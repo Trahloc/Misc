@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "sudo systemctl set-default graphical.target"
+sudo systemctl set-default graphical.target
+echo "System will boot to graphical user interface (GUI) with Wayland on next reboot."

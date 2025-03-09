@@ -1,0 +1,682 @@
+#!/usr/bin/env python3
+"""
+killit - a robust process termination utility
+
+This script allows users to terminate processes matching a pattern or specific PIDs
+with various safety features and granular control options.
+"""
+
+import argparse
+import getpass
+import logging
+import os
+import signal
+import sys
+import time
+from datetime import datetime
+from typing import List, Optional, Set, Tuple, Dict
+
+try:
+    import psutil
+except ImportError:
+    print("Warning: psutil module not found. Installing would provide enhanced functionality.")
+    # Fall back to basic functionality without psutil
+
+
+# Default configuration
+DEFAULT_TIMEOUT = 30       # Default timeout in seconds
+DEFAULT_LOG_DIR = "/var/log/killit"  # Default log directory
+DEFAULT_LOG_ENABLED = False  # Logging disabled by default
+DEFAULT_DRY_RUN = False    # Dry run disabled by default
+DEFAULT_YES_FLAG = False   # Confirmation required by default
+DEFAULT_FORCE = False      # Force mode disabled by default
+DEFAULT_VERBOSE = False    # Verbose mode disabled by default
+DEFAULT_EXACT_MATCH = False  # Exact process name matching disabled by default
+DEFAULT_USER = getpass.getuser()  # Default to current user
+DEFAULT_WAIT_TIME = 2      # Default seconds to wait between signals
+DEFAULT_ALL_USERS = False  # Default to only current user's processes
+DEFAULT_NUCLEAR = False    # Nuclear termination mode disabled by default
+
+# Exit codes
+EXIT_SUCCESS = 0
+EXIT_INVALID_ARGS = 1
+EXIT_NO_PROCESSES = 2
+EXIT_KILL_FAILED = 3
+EXIT_PARTIAL_KILL = 4
+EXIT_PERMISSION_DENIED = 5
+
+# Critical system processes that should be protected
+CRITICAL_PROCESSES = {
+    'init', 'systemd', 'launchd', 'sshd', 'bash', 'sh', 'ksh', 'zsh', 'csh',
+    'python', 'python3', 'sudo', 'su'
+}
+
+# Terminal colors if supported
+class Colors:
+    """ANSI color codes for terminal output"""
+    RED = '\033[0;31m' if sys.stdout.isatty() else ''
+    GREEN = '\033[0;32m' if sys.stdout.isatty() else ''
+    YELLOW = '\033[0;33m' if sys.stdout.isatty() else ''
+    BLUE = '\033[0;34m' if sys.stdout.isatty() else ''
+    BOLD = '\033[1m' if sys.stdout.isatty() else ''
+    NC = '\033[0m' if sys.stdout.isatty() else ''  # No Color
+
+
+class ProcessManager:
+    """Manages the process killing functionality"""
+    
+    def __init__(self, args):
+        """Initialize with command line arguments"""
+        self.args = args
+        self.own_pid = os.getpid()
+        self.parent_pid = os.getppid()
+        self.setup_logging()
+        
+        # Initialize instance variables
+        self.initial_pids = set()
+        self.skipped_pids = set()
+    
+    def setup_logging(self):
+        """Set up logging based on command line arguments"""
+        self.logger = logging.getLogger('killit')
+        self.logger.setLevel(logging.INFO if self.args.verbose else logging.WARNING)
+        
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO if self.args.verbose else logging.WARNING)
+        
+        # Formatter
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
+        
+        # File handler if logging enabled
+        if self.args.log:
+            try:
+                os.makedirs(self.args.log_dir, exist_ok=True)
+                log_file = os.path.join(
+                    self.args.log_dir, 
+                    f"killit_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.own_pid}.log"
+                )
+                file_handler = logging.FileHandler(log_file)
+                file_handler.setLevel(logging.INFO)
+                file_handler.setFormatter(formatter)
+                self.logger.addHandler(file_handler)
+                self.logger.info(f"Logging to {log_file}")
+            except (IOError, PermissionError) as e:
+                self.logger.error(f"Failed to set up log file: {e}")
+                self.args.log = False
+    
+    def is_critical_process(self, pid: int) -> bool:
+        """Check if the process is a critical system process"""
+        try:
+            # If psutil is available, use it for better process information
+            if 'psutil' in sys.modules:
+                try:
+                    proc = psutil.Process(pid)
+                    cmd = proc.name()
+                    
+                    # Check if it's in the critical list
+                    if cmd in CRITICAL_PROCESSES:
+                        # Make exception for shells if they're not our shell
+                        if cmd in {'bash', 'sh', 'ksh', 'zsh', 'csh'} and pid not in {self.own_pid, self.parent_pid}:
+                            return False
+                        return True
+                    return False
+                except psutil.NoSuchProcess:
+                    return False
+            else:
+                # Fallback to ps command if psutil not available
+                try:
+                    import subprocess
+                    result = subprocess.run(
+                        ['ps', '-p', str(pid), '-o', 'comm='],
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    if result.returncode == 0:
+                        cmd = result.stdout.strip()
+                        if cmd in CRITICAL_PROCESSES:
+                            if cmd in {'bash', 'sh', 'ksh', 'zsh', 'csh'} and pid not in {self.own_pid, self.parent_pid}:
+                                return False
+                            return True
+                    return False
+                except (subprocess.SubprocessError, FileNotFoundError):
+                    return False
+        except Exception as e:
+            self.logger.warning(f"Error checking if process {pid} is critical: {e}")
+            return False  # Assume not critical if we can't determine
+    
+    def get_pids(self) -> Set[int]:
+        """Get PIDs matching the pattern or specific PIDs"""
+        pids = set()
+        
+        # If specific PIDs were provided, use those
+        if self.args.pid:
+            for pid in self.args.pid:
+                try:
+                    pid = int(pid)
+                    # Skip our own process and parent
+                    if pid in {self.own_pid, self.parent_pid}:
+                        continue
+                    pids.add(pid)
+                except ValueError:
+                    self.logger.warning(f"Invalid PID: {pid}")
+                    
+            return pids
+                
+        # Otherwise find processes matching the pattern
+        try:
+            # If we have psutil, use it for better process filtering
+            if 'psutil' in sys.modules:
+                for proc in psutil.process_iter(['pid', 'name', 'username', 'cmdline']):
+                    try:
+                        info = proc.info
+                        pid = info['pid']
+                        
+                        # Skip our own process and parent
+                        if pid in {self.own_pid, self.parent_pid}:
+                            continue
+                            
+                        # Filter by user if specified
+                        if not self.args.all_users and self.args.user and info['username'] != self.args.user:
+                            continue
+                        
+                        # Match by name or command line based on exact flag
+                        if self.args.exact:
+                            if info['name'] == self.args.pattern:
+                                pids.add(pid)
+                        else:
+                            # Check command line for the pattern
+                            cmdline = ' '.join(info['cmdline'] or [])
+                            if self.args.pattern in cmdline or self.args.pattern in info['name']:
+                                pids.add(pid)
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+            else:
+                # Fallback to pgrep command if psutil not available
+                import subprocess
+                
+                cmd = ['pgrep']
+                if self.args.exact:
+                    cmd.append('-x')
+                else:
+                    cmd.append('-f')
+                    
+                if not self.args.all_users and self.args.user:
+                    cmd.extend(['-u', self.args.user])
+                    
+                cmd.append(self.args.pattern)
+                
+                try:
+                    result = subprocess.run(
+                        cmd, 
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    if result.returncode == 0:
+                        for line in result.stdout.strip().split('\n'):
+                            if line:
+                                try:
+                                    pid = int(line)
+                                    if pid not in {self.own_pid, self.parent_pid}:
+                                        pids.add(pid)
+                                except ValueError:
+                                    continue
+                except (subprocess.SubprocessError, FileNotFoundError) as e:
+                    self.logger.error(f"Error running pgrep: {e}")
+        except Exception as e:
+            self.logger.error(f"Error getting process list: {e}")
+            
+        return pids
+    
+    def validate_pids(self, pids: Set[int]) -> Set[int]:
+        """Validate PIDs to ensure they still exist and aren't critical"""
+        if not pids:
+            return set()
+            
+        valid_pids = set()
+        self.skipped_pids = set()
+        
+        for pid in pids:
+            # Skip our own script's PID and PPID
+            if pid in {self.own_pid, self.parent_pid}:
+                continue
+                
+            # Check if process still exists
+            try:
+                if 'psutil' in sys.modules:
+                    if not psutil.pid_exists(pid):
+                        continue
+                else:
+                    # Fallback to kill -0 to check if process exists
+                    try:
+                        os.kill(pid, 0)
+                    except ProcessLookupError:
+                        continue
+                    except PermissionError:
+                        # Process exists but we don't have permission
+                        if not self.args.force:
+                            self.logger.warning(f"No permission to access PID {pid}, skipping")
+                            self.skipped_pids.add(pid)
+                            continue
+            except Exception:
+                continue
+                
+            # Check if process is a critical system process
+            if not self.args.force and self.is_critical_process(pid):
+                self.logger.warning(f"Skipping critical system process: {pid}")
+                self.skipped_pids.add(pid)
+                continue
+                
+            # Add to valid PIDs
+            valid_pids.add(pid)
+            
+        if self.skipped_pids:
+            self.logger.warning(f"{len(self.skipped_pids)} processes skipped for safety. Use --force to override.")
+            
+        return valid_pids
+    
+    def show_process_details(self, pids: Set[int]) -> None:
+        """Show detailed information about the processes"""
+        if not pids:
+            return
+            
+        print("\n{:<8} {:<10} {:<12} {}".format("PID", "USER", "TIME", "COMMAND"))
+        print("-" * 80)
+        
+        try:
+            if 'psutil' in sys.modules:
+                # Use psutil for better process information
+                for pid in sorted(pids):
+                    try:
+                        proc = psutil.Process(pid)
+                        create_time = datetime.fromtimestamp(proc.create_time())
+                        elapsed = datetime.now() - create_time
+                        hours, remainder = divmod(int(elapsed.total_seconds()), 3600)
+                        minutes, seconds = divmod(remainder, 60)
+                        time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                        
+                        cmd = ' '.join(proc.cmdline() or [proc.name()])
+                        print(f"{pid:<8} {proc.username():<10} {time_str:<12} {cmd}")
+                    except psutil.Error:
+                        print(f"{pid:<8} {'Unknown':<10} {'Unknown':<12} {'[Process details unavailable]'}")
+            else:
+                # Fallback to ps command
+                import subprocess
+                pid_list = ','.join(str(pid) for pid in pids)
+                try:
+                    result = subprocess.run(
+                        ['ps', '-p', pid_list, '-o', 'pid,user,time,args'],
+                        stdout=subprocess.PIPE, 
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    if result.returncode == 0:
+                        lines = result.stdout.strip().split('\n')
+                        # Skip the header
+                        for line in lines[1:]:
+                            print(line)
+                    else:
+                        for pid in sorted(pids):
+                            print(f"{pid:<8} {'Unknown':<10} {'Unknown':<12} {'[Process details unavailable]'}")
+                except (subprocess.SubprocessError, FileNotFoundError):
+                    for pid in sorted(pids):
+                        print(f"{pid:<8} {'Unknown':<10} {'Unknown':<12} {'[Process details unavailable]'}")
+        except Exception as e:
+            self.logger.error(f"Error showing process details: {e}")
+            for pid in sorted(pids):
+                print(f"{pid:<8} {'Unknown':<10} {'Unknown':<12} {'[Error retrieving process info]'}")
+                
+        print()
+    
+    def kill_processes(self, signal_name: str, pids: Set[int]) -> Tuple[bool, Set[int]]:
+        """
+        Kill processes with the specified signal
+        
+        Returns:
+            Tuple(bool, set): Success status and set of remaining PIDs
+        """
+        if not pids:
+            return True, set()
+            
+        if not signal_name:
+            return True, pids
+            
+        # Get signal number
+        signal_map = {
+            'TERM': signal.SIGTERM,
+            'KILL': signal.SIGKILL,
+            'HUP': signal.SIGHUP,
+            'INT': signal.SIGINT,
+        }
+        
+        sig = signal_map.get(signal_name, signal.SIGTERM)
+        
+        if self.args.dry_run:
+            self.logger.info(f"Would kill PIDs {', '.join(str(pid) for pid in pids)} with signal {signal_name}")
+            return True, pids
+            
+        self.logger.info(f"Sending signal {signal_name} to PIDs: {', '.join(str(pid) for pid in pids)}")
+        
+        failed_pids = set()
+        for pid in pids:
+            try:
+                os.kill(pid, sig)
+                self.logger.info(f"Successfully sent signal {signal_name} to PID {pid}")
+            except ProcessLookupError:
+                # Process already gone, which is fine
+                self.logger.info(f"Process {pid} already terminated")
+            except (PermissionError, OSError) as e:
+                self.logger.error(f"Failed to send signal {signal_name} to PID {pid}: {e}")
+                failed_pids.add(pid)
+                
+        # Wait for the specified time
+        if self.args.wait_time > 0:
+            if self.args.verbose:
+                for i in range(1, self.args.wait_time + 1):
+                    sys.stdout.write(f"\rWaiting after sending SIG{signal_name} ({i}/{self.args.wait_time} seconds)...")
+                    sys.stdout.flush()
+                    time.sleep(1)
+                print()  # New line after the progress indicator
+            else:
+                time.sleep(self.args.wait_time)
+                
+        # Check which processes are still running
+        remaining_pids = set()
+        for pid in pids:
+            try:
+                if 'psutil' in sys.modules:
+                    if psutil.pid_exists(pid):
+                        remaining_pids.add(pid)
+                else:
+                    try:
+                        os.kill(pid, 0)  # Signal 0 checks if process exists
+                        remaining_pids.add(pid)
+                    except ProcessLookupError:
+                        pass  # Process is gone, which is good
+                    except OSError:
+                        # Process exists but we can't signal it
+                        remaining_pids.add(pid)
+            except Exception:
+                # Assume still running if we can't determine
+                remaining_pids.add(pid)
+                
+        return len(failed_pids) == 0, remaining_pids
+    
+    def run(self) -> int:
+        """Main execution flow of the script"""
+        # Get initial PIDs
+        if self.args.pid:
+            self.logger.info(f"Starting killit with specified PIDs: {', '.join(str(pid) for pid in self.args.pid)}")
+            self.initial_pids = set(self.args.pid)
+        else:
+            self.logger.info(f"Starting killit with pattern: '{self.args.pattern}'")
+            
+            if self.args.exact:
+                self.logger.info("Using exact name matching")
+                
+            if not self.args.all_users and self.args.user:
+                self.logger.info(f"Targeting only processes owned by user: {self.args.user}")
+                
+            self.initial_pids = self.get_pids()
+            
+        if not self.initial_pids:
+            msg = "No PIDs specified" if self.args.pid else f"No processes found matching '{self.args.pattern}'"
+            self.logger.error(msg)
+            return EXIT_NO_PROCESSES
+            
+        # Validate the PIDs
+        self.initial_pids = self.validate_pids(self.initial_pids)
+        
+        if not self.initial_pids:
+            if self.skipped_pids:
+                self.logger.error(f"All {len(self.skipped_pids)} matching processes were skipped (use --force to override)")
+                return EXIT_NO_PROCESSES
+            else:
+                msg = "No valid PIDs to kill" if self.args.pid else f"No valid processes to kill matching '{self.args.pattern}'"
+                self.logger.error(msg)
+                return EXIT_NO_PROCESSES
+                
+        if self.args.pid:
+            self.logger.info(f"Found valid PIDs: {', '.join(str(pid) for pid in self.initial_pids)}")
+        else:
+            self.logger.info(f"Found PIDs matching '{self.args.pattern}': {', '.join(str(pid) for pid in self.initial_pids)}")
+            
+        # Show process details
+        self.show_process_details(self.initial_pids)
+        
+        # Prompt for confirmation
+        if not self.args.yes and not self.args.dry_run:
+            try:
+                confirm = input("Do you want to kill these processes? (y/N): ").strip().lower()
+                if not confirm.startswith('y'):
+                    self.logger.info("Operation cancelled by user.")
+                    return EXIT_SUCCESS
+            except (KeyboardInterrupt, EOFError):
+                print()  # Add a newline after ^C
+                self.logger.info("Operation cancelled by user.")
+                return EXIT_SUCCESS
+                
+        # Kill processes with increasing severity of signals
+        start_time = time.time()
+        remaining_pids = self.initial_pids.copy()
+        
+        # Try with progressively stronger signals
+        if self.args.nuclear:
+            # Nuclear mode: try a much more extensive sequence of signals
+            signal_sequence = [
+                '',                # Initial check
+                'STOP',           # Pause the process first
+                'CONT',           # Resume it so it can process signals
+                'HUP',            # Hangup signal - many daemons reload config
+                'INT',            # Interrupt (like Ctrl+C)
+                'TERM',           # Standard termination
+                'QUIT',           # Quit with core dump
+                'ABRT',           # Abort with core dump
+                'KILL',           # The ultimate signal, can't be caught
+            ]
+            
+            self.logger.info(f"{Colors.RED}🔥 NUCLEAR TERMINATION MODE ACTIVATED 🔥{Colors.NC}")
+            print(f"\n{Colors.RED}⚠️  NUCLEAR PROCESS TERMINATION SEQUENCE INITIATED ⚠️{Colors.NC}\n")
+        else:
+            # Standard mode: simple signal sequence
+            signal_sequence = ['', 'TERM', 'KILL']
+            
+        for signal_name in signal_sequence:
+            success, remaining_pids = self.kill_processes(signal_name, remaining_pids)
+            
+            if not remaining_pids:
+                if self.args.nuclear:
+                    print(f"\n{Colors.GREEN}✓ TARGET PROCESSES ELIMINATED SUCCESSFULLY ✓{Colors.NC}\n")
+                self.logger.info(f"All processes successfully terminated.")
+                return EXIT_SUCCESS
+                
+            self.logger.info(f"PIDs still running after signal SIG{signal_name}: {', '.join(str(pid) for pid in remaining_pids)}")
+            
+            # Check if timeout reached
+            if (time.time() - start_time) >= self.args.timeout:
+                self.logger.warning(f"Timeout of {self.args.timeout} seconds reached. Giving up.")
+                break
+                
+        # If nuclear and still have processes, try repeatedly sending KILL with reduced wait time
+        if self.args.nuclear and remaining_pids:
+            self.logger.warning("Standard signal sequence failed. Initiating final termination protocol...")
+            print(f"\n{Colors.RED}🧨 DEPLOYING FINAL TERMINATION PROTOCOL 🧨{Colors.NC}")
+            
+            original_wait = self.args.wait_time
+            self.args.wait_time = max(1, original_wait // 2)
+            
+            # Last 3 attempts with SIGKILL
+            for attempt in range(3):
+                if not remaining_pids:
+                    break
+                    
+                print(f"{Colors.YELLOW}Termination attempt {attempt+1}/3...{Colors.NC}")
+                self.logger.info(f"Final termination protocol attempt {attempt+1}/3")
+                
+                # Try SIGKILL again, repeatedly
+                success, remaining_pids = self.kill_processes('KILL', remaining_pids)
+                
+                if not remaining_pids:
+                    print(f"\n{Colors.GREEN}✓ TARGET PROCESSES ELIMINATED SUCCESSFULLY ✓{Colors.NC}\n")
+                    self.logger.info("All processes terminated in final protocol.")
+                    return EXIT_SUCCESS
+                    
+                # Check if timeout reached
+                if (time.time() - start_time) >= self.args.timeout:
+                    break
+            
+            # Reset wait time
+            self.args.wait_time = original_wait
+                
+        # Check final status
+        if remaining_pids:
+            remaining_count = len(remaining_pids)
+            initial_count = len(self.initial_pids)
+            
+            if remaining_count == initial_count:
+                self.logger.error(f"Failed to terminate all processes. Remaining PIDs: {', '.join(str(pid) for pid in remaining_pids)}")
+                return EXIT_KILL_FAILED
+            else:
+                self.logger.warning(
+                    f"Partially successful. {initial_count - remaining_count}/{initial_count} processes killed. "
+                    f"Remaining PIDs: {', '.join(str(pid) for pid in remaining_pids)}"
+                )
+                return EXIT_PARTIAL_KILL
+        else:
+            self.logger.info("All processes matching criteria have been terminated.")
+            return EXIT_SUCCESS
+
+
+def parse_args():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description="killit - a robust process termination utility",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+    
+    # Add arguments
+    parser.add_argument(
+        "pattern", 
+        nargs="?", 
+        help="Process name or pattern to match"
+    )
+    
+    parser.add_argument(
+        "-p", "--pid", 
+        type=int,
+        nargs="+", 
+        help="Specify one or more PIDs to kill directly"
+    )
+    
+    parser.add_argument(
+        "-y", "--yes", 
+        action="store_true", 
+        default=DEFAULT_YES_FLAG,
+        help="Skip confirmation prompt"
+    )
+    
+    parser.add_argument(
+        "-d", "--dry-run", 
+        action="store_true", 
+        default=DEFAULT_DRY_RUN,
+        help="Show what would be killed, but don't kill"
+    )
+    
+    parser.add_argument(
+        "-l", "--log", 
+        action="store_true", 
+        default=DEFAULT_LOG_ENABLED,
+        help=f"Enable logging to {DEFAULT_LOG_DIR}"
+    )
+    
+    parser.add_argument(
+        "--log-dir", 
+        default=DEFAULT_LOG_DIR,
+        help="Specify custom log directory"
+    )
+    
+    parser.add_argument(
+        "-f", "--force", 
+        action="store_true", 
+        default=DEFAULT_FORCE,
+        help="Force kill, including critical processes"
+    )
+    
+    parser.add_argument(
+        "-n", "--nuclear", 
+        action="store_true", 
+        default=DEFAULT_NUCLEAR,
+        help="NUCLEAR OPTION: Use every available technique to terminate the process"
+    )
+    
+    parser.add_argument(
+        "-t", "--timeout", 
+        type=int, 
+        default=DEFAULT_TIMEOUT,
+        help=f"Timeout before giving up (default: {DEFAULT_TIMEOUT})"
+    )
+    
+    parser.add_argument(
+        "-w", "--wait-time", 
+        type=int, 
+        default=DEFAULT_WAIT_TIME,
+        help=f"Wait time between signals (default: {DEFAULT_WAIT_TIME})"
+    )
+    
+    parser.add_argument(
+        "-u", "--user", 
+        default=DEFAULT_USER,
+        help=f"Only kill processes owned by specified user (default: current user)"
+    )
+    
+    parser.add_argument(
+        "-a", "--all-users", 
+        action="store_true", 
+        default=DEFAULT_ALL_USERS,
+        help="Match processes for all users (overrides --user)"
+    )
+    
+    parser.add_argument(
+        "-e", "--exact", 
+        action="store_true", 
+        default=DEFAULT_EXACT_MATCH,
+        help="Match process name exactly"
+    )
+    
+    parser.add_argument(
+        "-v", "--verbose", 
+        action="store_true", 
+        default=DEFAULT_VERBOSE,
+        help="Show verbose output"
+    )
+    
+    args = parser.parse_args()
+    
+    # Validate arguments
+    if args.pid is None and args.pattern is None:
+        parser.error("Either a process pattern or PIDs (-p) must be specified")
+        
+    return args
+
+
+def main():
+    """Main entry point"""
+    try:
+        args = parse_args()
+        process_manager = ProcessManager(args)
+        exit_code = process_manager.run()
+        return exit_code
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user")
+        return EXIT_SUCCESS
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return EXIT_KILL_FAILED
+
+
+if __name__ == "__main__":
+    sys.exit(main())

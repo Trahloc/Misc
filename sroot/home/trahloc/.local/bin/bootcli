@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "sudo systemctl set-default multi-user.target"
+sudo systemctl set-default multi-user.target
+echo "System will boot to command-line interface (CLI) on next reboot."
