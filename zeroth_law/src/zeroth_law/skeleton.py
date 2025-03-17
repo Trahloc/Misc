@@ -1,4 +1,4 @@
-# FILE: zeroth_law/skeleton.py (CORRECTED)
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/skeleton.py (CORRECTED)
 """
 # PURPOSE: Create a project skeleton following the Zeroth Law.
 

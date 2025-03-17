@@ -1,4 +1,4 @@
-# FILE: zeroth_law/metrics/cyclomatic_complexity.py
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/metrics/cyclomatic_complexity.py
 """
 # PURPOSE: Calculate the cyclomatic complexity of a function.
 

@@ -1,4 +1,4 @@
-#/zeroth_law/templates/.pylintrc.template
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/.pylintrc.template
 [MESSAGES CONTROL]
 disable=
     C0114,  # missing-module-docstring

@@ -1,4 +1,4 @@
-<!--/zeroth_law/README.md-->
+<!--# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/README.md-->
 
 # Zeroth Law Analyzer
 

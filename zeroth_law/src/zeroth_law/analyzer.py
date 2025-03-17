@@ -1,4 +1,4 @@
-# FILE: zeroth_law/analyzer.py (CORRECTED)
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/analyzer.py (CORRECTED)
 """
 # PURPOSE: Orchestrate the analysis of Python files for Zeroth Law compliance.
 

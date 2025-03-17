@@ -28,6 +28,7 @@ This framework is foundational. Code must satisfy these metrics before functiona
 ### 5.1 File Header
 
 ```python
+# FILE: project_head/src/project_module/file_name.example
 """
 # PURPOSE: [File's single responsibility.]
 
@@ -42,7 +43,7 @@ This framework is foundational. Code must satisfy these metrics before functiona
 ### 5.2 Code Entity (Function)
 
 ```python
-def very_descriptive_function_name(param1: type, param2: type = default) -> return_type:
+def a_very_descriptive_function_name(param1: type, param2: type = default) -> return_type:
     """
     PURPOSE: [Single responsibility.]
 

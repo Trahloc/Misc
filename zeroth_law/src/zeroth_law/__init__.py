@@ -1,4 +1,4 @@
-# FILE: zeroth_law/__init__.py
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/__init__.py
 """
 # PURPOSE: Provide the public API for the Zeroth Law analyzer.
 

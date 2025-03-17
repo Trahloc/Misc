@@ -1,4 +1,4 @@
-#/zeroth_law/__main__.py
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/__main__.py
 """
 # PURPOSE: Entry point for the Zeroth Law analyzer package.
 

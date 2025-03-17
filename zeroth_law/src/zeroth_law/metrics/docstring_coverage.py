@@ -1,4 +1,4 @@
-#/zeroth_law/metrics/docstring_coverage.py
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/metrics/docstring_coverage.py
 """
 # PURPOSE: Check for the presence of a docstring in a function.
 

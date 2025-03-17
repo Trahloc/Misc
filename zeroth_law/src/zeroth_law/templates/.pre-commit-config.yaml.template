@@ -1,4 +1,4 @@
-# /zeroth_law/templates/.pre-commit-config.yaml.template
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/.pre-commit-config.yaml.template
 repos:
   - repo: https://github.com/psf/black
     rev: 23.1.0  # Use a specific, stable version.  VS Code has built-in Black support.

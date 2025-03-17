@@ -1,4 +1,4 @@
-# FILE: tests/test_analyzer.py (CORRECTED)
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/tests/test_analyzer.py (CORRECTED)
 """
 # PURPOSE: Tests for the Zeroth Law analyzer.
 

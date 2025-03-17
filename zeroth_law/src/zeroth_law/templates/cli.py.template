@@ -1,4 +1,4 @@
-#/zeroth_law/templates/cli.py.template
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/cli.py.template
 """
 # PURPOSE: Command-line interface for the {directory} package.
 

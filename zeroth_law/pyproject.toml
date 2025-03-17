@@ -1,4 +1,4 @@
-#/zeorth_law/pyproject.toml
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/pyproject.toml
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"

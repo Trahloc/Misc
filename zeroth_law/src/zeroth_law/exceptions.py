@@ -1,4 +1,4 @@
-# FILE: zeroth_law/exceptions.py
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/exceptions.py
 """
 # PURPOSE: Define custom exceptions for the Zeroth Law analyzer.
 

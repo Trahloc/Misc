@@ -1,4 +1,4 @@
-#/zeroth_law/metrics/function_size.py
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/metrics/function_size.py
 """
 # PURPOSE: Calculate metrics related to function size.
 

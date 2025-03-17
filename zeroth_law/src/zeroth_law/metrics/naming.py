@@ -1,4 +1,4 @@
-#/zeroth_law/metrics/naming.py
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/metrics/naming.py
 """
 # PURPOSE: Evaluate semantic naming (very simplified).
 
