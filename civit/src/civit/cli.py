@@ -9,8 +9,6 @@
  - logging
 """
 import argparse
-import sys
-import os
 import logging
 
 def parse_args():
@@ -36,8 +34,11 @@ def parse_args():
     group.add_argument(
         "-vv", "--very-verbose", action="store_true", help="Very verbose output"
     )
+    return parser.parse_args()
 
-     # Configure logging
+def main():
+    args = parse_args()
+    # Configure logging
     if args.debug:
         log_level = logging.DEBUG
     elif args.verbose:
@@ -52,4 +53,5 @@ def parse_args():
 
     logger.info("Hello from civit")
 
-    return parser.parse_args()
+    # Add the main logic here
+    print("Main function executed")

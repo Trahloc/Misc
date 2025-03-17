@@ -1,0 +1,10 @@
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/requirements.txt.template
+# requirements.txt
+black==23.1.0
+flake8==6.0.0
+mypy==1.0.0
+pytest==7.4.7       # Use a specific version, I've used a more recent one here.
+pytest-cov==4.1.0   # For coverage reporting.
+autoinit==1.0.2     # For automatic __init__.py generation.
+isort==5.12.0       # For consistent import ordering
+typer==0.9.1        # Consider using Typer for your CLI in zeroth-law

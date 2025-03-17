@@ -1,0 +1,28 @@
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/pyproject.toml.template
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astscan"
+version = "0.0.1"
+authors = [
+    { name = "Your Name", email = "your.email@example.com" },
+]
+description = "A Python package generated with Zeroth Law"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click",
+]
+
+[project.scripts]
+astscan = "astscan.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

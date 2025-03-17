@@ -1,3 +1,4 @@
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/tests/__init__.py.template
 """
 # PURPOSE: [Briefly describe the purpose of this module.]
 
@@ -7,7 +8,6 @@
 ## DEPENDENCIES:
     # - [module_path]: [What's needed.]
 """
-
 from typing import List
 
 __all__: List[str] = [
