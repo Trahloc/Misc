@@ -7,10 +7,10 @@
   - analyze_directory(dir_path: str, recursive: bool = False, update: bool = False, config: dict = None) -> list: Analyze a directory.
 
 ## DEPENDENCIES:
- - {directory}.metrics: For calculating individual metrics.
- - {directory}.reporting: For generating reports.
- - {directory}.utils: Utility functions.
- - {directory}.exceptions: Custom exceptions.
+ - {{ cookiecutter.project_name }}.metrics: For calculating individual metrics.
+ - {{ cookiecutter.project_name }}.reporting: For generating reports.
+ - {{ cookiecutter.project_name }}.utils: Utility functions.
+ - {{ cookiecutter.project_name }}.exceptions: Custom exceptions.
  - logging
  - datetime
 """
@@ -22,7 +22,7 @@ from typing import Dict, List, Any
 import logging
 from datetime import datetime
 
-from {directory}.metrics import (
+from {{ cookiecutter.project_name }}.metrics import (
     calculate_file_size_metrics,
     calculate_function_size_metrics,
     calculate_cyclomatic_complexity,
@@ -30,9 +30,9 @@ from {directory}.metrics import (
     calculate_naming_score,
     calculate_import_metrics
 )
-from {directory}.reporting import generate_report, generate_summary_report
-from {directory}.utils import find_header_footer, count_executable_lines, replace_footer
-from {directory}.exceptions import ZerothLawError, FileNotFoundError, NotPythonFileError, AnalysisError, ConfigError
+from {{ cookiecutter.project_name }}.reporting import generate_report, generate_summary_report
+from {{ cookiecutter.project_name }}.utils import find_header_footer, count_executable_lines, replace_footer
+from {{ cookiecutter.project_name }}.exceptions import ZerothLawError, FileNotFoundError, NotPythonFileError, AnalysisError, ConfigError
 
 logger = logging.getLogger(__name__)
 

@@ -64,7 +64,7 @@ repos:
 
       - id: zeroth-law
         name: Zeroth Law Analyzer
-        entry: python -m {directory} # Replace with your actual script/module
+        entry: python -m {{ cookiecutter.project_name }} # Replace with your actual script/module
         language: python
         files: '\.py$'  # Apply to all Python files.
         args: [-r]   # Example: Pass arguments to your analyzer (-r for recursive).

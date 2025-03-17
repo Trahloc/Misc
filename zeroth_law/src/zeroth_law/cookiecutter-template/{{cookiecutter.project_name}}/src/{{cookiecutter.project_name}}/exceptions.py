@@ -1,6 +1,6 @@
 # FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/exceptions.py.template
 """
-# PURPOSE: Define custom exceptions for the {directory} analyzer.
+# PURPOSE: Define custom exceptions for the {{ cookiecutter.project_name }} analyzer.
 
 ## INTERFACES:
  - ZerothLawError

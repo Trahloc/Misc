@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "civit"
-version = "0.0.1"
+version = "100.0.1"
 authors = [
   { name = "Trahloc colDhart", email = "github@trahloc.com" },
 ]
@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.scripts]
-civit = "src.civit.__main__"
+civit = "src.civit.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

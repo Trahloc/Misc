@@ -4,12 +4,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "{directory}"
+name = "{{cookiecutter.project_name}}"
 version = "0.0.1"
 authors = [
-  { name = "Example Author", email = "author@example.com" },
+    { name = "Your Name", email = "your.email@example.com" },
 ]
-description = "A small example package"
+description = "A Python package generated with Zeroth Law"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -17,6 +17,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "click",
+]
 
 [project.scripts]
-{directory} = "{directory}.__main__:main"
+{{cookiecutter.project_name}} = "{{cookiecutter.project_name}}.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

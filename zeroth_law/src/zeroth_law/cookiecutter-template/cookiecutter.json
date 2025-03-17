@@ -1,0 +1,6 @@
+{
+  "project_name": "my_project",
+  "_copy_without_render": [
+    "*.template"
+  ]
+}

@@ -1,6 +1,6 @@
 # FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/cli.py.template
 """
-# PURPOSE: Command-line interface for the {directory} package.
+# PURPOSE: Command-line interface for the {{ cookiecutter.project_name }} package.
 
 ## INTERFACES:
  - main(): Main entry point.
@@ -8,8 +8,8 @@
 ## DEPENDENCIES:
  - click
  - logging
- - {directory}.cli_args
- - {directory}.exceptions
+ - {{ cookiecutter.project_name }}.cli_args
+ - {{ cookiecutter.project_name }}.exceptions
 """
 import logging
 import os
@@ -19,8 +19,8 @@ from typing import Optional
 import click
 
 # Import from the *project's* cli_args
-from {directory} import cli_args
-from {directory}.exceptions import ZerothLawError
+from {{ cookiecutter.project_name }} import cli_args
+from {{ cookiecutter.project_name }}.exceptions import ZerothLawError
 
 
 @click.group()  # Use @click.group() for subcommands
@@ -28,14 +28,14 @@ from {directory}.exceptions import ZerothLawError
 @click.version_option(version="0.0.1")
 @click.pass_context
 def main(ctx: click.Context, verbose: int):
-    """Command-line interface for the {directory} package."""
+    """Command-line interface for the {{ cookiecutter.project_name }} package."""
     # Add project-specific arguments
     cli_args.add_args(ctx.command)
 
     # Configure logging (using project's configure_logging)
     cli_args.configure_logging(ctx, verbose)  # Use project's configure_logging
     ctx.ensure_object(dict)
-    ctx.obj['logger'] = logging.getLogger('{directory}')
+    ctx.obj['logger'] = logging.getLogger('{{ cookiecutter.project_name }}')
 
 @main.command()  # Add a 'create' subcommand
 @click.argument("directory")
@@ -45,7 +45,7 @@ def create(ctx: click.Context, directory: str):
     logger = ctx.obj['logger']
     try:
         # In a real implementation, you'd call your project creation function here
-        logger.info(f"Creating project: {directory}")
+        logger.info(f"Creating project: {{ cookiecutter.project_name }}")
         # Example:  skeleton.create_skeleton(directory)
     except Exception as e:
         logger.error(f"Error creating project: {e}")
@@ -75,7 +75,7 @@ def analyze(
         ctx.exit(1)
 
 
-    logger.info(f"Hello from {{directory}} cli")
+    logger.info(f"Hello from {{ cookiecutter.project_name }} cli")
     logger.info(f"Analyzing path: {path}")
     if recursive:
         logger.info("Recursive analysis enabled.")

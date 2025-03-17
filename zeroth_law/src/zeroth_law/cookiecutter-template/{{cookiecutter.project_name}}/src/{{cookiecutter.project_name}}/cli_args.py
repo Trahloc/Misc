@@ -1,6 +1,6 @@
 # FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/cli_args.py.template
 """
-# PURPOSE: Provide reusable command-line arguments for the {directory} package.
+# PURPOSE: Provide reusable command-line arguments for the {{ cookiecutter.project_name }} package.
 
 ## INTERFACES:
  - add_args(click_group): adds the arguments

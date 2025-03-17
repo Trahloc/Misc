@@ -17,6 +17,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "click",  # Assuming you have other dependencies
+    "cookiecutter>=2.1.1",  # Adding cookiecutter dependency
+    # ...other existing dependencies...
+]
 
 [project.scripts]
 zeroth-law = "zeroth_law.__main__:main"
