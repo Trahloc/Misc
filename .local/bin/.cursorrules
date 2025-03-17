@@ -1,0 +1,364 @@
+{
+  "framework": {
+    "name": "Zeroth Law of AI-Driven Development",
+    "version": "1.1",
+    "description": "Code Quality Assessment Framework optimizing for AI comprehension and maintainability",
+    "contributors": ["Trahloc colDhart"],
+    "framework_type": "Personal framework referencing established industry practices"
+  },
+
+  "purpose": "A foundational principle ensuring code quality metrics center on AI comprehension: emphasizes descriptive, self-contained, and consistent structures; aims for continual self-assessment and improvement; prioritizes clarity over traditional norms, enabling AI systems to effectively parse, understand, and evolve the codebase without being limited by human methods.",
+
+  "core_focus": "This framework establishes fundamental quality principles for technical hobbyists using AI tools with 16k+ context windows to generate and maintain code. It optimizes code structure for AI comprehension while ensuring maintainability and reliability. This is a personal framework, not an industry standard, though it references established industry practices where appropriate.",
+
+  "application_as_zeroth_law": "This framework serves as the foundational principle that supersedes all other development considerations. Before any functional requirement is considered complete, code must satisfy these quality metrics. AI assistants should automatically apply these principles during development and flag any violations for immediate correction.",
+
+  "guiding_principles": {
+    "ai_comprehension_priority": "AI readability surpasses all human conventions. Format code and data primarily for the AI's clarity. Humans can request simpler explanations from the AI if needed.",
+    "in_file_context_sufficiency": "All necessary context should be contained within the file itself. External documentation (wikis, external docs) is considered counterproductive for AI comprehension purposes. It's better that a function have a descriptive sentence-like name than require complex documentation elsewhere.",
+    "implementability_principle": "A practical framework that gets used consistently is superior to a perfect framework that remains theoretical. The Zeroth Law prioritizes real-world applicability over theoretical purity.",
+    "incremental_enhancement_focus": "Progress is tracked through AI-led assessments, with consistent, non-breaking refinements introduced across development sessions."
+  },
+
+  "documentation_patterns": {
+    "header_template": {
+      "format": "\"\"\"\\n# PURPOSE\\n\\n  [Concise description of file's purpose and responsibilities]\\n\\n## INTERFACES\\n\\n  - [function_name(param_type) -> return_type]: [brief description]\\n  - [...]\\n\\n## DEPENDENCIES\\n\\n  - [file_path]: [What this component needs from the dependency]\\n  - [...]\\n\\n## ZEROTH LAW STATUS\\n\\n  - [x] Clear file purpose\\n  - [x/] Interface documentation complete\\n  - [ ] [Other relevant metrics based on Key Metrics section]\\n\\n## RELATED FILES\\n\\n  - [file_path]: [Brief description of interaction]\\n  - [...]\\n\"\"\"",
+      "required_sections": [
+        "PURPOSE",
+        "INTERFACES",
+        "DEPENDENCIES",
+        "ZEROTH LAW STATUS"
+      ],
+      "optional_sections": [
+        "RELATED FILES"
+      ]
+    },
+    "code_entity_template": {
+      "format": "\"\"\"\\nCODE ENTITY PURPOSE:\\n  [Description of what this code entity does]\\n\\nCONTEXT & DEPENDENCIES:\\n  - [External imports or dependencies]\\n  - [Alignment with Zeroth Law guidelines]\\n\\nPARAMS:\\n  param_name (type): [Description]\\n\\nRETURNS:\\n  type: [Description]\\n\"\"\"\\n\\n[code implementation]\\n\\n\"\"\"\\nCODE ENTITY IMPLEMENTATION DETAILS:\\n  [Details about function size, naming, logic]\\nAI INSIGHT:\\n  [Information about AI suggestions that influenced the implementation]\\n\"\"\"",
+      "example": "def calculate_final_invoice_amount(subtotal: float, tax_rate: float, discount_rate: float = 0.0) -> float:\n\"\"\"\nCODE ENTITY PURPOSE:\n  Calculates the final amount for an invoice, applying tax and optional discount.\n\nCONTEXT & DEPENDENCIES:\n  - No external imports needed\n  - Aligns with Zeroth Law guidelines (clear naming, context within the file)\n\nPARAMS:\n  subtotal (float): Base invoice amount, excluding tax.\n  tax_rate (float): Rate applied to subtotal (e.g., 0.075 for 7.5%).\n  discount_rate (float): Optional discount rate (defaults to 0.0).\n\nRETURNS:\n  float: Final invoice amount after tax and discount.\n\"\"\"\ntax_amount = subtotal * tax_rate\ndiscount_amount = subtotal * discount_rate\nfinal_amount = subtotal + tax_amount - discount_amount\nreturn final_amount\n\"\"\"\nCODE ENTITY IMPLEMENTATION DETAILS:\n  Maintains small function size - [4]\n  Includes domain-specific naming\n  Maintains self-contained logic for clarity\nAI INSIGHT:\n  Based on chat [date/topic], optimized loop for readability per AI suggestion.\n\"\"\""
+    },
+    "footer_template": {
+      "format": "\"\"\"\\n## ZEROTH LAW COMPLIANCE\\n\\n  1. File Organization & Documentation [%]\\n  2. Code Characteristics [%]\\n  3. Error Handling & Logging [%]\\n  4. AI-Specific Quality Indicators [%]\\n  5. Implementation Guidance [%]\\n  6. Zeroth Law Total Integrity [%]\\n\\n### Improvements Made\\n\\n  1. [Specific improvements in this implementation session]\\n  2. [...]\\n\\n### Next Improvements Needed\\n\\n  1. [Specific areas for future improvement]\\n  2. [...]\\n\\n### Linking Self-Assessment to Next Iteration\\n\\n  1. Carry over any pending items from \"Next Improvements Needed\" into the next file header\\n  2. Use previous compliance percentages to measure incremental progress\\n  3. Prioritize improvements that have the highest impact on AI comprehension\\n  4. Establish clear iteration goals based on these assessments to guide refactoring\\n  5. [...]\\n\"\"\"",
+      "required_sections": [
+        "ZEROTH LAW COMPLIANCE",
+        "Improvements Made",
+        "Next Improvements Needed"
+      ],
+      "optional_sections": [
+        "Linking Self-Assessment to Next Iteration"
+      ]
+    }
+  },
+
+  "key_metrics": {
+    "ai_specific_quality_indicators": {
+      "context_independence_score": {
+        "context": "AI benefits from code that's understandable within limited context windows",
+        "target": "Maximum code understandability with minimal external context",
+        "priority": "Critical",
+        "implementation": [
+          "Ensure each file contains complete business logic context in its header",
+          "Use descriptive, self-documenting names that encode domain knowledge",
+          "Keep all related code within the same file when under size limits",
+          "Structure code to minimize dependencies on external components"
+        ]
+      },
+      "ai_insight_documentation": {
+        "context": "AI generates valuable insights during development that need to be preserved for future reference",
+        "target": "Document 100% of significant AI-provided insights that impact design decisions",
+        "priority": "Critical",
+        "implementation": [
+          "Document AI-suggested rationales behind implementation choices",
+          "Include dates or session references for traceability",
+          "Create lightweight Project Architecture Overview files for multi-file projects",
+          "Maintain cross-reference links between related components and their architectural documentation"
+        ]
+      },
+      "implementation_pattern_consistency": {
+        "context": "AI excels at pattern recognition and struggles with inconsistent approaches",
+        "target": "> 90% consistency with established patterns",
+        "priority": "High",
+        "implementation": [
+          "Structure all files using the defined Header-Code-Footer template",
+          "Apply consistent design patterns and architectural solutions across similar problems",
+          "Maintain uniform method signatures, parameter ordering, and naming conventions",
+          "Follow standardized error handling and logging patterns across components"
+        ]
+      },
+      "project_architecture_visibility": {
+        "context": "AI benefits from understanding the overall structure when working on individual components",
+        "target": "Maintain high-level documentation showing system organization and component relationships",
+        "priority": "Medium",
+        "implementation": [
+          "Create centralized architecture documentation (diagrams, relationship maps)",
+          "Reference the architecture document in component headers",
+          "Document component relationships and dependencies",
+          "Update architecture documentation when significant structural changes occur"
+        ]
+      },
+      "test_scenario_coverage": {
+        "context": "AI needs comprehensive examples of correct behavior for each component",
+        "target": "> 90% of business logic paths covered with explicit test scenarios",
+        "priority": "Medium",
+        "implementation": [
+          "Create behavior-driven tests that document expected behavior and edge cases",
+          "Use descriptive naming conventions for methods and tests to help AI pinpoint tested logic",
+          "Organize tests by feature with clear documentation of each test's purpose",
+          "Ensure tests serve as executable documentation of component functionality"
+        ]
+      },
+      "cross_reference": {
+        "context": "Refer to recognized language style guides (e.g., PEP 8) for standardized naming and \"Design Patterns: Elements of Reusable Object-Oriented Software\" (GoF) for common implementation patterns to maintain consistency",
+        "target": "Leverage widely recognized standards for naming and design to ensure code consistency",
+        "priority": "Medium",
+        "implementation": [
+          "Adopt recognized style guides and document deviations in file headers",
+          "Follow established GoF design patterns where applicable",
+          "Document any newly introduced patterns with clear usage examples",
+          "Ensure consistency through automated linting and code reviews"
+        ]
+      }
+    },
+    "file_organization_documentation": {
+      "file_purpose_documentation": {
+        "context": "AI requires explicit semantic understanding of each file's role within the project architecture",
+        "target": "Every file must begin with a clear, concise description of its purpose and responsibilities",
+        "priority": "Critical",
+        "implementation": [
+          "Begin each file with a docstring describing its purpose and architectural role",
+          "Document relationships to other system components",
+          "Document any applied design patterns or principles",
+          "Include key dependencies and their required interfaces"
+        ]
+      },
+      "file_size": {
+        "context": "Critical for AI to maintain full context awareness within limited context windows",
+        "target": "200-300 lines per file (excluding documentation and whitespace)",
+        "priority": "Low",
+        "implementation": [
+          "Monitor token count to stay within AI 16k context window limits",
+          "Split files exceeding size limits into logical components",
+          "Maintain related functionality in single files when under limits",
+          "Exclude documentation and whitespace from line count calculations"
+        ]
+      },
+      "module_interface_documentation": {
+        "context": "AI requires explicit interface definitions to understand component relationships",
+        "target": "100% of public interfaces documented with input/output specifications",
+        "priority": "High",
+        "implementation": [
+          "Document parameter types, return values, exceptions, and usage examples for all public methods",
+          "Specify preconditions and postconditions where applicable",
+          "Include clear descriptions of component dependencies and interactions",
+          "Maintain comprehensive interface documentation with real-world usage patterns"
+        ]
+      }
+    },
+    "code_characteristics": {
+      "semantic_naming": {
+        "context": "AI relies heavily on meaningful naming patterns for code understanding",
+        "target": "All identifiers clearly express their purpose and role, even if this means longer, sentence-like names",
+        "priority": "Critical",
+        "implementation": [
+          "Use descriptive, domain-specific terminology in all identifiers (e.g., `calculate_total_tax_amount_for_invoice` instead of `calc_tax`)",
+          "Follow consistent naming patterns with unit suffixes where appropriate (e.g., `delay_in_milliseconds`)",
+          "Prioritize clarity over brevity, using full words and explicit context",
+          "Include business domain terminology to enhance semantic understanding"
+        ]
+      },
+      "function_size": {
+        "context": "Smaller functions are easier for AI to comprehend fully",
+        "target": "Functions should be under 30 lines (excluding comments)",
+        "priority": "High",
+        "implementation": [
+          "Extract reusable logic into well-named helper functions, with each performing one logical operation",
+          "Break complex algorithms into step-by-step functions",
+          "Use early returns to reduce nesting and complexity",
+          "Document any function exceeding size limits with clear justification"
+        ]
+      },
+      "function_signature_clarity": {
+        "context": "Self-documenting parameter names reduce misinterpretation by AI systems",
+        "target": "Parameter names must convey semantic meaning; parameters ≤ 4",
+        "priority": "High",
+        "implementation": [
+          "Use descriptive noun phrases for parameters (e.g., `customer_id` instead of `id`)",
+          "Keep parameter count under 4, using parameter objects for complex interfaces",
+          "Order parameters consistently (required before optional)",
+          "Use named parameters when language supports them (e.g., Python's keyword arguments)"
+        ]
+      },
+      "cyclomatic_complexity": {
+        "context": "Lower complexity helps the AI analyze branching more efficiently",
+        "target": "CC < 8 for most functions; functions exceeding CC 8 must be documented and justified",
+        "priority": "Medium",
+        "implementation": [
+          "Replace nested conditionals with guard clauses and early returns",
+          "Split complex logical expressions into well-named helper functions",
+          "Use polymorphism instead of switch/case blocks",
+          "Monitor CC metrics via static analysis in CI pipelines"
+        ]
+      },
+      "code_duplication": {
+        "context": "Duplicated logic creates inconsistent maintenance and increases context requirements",
+        "target": "< 2% duplication across codebase",
+        "priority": "Low",
+        "implementation": [
+          "Extract common functionality into reusable utilities and shared base classes",
+          "Use design patterns like Template Method for similar procedures",
+          "Regular refactoring sessions to identify and eliminate duplication",
+          "Document any intentionally duplicated code with clear justification"
+        ]
+      }
+    },
+    "error_handling_logging": {
+      "traceability_context_enrichment": {
+        "context": "AI benefits from explicit references to the failing component",
+        "target": "Include relevant function and parameter info in error messages",
+        "priority": "Critical",
+        "implementation": [
+          "Include context data (function names, sanitized parameters, correlation IDs) in error messages",
+          "Ensure logs contain sufficient data to reproduce issues",
+          "Maintain consistent error message format across the system",
+          "Include specific component references in stack traces"
+        ]
+      },
+      "logging_standardization": {
+        "context": "Consistent logs help AI systems parse and correlate issue details quickly",
+        "target": "Log messages must follow a uniform format (timestamp, severity, message, context)",
+        "priority": "High",
+        "implementation": [
+          "Use consistent log format (timestamp, severity, message, context) across all components",
+          "Include relevant contextual information in every log entry",
+          "Document and enforce standard log levels (DEBUG, INFO, WARN, ERROR)",
+          "Use structured logging for machine-readable output"
+        ]
+      },
+      "exception_management": {
+        "context": "AI depends on clear exception paths for debugging suggestions",
+        "target": "All caught exceptions must either be handled or rethrown with meaningful context",
+        "priority": "High",
+        "implementation": [
+          "Create custom exception types with domain-specific error messages and context",
+          "Log exceptions with appropriate severity and detailed diagnostic data",
+          "Include meaningful context when rethrowing exceptions",
+          "Avoid silently catching or discarding exceptions"
+        ]
+      },
+      "error_recovery": {
+        "context": "AI can suggest improved solutions if the error path is well-defined",
+        "target": "Graceful fallback when possible, with robust failure states otherwise",
+        "priority": "Medium",
+        "implementation": [
+          "Document failure scenarios and recovery strategies",
+          "Implement circuit breakers for external dependencies",
+          "Provide clear user feedback during recovery",
+          "Only proceed after validating partial failure safety"
+        ]
+      }
+    }
+  },
+
+  "implementation_guidance": {
+    "project_initialization": {
+      "context": "Establishing proper foundation at the beginning minimizes remediation work later",
+      "requirement": "Each new project must be set up with the complete framework structure in place",
+      "priority": "Low",
+      "implementation": [
+        "Create standardized project structure with framework-compliant templates and documentation",
+        "Configure automated tooling for style guide enforcement and metric tracking",
+        "Establish required header/footer patterns in project templates",
+        "Document project-specific deviations from framework defaults"
+      ]
+    },
+    "development_workflow_integration": {
+      "context": "Consistent application of principles requires workflow integration",
+      "requirement": "Ensure framework principles are integrated into the regular development process",
+      "priority": "Low",
+      "implementation": [
+        "Implement Separation of Concerns and Test-Driven Development practices",
+        "Configure static analysis tools to prioritize AI-relevant metrics",
+        "Automate framework compliance checks in CI/CD pipeline",
+        "Document workflow integration steps in project templates"
+      ]
+    },
+    "no_fallback_methods_policy": {
+      "context": "Prevents masking issues through deflection to alternative implementations",
+      "requirement": "Code must either work correctly, be fixed properly, or have a formal bug report filed upstream",
+      "priority": "Critical",
+      "implementation": [
+        "Document issue details and reproduction steps within affected code blocks",
+        "Implement proper fixes rather than alternative implementations or workarounds",
+        "Create detailed issue explanations in file headers when fixes aren't immediately possible",
+        "Include status of known issues in the file's header and footer assessments"
+      ]
+    },
+    "refactoring_priority": {
+      "context": "Existing patterns optimized for human comprehension may impair AI understanding",
+      "requirement": "When refactoring, prioritize changes that enhance AI comprehension over preserving existing style patterns",
+      "priority": "High",
+      "implementation": [
+        "Replace terse variable/function names with descriptive, context-rich alternatives",
+        "Break complex functions into smaller, focused units with clear single responsibilities",
+        "Maintain comprehensive in-file documentation to preserve context independence",
+        "Review and update guidelines based on evolving AI capabilities"
+      ]
+    },
+    "framework_application_guidelines": {
+      "context": "The Zeroth Law must scale effectively across projects of varying sizes and complexities",
+      "requirement": "Apply the framework flexibly, ensuring it enhances rather than hinders development",
+      "priority": "Medium",
+      "implementation": {
+        "small_projects": "For scripts or small modules, prioritize critical metrics like semantic naming and context independence. Use abbreviated headers if necessary, but ensure core principles are met.",
+        "large_projects": "For multi-module systems, emphasize file organization, interface documentation, and cross-file consistency. Use the full header and footer templates to maintain clarity.",
+        "rationale_for_framework_size": "The framework exceeds 300 lines because it serves as a comprehensive reference, not a single file's blueprint. It provides detailed guidance for all project sizes, ensuring consistency and adaptability."
+      }
+    }
+  },
+
+  "self_assessment_process": {
+    "ai_assessment_role": [
+      "Generate code following Zeroth Law principles while tracking compliance metrics",
+      "Evaluate generated code against framework metrics and document findings in file footers",
+      "Use compliance percentages as general indicators rather than precise measurements",
+      "Recommend specific improvements based on assessment findings"
+    ],
+    "return_session_workflow": [
+      "Review and implement pending improvements from the previous footer's assessment",
+      "Update header and footer documentation to reflect current status and progress",
+      "Perform comprehensive metric evaluation against framework standards",
+      "Document specific recommendations for next iteration in footer"
+    ],
+    "self_assessment_evolution": {
+      "context": "The self-assessment process should evolve alongside the framework to remain effective",
+      "requirement": "Document and refine AI-driven self-assessment methods over time",
+      "priority": "Medium",
+      "implementation": [
+        "Process Documentation: AIs should record their self-assessment methods, including any templates or checklists used.",
+        "Refinement Mechanism: Track changes to self-assessment templates or methods (e.g., via a version history or changelog) based on what proves effective.",
+        "AI Feedback Loop: Encourage AIs to suggest improvements to the self-assessment process itself, fostering ongoing enhancement."
+      ]
+    },
+    "practical_implementation": [
+      "Evaluate components against metrics and provide specific, actionable feedback for any that fall below thresholds",
+      "Track quality progress through the header-code-footer pattern, ensuring complete documentation",
+      "Structure code to align with these principles from initial implementation",
+      "Maintain clear metric assessments in file footers to guide future improvements"
+    ]
+  },
+
+  "application": {
+    "description": "This framework serves as the foundational principle that supersedes all other development considerations",
+    "implementation_steps": [
+      "Evaluate components against metrics before considering complete",
+      "Provide specific, actionable feedback for any metric below thresholds",
+      "Track quality progress through the header-code-footer pattern",
+      "Preemptively structure code to align with these principles",
+      "Ensure all temporary test files meet documentation standards",
+      "Verify that all permanent files are free from temporary implementations",
+      "Implement a review process for all newly created documentation to ensure adherence to standards",
+      "Before any changes, complete thorough dependency and flow analysis",
+      "Use structured proposals to document all changes with complete context"
+    ]
+  }
+}

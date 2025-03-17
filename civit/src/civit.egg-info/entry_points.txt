@@ -1,0 +1,2 @@
+[console_scripts]
+civit = src.civit.__main__:main

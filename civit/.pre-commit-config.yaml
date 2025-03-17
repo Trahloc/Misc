@@ -1,0 +1,7 @@
+         hooks:
+           - id: zeroth-law
+             name: Zeroth Law Analyzer
+             entry: python -m zeroth_law
+             language: python
+             files: '\.py$'
+             args: [-r]  # Add -s for summary reports

@@ -1,0 +1,10 @@
+#/zeroth_law/templates/.pylintrc.template
+[MESSAGES CONTROL]
+disable=
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    # ... add other codes to disable as needed ...
+
+[FORMAT]
+max-line-length=140

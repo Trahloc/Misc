@@ -1,0 +1,40 @@
+# /zeroth_law/templates/config.py.template
+"""
+# PURPOSE: Handle configuration for the {directory} analyzer.
+
+## INTERFACES:
+ - load_config(config_path: str) -> dict
+
+## DEPENDENCIES:
+ - toml
+ - typing
+ - {directory}.exceptions
+"""
+from typing import Dict
+import toml
+from {directory}.exceptions import ConfigError
+
+# Define default configuration values
+DEFAULT_CONFIG: Dict = {default_config}
+
+
+def load_config(config_path: str) -> Dict:
+    """Loads configuration from a TOML file."""
+    try:
+        config = toml.load(config_path)
+        # Validate configuration (basic type checking)
+        for key, value in config.items():
+            if key not in DEFAULT_CONFIG:
+                raise ConfigError(f"Unknown configuration option: {key}")
+            if not isinstance(value, type(DEFAULT_CONFIG[key])):
+                raise ConfigError(f"Invalid type for configuration option: {key}.  Expected {type(DEFAULT_CONFIG[key])}, got {type(value)}")
+
+        # Merge with defaults (so unspecified options use defaults)
+        return {{**DEFAULT_CONFIG, **config}}
+
+    except toml.TomlDecodeError as e:
+        raise ConfigError(f"Error decoding TOML file: {e}") from e
+    except FileNotFoundError as e:
+        raise ConfigError(f"Configuration file not found: {config_path}") from e
+    except Exception as e:
+        raise ConfigError(f"Error loading configuration: {e}") from e

@@ -1,0 +1,25 @@
+#/zeorth_law/pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zeroth_law"  # Package name (for importing)
+version = "0.0.1"
+authors = [
+    { name = "Trahloc colDhart", email = "github@trahloc.com" },
+]
+description = "A Python code analyzer to enforce the Zeroth Law of AI-Driven Development."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+zeroth-law = "zeroth_law.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

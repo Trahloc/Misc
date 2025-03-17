@@ -1,0 +1,2 @@
+[console_scripts]
+zeroth-law = zeroth_law.__main__:main
