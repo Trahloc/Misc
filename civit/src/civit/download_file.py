@@ -8,17 +8,20 @@
 """
 
 import logging
+import os
+import re
 from pathlib import Path
 from tqdm import tqdm
-from requests import Response
-import os
-import requests
-import re
 from typing import Optional, Dict
+import requests
+from requests import Response
 
 
 def make_request_with_auth(url: str, headers: Dict[str, str], stream: bool = False) -> Response:
     """Make an authenticated request with detailed logging"""
+    if not url:
+        raise ValueError("URL cannot be empty")
+
     logging.debug("Making request:")
     logging.debug(f"  URL: {url}")
     logging.debug(f"  Headers: {headers}")
@@ -38,7 +41,19 @@ def make_request_with_auth(url: str, headers: Dict[str, str], stream: bool = Fal
     return response
 
 
-def download_file(url: str, destination: str, api_key: Optional[str] = None) -> str:
+def extract_filename(url: str, headers: Dict[str, str]) -> str:
+    """Extract filename from Content-Disposition header or URL"""
+    if "Content-Disposition" in headers:
+        matches = re.findall('filename="(.+?)"', headers["Content-Disposition"])
+        if matches:
+            return matches[0]
+        matches = re.findall("filename=(.+)", headers["Content-Disposition"])
+        if matches:
+            return matches[0].strip('"')
+    return url.split("/")[-1].split("?")[0]
+
+
+def download_file(url: str, destination: str, api_key: Optional[str] = None) -> Optional[str]:
     """
     Download a file from a URL with support for custom filename patterns.
 
@@ -50,8 +65,15 @@ def download_file(url: str, destination: str, api_key: Optional[str] = None) -> 
         api_key (Optional[str]): API key for authentication
 
     RETURNS:
-        str: The path to the downloaded file
+        Optional[str]: The path to the downloaded file if successful, None otherwise
+
+    RAISES:
+        ValueError: If the URL is empty or invalid
+        OSError: If there are file system related errors
     """
+    if not url:
+        raise ValueError("URL cannot be empty")
+
     logging.debug(f"Starting download from URL: {url}")
 
     # Set up headers with API key if provided
@@ -64,54 +86,56 @@ def download_file(url: str, destination: str, api_key: Optional[str] = None) -> 
         visible_part = api_key[:4] if len(api_key) > 4 else ""
         logging.debug(f"Using API key for auth (starts with: {visible_part}...)")
 
-    # For direct API URLs, make a direct request
-    if "/api/download/models/" in url:
-        logging.debug("Direct API URL detected - making authenticated request")
-        response = make_request_with_auth(url, headers, stream=True)
-
-        # Extract filename from the URL or Content-Disposition header
-        if "Content-Disposition" in response.headers:
-            filename = re.findall("filename=(.+)", response.headers["Content-Disposition"])[0].strip('"')
+    try:
+        # For direct API URLs, make a direct request
+        if "/api/download/models/" in url:
+            logging.debug("Direct API URL detected - making authenticated request")
+            response = make_request_with_auth(url, headers, stream=True)
+            filename = extract_filename(url, response.headers)
         else:
-            filename = url.split("/")[-1].split("?")[0]
+            # Handle model page URLs through the API
+            # Get the direct download URL from the Civitai API
+            response = make_request_with_auth(url, headers)
+            data = response.json()
+            direct_url = data.get('downloadUrl')
 
+            if not direct_url:
+                logging.error("No download URL found in API response")
+                logging.debug(f"API Response: {response.text}")
+                return None
+
+            # Download the file from the direct URL
+            response = make_request_with_auth(direct_url, headers, stream=True)
+            filename = extract_filename(direct_url, response.headers)
+
+        # Create destination directory if it doesn't exist
+        dest_path = Path(destination)
+        try:
+            dest_path.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            logging.error(f"Failed to create destination directory: {e}")
+            return None
+
+        filepath = dest_path / filename
         total_size = int(response.headers.get('content-length', 0))
-        logging.debug(f"Filename: {filename}, Size: {total_size}")
-    else:
-        # Handle model page URLs through the API
-        # Get the direct download URL from the Civitai API
-        response = make_request_with_auth(url, headers)
-        direct_url = response.json().get('downloadUrl')
 
-        if not direct_url:
-            logging.error("No download URL found in API response")
-            logging.debug(f"API Response: {response.text}")
-            raise ValueError("No download URL found in API response")
+        with open(filepath, 'wb') as f, tqdm(
+            desc=filename,
+            total=total_size,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
+            for data in response.iter_content(chunk_size=8192):
+                size = f.write(data)
+                pbar.update(size)
 
-        # Download the file from the direct URL
-        response = make_request_with_auth(direct_url, headers, stream=True)
-        filename = direct_url.split('/')[-1]
+        logging.info(f'Download completed: {filepath}')
+        return str(filepath)
 
-    # Create destination directory if it doesn't exist
-    Path(destination).mkdir(parents=True, exist_ok=True)
-
-    # Save the file to the destination
-    filepath = os.path.join(destination, filename)
-    total_size = int(response.headers.get('content-length', 0))
-
-    with open(filepath, 'wb') as f, tqdm(
-        desc=filename,
-        total=total_size,
-        unit='iB',
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as pbar:
-        for data in response.iter_content(chunk_size=8192):
-            size = f.write(data)
-            pbar.update(size)
-
-    logging.info(f'Download completed: {filepath}')
-    return filepath
+    except (requests.RequestException, ValueError, OSError) as e:
+        logging.error(f"Download failed: {str(e)}")
+        return None
 
 
 """

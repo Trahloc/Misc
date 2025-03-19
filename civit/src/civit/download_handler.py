@@ -1,29 +1,29 @@
 """
 # PURPOSE: Manages file download and progress.
 
-## INTERFACES: download_file(url: str, destination: str, filename_pattern: str = "{model_id}_{model_name}_{version}.{ext}", metadata: dict = None, api_key: str = None) -> str: Downloads a file with custom filename patterns.
+## INTERFACES: download_file(url: str, destination: str, filename_pattern: str = None, metadata: dict = None, api_key: str = None) -> str: Downloads a file with custom filename patterns.
 
-## DEPENDENCIES: requests, os, boto3
+## DEPENDENCIES:
+- logging: For logging functionality
+- pathlib: For path operations
+- tqdm: For progress bars
+- requests: For HTTP requests
+- filename_pattern: For custom filename generation
+- re: For regular expression operations
 
-## TODO: Add support for setting custom patterns for downloaded filenames.
-- Support for using metadata from civitai model (e.g., model name, version, etc.) in filename.
-- Allow configurable placeholders like {model_id}_{model_name}_{version}.{ext}.
-- Implement filename pattern parsing and validation.
-- Update download handler to use custom filename patterns.
-- Add unit tests for custom filename functionality.
-- Update documentation to include custom filename usage.
+## TODO: None
 """
 
 import logging
+import re
 from pathlib import Path
 from tqdm import tqdm
 from requests import Response
 import os
 import requests
-import re
-import zlib
-import boto3
-from botocore.exceptions import NoCredentialsError
+from typing import Dict, Any, Optional
+
+from .filename_pattern import process_filename_pattern
 
 
 def download_with_progress(
@@ -97,75 +97,104 @@ def download_with_progress(
         return False
 
 
-def download_file(url: str, destination: str, filename_pattern: str = "{model_type}-{base_model}-{civit_website_model_name}-{model_id}-{crc32}-{original_filename}", metadata: dict = None, api_key: str = None) -> str:
+def download_file(
+    url: str,
+    destination: str,
+    filename_pattern: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    api_key: Optional[str] = None
+) -> str:
     """
     PURPOSE: Download a file from a URL with support for custom filename patterns.
 
-    CONTEXT: Uses requests for HTTP operations.
-
     PARAMS:
-    - url (str): The URL to download the file from.
-    - destination (str): The directory to save the downloaded file.
-    - filename_pattern (str): The pattern to use for the filename.
-    - metadata (dict): Metadata to use for filename placeholders.
-    - api_key (str): API key for authentication.
+        url (str): The URL to download the file from.
+        destination (str): The directory to save the downloaded file.
+        filename_pattern (Optional[str]): The pattern to use for the filename.
+        metadata (Optional[Dict[str, Any]]): Metadata to use for filename placeholders.
+        api_key (Optional[str]): API key for authentication.
 
-    RETURNS: str: The path to the downloaded file.
+    RETURNS:
+        str: The path to the downloaded file.
     """
+    # Ensure destination directory exists
+    Path(destination).mkdir(parents=True, exist_ok=True)
+
+    # Set up headers with API key if provided
     headers = {}
     if api_key:
         headers['Authorization'] = f'Bearer {api_key}'
 
-    # Get the direct download URL from the Civitai API
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    direct_url = response.json().get('downloadUrl')
+    try:
+        # Make the request to get the file
+        response = requests.get(url, headers=headers, stream=True)
+        response.raise_for_status()
 
-    # Download the file from the direct URL
-    response = requests.get(direct_url, stream=True)
-    response.raise_for_status()
+        # Extract original filename from Content-Disposition or URL
+        original_filename = extract_filename_from_response(response, url)
 
-    # Extract original filename from URL
-    original_filename = direct_url.split('/')[-1]
+        # Process custom filename pattern if provided
+        if filename_pattern:
+            filename = process_filename_pattern(filename_pattern, metadata, original_filename)
+        else:
+            filename = original_filename
 
-    # Generate CRC32 checksum of the original filename
-    crc32 = format(zlib.crc32(original_filename.encode()) & 0xFFFFFFFF, '08X')
+        # Create full filepath
+        filepath = Path(destination) / filename
 
-    # Generate filename using the pattern and metadata
-    if metadata:
-        metadata.update({
-            "crc32": crc32,
-            "original_filename": original_filename
-        })
-        filename = filename_pattern.format(**metadata)
-    else:
-        filename = original_filename
+        # Get file size from headers
+        total_size = int(response.headers.get('content-length', 0))
 
-    # Ensure the filename is safe and valid
-    filename = sanitize_filename(filename)
+        # Download the file with progress tracking
+        success = download_with_progress(response, filepath, total_size)
 
-    # Save the file to the destination
-    filepath = os.path.join(destination, filename)
-    total_size = int(response.headers.get('content-length', 0))
-    download_with_progress(response, Path(filepath), total_size)
-    return filepath
+        if success:
+            return str(filepath)
+        else:
+            logging.error(f"Failed to download {url}")
+            return ""
 
-def sanitize_filename(filename: str) -> str:
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request failed: {str(e)}")
+        return ""
+    except Exception as e:
+        logging.error(f"Unexpected error: {str(e)}")
+        return ""
+
+
+def extract_filename_from_response(response: Response, url: str) -> str:
     """
-    PURPOSE: Sanitize the filename to ensure it is safe and valid.
+    PURPOSE: Extract the filename from the response headers or URL.
 
     PARAMS:
-    - filename (str): The filename to sanitize.
+        response (Response): The HTTP response.
+        url (str): The URL of the request.
 
-    RETURNS: str: The sanitized filename.
+    RETURNS:
+        str: The extracted filename.
     """
-    # Replace undesirable characters with underscores
-    return re.sub(r'[^\w\-_\.]', '_', filename)
+    # Try to get filename from Content-Disposition header
+    content_disposition = response.headers.get('content-disposition', '')
+    if 'filename=' in content_disposition:
+        try:
+            filename = re.findall('filename=(.+)', content_disposition)[0].strip('"')
+            return filename
+        except:
+            pass
+
+    # Fall back to URL if Content-Disposition parsing fails
+    return os.path.basename(url.split('?')[0])
+
 
 """
 ## KNOWN ERRORS: None
 
-## IMPROVEMENTS: Added support for custom filename patterns.
+## IMPROVEMENTS:
+- Added support for custom filename patterns.
+- Integrated with filename_pattern module for processing patterns.
+- Improved error handling for requests.
 
-## FUTURE TODOs: Consider adding more placeholders for filename patterns.
+## FUTURE TODOs:
+- Add support for download resumption with custom filenames.
+- Consider adding file integrity verification.
 """

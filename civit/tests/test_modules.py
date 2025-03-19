@@ -2,11 +2,11 @@ import unittest
 from unittest.mock import patch, MagicMock
 import logging
 import os
-from signal_handler import signal_handler
-from logging_setup import setup_logging
-from api_key import get_api_key
-from model_info import get_model_info
-from url_extraction import extract_model_id, extract_download_url
+from src.civit.signal_handler import signal_handler
+from src.civit.logging_setup import setup_logging
+from src.civit.api_key import get_api_key
+from src.civit.model_info import get_model_info
+from src.civit.url_extraction import extract_model_id, extract_download_url
 
 
 class TestSignalHandler(unittest.TestCase):
@@ -61,7 +61,9 @@ class TestApiKey(unittest.TestCase):
         mock_environ_get.return_value = None
         self.assertIsNone(get_api_key())
         mock_logging_error.assert_called_once_with(
-            "CIVITAPI environment variable not set"
+            "CIVITAPI environment variable not set. Please set it with:\n"
+            "export CIVITAPI=your_api_key_here\n"
+            "You can get an API key from: https://civitai.com/user/account"
         )
 
 
@@ -74,10 +76,16 @@ class TestModelInfo(unittest.TestCase):
     def test_get_model_info(self, mock_get):
         """Test successful model information retrieval"""
         mock_response = MagicMock()
-        mock_response.json.return_value = {"name": "Test Model"}
+        mock_response.json.return_value = {
+            "name": "Test Model",
+            "modelVersions": [{"downloadUrl": "https://download.url"}]
+        }
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
-        self.assertEqual(get_model_info("1234")["name"], "Test Model")
+
+        result = get_model_info("1234")
+        self.assertEqual(result["name"], "Test Model")
+
         mock_get.side_effect = Exception("API Error")
         self.assertIsNone(get_model_info("1234"))
 
@@ -92,7 +100,7 @@ class TestUrlExtraction(unittest.TestCase):
         self.assertEqual(extract_model_id("https://civitai.com/models/1234"), "1234")
         self.assertIsNone(extract_model_id("https://civitai.com/images/1234"))
 
-    @patch("url_extraction.get_model_info")
+    @patch("src.civit.url_extraction.get_model_info")
     def test_extract_download_url(self, mock_get_model_info):
         """Test download URL extraction from model info"""
         mock_get_model_info.return_value = {

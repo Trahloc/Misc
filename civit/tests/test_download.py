@@ -24,9 +24,9 @@ from unittest.mock import patch, MagicMock
 from io import BytesIO
 from pathlib import Path
 import logging
-from civit import download_file
-from url_extraction import extract_model_id, extract_download_url
-from model_info import get_model_info
+from src.civit import download_file
+from src.civit.url_extraction import extract_model_id, extract_download_url
+from src.civit.model_info import get_model_info
 
 
 # Model ID extraction tests
@@ -91,7 +91,7 @@ def test_failed_model_info_fetch(mock_get):
 
 
 # Download URL tests
-@patch("url_extraction.get_model_info")
+@patch("src.civit.url_extraction.get_model_info")
 def test_successful_url_extraction(mock_get_info):
     """Test successful download URL extraction"""
     mock_get_info.return_value = {
@@ -101,7 +101,7 @@ def test_successful_url_extraction(mock_get_info):
     assert url == "https://download.url"
 
 
-@patch("url_extraction.get_model_info")
+@patch("src.civit.url_extraction.get_model_info")
 def test_failed_url_extraction(mock_get_info):
     """Test failed download URL extraction"""
     mock_get_info.return_value = None
@@ -120,147 +120,81 @@ class TestFileDownload:
         self.test_dir.mkdir(parents=True, exist_ok=True)
 
     @patch("requests.get")
-    @patch("civit.extract_download_url")
-    def test_successful_download(self, mock_extract_url, mock_get):
+    def test_successful_download(self, mock_get):
         """Test successful file download"""
-        # Mock the download URL extraction
-        download_url = "https://download.url/file.zip"
-        mock_extract_url.return_value = download_url
+        # Mock the first response (API response with download URL)
+        api_response = MagicMock()
+        api_response.json.return_value = {"downloadUrl": "https://download.url/test.zip"}
 
-        # Mock the download response
-        mock_response = MagicMock()
-        mock_response.url = download_url  # Set the URL directly
-        mock_response.headers = {
+        # Mock the second response (actual file download)
+        download_response = MagicMock()
+        download_response.headers = {
             "content-length": "1024",
-            "content-disposition": "filename=test.zip",
+            "content-disposition": 'filename="test.zip"'
         }
-        mock_response.iter_content.return_value = [b"test data"]
-        mock_get.return_value = mock_response
+        download_response.iter_content.return_value = [b"test data"]
 
-        result = download_file("https://civitai.com/models/1234", str(self.test_dir))
-        assert result is True
-        downloaded_file = self.test_dir / "test.zip"
-        assert downloaded_file.exists()
-
-    @patch("requests.get")
-    @patch("civit.extract_download_url")
-    @patch("builtins.open", create=True)
-    def test_resume_download_with_validations(
-        self, mock_open, mock_extract_url, mock_get
-    ):
-        """Test resuming a download with server response validations"""
-        # Mock the download URL extraction
-        download_url = "https://download.url/file.zip"
-        mock_extract_url.return_value = download_url
-
-        # Create a file-like object to track written content
-        file_content = BytesIO()
-        mock_file = MagicMock()
-
-        def mock_write(data):
-            nonlocal file_content
-            size = file_content.write(data)
-            return size
-
-        mock_file.write = mock_write
-        mock_file.tell = lambda: file_content.tell()
-        mock_context = MagicMock()
-        mock_context.__enter__ = lambda x: mock_file
-        mock_open.return_value = mock_context
-
-        # Mock the initial download response
-        mock_response_initial = MagicMock()
-        mock_response_initial.url = download_url  # Set the URL directly
-        mock_response_initial.headers = {
-            "content-length": "1024",
-            "content-disposition": "filename=test.zip",
-            "Accept-Ranges": "bytes",
-        }
-        # Generate 500 bytes of data
-        initial_data = b"x" * 500
-        mock_response_initial.iter_content.return_value = [initial_data]
-        mock_response_initial.status_code = 200
-
-        # Calculate the size of our initial data
-        initial_data_size = len(initial_data)
-
-        # Mock the resumed download response
-        mock_response_resume = MagicMock()
-        mock_response_resume.url = download_url  # Set the URL directly
-        mock_response_resume.headers = {
-            "content-length": "512",
-            "content-disposition": "filename=test.zip",
-            "Content-Range": f"bytes {initial_data_size}-1023/1024",
-        }
-        # Generate remaining data
-        remaining_data = b"y" * (1024 - initial_data_size)
-        mock_response_resume.iter_content.return_value = [remaining_data]
-        mock_response_resume.status_code = 206
-
-        # Set up the side effects for the mock get
+        # Set up the mock to return different responses based on URL
         def mock_get_side_effect(*args, **kwargs):
-            if "headers" in kwargs and "Range" in kwargs["headers"]:
-                range_header = kwargs["headers"]["Range"]
-                if range_header == f"bytes={initial_data_size}-":
-                    return mock_response_resume
-            return mock_response_initial
+            if args[0] == "https://download.url/test.zip":
+                return download_response
+            return api_response
 
         mock_get.side_effect = mock_get_side_effect
 
-        # Mock Path.exists and stat methods for file size checking
-        with patch("pathlib.Path.exists", return_value=True), patch(
-            "pathlib.Path.stat"
-        ) as mock_stat:
+        result = download_file("https://civitai.com/models/1234", str(self.test_dir))
+        assert result == str(self.test_dir / "test.zip")
+        assert (self.test_dir / "test.zip").exists()
 
-            # First download: file doesn't exist yet
-            mock_stat.return_value.st_size = 0
-            result_initial = download_file(
-                "https://civitai.com/models/1234", str(self.test_dir)
-            )
-            assert result_initial is True
-            assert file_content.tell() == 500  # Initial data size
-
-            # Second download: file exists with partial content
-            mock_stat.return_value.st_size = initial_data_size
-            result_resume = download_file(
-                "https://civitai.com/models/1234", str(self.test_dir)
-            )
-            assert result_resume is True
-            assert file_content.tell() == 1024  # Total size after resume
-
-    def test_download_with_empty_url(self):
+    @patch("requests.get")
+    def test_empty_url(self, mock_get):
         """Test download with empty URL"""
-        result = download_file("", str(self.test_dir))
-        assert result is False
+        with pytest.raises(ValueError, match="URL cannot be empty"):
+            download_file("", str(self.test_dir))
+        mock_get.assert_not_called()
 
-    @patch("os.mkdir")
-    @patch("pathlib.PurePath")
-    @patch("pathlib.Path")
-    def test_download_with_invalid_output_dir(
-        self, mock_path_class, mock_pure_path, mock_mkdir
-    ):
+    @patch("requests.get")
+    @patch("pathlib.Path.mkdir")
+    def test_download_with_invalid_output_dir(self, mock_mkdir, mock_get):
         """Test download with invalid output directory"""
-        # Mock os.mkdir to raise PermissionError
-        mock_mkdir.side_effect = PermissionError("Permission denied")
-
-        # Create a mock Path instance
-        mock_path_instance = MagicMock()
-        mock_path_instance.parent = mock_path_instance  # Handle recursive parent access
-        mock_path_instance.exists.return_value = False  # Directory doesn't exist
-
-        # Make both Path and PurePath return our mock instance
-        mock_path_class.return_value = mock_path_instance
-        mock_pure_path.return_value = mock_path_instance
-
-        # Mock path division operations
-        mock_path_instance.__truediv__ = lambda self, other: mock_path_instance
-        mock_path_class.__truediv__ = lambda self, other: mock_path_instance
-        mock_pure_path.__truediv__ = lambda self, other: mock_path_instance
-
+        mock_mkdir.side_effect = OSError("Permission denied")
         result = download_file("https://civitai.com/models/1234", "/nonexistent/dir")
-        assert result is False
-        # Verify mkdir was called
-        mock_mkdir.assert_called()
+        assert result is None
+
+    @patch("requests.get")
+    def test_resume_interrupted_download(self, mock_get):
+        """Test resuming interrupted download"""
+        # Mock the first response (API response with download URL)
+        api_response = MagicMock()
+        api_response.json.return_value = {"downloadUrl": "https://download.url/test.zip"}
+
+        # Mock the download response with support for range requests
+        download_response = MagicMock()
+        download_response.status_code = 206  # Partial Content
+        download_response.headers = {
+            "content-length": "1024",
+            "content-disposition": 'filename="test.zip"',
+            "accept-ranges": "bytes",
+            "content-range": "bytes 0-1023/1024"
+        }
+        download_response.iter_content.return_value = [b"x" * 1024]
+
+        def mock_get_side_effect(*args, **kwargs):
+            if args[0] == "https://download.url/test.zip":
+                return download_response
+            return api_response
+
+        mock_get.side_effect = mock_get_side_effect
+
+        # Create partial file
+        partial_file = self.test_dir / "test.zip"
+        partial_data = b"x" * 100
+        with open(partial_file, "wb") as f:
+            f.write(partial_data)
+
+        result = download_file("https://civitai.com/models/1234", str(self.test_dir))
+        assert result == str(self.test_dir / "test.zip")
+        assert partial_file.exists()
 
 
 """

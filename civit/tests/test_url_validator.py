@@ -21,9 +21,8 @@ import os
 import logging
 from unittest.mock import patch
 
-# Add parent directory to path so we can import our module
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from url_validator import validate_url, normalize_url
+# Import from the correct module path
+from src.civit.url_validator import validate_url, normalize_url
 
 
 class TestUrlValidator(unittest.TestCase):
@@ -46,6 +45,7 @@ class TestUrlValidator(unittest.TestCase):
             "https://civitai.com/models/1234",
             "https://civitai.com/images/5678",
             "https://www.civitai.com/models/1234",
+            "https://civitai.com/api/download/models/1234"
         ]
         for url in valid_urls:
             self.assertTrue(validate_url(url), f"URL should be valid: {url}")
@@ -62,7 +62,7 @@ class TestUrlValidator(unittest.TestCase):
         for url in invalid_urls:
             self.assertFalse(validate_url(url), f"URL should be invalid: {url}")
 
-    @patch("url_validator.logging.error")
+    @patch("src.civit.url_validator.logging.error")
     def test_invalid_url_error_messages(self, mock_logging_error):
         """Test error messages for invalid URLs"""
         invalid_urls = [
@@ -82,7 +82,7 @@ class TestUrlValidator(unittest.TestCase):
             ),
             (
                 "https://civitai.com/invalidpath",
-                "Invalid URL path: /invalidpath. Expected path to start with /models/ or /images/",
+                "Invalid URL path: /invalidpath. Expected path to start with /models/, /images/, or /api/download/models/",
             ),
         ]
         for url, expected_message in invalid_urls:

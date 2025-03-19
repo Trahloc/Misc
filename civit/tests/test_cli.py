@@ -1,6 +1,6 @@
 import sys
 import pytest
-from cli import parse_args
+from src.civit.cli import parse_args  # Fixed import path
 
 
 def test_parse_args_minimal(monkeypatch):

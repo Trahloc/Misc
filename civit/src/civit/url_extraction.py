@@ -1,7 +1,7 @@
 import re
 import logging
 from typing import Optional
-from model_info import get_model_info
+from .model_info import get_model_info
 
 
 def extract_model_id(url: str) -> Optional[str]:

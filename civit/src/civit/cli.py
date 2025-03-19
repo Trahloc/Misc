@@ -1,15 +1,45 @@
 # FILE: src/civit/cli.py
 """
 # PURPOSE: Command-line interface for civit
-
-## INTERFACES: main()
-
+## INTERFACES: main(), parse_args()
 ## DEPENDENCIES: click, logging, download_file, api_key
 """
 import click
 import logging
+import sys
+import argparse
 from .download_file import download_file
 from .api_key import get_api_key
+
+def parse_args(args=None):
+    """
+    Parse command line arguments using argparse.
+    This function exists primarily to support testing.
+
+    Args:
+        args: List of command line arguments, defaults to sys.argv
+
+    Returns:
+        argparse.Namespace: Parsed command line arguments
+
+    Raises:
+        SystemExit: If there are invalid or mutually exclusive arguments
+    """
+    parser = argparse.ArgumentParser(description='Download files from civitai.com')
+    parser.add_argument('urls', nargs='+', help='URLs to download')
+    parser.add_argument('-o', '--output-dir', default='.', help='Directory to save downloaded files')
+    parser.add_argument('-k', '--api-key', help='Optional Civitai API key')
+
+    # Create mutually exclusive group for verbosity options
+    verbosity = parser.add_mutually_exclusive_group()
+    verbosity.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    verbosity.add_argument('-q', '--quiet', action='store_true', help='Suppress output')
+    verbosity.add_argument('--very-verbose', action='store_true', help='Very verbose output')
+
+    # Parse arguments
+    if args is None:
+        args = sys.argv[1:]
+    return parser.parse_args(args)
 
 @click.command()
 @click.argument('urls', nargs=-1, required=True)

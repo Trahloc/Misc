@@ -18,7 +18,7 @@ def get_model_info(model_id: str, api_key: Optional[str] = None, timeout: int = 
     """
     api_url = urljoin("https://civitai.com/api/v1/models/", model_id)
 
-    headers = {}
+    headers = {'User-Agent': 'civit-cli/1.0'}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
         logging.debug("Using API key for authentication")
