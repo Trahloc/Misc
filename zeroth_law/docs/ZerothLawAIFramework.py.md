@@ -105,10 +105,60 @@ def a_very_descriptive_function_name(param1: type, param2: type = default) -> re
 *   **Discernment** Justify why each external dependency was chosen over Standard or other PyPI packages. *Medium*
 
 ## 7. AUTOMATION
-
 *   **`pre-commit` Framework:** Use `pre-commit` to automate code quality checks.
 *   **`autoinit`:** Automatically generate and update `__init__.py` files.  Integrate with `pre-commit`.
 *   **`pytest`:** Use for unit and integration tests.
 *   **`black`:** Automatically format code for consistency. Integrate with `pre-commit`.
 *   **`flake8`:** Lint code for style and potential errors. Integrate with `pre-commit`.
 *   **`mypy`:** Perform static type checking. Integrate with `pre-commit`.
+
+### 7.1 Example Project Layout
+project_head/
+├── pyproject.toml
+├── src/
+│   └── project_module/
+└── tests/
+    └── ...
+
+### 7.2 `pyproject.toml`
+Use a centralized `pyproject.toml` to configure and manage these tools. A minimal skeleton might look like:
+
+```toml
+# filepath: /project_head/pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tmux_manager"
+version = "100.0.1"
+authors = [
+    { name = "Trahloc colDhart", email = "github@trahloc.com" },
+]
+
+description = "A Python package generated with Zeroth Law"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "click",                # A package for creating command line interfaces
+  "cookiecutter>=2.1.1",  # Adding cookiecutter dependency
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",  # For running unit tests
+  "black>=23.0",  # For code formatting
+]
+
+[project.scripts]
+tmux_manager = "tmux_manager.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+```

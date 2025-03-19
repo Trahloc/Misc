@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/tmux_manager/__init__.py
+src/tmux_manager/__main__.py
+src/tmux_manager/cli.py
+src/tmux_manager/config-management.py
+src/tmux_manager/server-management.py
+src/tmux_manager/session-management.py
+src/tmux_manager/status-reporting.py
+src/tmux_manager/systemd-integration.py
+src/tmux_manager.egg-info/PKG-INFO
+src/tmux_manager.egg-info/SOURCES.txt
+src/tmux_manager.egg-info/dependency_links.txt
+src/tmux_manager.egg-info/entry_points.txt
+src/tmux_manager.egg-info/requires.txt
+src/tmux_manager.egg-info/top_level.txt
+tests/test_server_management.py

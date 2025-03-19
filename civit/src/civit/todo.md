@@ -15,6 +15,10 @@
     - Add support for setting custom patterns for downloaded filenames
     - Support for using metadata from civitai model (e.g., model name, version, etc.) in filename
     - Allow configurable placeholders like {model_id}_{model_name}_{version}.{ext}
+    - Implement filename pattern parsing and validation
+    - Update download handler to use custom filename patterns
+    - Add unit tests for custom filename functionality
+    - Update documentation to include custom filename usage
 
 ## Current Debugging Tasks
 

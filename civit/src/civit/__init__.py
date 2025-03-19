@@ -1,15 +1,26 @@
 """
-# PURPOSE: [Briefly describe the purpose of this module.]
+# PURPOSE: Top-level package initialization for civit.
+  Provides the main interface for downloading files from civitai.com.
 
 ## INTERFACES:
-    # - [function_name(param_type) -> return_type]: [description]
+    - download_file(url: str, destination: str, api_key: Optional[str] = None) -> str:
+      Downloads a file with optional API key authentication
+    - get_api_key() -> Optional[str]:
+      Gets the API key from environment variable
 
 ## DEPENDENCIES:
-    # - [module_path]: [What's needed.]
+    - requests: HTTP request handling
+    - click: CLI interface
+    - tqdm: Progress bars
 """
 
 from typing import List
+from .download_file import download_file
+from .api_key import get_api_key
+
+__version__ = '100.0.1'
 
 __all__: List[str] = [
-    # "[function_name]",
+    "download_file",
+    "get_api_key",
 ]
