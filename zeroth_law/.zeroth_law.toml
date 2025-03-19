@@ -1,0 +1,56 @@
+max_executable_lines = 300
+max_function_lines = 30
+max_cyclomatic_complexity = 8
+max_parameters = 4
+missing_header_penalty = 20
+missing_footer_penalty = 10
+missing_docstring_penalty = 2
+
+ignore_patterns = [
+    "**/*.log", # ignore log files
+    "**/*.tmp", # ignore temp files
+    "**/.DS_Store", # ignore macOS store file
+    "**/.backup/**", # ignore backups
+    "**/.cache/**", # ignore caches
+    "**/.coverage", # ignore coverage file
+    "**/.egg-info/**", # ignore Python egg info
+    "**/.eggs/**", # ignore Python egg folders
+    "**/.env", # ignore environment file
+    "**/.env.*", # ignore environment files
+    "**/.env.development", # ignore environment config
+    "**/.env.example", # ignore example environment
+    "**/.env.local", # ignore local environment
+    "**/.env.production", # ignore production environment
+    "**/.env.sample", # ignore sample environment
+    "**/.env.test", # ignore test environment
+    "**/.envrc", # ignore environment config
+    "**/.envrc.development", # ignore dev environment config
+    "**/.envrc.example", # ignore example environment config
+    "**/.envrc.local", # ignore local environment config
+    "**/.envrc.production", # ignore production environment config
+    "**/.envrc.sample", # ignore sample environment config
+    "**/.envrc.test", # ignore test environment config
+    "**/.git/**", # ignore Git repository data
+    "**/.gitignore", # ignore Git ignore file
+    "**/.gitlab-ci.yml", # ignore GitLab CI config
+    "**/.idea/**", # ignore IDE config
+    "**/.idea/**", # ignore IDE config (duplicate)
+    "**/.ipynb_checkpoints/**", # ignore Jupyter checkpoints
+    "**/.mypy_cache/**", # ignore mypy cache
+    "**/.old/**", # ignore old files
+    "**/.pytest_cache/**", # ignore pytest cache
+    "**/.tox/**", # ignore tox environment
+    "**/.venv/**", # ignore Python venv
+    "**/.vscode/**", # ignore VSCode config
+    "**/__pycache__/**", # ignore Python caches
+    "**/build/**", # ignore build outputs
+    "**/dist/**", # ignore distribution outputs
+    "**/docs/_build/**", # ignore docs build
+    "**/htmlcov/**", # ignore coverage HTML
+    "**/node_modules/**", # ignore Node modules
+    "**/out/**", # ignore output folder
+    "**/public/**", # ignore public folder
+    "**/target/**", # ignore build target
+    "**/venv/**", # ignore Python virtualenv
+    "**/*.pyc" # ignore Python bytecode
+]

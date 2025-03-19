@@ -63,7 +63,14 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
 
     # Load configuration
     try:
-        config = load_config(config_path) if config_path else DEFAULT_CONFIG
+        if config_path:
+            config = load_config(config_path)
+        else:
+            default_config_path = os.path.join(os.getcwd(), ".zeroth_law.toml")
+            if os.path.isfile(default_config_path):
+                config = load_config(default_config_path)
+            else:
+                config = DEFAULT_CONFIG
     except Exception as e:
         logger.error(f"Error loading config: {e}")
         sys.exit(1)

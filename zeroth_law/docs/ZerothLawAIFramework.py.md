@@ -1,7 +1,7 @@
 # Zeroth Law: AI-Driven Python Code Quality Framework
 
 **Co-Author**: Trahloc colDhart
-**Version**: 2025-03-17
+**Version**: 2025-03-19
 
 ## 1. PURPOSE
 
@@ -73,10 +73,10 @@ def a_very_descriptive_function_name(param1: type, param2: type = default) -> re
 ### 6.1 AI Quality
 
 *   **Context Independence:** Maximize understandability within the file (descriptive names, single-function files, `__init__.py` for namespaces). *Critical*
-*   **AI Insight Documentation:** Document AI suggestions (dates, rationales). *Critical*
+*   **AI Insight Documentation:** Clearly explain the 'why' with guideline references for informed future review. *Critical*
 *   **Implementation Consistency:** >90% consistency with patterns (header-code-footer, one-function-per-file, `__init__.py`). Use `black` and `flake8` for automated checks. *High*
 *   **Project Architecture Visibility:** Use directory structure. Minimal, centralized documentation if needed. Dependencies in `__init__.py`. *Medium*
-*   **Test Coverage:** >90% business logic coverage (separate `tests` directory, mirroring source structure). Use `pytest` for testing. *Medium*
+*   **Test Coverage:** >90% business logic coverage (separate `tests` directory, mirroring source structure). Each feature should have a corresponding `pytest` for testing. *Medium*
 *   **Cross-Reference:** Use PEP 8, standard patterns (prioritize one-function-per-file simplicity). Use `flake8` and `black` for enforcement. *Medium*
 
 ### 6.2 File Organization

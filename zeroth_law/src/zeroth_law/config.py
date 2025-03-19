@@ -1,4 +1,3 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/config.py
 """
 # PURPOSE: Handle configuration for the Zeroth Law analyzer.
 
@@ -9,7 +8,7 @@
  - toml
  - typing
 """
-from typing import Dict
+from typing import Dict, List
 import toml
 from zeroth_law.exceptions import ConfigError
 
@@ -22,7 +21,16 @@ DEFAULT_CONFIG: Dict = {
     "missing_header_penalty": 20,
     "missing_footer_penalty": 10,
     "missing_docstring_penalty": 2,
-    # Add other configurable options here
+    "ignore_patterns": [
+        "**/__pycache__/**",
+        "**/.git/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/*.pyc",
+        "**/.pytest_cache/**",
+        "**/.coverage",
+        "**/htmlcov/**"
+    ]
 }
 
 def load_config(config_path: str) -> Dict:
@@ -33,8 +41,11 @@ def load_config(config_path: str) -> Dict:
         for key, value in config.items():
             if key not in DEFAULT_CONFIG:
                 raise ConfigError(f"Unknown configuration option: {key}")
-            if not isinstance(value, type(DEFAULT_CONFIG[key])):
-                raise ConfigError(f"Invalid type for configuration option: {key}.  Expected {type(DEFAULT_CONFIG[key])}, got {type(value)}")
+            if isinstance(DEFAULT_CONFIG[key], list):
+                if not isinstance(value, list):
+                    raise ConfigError(f"Invalid type for configuration option: {key}. Expected list, got {type(value)}")
+            elif not isinstance(value, type(DEFAULT_CONFIG[key])):
+                raise ConfigError(f"Invalid type for configuration option: {key}. Expected {type(DEFAULT_CONFIG[key])}, got {type(value)}")
 
         # Merge with defaults (so unspecified options use defaults)
         return {**DEFAULT_CONFIG, **config}

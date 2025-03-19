@@ -12,7 +12,8 @@
  - zeroth_law.utils: Utility functions.
  - zeroth_law.exceptions: Custom exceptions.
  - logging
- - datetime #Import correctly
+ - datetime
+ - fnmatch
 """
 import ast
 import os
@@ -20,8 +21,9 @@ import shutil
 import tempfile
 from typing import Dict, List, Any
 import logging
-from datetime import datetime #Import correctly
+from datetime import datetime
 import re
+import fnmatch
 
 from zeroth_law.metrics import (
     calculate_file_size_metrics,
@@ -36,6 +38,42 @@ from zeroth_law.utils import find_header_footer, count_executable_lines, replace
 from zeroth_law.exceptions import ZerothLawError, FileNotFoundError, NotPythonFileError, AnalysisError, ConfigError
 
 logger = logging.getLogger(__name__)
+
+def should_ignore(file_path: str, base_path: str, ignore_patterns: List[str]) -> bool:
+    """Check if a file should be ignored based on the ignore patterns.
+
+    Args:
+        file_path: The absolute path to check
+        base_path: The base directory path to make paths relative to
+        ignore_patterns: List of glob patterns to match against
+
+    Returns:
+        True if the file should be ignored, False otherwise
+    """
+    try:
+        # Get path relative to the base directory
+        rel_path = os.path.relpath(file_path, base_path)
+        # Convert path to use forward slashes for consistent matching
+        normalized_path = rel_path.replace(os.sep, '/')
+
+        # Add a leading ./ to match patterns that start with . like .old/
+        if not normalized_path.startswith('./'):
+            normalized_path = './' + normalized_path
+
+        for pattern in ignore_patterns:
+            # Normalize pattern to use forward slashes
+            norm_pattern = pattern.replace(os.sep, '/')
+            # Add ./ prefix to pattern if it starts with a dot directory
+            if norm_pattern.startswith('.') and not norm_pattern.startswith('./'):
+                norm_pattern = './' + norm_pattern
+
+            if fnmatch.fnmatch(normalized_path, norm_pattern):
+                logger.debug(f"Path '{normalized_path}' matched pattern '{norm_pattern}'")
+                return True
+        return False
+    except ValueError:
+        # Handle case where file_path is on different drive than base_path (Windows)
+        return False
 
 def analyze_file(file_path: str, update: bool = False, config: dict = None) -> Dict[str, Any]:
     """Analyzes a single Python file for Zeroth Law compliance.
@@ -164,17 +202,40 @@ def analyze_directory(dir_path: str, recursive: bool = False, update: bool = Fal
     if not os.path.isdir(dir_path):
         raise NotADirectoryError(f"Not a directory: {dir_path}")
 
+    if config is None:
+        config = {}
+
+    ignore_patterns = config.get('ignore_patterns', [])
+    logger.debug(f"Loaded ignore patterns: {ignore_patterns}")
     all_metrics = []
+
+    # Convert dir_path to absolute path for consistent relative path calculation
+    abs_dir_path = os.path.abspath(dir_path)
+
     for root, _, files in os.walk(dir_path):
+        # Skip the directory if it matches any ignore pattern
+        if should_ignore(root, abs_dir_path, ignore_patterns):
+            logger.debug(f"Ignoring directory: {os.path.relpath(root, abs_dir_path)}")
+            continue
+
         for file in files:
-            if file.endswith(".py"):
-                file_path = os.path.join(root, file)
-                try:
-                    metrics = analyze_file(file_path, update=update, config=config)
-                    all_metrics.append(metrics)
-                except ZerothLawError as e:  # Catch any ZerothLawError
-                    logger.error(str(e))  # Log the specific error
-                    all_metrics.append({"file_path": file_path, "error": str(e)})
+            if not file.endswith(".py"):
+                continue
+
+            file_path = os.path.join(root, file)
+
+            # Skip the file if it matches any ignore pattern
+            if should_ignore(file_path, abs_dir_path, ignore_patterns):
+                logger.debug(f"Ignoring file: {os.path.relpath(file_path, abs_dir_path)}")
+                continue
+
+            try:
+                metrics = analyze_file(file_path, update=update, config=config)
+                all_metrics.append(metrics)
+            except ZerothLawError as e:
+                logger.error(str(e))
+                all_metrics.append({"file_path": file_path, "error": str(e)})
+
         if not recursive:
             break
 
