@@ -28,7 +28,10 @@ def create_skeleton(directory: str):
 
     # Create context with variables for the template
     context = {
-        "project_name": directory,
+        "project_name": os.path.basename(directory),
+        "project_short_description": "A Python project using the Zeroth Law framework",
+        "author_name": "Zeroth Law Developer",
+        "author_email": "developer@example.com",
         "default_config": DEFAULT_CONFIG
     }
 
