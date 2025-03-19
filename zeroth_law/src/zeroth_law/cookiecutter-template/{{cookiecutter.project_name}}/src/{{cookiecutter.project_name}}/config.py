@@ -1,3 +1,4 @@
+# FILE_LOCATION: {{cookiecutter.project_name}}/src/{{cookiecutter.project_name}}/config.py
 """
 # PURPOSE: Configuration management.
 
@@ -12,16 +13,28 @@
 import json
 from typing import Dict, Any, Optional
 
-DEFAULT_CONFIG = {
-    "max_line_length": 88,
+# Define default configuration values
+DEFAULT_CONFIG: Dict = {
+    "max_line_length": 140,
     "min_docstring_length": 10,
+    "max_executable_lines": 300,
+    "max_function_lines": 30,
     "max_function_length": 30,
     "max_cyclomatic_complexity": 8,
+    "max_parameters": 7,
+    "missing_header_penalty": 20,
+    "missing_footer_penalty": 10,
+    "missing_docstring_penalty": 2,
     "ignore_patterns": [
-        ".*\\.pyc$",
-        ".*\\.git.*",
-        ".*__pycache__.*",
-        ".*\\.egg-info.*"
+        "**/__pycache__/**",
+        "**/.git/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/*.pyc",
+        "**/.pytest_cache/**",
+        "**/.coverage",
+        "**/htmlcov/**",
+        ".*\\.egg-info.*",
     ]
 }
 

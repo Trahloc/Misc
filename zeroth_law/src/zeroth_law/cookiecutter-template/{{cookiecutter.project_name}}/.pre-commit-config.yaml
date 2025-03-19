@@ -1,4 +1,5 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/.pre-commit-config.yaml.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/.pre-commit-config.yaml
+
 repos:
   - repo: https://github.com/psf/black
     rev: 23.1.0  # Use a specific, stable version.  VS Code has built-in Black support.
@@ -41,7 +42,7 @@ repos:
         name: Auto-generate __init__.py
         entry: autoinit  # Assumes you have 'autoinit' installed (pip install autoinit)
         language: python
-        files: 'src/'  #  **CRITICAL:**  Change this to your source directory!
+        files: 'src/{{cookiecutter.project_name}}/'  #  **CRITICAL:**  Change this to your source directory!
         args:
           - --dest-dir=src  #  **IMPORTANT:** Specify the destination directory.
           - --single-pass  #  Only update existing __init__.py files, don't create new ones.  Good for initial setup.
@@ -61,14 +62,3 @@ repos:
             # -x: Stop on first failure.
             # --cov=src: Measure code coverage for the 'src' directory.
             # --cov-report=xml: Generate a coverage report in XML format (for VS Code extensions).
-
-      - id: zeroth-law
-        name: Zeroth Law Analyzer
-        entry: python -m {{ cookiecutter.project_name }} # Replace with your actual script/module
-        language: python
-        files: '\.py$'  # Apply to all Python files.
-        args: [-r]   # Example: Pass arguments to your analyzer (-r for recursive).
-        # VS Code:  You could create a VS Code extension to integrate the
-        #          Zeroth Law Analyzer's output into the Problems panel.
-        #          This is a more advanced topic.
-        # pre-commit: This is where the *core* Zeroth Law rules are enforced.

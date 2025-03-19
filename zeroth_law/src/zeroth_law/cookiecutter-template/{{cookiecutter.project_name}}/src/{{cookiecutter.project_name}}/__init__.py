@@ -1,15 +1,15 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/__init__.py.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/src/{{cookiecutter.project_name}}/__init__.py
 """
-# PURPOSE: [Briefly describe the purpose of this module.]
+# PURPOSE: Exposes the public API for the {{ cookiecutter.project_name }} module.
 
 ## INTERFACES:
-    # - [function_name(param_type) -> return_type]: [description]
+# - greet_user(name: str, formal: bool) -> str: Generates a greeting message.
 
 ## DEPENDENCIES:
-    # - [module_path]: [What's needed.]
+# - {{ cookiecutter.project_name }}.greeter: Provides the greet_user function.
 """
-from typing import List
+from .greeter import greet_user
 
-__all__: List[str] = [
-    # "[function_name]",
+__all__ = [
+    "greet_user",
 ]

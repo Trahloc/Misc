@@ -1,43 +1,54 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/cli_args.py.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/src/{{cookiecutter.project_name}}/cli_args.py
 """
 # PURPOSE: Provide reusable command-line arguments for the {{ cookiecutter.project_name }} package.
 
 ## INTERFACES:
- - add_args(click_group): adds the arguments
+ - add_args(command): Add standard arguments to a Click command
+ - configure_logging(ctx: click.Context, verbose: int) -> None: Configures logging based on verbosity level.
 
 ## DEPENDENCIES:
- - click
- - logging
+ - click: Command-line interface creation library
+ - logging: Standard logging functionality
 """
 import logging
 import click
-from typing import Union
+from typing import Any
 
-def add_logging_args(group: click.Group) -> None:
-    """Adds logging-related arguments (quiet, verbose, debug) to a click group."""
-    group.add_option("-q", "--quiet", "verbosity", flag_value=logging.ERROR, help="Suppress all output except errors.")
-    group.add_option("-v", "--verbose", "verbosity", flag_value=logging.INFO, help="Enable verbose output (INFO level).")
-    group.add_option("-vv", "--debug", "verbosity", flag_value=logging.DEBUG, help="Enable debug output (DEBUG level).")
+def add_args(command: click.Command) -> None:
+    """
+    PURPOSE: Add standard arguments to a Click command.
 
-def add_version_arg(cmd: click.Command, version: str = "0.0.1") -> None:
-    """Adds a --version option to the click Command."""
-    cmd.params.append(click.Option(['--version'], is_flag=True, expose_value=False, is_eager=True, help="Show the version and exit.", callback=click.version_option(version=version)))
+    PARAMS:
+        command: The Click command to add arguments to
 
-def configure_logging(ctx: click.Context, verbose:int) -> None:
-    """Configures the logging level based on command-line arguments."""
+    RETURNS: None
+    """
+    command.params.append(click.Option(
+        ["-v", "--verbose"],
+        count=True,
+        help="Increase verbosity (e.g., -v for INFO, -vv for DEBUG)."
+    ))
 
-    if verbose == 1:
+def configure_logging(ctx: click.Context, verbose: int) -> None:
+    """
+    PURPOSE: Configure logging based on verbosity level.
+
+    PARAMS:
+        ctx: Click context object
+        verbose: Verbosity level (0=WARNING, 1=INFO, 2+=DEBUG)
+
+    RETURNS: None
+    """
+    if verbose == 0:
+        log_level = logging.WARNING
+    elif verbose == 1:
         log_level = logging.INFO
-    elif verbose > 1:
-        log_level = logging.DEBUG
     else:
-        log_level = logging.WARNING  # Default log level
-    logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
+        log_level = logging.DEBUG
 
-def add_args(cmd: click.Command):
-    """Add all arguments"""
-    # verbosity_group = click.Group("Verbosity") # Removed unused group
-    # add_logging_args(verbosity_group) # Removed unused group
-    # cmd.add_group(verbosity_group) # Removed unused group
-
-    add_version_arg(cmd) #Add version
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    logging.debug(f"Logging configured at level: {logging.getLevelName(log_level)}")

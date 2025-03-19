@@ -1,4 +1,4 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/exceptions.py.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/src/{{cookiecutter.project_name}}/exceptions.py
 """
 # PURPOSE: Define custom exceptions for the {{ cookiecutter.project_name }} analyzer.
 

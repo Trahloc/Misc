@@ -1,8 +1,15 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/README.md.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/README.md
 
-# {{cookiecutter.project_name}}
+## PURPOSE: Provides a basic overview and usage instructions for the {{cookiecutter.project_name}} package.
 
-A Python package created with Zeroth Law.
+## INTERFACES: N/A (Documentation file)
+
+## DEPENDENCIES: N/A
+
+## TODO: Review and refine documentation based on project evolution.
+
+---
+A Python package generated with Zeroth Law.
 
 ## Installation
 
@@ -24,4 +31,12 @@ import {{cookiecutter.project_name}}
 
 ## Development
 
-This project follows the Zeroth Law of AI-Driven Development.
+This project adheres to the Zeroth Law of AI-Driven Development.  See [ZerothLawAIFramework.py.md](ZerothLawAIFramework.py.md) for details.
+
+```
+## KNOWN ERRORS: None
+
+## IMPROVEMENTS: Initial template creation.
+
+## FUTURE TODOs: Add contribution guidelines, expand usage examples, and integrate automated documentation generation.
+```

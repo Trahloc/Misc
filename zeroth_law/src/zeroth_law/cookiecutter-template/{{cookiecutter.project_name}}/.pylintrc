@@ -1,10 +1,14 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/.pylintrc.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/.pylintrc
+
 [MESSAGES CONTROL]
 disable=
-    C0114,  # missing-module-docstring
-    C0115,  # missing-class-docstring
-    C0116,  # missing-function-docstring
+    C0114,  # missing-module-docstring: Docstrings are handled by file headers.
+    C0115,  # missing-class-docstring: Docstrings are handled by file headers.
+    C0116,  # missing-function-docstring: Docstrings are handled by file headers.
     # ... add other codes to disable as needed ...
 
 [FORMAT]
 max-line-length=140
+
+[DESIGN]
+max-args=7

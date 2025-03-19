@@ -1,15 +1,13 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/tests/__init__.py.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/tests/__init__.py
 """
-# PURPOSE: [Briefly describe the purpose of this module.]
+# PURPOSE: Initializes the tests module and defines the public test API.
 
 ## INTERFACES:
-    # - [function_name(param_type) -> return_type]: [description]
+#   __all__: List of exported test functions/classes.
 
 ## DEPENDENCIES:
-    # - [module_path]: [What's needed.]
+#   typing: Used for type hinting.
 """
 from typing import List
 
-__all__: List[str] = [
-    # "[function_name]",
-]
+__all__: List[str] = []

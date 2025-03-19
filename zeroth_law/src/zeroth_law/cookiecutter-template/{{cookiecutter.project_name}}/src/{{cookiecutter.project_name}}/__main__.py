@@ -1,4 +1,4 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/__main__.py.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/src/{{cookiecutter.project_name}}/__main__.py
 """
 # PURPOSE: Entry point for the {{ cookiecutter.project_name }} package.
 

@@ -1,102 +1,48 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/cli.py.template
+# FILE_LOCATION: {{cookiecutter.project_name}}/src/{{cookiecutter.project_name}}/cli.py
 """
-# PURPOSE: Command-line interface for the {{ cookiecutter.project_name }} package.
+# PURPOSE: Main entry point for the CLI, registers and orchestrates commands.
 
 ## INTERFACES:
- - main(): Main entry point.
+ - main(): CLI entry point that sets up logging and registers commands
 
 ## DEPENDENCIES:
- - click
- - logging
- - {{ cookiecutter.project_name }}.cli_args
- - {{ cookiecutter.project_name }}.exceptions
+ - click: Command-line interface creation
+ - {{ cookiecutter.project_name }}.cli_args: CLI argument handling
+ - {{ cookiecutter.project_name }}.commands: Command implementations
 """
 import logging
-import os
-import sys
 from typing import Optional
 
 import click
 
-# Import from the *project's* cli_args
 from {{ cookiecutter.project_name }} import cli_args
-from {{ cookiecutter.project_name }}.exceptions import ZerothLawError
+from {{ cookiecutter.project_name }}.commands import hello, info
 
-
-@click.group()  # Use @click.group() for subcommands
-@click.option("-v", "--verbose", count=True, help="Increase verbosity (e.g., -v for INFO, -vv for DEBUG).")
-@click.version_option(version="0.0.1")
+@click.group()
+@click.version_option(version="0.1.0")
 @click.pass_context
 def main(ctx: click.Context, verbose: int):
     """Command-line interface for the {{ cookiecutter.project_name }} package."""
-    # Add project-specific arguments
     cli_args.add_args(ctx.command)
-
-    # Configure logging (using project's configure_logging)
-    cli_args.configure_logging(ctx, verbose)  # Use project's configure_logging
+    cli_args.configure_logging(ctx, ctx.params.get("verbose", 0))
     ctx.ensure_object(dict)
     ctx.obj['logger'] = logging.getLogger('{{ cookiecutter.project_name }}')
 
-@main.command()  # Add a 'create' subcommand
-@click.argument("directory")
-@click.pass_context
-def create(ctx: click.Context, directory: str):
-    """Creates a new project with the specified name."""
-    logger = ctx.obj['logger']
-    try:
-        # In a real implementation, you'd call your project creation function here
-        logger.info(f"Creating project: {{ cookiecutter.project_name }}")
-        # Example:  skeleton.create_skeleton(directory)
-    except Exception as e:
-        logger.error(f"Error creating project: {e}")
-        sys.exit(1)
-
-
-@main.command()
-@click.argument("path", required=False, type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True))
-@click.option("-r", "--recursive", is_flag=True, help="Analyze directories recursively.")
-@click.option("-s", "--summary", is_flag=True, help="Generate a summary report (for directories).")
-@click.option("-u", "--update", is_flag=True, help="Update file footers with analysis results.")
-@click.option("-c", "--config", "config_path", type=click.Path(exists=True, dir_okay=False, readable=True), help="Path to a configuration file.")
-@click.pass_context
-def analyze(
-    ctx: click.Context,
-    path: Optional[str],
-    recursive: bool,
-    summary: bool,
-    update: bool,
-    config_path: Optional[str]
-):
-    """Analyze Python code for Zeroth Law compliance."""
-    logger = ctx.obj['logger']  # Correctly retrieve the logger
-
-    if not path:
-        click.echo(ctx.get_help())
-        ctx.exit(1)
-
-
-    logger.info(f"Hello from {{ cookiecutter.project_name }} cli")
-    logger.info(f"Analyzing path: {path}")
-    if recursive:
-        logger.info("Recursive analysis enabled.")
-    if summary:
-        logger.info("Summary report will be generated.")
-    if update:
-        logger.info("File footers will be updated.")
-
-    # ... (rest of your logic) ...
-    # Example:
-    # try:
-    #     if os.path.isfile(path):
-    #        metrics = analyzer.analyze_file(path, update=update)
-    #         ...
-    #     elif os.path.isdir(path):
-    #         all_metrics = analyzer.analyze_directory(path, recursive=recursive, update=update)
-    #         ...
-    # except ZerothLawError as e:
-    #      logger.error(str(e))
-    #      sys.exit(1)
-
+# Register commands
+main.add_command(hello.command)
+main.add_command(info.command)
 
 if __name__ == "__main__":
     main()
+
+"""
+## KNOWN ERRORS: None
+
+## IMPROVEMENTS:
+ - Separated commands into individual modules
+ - Simplified main CLI entry point
+
+## FUTURE TODOs:
+ - Consider adding command discovery mechanism
+ - Add command group management
+"""
