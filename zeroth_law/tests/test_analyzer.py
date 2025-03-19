@@ -35,6 +35,10 @@ def create_test_files():
     with open(os.path.join(TEST_DIR, "empty_file.py"), "w") as f:
         pass
 
+    # Create a non-Python file
+    with open(os.path.join(TEST_DIR, "not_a_python_file.txt"), "w") as f:
+        f.write("This is not a Python file.")
+
     #Create an empty directory
     os.makedirs(os.path.join(TEST_DIR, "empty_dir"), exist_ok=True)
 
@@ -67,7 +71,7 @@ def test_analyze_file_not_found():
 def test_analyze_not_python_file():
     """Tests handling of a non-Python file."""
     with pytest.raises(NotPythonFileError):
-        analyze_file(os.path.join(TEST_DIR, "empty_file.py")) #Empty file, so will not end in .py
+        analyze_file(os.path.join(TEST_DIR, "not_a_python_file.txt"))
 
 def test_analyze_syntax_error():
     """Tests handling of a file with a syntax error."""

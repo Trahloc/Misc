@@ -21,7 +21,7 @@ import tempfile
 from typing import Dict, List, Any
 import logging
 from datetime import datetime #Import correctly
-
+import re
 
 from zeroth_law.metrics import (
     calculate_file_size_metrics,
@@ -61,14 +61,47 @@ def analyze_file(file_path: str, update: bool = False, config: dict = None) -> D
         logger.warning(f"Skipping non-Python file: {file_path}")
         raise NotPythonFileError(f"Not a Python file: {file_path}")
 
+    # Check if this is a template file
+    normalized_path = os.path.normpath(file_path)
+    is_template = (
+        "cookiecutter-template" in normalized_path or
+        any(part.startswith("{{") and part.endswith("}}") for part in normalized_path.split(os.sep)) or
+        os.path.basename(file_path).startswith("fix_cookiecutter") or
+        os.path.basename(file_path).startswith("convert_templates_to_cookiecutter")
+    )
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        source_code = f.read()
+
     if config is None:
-        config = {}  # Use an empty dict if no config is provided
+        config = {}
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            source_code = f.read()
-        tree = ast.parse(source_code)
+        # For template files, only do basic analysis without AST parsing
+        if is_template:
+            logger.info(f"Processing template file: {file_path}")
+            header, footer = find_header_footer(source_code)
+            executable_lines = count_executable_lines(source_code)
 
+            return {
+                "file_path": file_path,
+                "file_name": os.path.basename(file_path),
+                "is_template": True,
+                "header_footer_status": "complete" if header and footer else ("missing_header" if not header else "missing_footer"),
+                "executable_lines": executable_lines,
+                "overall_score": "N/A - Template File",
+                "compliance_level": "Template File",
+                "functions": [],
+                "penalties": []
+            }
+
+        # Check for unrendered templates in non-template files, but skip analyzer.py
+        if not is_template and not file_path.endswith("analyzer.py") and re.search(r"\{\{.*?\}\}", source_code):
+            logger.warning(f"Skipping unrendered template file: {file_path}")
+            raise AnalysisError(f"Unrendered template detected in file: {file_path}")
+
+        # Regular analysis for non-template files
+        tree = ast.parse(source_code)
         header, footer = find_header_footer(source_code)
         executable_lines = count_executable_lines(source_code)
 
