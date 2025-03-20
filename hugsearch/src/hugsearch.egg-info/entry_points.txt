@@ -1,0 +1,2 @@
+[console_scripts]
+zeroth_law_template = zeroth_law_template.__main__:main

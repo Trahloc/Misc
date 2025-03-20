@@ -1,4 +1,4 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/tests/test_project_setup.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/tests/test_project_setup.py
 """
 # PURPOSE: Tests to verify proper project setup and customization.
 
@@ -51,7 +51,7 @@ def test_project_name_customized():
     project_name = pyproject_data.get("project", {}).get("name", "")
     
     # Check both for the default value and for the uncustomized template variable
-    if project_name == "my_project" or project_name == "{{cookiecutter.project_name}}":
+    if project_name == "my_project" or project_name == "{{ cookiecutter.project_name }}":
         warnings.warn(
             f"\nDEFAULT PROJECT NAME DETECTED: Project name is still set to '{project_name}'.\n"
             "This suggests the project was not properly customized when created.\n"
@@ -81,14 +81,14 @@ def test_author_info_customized():
         author_email = author.get("email", "")
         
         # Check for default values and uncustomized template variables
-        if author_name == "Your Name" or author_name == "{{cookiecutter.author_name}}":
+        if author_name == "Your Name" or author_name == "Zeroth Law Developer":
             warnings.warn(
                 f"\nDEFAULT AUTHOR NAME DETECTED: Author name is still set to '{author_name}'.\n"
                 "This suggests the project was not properly customized when created.\n"
                 "You should update the author name in pyproject.toml."
             )
         
-        if author_email == "your.email@example.com" or author_email == "{{cookiecutter.author_email}}":
+        if author_email == "your.email@example.com" or author_email == "developer@example.com":
             warnings.warn(
                 f"\nDEFAULT EMAIL DETECTED: Author email is still set to '{author_email}'.\n"
                 "This suggests the project was not properly customized when created.\n"

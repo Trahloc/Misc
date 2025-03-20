@@ -1,4 +1,4 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/requirements.txt
+# FILE_LOCATION: {{ cookiecutter.project_name }}/requirements.txt
 black==23.1.0
 flake8==6.0.0
 mypy==1.0.0

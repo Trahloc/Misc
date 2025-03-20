@@ -9,11 +9,13 @@
  - logging
  - json
  - pathlib
+ - datetime
 """
 import shutil
 import logging
 import json
 from pathlib import Path
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -34,20 +36,40 @@ def _create_cookiecutter_json(template_dir: Path, project_name: str) -> None:
 
 def _replace_project_name(content: str, project_name: str) -> str:
     """Replace the project name with cookiecutter variable."""
-    return (content
-        .replace(f'"{project_name}"', '"{{ cookiecutter.project_name }}"')
-        .replace(f"'{project_name}'", "'{{ cookiecutter.project_name }}'")
-        .replace(f"from {project_name}", "from {{ cookiecutter.project_name }}")
-        .replace(f"import {project_name}", "import {{ cookiecutter.project_name }}")
-        .replace(f"Command-line interface for the {project_name}", "Command-line interface for the {{ cookiecutter.project_name }}")
-        .replace(f"{project_name}/src/{project_name}", "{{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}")
-        .replace(f"{project_name}.commands", "{{ cookiecutter.project_name }}.commands")
-        .replace(f": {project_name}/", ": {{ cookiecutter.project_name }}/")
-    )
+    # First replace any direct project name references
+    content = content.replace(f'"{project_name}"', '"{{ cookiecutter.project_name }}"')
+    content = content.replace(f"'{project_name}'", "'{{ cookiecutter.project_name }}'")
+
+    # Replace common patterns in imports and module references
+    content = content.replace(f"from {project_name}", "from {{ cookiecutter.project_name }}")
+    content = content.replace(f"import {project_name}", "import {{ cookiecutter.project_name }}")
+    content = content.replace(f"from . import {project_name}", "from . import {{ cookiecutter.project_name }}")
+
+    # Replace in docstrings and comments
+    content = content.replace(f"for the {project_name}", "for the {{ cookiecutter.project_name }}")
+    content = content.replace(f"the {project_name} package", "the {{ cookiecutter.project_name }} package")
+    content = content.replace(f"the {project_name} module", "the {{ cookiecutter.project_name }} module")
+
+    # Replace in file headers and paths
+    content = content.replace(f"# FILE_LOCATION: {project_name}/", "# FILE_LOCATION: {{ cookiecutter.project_name }}/")
+    content = content.replace(f"## PURPOSE: Provides a basic overview and usage instructions for the {project_name} package",
+                            "## PURPOSE: Provides a basic overview and usage instructions for the {{ cookiecutter.project_name }} package")
+
+    # Replace in configuration and logging
+    content = content.replace(f"name = \"{project_name}\"", "name = \"{{ cookiecutter.project_name }}\"")
+    content = content.replace(f"logging.getLogger('{project_name}')", "logging.getLogger('{{ cookiecutter.project_name }}')")
+    content = content.replace(f"{project_name}/src/{project_name}", "{{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}")
+    content = content.replace(f"{project_name}.commands", "{{ cookiecutter.project_name }}.commands")
+
+    return content
 
 def _replace_paths(path: str, project_name: str) -> str:
     """Replace project name in paths with cookiecutter variable."""
-    return path.replace(f"/src/{project_name}/", "/src/{{cookiecutter.project_name}}/")
+    parts = path.split('/')
+    for i, part in enumerate(parts):
+        if part == project_name:
+            parts[i] = "{{cookiecutter.project_name}}"
+    return '/'.join(parts)
 
 def _process_file(src: Path, dest: Path, project_name: str) -> None:
     """Process a single file, replacing project-specific values with template variables."""
@@ -59,12 +81,17 @@ def _process_file(src: Path, dest: Path, project_name: str) -> None:
     if any(pattern in str(src) for pattern in skip_patterns):
         return
 
-    # Get the relative path with cookiecutter variable
-    rel_path = str(src).replace(project_name, "{{cookiecutter.project_name}}")
+    # Get the relative path with cookiecutter variable for both the file and its parent directories
     dest = Path(_replace_paths(str(dest), project_name))
 
-    # Create parent directories if they don't exist
-    dest.parent.mkdir(parents=True, exist_ok=True)
+    # Ensure all parent directories are created with proper naming
+    for parent in dest.parents:
+        if str(parent).endswith(project_name):
+            new_parent = Path(str(parent).replace(project_name, "{{cookiecutter.project_name}}"))
+            if not new_parent.exists():
+                new_parent.mkdir(parents=True, exist_ok=True)
+        elif not parent.exists():
+            parent.mkdir(parents=True, exist_ok=True)
 
     # Copy the file content
     if src.suffix in {'.py', '.md', '.txt', '.toml', '.yaml', '.yml', '.ini'}:
@@ -110,8 +137,11 @@ def convert_to_template(source_dir: str, template_name: str = "test_zeroth_law",
     if template_dir.exists():
         if not overwrite:
             raise FileExistsError(f"Template directory already exists: {template_name}")
-        logger.debug("Removing existing template directory")
-        shutil.rmtree(template_dir)
+        # Backup existing template before removal
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = f"{template_dir}.{timestamp}"
+        logger.debug("Backing up existing template directory to: %s", backup_path)
+        shutil.move(template_dir, backup_path)
 
     try:
         # Create the template structure

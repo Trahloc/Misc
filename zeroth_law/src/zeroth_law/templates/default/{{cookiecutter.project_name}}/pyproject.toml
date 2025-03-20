@@ -1,16 +1,16 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/pyproject.toml
+# FILE_LOCATION: {{ cookiecutter.project_name }}/pyproject.toml
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "{{cookiecutter.project_name}}"
+name = "{{ cookiecutter.project_name }}"
 version = "1742389364" # epoch date format for AI-driven versioning
 authors = [
-    { name = "{{cookiecutter.author_name}}", email = "{{cookiecutter.author_email}}" },
+    { name = "Zeroth Law Developer", email = "developer@example.com" },
 ]
-description = "{{cookiecutter.project_short_description}}"
+description = "A Python project using the Zeroth Law framework"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [project.scripts]
-{{cookiecutter.project_name}} = "{{cookiecutter.project_name}}.__main__:main"
+zeroth_law_template = "zeroth_law_template.__main__:main"
 
 [project.optional-dependencies]
 dev = [
@@ -51,6 +51,11 @@ markers = [
 [tool.pytest.ini_options]
 # Any additional pytest options here
 minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra -q"
 
 [tool.black]
 line-length = 140

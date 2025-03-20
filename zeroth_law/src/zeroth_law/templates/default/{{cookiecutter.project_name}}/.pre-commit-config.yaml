@@ -1,4 +1,4 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/.pre-commit-config.yaml
+# FILE_LOCATION: {{ cookiecutter.project_name }}/.pre-commit-config.yaml
 
 repos:
   - repo: https://github.com/psf/black
@@ -42,7 +42,7 @@ repos:
         name: Auto-generate __init__.py
         entry: autoinit  # Assumes you have 'autoinit' installed (pip install autoinit)
         language: python
-        files: 'src/{{cookiecutter.project_name}}/'  #  **CRITICAL:**  Change this to your source directory!
+        files: 'src/zeroth_law_template/'  #  **CRITICAL:**  Change this to your source directory!
         args:
           - --dest-dir=src  #  **IMPORTANT:** Specify the destination directory.
           - --single-pass  #  Only update existing __init__.py files, don't create new ones.  Good for initial setup.

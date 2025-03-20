@@ -1,6 +1,6 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/conftest.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/conftest.py
 """
-# PURPOSE: Configure pytest for the {{cookiecutter.project_name}} project.
+# PURPOSE: Configure pytest for the zeroth_law_template project.
 
 ## INTERFACES:
  - pytest_configure: Configure pytest to add the project root to Python path

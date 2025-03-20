@@ -1,2 +1,0 @@
-[console_scripts]
-source_project2 = source_project2.__main__:main

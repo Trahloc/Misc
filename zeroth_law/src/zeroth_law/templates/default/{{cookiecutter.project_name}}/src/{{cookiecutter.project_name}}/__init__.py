@@ -1,15 +1,29 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/src/{{cookiecutter.project_name}}/__init__.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/__init__.py
 """
-# PURPOSE: Exposes the public API for the {{ cookiecutter.project_name }} module.
+# PURPOSE: Exposes the public API for the zeroth_law_template module.
 
 ## INTERFACES:
-# - greet_user(name: str, formal: bool) -> str: Generates a greeting message.
+# - config: Configuration management
+# - cli: Command-line interface
+# - commands: CLI commands
+# - logging: Logging utilities
+# - types: Type definitions
+# - utils: Utility functions
 
-## DEPENDENCIES:
-# - {{ cookiecutter.project_name }}.greeter: Provides the greet_user function.
+## DEPENDENCIES: None (only internal modules)
 """
-from .greeter import greet_user
+from . import config
+from . import cli
+from . import commands
+from . import logging
+from . import types
+from . import utils
 
 __all__ = [
-    "greet_user",
+    "config",
+    "cli",
+    "commands",
+    "logging",
+    "types",
+    "utils",
 ]

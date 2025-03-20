@@ -1,91 +1,84 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/tests/test_cli.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/tests/test_cli.py
 """
-# PURPOSE: Tests for the CLI interface of {{cookiecutter.project_name}}
+# PURPOSE: Tests for the CLI functionality.
 
 ## INTERFACES:
-#   test_cli_hello: Test the CLI hello command
-#   test_cli_info: Test the CLI info command
-#   test_cli_verbose: Test the CLI verbose option
+ - test_cli_check(): Test the check command
+ - test_cli_version(): Test the version command
+ - test_cli_verbose(): Test verbose logging
+ - test_cli_error_handling(): Test error handling
 
 ## DEPENDENCIES:
-#   pytest
-#   click.testing
-#   {{cookiecutter.project_name}}.cli
+ - click.testing: CLI testing utilities
+ - pytest: Testing framework
 """
 import pytest
 from click.testing import CliRunner
-from {{cookiecutter.project_name}}.cli import main
 
+from {{ cookiecutter.project_name }}.cli import main
 
-def test_cli_hello():
-    """Test the CLI hello command with different inputs"""
+def test_cli_check():
+    """Test the CLI check command with different options"""
     runner = CliRunner()
-
-    # Test default hello (no name provided)
-    result = runner.invoke(main, ["hello"])
+    
+    # Test basic check
+    result = runner.invoke(main, ["check"])
     assert result.exit_code == 0
-    assert "Hello, world!" in result.output
-
-    # Test hello with a name
-    result = runner.invoke(main, ["hello", "Alice"])
+    
+    # Test with specific options
+    result = runner.invoke(main, ["check", "--deps"])
     assert result.exit_code == 0
-    assert "Hello, Alice!" in result.output
-
-    # Test hello with formal flag
-    result = runner.invoke(main, ["hello", "--formal", "Alice"])
+    
+    result = runner.invoke(main, ["check", "--env"])
     assert result.exit_code == 0
-    assert "Greetings, Alice!" in result.output
+    
+    result = runner.invoke(main, ["check", "--paths"])
+    assert result.exit_code == 0
 
-
-def test_cli_info():
-    """Test the CLI info command"""
+def test_cli_version():
+    """Test the CLI version command"""
     runner = CliRunner()
-
-    # Test basic info
-    result = runner.invoke(main, ["info"])
+    
+    # Test basic version
+    result = runner.invoke(main, ["version"])
     assert result.exit_code == 0
-    assert "Project: {{cookiecutter.project_name}}" in result.output
-
-    # Test detailed info
-    result = runner.invoke(main, ["info", "--details"])
+    
+    # Test verbose version
+    result = runner.invoke(main, ["version", "--verbose"])
     assert result.exit_code == 0
-    assert "Project: {{cookiecutter.project_name}}" in result.output
-    assert "Description:" in result.output
-    assert "Zeroth Law AI Framework" in result.output
-
+    
+    # Test JSON output
+    result = runner.invoke(main, ["version", "--json"])
+    assert result.exit_code == 0
 
 def test_cli_verbose():
     """Test the CLI verbose option affects logging"""
     runner = CliRunner()
-
-    # This is a simple check that the command runs with verbose flag
-    # More detailed logging tests would need to capture log output
-    result = runner.invoke(main, ["-v", "info"])
+    
+    # Test with different verbosity levels
+    result = runner.invoke(main, ["-v", "version"])
+    assert result.exit_code == 0
+    
+    result = runner.invoke(main, ["-vv", "version"])
     assert result.exit_code == 0
 
-    result = runner.invoke(main, ["-vv", "info"])
-    assert result.exit_code == 0
-
+def test_cli_error_handling(cli_runner, monkeypatch):
+    """Test CLI error handling when a command fails"""
+    # Mock check_environment in the commands/check module
+    def mock_check_environment(*args, **kwargs):
+        raise ValueError("Test error")
+    
+    # Apply the mock to the correct module
+    monkeypatch.setattr(
+        "{{ cookiecutter.project_name }}.commands.check.check_environment",
+        mock_check_environment
+    )
+    
+    # Test that the CLI handles errors correctly
+    result = cli_runner.invoke(main, ["check"], catch_exceptions=True)
+    assert "Error during environment check" in result.output
 
 @pytest.fixture
 def cli_runner():
     """Provides a Click test runner"""
     return CliRunner()
-
-
-def test_cli_error_handling(cli_runner, monkeypatch):
-    """Test CLI error handling when a command fails"""
-    # Mock greet_user in the commands/hello module where it's actually used
-    def mock_greet_user(*args, **kwargs):
-        raise ValueError("Test error")
-
-    # Apply the mock to the correct module where it's imported and used
-    monkeypatch.setattr(
-        "{{cookiecutter.project_name}}.commands.hello.greet_user",
-        mock_greet_user
-    )
-
-    # Test that the CLI handles errors correctly
-    result = cli_runner.invoke(main, ["hello"], catch_exceptions=True)
-    assert "Error during greeting" in result.output
-    assert result.exit_code == 1

@@ -11,11 +11,15 @@
  - importlib.metadata
  - cookiecutter.main
  - zeroth_law.config
+ - datetime
+ - shutil
 """
 import os
 import logging
 import subprocess
 import sys
+import shutil
+from datetime import datetime
 from pathlib import Path
 from importlib import metadata
 from cookiecutter.main import cookiecutter
@@ -64,17 +68,23 @@ def create_skeleton(directory: str, template_name: str = None):
     Args:
         directory: The target directory to create the project in
         template_name: Optional name of the template to use. If None, uses the default template.
-    """
-    # Check for directory existence first
-    if os.path.exists(directory):
-        raise FileExistsError(f"Directory already exists: {directory}")
 
-    # Get package name and check for conflicts before making any file system changes
+    Raises:
+        FileExistsError: If directory already exists
+        FileNotFoundError: If template doesn't exist
+    """
+    # Get package name before any file system operations
     package_name = os.path.basename(directory)
+
+    # Check for package conflicts before making any file system changes
     if check_package_exists(package_name):
         if not user_confirms_overwrite(package_name):
             logger.info("Operation cancelled by user due to package name conflict.")
             sys.exit(0)
+
+    # Check for existing directory and raise error instead of backing up
+    if os.path.exists(directory):
+        raise FileExistsError(f"Directory already exists: {directory}")
 
     # Get the path to the cookiecutter template directory
     templates_dir = Path(__file__).parent / "templates"

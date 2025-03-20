@@ -1,4 +1,4 @@
-# FILE_LOCATION: {{cookiecutter.project_name}}/tests/__init__.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/tests/__init__.py
 """
 # PURPOSE: Initializes the tests module and defines the public test API.
 
