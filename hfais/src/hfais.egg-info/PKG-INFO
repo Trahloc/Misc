@@ -1,0 +1,65 @@
+Metadata-Version: 2.4
+Name: hfais
+Version: 1742389364
+Summary: A Python project using the Zeroth Law framework
+Author-email: Zeroth Law Developer <developer@example.com>
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: click
+Requires-Dist: autoinit
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: black>=23.0; extra == "dev"
+Requires-Dist: flake8>=6.0; extra == "dev"
+Requires-Dist: mypy>=1.0; extra == "dev"
+
+# FILE_LOCATION: hfais/README.md
+
+## PURPOSE: Provides advanced search capabilities for HuggingFace.co models.
+
+## INTERFACES: N/A (Documentation file)
+
+## DEPENDENCIES: N/A
+
+## TODO: Review and refine documentation based on project evolution.
+
+---
+A Python package for advanced HuggingFace.co model search capabilities.
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+```python
+import hfais
+```
+
+## Command Line Interface
+
+```bash
+hfais --help
+```
+
+## Features
+
+- Perform advanced searches on HuggingFace.co models.
+- Follow specific creators or models with fine-grained criteria.
+- Cache search results locally for efficient processing.
+- Apply advanced filters (e.g., model size, architecture).
+
+## Development
+
+This project adheres to the Zeroth Law of AI-Driven Development. See [ZerothLawAIFramework.py.md](ZerothLawAIFramework.py.md) for details.
+
+## KNOWN ERRORS: None
+
+## IMPROVEMENTS: Initial template creation.
+
+## FUTURE TODOs: Add contribution guidelines, expand usage examples, and integrate automated documentation generation.

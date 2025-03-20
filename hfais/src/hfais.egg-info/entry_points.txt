@@ -1,0 +1,2 @@
+[console_scripts]
+hfais = hfais.__main__:main

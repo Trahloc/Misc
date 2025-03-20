@@ -9,8 +9,10 @@
  - zeroth_law.analyzer
  - zeroth_law.reporting
  - zeroth_law.skeleton
+ - zeroth_law.test_coverage
  - zeroth_law.config
  - zeroth_law.exceptions
+ - zeroth_law.template_converter
  - click
  - logging
 """
@@ -23,9 +25,12 @@ import click
 
 from zeroth_law.analyzer import analyze_file, analyze_directory
 from zeroth_law.reporting import generate_report, generate_summary_report
+from zeroth_law import skeleton
 from zeroth_law.skeleton import create_skeleton
+from zeroth_law.test_coverage import verify_test_coverage, CoverageError
 from zeroth_law.config import load_config, DEFAULT_CONFIG
 from zeroth_law.exceptions import ZerothLawError
+from zeroth_law.template_converter import convert_to_template
 
 @click.command()
 @click.argument("path", required=False, type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True))
@@ -36,24 +41,103 @@ from zeroth_law.exceptions import ZerothLawError
 @click.option("-v", "--verbose", count=True, help="Increase verbosity (e.g., -v for INFO, -vv for DEBUG).")
 @click.version_option(version="0.1.0")  # Replace with actual version
 @click.option("--skel", metavar="DIRECTORY", help="Create a new Zeroth Law project skeleton.")
-def main(path: Optional[str], recursive: bool, summary: bool, update: bool, config_path: Optional[str], verbose: int, skel: Optional[str]):
+@click.option("--template", help="Template to use with --skel (defaults to 'default')")
+@click.option("--list-templates", is_flag=True, help="List available project templates")
+@click.option("--test-coverage", is_flag=True, help="Verify test coverage for the project.")
+@click.option("--create-test-stubs", is_flag=True, help="Create test stubs for files without tests (used with --test-coverage).")
+@click.option('--template-from', help='Convert an existing project into a cookiecutter template')
+@click.option('--template-name', default='test_zeroth_law', help='Name for the template project (default: test_zeroth_law)')
+@click.option('--overwrite', is_flag=True, help='Overwrite existing template if it exists')
+def main(path: Optional[str], recursive: bool, summary: bool, update: bool, config_path: Optional[str],
+         verbose: int, skel: Optional[str], template: Optional[str], list_templates: bool,
+         test_coverage: bool, create_test_stubs: bool, template_from: Optional[str],
+         template_name: Optional[str], overwrite: bool):
     """Command-line interface for the analyzer."""
-    # Configure logging level
-    if verbose == 1:
-        log_level = logging.INFO
-    elif verbose > 1:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.WARNING  # Default log level
-
-    logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
     logger = logging.getLogger(__name__)
+
+    # Configure logging based on verbosity
+    if verbose == 0:
+        logging.basicConfig(level=logging.WARNING)
+    elif verbose == 1:
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(level=logging.DEBUG)
+
+    # If create_test_stubs is specified, automatically enable test_coverage
+    if create_test_stubs:
+        test_coverage = True
+
+    if list_templates:
+        templates = skeleton.list_templates()
+        if not templates:
+            click.echo("No templates available. Use --template-from to create one.")
+        else:
+            click.echo("Available templates:")
+            for t in templates:
+                click.echo(f"  - {t}")
+        return
 
     if skel:
         try:
-            create_skeleton(skel)
+            create_skeleton(skel, template)
         except FileExistsError as e:
-            logger.error(e)
+            logger.error(str(e))
+            sys.exit(1)
+        except FileNotFoundError as e:
+            logger.error(str(e))
+            sys.exit(1)
+        return
+
+    if test_coverage:
+        if not path:
+            path = os.getcwd()
+            logger.info("No path specified, using current directory: %s", path)
+
+        try:
+            metrics = verify_test_coverage(path, create_stubs=create_test_stubs)
+
+            # Report the results
+            click.echo(f"\nTest Coverage Report for {path}:")
+            click.echo(f"Total source files: {metrics['total_source_files']}")
+            click.echo(f"Total test files: {metrics['total_test_files']}")
+            click.echo(f"Test coverage: {metrics['coverage_percentage']:.1f}%")
+
+            # Report missing tests
+            if metrics['missing_tests']:
+                click.echo("\nSource files missing tests:")
+                for source_file in metrics['missing_tests']:
+                    click.echo(f"  - {source_file}")
+
+                if create_test_stubs:
+                    click.echo("\nTest stubs created for missing tests.")
+                else:
+                    click.echo("\nUse --create-test-stubs to generate test stubs for these files.")
+
+            # Report orphaned tests (tests without source files)
+            if metrics.get('orphaned_tests'):
+                click.echo("\nTest files without corresponding source files:")
+                for test_file in metrics['orphaned_tests']:
+                    click.echo(f"  - {test_file}")
+
+            # Exit with non-zero status if coverage is below 90%
+            if metrics['coverage_percentage'] < 90:
+                click.echo("\nZEROTH LAW VIOLATION: Test coverage below 90%.")
+                if not create_test_stubs:
+                    sys.exit(1)
+
+            return
+        except (OSError, CoverageError) as e:
+            logger.error("Error verifying test coverage: %s", str(e))
+            sys.exit(1)
+        except KeyError as e:
+            logger.error("Invalid metrics format returned from verify_test_coverage: %s", str(e))
+            sys.exit(1)
+
+    if template_from:
+        try:
+            convert_to_template(template_from, template_name or 'test_zeroth_law', overwrite)
+        except (FileNotFoundError, FileExistsError, ValueError) as e:
+            logger.error("Failed to convert project to template: %s", str(e))
             sys.exit(1)
         return
 
@@ -71,8 +155,8 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
                 config = load_config(default_config_path)
             else:
                 config = DEFAULT_CONFIG
-    except Exception as e:
-        logger.error(f"Error loading config: {e}")
+    except ZerothLawError as e:
+        logger.error("Error loading config: %s", str(e))
         sys.exit(1)
 
     try:
@@ -88,7 +172,7 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
                     click.echo(generate_report(metrics))
                     logger.debug("-" * 20)  # Separator line
         else:
-            logger.error(f"Invalid path: {path}")
+            logger.error("Invalid path: %s", path)
             sys.exit(1)
 
     except ZerothLawError as e:
@@ -98,4 +182,4 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter

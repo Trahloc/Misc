@@ -28,3 +28,17 @@ zeroth-law = "zeroth_law.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest]
+testpaths = ["tests"]
+python_files = "test_*.py"
+# Explicitly ignore cookiecutter template directories and files with cookiecutter variables
+norecursedirs = ["src/zeroth_law/cookiecutter-template", "tests/zeroth_law/cookiecutter-template", "*cookiecutter*", "*{{*}}*"]
+# Add a custom marker for tests that involve cookiecutter templates if needed
+markers = [
+    "cookiecutter: marks tests that involve cookiecutter templates (deselect with '-m \"not cookiecutter\"')"
+]
+
+[tool.pytest.ini_options]
+cache_dir = "$HOME/.config/python/pytest-cache"
+# verbose = true  # Removed as it's causing a warning

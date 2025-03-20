@@ -1,0 +1,78 @@
+# FILE_LOCATION: source_project2/pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{ cookiecutter.project_name }}"
+version = "1742389364" # epoch date format for AI-driven versioning
+authors = [
+    { name = "Zeroth Law Developer", email = "developer@example.com" },
+]
+description = "A Python project using the Zeroth Law framework"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click",
+    "autoinit", # Added autoinit
+    "tomli",    # For reading TOML files (used in project setup warning tests)
+]
+
+[project.scripts]
+source_project2 = "source_project2.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "black>=23.0",
+    "flake8>=6.0",
+    "mypy>=1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest]
+testpaths = ["tests"]
+python_files = "test_*.py"
+# Add the project root to Python path
+pythonpath = ["."]
+# Add any specific markers if needed
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.pytest.ini_options]
+# Any additional pytest options here
+minversion = "7.0"
+
+[tool.black]
+line-length = 140
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.flake8]
+max-line-length = 140
+extend-ignore = "E203,"
+exclude = [
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    "*.egg-info",
+    "build",
+    "dist",
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true

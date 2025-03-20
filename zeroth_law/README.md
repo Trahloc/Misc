@@ -19,6 +19,7 @@ The Zeroth Law is a set of coding principles designed to maximize code comprehen
 *   **Supports file and directory analysis** (including recursive analysis).
 *   **Integrates with `pre-commit`:** Automate checks before committing code.
 *   **Type-hinted:** For clarity and static analysis.
+*   **Test coverage verification:** Ensures every Python file has a corresponding test file.
 
 ## Installation
 
@@ -46,6 +47,10 @@ python -m zeroth_law.cli <path> [options]
 *   **`<path>`:**  Path to a Python file or directory.
 *   **`-r` or `--recursive`:** Analyze directories recursively.
 *   **`-s` or `--summary`:** Generate a summary report (for directories).
+*   **`-u` or `--update`:** Update file footers with analysis results.
+*   **`--skel DIRECTORY`:** Create a new Zeroth Law project skeleton.
+*   **`--test-coverage`:** Verify test coverage for the project.
+*   **`--create-test-stubs`:** Create test stubs for files without tests.
 
 **Examples:**
 
@@ -64,6 +69,18 @@ python -m zeroth_law.cli <path> [options]
 *   Generate a summary report:
     ```bash
     python -m zeroth_law.cli my_project/ -r -s
+    ```
+*   Create a new project skeleton:
+    ```bash
+    python -m zeroth_law.cli --skel my_new_project
+    ```
+*   Verify test coverage for a project:
+    ```bash
+    python -m zeroth_law.cli my_project --test-coverage
+    ```
+*   Create test stubs for files without tests:
+    ```bash
+    python -m zeroth_law.cli my_project --test-coverage --create-test-stubs
     ```
 
 ### Pre-commit Integration
