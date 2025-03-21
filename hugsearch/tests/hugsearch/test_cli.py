@@ -1,13 +1,13 @@
-# FILE_LOCATION: hugsearch/tests/zeroth_law_template/test_cli.py
+# FILE_LOCATION: hugsearch/tests/hugsearch/test_cli.py
 """
-# PURPOSE: Tests for zeroth_law_template.cli.
+# PURPOSE: Tests for hugsearch.cli.
 
 ## INTERFACES:
 #   test_cli_exists: Verify the module exists.
 
 ## DEPENDENCIES:
 #   pytest
-#   zeroth_law_template.cli
+#   hugsearch.cli
 """
 import pytest
 

@@ -1,6 +1,6 @@
-# FILE_LOCATION: hugsearch/tests/zeroth_law_template/test_exceptions.py
+# FILE_LOCATION: hugsearch/tests/hugsearch/test_exceptions.py
 """
-# PURPOSE: Tests for zeroth_law_template.exceptions.
+# PURPOSE: Tests for hugsearch.exceptions.
 
 ## INTERFACES:
 #   test_exceptions_exist: Verify the exception classes exist.
@@ -8,7 +8,7 @@
 
 ## DEPENDENCIES:
 #   pytest
-#   zeroth_law_template.exceptions
+#   hugsearch.exceptions
 """
 import pytest
 from hugsearch.exceptions import (

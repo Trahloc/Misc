@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/zeroth_law_template/config.py
+# FILE_LOCATION: hugsearch/src/hugsearch/config.py
 """
 # PURPOSE: Comprehensive configuration management.
 

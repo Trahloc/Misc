@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/zeroth_law_template/cli.py
+# FILE_LOCATION: hugsearch/src/hugsearch/cli.py
 """
 # PURPOSE: Main entry point for the CLI, registers and orchestrates commands.
 
@@ -8,7 +8,7 @@
 ## DEPENDENCIES:
  - click: Command-line interface creation
  - hugsearch.commands: Command implementations
- - zeroth_law_template.config: Configuration management
+ - hugsearch.config: Configuration management
 """
 import logging
 import sys

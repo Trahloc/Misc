@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/zeroth_law_template/cli_args.py
+# FILE_LOCATION: hugsearch/src/hugsearch/cli_args.py
 """
 # PURPOSE: Provide reusable command-line arguments for the hugsearch package.
 

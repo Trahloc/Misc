@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/tests/zeroth_law_template/commands/test_info.py
+# FILE_LOCATION: hugsearch/tests/hugsearch/commands/test_info.py
 """
 # PURPOSE: Tests for hugsearch.commands.info.
 

@@ -68,10 +68,6 @@ def create_skeleton(directory: str, template_name: str = None):
     Args:
         directory: The target directory to create the project in
         template_name: Optional name of the template to use. If None, uses the default template.
-
-    Raises:
-        FileExistsError: If directory already exists
-        FileNotFoundError: If template doesn't exist
     """
     # Get package name before any file system operations
     package_name = os.path.basename(directory)
@@ -82,9 +78,12 @@ def create_skeleton(directory: str, template_name: str = None):
             logger.info("Operation cancelled by user due to package name conflict.")
             sys.exit(0)
 
-    # Check for existing directory and raise error instead of backing up
+    # Handle existing directory by backing it up with timestamp
     if os.path.exists(directory):
-        raise FileExistsError(f"Directory already exists: {directory}")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = f"{directory}.{timestamp}"
+        logger.info("Backing up existing directory to: %s", backup_path)
+        shutil.move(directory, backup_path)
 
     # Get the path to the cookiecutter template directory
     templates_dir = Path(__file__).parent / "templates"

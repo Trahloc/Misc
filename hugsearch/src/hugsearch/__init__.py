@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/zeroth_law_template/__init__.py
+# FILE_LOCATION: hugsearch/src/hugsearch/__init__.py
 """
 # PURPOSE: Exposes the public API for the hugsearch module.
 

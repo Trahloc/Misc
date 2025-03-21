@@ -1,13 +1,13 @@
-# FILE_LOCATION: hugsearch/tests/zeroth_law_template/test___main__.py
+# FILE_LOCATION: hugsearch/tests/hugsearch/test___main__.py
 """
-# PURPOSE: Tests for zeroth_law_template.__main__.
+# PURPOSE: Tests for hugsearch.__main__.
 
 ## INTERFACES:
 #   test___main___exists: Verify the module exists.
 
 ## DEPENDENCIES:
 #   pytest
-#   zeroth_law_template.__main__
+#   hugsearch.__main__
 """
 import pytest
 

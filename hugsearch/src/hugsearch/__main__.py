@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/zeroth_law_template/__main__.py
+# FILE_LOCATION: hugsearch/src/hugsearch/__main__.py
 """
 # PURPOSE: Entry point for the hugsearch package.
 
@@ -6,7 +6,7 @@
  # main(): executes the main function from cli.py
 
 ## DEPENDENCIES:
- - zeroth_law_template.cli
+ - hugsearch.cli
 """
 from hugsearch.cli import main
 

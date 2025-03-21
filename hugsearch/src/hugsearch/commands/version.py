@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/zeroth_law_template/commands/version.py
+# FILE_LOCATION: hugsearch/src/hugsearch/commands/version.py
 """
 # PURPOSE: Implements the version command for CLI.
 
@@ -8,7 +8,7 @@
 ## DEPENDENCIES:
  - click: Command-line interface creation
  - importlib.metadata: Package version information (Python 3.8+)
- - zeroth_law_template.config: Configuration management
+ - hugsearch.config: Configuration management
 """
 import sys
 import platform

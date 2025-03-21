@@ -1,2 +1,1 @@
 hugsearch
-zeroth_law_template

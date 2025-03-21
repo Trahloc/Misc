@@ -6,7 +6,7 @@
 
 ## DEPENDENCIES:
  - click: Command-line interface creation
- - zeroth_law_template.config: Configuration management
+ - hugsearch.config: Configuration management
 """
 import sys
 import click

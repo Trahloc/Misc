@@ -1,6 +1,6 @@
-# FILE_LOCATION: hugsearch/tests/zeroth_law_template/test_config.py
+# FILE_LOCATION: hugsearch/tests/hugsearch/test_config.py
 """
-# PURPOSE: Tests for zeroth_law_template.config.
+# PURPOSE: Tests for hugsearch.config.
 
 ## INTERFACES:
 #   test_config_exists: Verify the module exists.
@@ -10,7 +10,7 @@
 
 ## DEPENDENCIES:
 #   pytest
-#   zeroth_law_template.config
+#   hugsearch.config
 #   json
 #   tempfile
 """

@@ -20,7 +20,7 @@ The project uses a configuration file to manage settings. The following formats 
 - **YAML**: Useful for complex configurations.
 - **JSON**: Commonly used but less human-readable.
 
-### Example Configuration (zeroth_law_template.toml)
+### Example Configuration (hugsearch.toml)
 
 ```toml
 [app]

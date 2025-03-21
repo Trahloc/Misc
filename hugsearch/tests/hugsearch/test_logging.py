@@ -1,12 +1,12 @@
 """
-# PURPOSE: Tests for zeroth_law_template.logging.
+# PURPOSE: Tests for hugsearch.logging.
 
 ## INTERFACES:
  - All test functions
 
 ## DEPENDENCIES:
  - pytest
- - zeroth_law_template.logging
+ - hugsearch.logging
 """
 import pytest
 

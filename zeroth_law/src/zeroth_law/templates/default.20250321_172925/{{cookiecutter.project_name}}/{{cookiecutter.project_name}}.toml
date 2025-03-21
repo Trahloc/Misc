@@ -1,8 +1,8 @@
-# hugsearch.toml
+# {{ cookiecutter.project_name }}.toml
 # Project-specific configuration file
 
 [app]
-name = "hugsearch"
+name = "{{ cookiecutter.project_name }}"
 version = "0.1.0"
 description = "A project created with the Zeroth Law AI Framework"
 debug = false

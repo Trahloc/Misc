@@ -1,4 +1,4 @@
-# FILE_LOCATION: zeroth_law_template/.pylintrc
+# FILE_LOCATION: hugsearch/.pylintrc
 
 [MESSAGES CONTROL]
 disable=
