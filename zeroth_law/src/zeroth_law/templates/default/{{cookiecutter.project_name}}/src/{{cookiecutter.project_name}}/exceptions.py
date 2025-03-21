@@ -1,6 +1,6 @@
-# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/exceptions.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/zeroth_law_template/exceptions.py
 """
-# PURPOSE: Define custom exceptions for the zeroth_law_template analyzer.
+# PURPOSE: Define custom exceptions for the {{ cookiecutter.project_name }} analyzer.
 
 ## INTERFACES:
  - ZerothLawError

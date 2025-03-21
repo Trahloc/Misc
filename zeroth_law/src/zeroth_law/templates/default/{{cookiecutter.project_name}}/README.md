@@ -1,6 +1,6 @@
 # FILE_LOCATION: {{ cookiecutter.project_name }}/README.md
 
-## PURPOSE: Provides a basic overview and usage instructions for the zeroth_law_template package.
+## PURPOSE: Provides a basic overview and usage instructions for the {{ cookiecutter.project_name }} package.
 
 ## INTERFACES: N/A (Documentation file)
 

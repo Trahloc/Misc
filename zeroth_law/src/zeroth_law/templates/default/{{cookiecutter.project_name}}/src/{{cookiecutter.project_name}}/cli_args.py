@@ -1,6 +1,6 @@
-# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/cli_args.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/zeroth_law_template/cli_args.py
 """
-# PURPOSE: Provide reusable command-line arguments for the zeroth_law_template package.
+# PURPOSE: Provide reusable command-line arguments for the {{ cookiecutter.project_name }} package.
 
 ## INTERFACES:
  - add_args(command): Add standard arguments to a Click command

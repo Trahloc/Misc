@@ -1,4 +1,4 @@
-# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/cli.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/zeroth_law_template/cli.py
 """
 # PURPOSE: Main entry point for the CLI, registers and orchestrates commands.
 

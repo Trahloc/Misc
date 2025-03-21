@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/hugsearch/cli.py
+# FILE_LOCATION: hugsearch/src/zeroth_law_template/cli.py
 """
 # PURPOSE: Main entry point for the CLI, registers and orchestrates commands.
 

@@ -1,4 +1,4 @@
-# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/commands/version.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/zeroth_law_template/commands/version.py
 """
 # PURPOSE: Implements the version command for CLI.
 

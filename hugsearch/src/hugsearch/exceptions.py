@@ -1,6 +1,6 @@
-# FILE_LOCATION: hugsearch/src/hugsearch/exceptions.py
+# FILE_LOCATION: hugsearch/src/zeroth_law_template/exceptions.py
 """
-# PURPOSE: Define custom exceptions for the zeroth_law_template analyzer.
+# PURPOSE: Define custom exceptions for the hugsearch analyzer.
 
 ## INTERFACES:
  - ZerothLawError

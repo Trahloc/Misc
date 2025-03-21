@@ -1,4 +1,4 @@
-# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/config.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/zeroth_law_template/config.py
 """
 # PURPOSE: Comprehensive configuration management.
 

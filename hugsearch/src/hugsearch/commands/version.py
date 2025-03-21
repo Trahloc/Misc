@@ -1,4 +1,4 @@
-# FILE_LOCATION: hugsearch/src/hugsearch/commands/version.py
+# FILE_LOCATION: hugsearch/src/zeroth_law_template/commands/version.py
 """
 # PURPOSE: Implements the version command for CLI.
 

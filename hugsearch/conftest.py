@@ -1,6 +1,6 @@
 # FILE_LOCATION: hugsearch/conftest.py
 """
-# PURPOSE: Configure pytest for the zeroth_law_template project.
+# PURPOSE: Configure pytest for the hugsearch project.
 
 ## INTERFACES:
  - pytest_configure: Configure pytest to add the project root to Python path

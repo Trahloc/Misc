@@ -1,6 +1,6 @@
-# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/__main__.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/zeroth_law_template/__main__.py
 """
-# PURPOSE: Entry point for the zeroth_law_template package.
+# PURPOSE: Entry point for the {{ cookiecutter.project_name }} package.
 
 ## INTERFACES:
  # main(): executes the main function from cli.py

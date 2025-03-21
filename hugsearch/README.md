@@ -1,6 +1,6 @@
 # FILE_LOCATION: hugsearch/README.md
 
-## PURPOSE: Provides a basic overview and usage instructions for the zeroth_law_template package.
+## PURPOSE: Provides a basic overview and usage instructions for the hugsearch package.
 
 ## INTERFACES: N/A (Documentation file)
 

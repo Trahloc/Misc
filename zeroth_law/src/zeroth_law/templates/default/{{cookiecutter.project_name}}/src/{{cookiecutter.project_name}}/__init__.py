@@ -1,6 +1,6 @@
-# FILE_LOCATION: {{ cookiecutter.project_name }}/src/{{ cookiecutter.project_name }}/__init__.py
+# FILE_LOCATION: {{ cookiecutter.project_name }}/src/zeroth_law_template/__init__.py
 """
-# PURPOSE: Exposes the public API for the zeroth_law_template module.
+# PURPOSE: Exposes the public API for the {{ cookiecutter.project_name }} module.
 
 ## INTERFACES:
 # - config: Configuration management
