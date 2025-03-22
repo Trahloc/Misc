@@ -1,21 +1,30 @@
 Metadata-Version: 2.4
 Name: hugsearch
 Version: 1742389364
-Summary: A Python project using the Zeroth Law framework
+Summary: A local cached search engine for Hugging Face models.
 Author-email: Zeroth Law Developer <developer@example.com>
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
-Requires-Dist: click
+License-File: LICENSE
+Requires-Dist: aiosqlite>=0.19.0
+Requires-Dist: apscheduler>=3.10.4
 Requires-Dist: autoinit
+Requires-Dist: click
+Requires-Dist: huggingface-hub
+Requires-Dist: rapidfuzz>=3.6.1
+Requires-Dist: requests
+Requires-Dist: rich>=13.7.0
+Requires-Dist: textual>=0.47.1
 Requires-Dist: tomli
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0; extra == "dev"
 Requires-Dist: black>=23.0; extra == "dev"
 Requires-Dist: flake8>=6.0; extra == "dev"
 Requires-Dist: mypy>=1.0; extra == "dev"
+Dynamic: license-file
 
 # FILE_LOCATION: hugsearch/README.md
 

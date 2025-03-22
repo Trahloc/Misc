@@ -1,81 +1,141 @@
-# FILE_LOCATION: hugsearch/src/hugsearch/cli.py
 """
-# PURPOSE: Main entry point for the CLI, registers and orchestrates commands.
+# PURPOSE: Command line interface for hugsearch, enabling scripted usage
 
 ## INTERFACES:
- - main(): CLI entry point that sets up logging and registers commands
+- search(): Main search command with filtering options
+- refresh(): Manual refresh command for models/users/searches
+- follow(): Command to follow a creator
+- unfollow(): Command to unfollow a creator
 
 ## DEPENDENCIES:
- - click: Command-line interface creation
- - hugsearch.commands: Command implementations
- - hugsearch.config: Configuration management
+- click: CLI framework
+- rich: Output formatting
 """
-import logging
-import sys
-from typing import Optional  # Only import what's needed for the type annotation
-
+import asyncio
 import click
+from pathlib import Path
+from rich.console import Console
+from rich.table import Table
+from typing import Optional, List
+from . import database
+from . import scheduler
+from .config import get_config
+from .cli_args import configure_logging
+from .commands import version, check
 
-from hugsearch.commands import check, version, info
-from hugsearch.config import get_config
+console = Console()
+
+def run_async(coro):
+    """Wrapper to run async functions in click commands"""
+    return asyncio.get_event_loop().run_until_complete(coro)
 
 @click.group()
-@click.option('-v', '--verbose', count=True, help="Increase verbosity (e.g., -v for INFO, -vv for DEBUG).")
-@click.option('--config', type=str, help="Path to configuration file.")
+@click.version_option()
+@click.option('-v', '--verbose', count=True, help='Increase verbosity (e.g., -v for INFO, -vv for DEBUG).', is_eager=True)
 @click.pass_context
-def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> None:
-    """Command-line interface for the hugsearch package."""
-    # Initialize context object to store shared data
+def cli(ctx, verbose):
+    """Local Hugging Face model search with caching"""
     ctx.ensure_object(dict)
-    
-    # Load configuration
-    app_config = get_config(config)
-    
-    # Use config version or fallback to default
-    version_str = getattr(app_config.app, 'version', "0.1.0")
-    
-    # Set up logging based on verbosity
-    if verbose == 0:
-        log_level = logging.WARNING
-    elif verbose == 1:
-        log_level = logging.INFO
-    else:
-        log_level = logging.DEBUG
-
-    logging.basicConfig(
-        level=log_level,
-        format=app_config.logging.format,
-        datefmt=app_config.logging.date_format
-    )
-    
-    # Store logger and config in context for commands to use
-    ctx.obj['logger'] = logging.getLogger('hugsearch')
-    ctx.obj['config'] = app_config
+    ctx.obj['logger'] = configure_logging(verbose)
+    # Store verbose level in context for subcommands
     ctx.obj['verbose'] = verbose
 
-# Register commands
-main.add_command(version.command)
-main.add_command(check.command)
-main.add_command(info.command)
+# Add commands from the commands directory
+cli.add_command(version.command)
+cli.add_command(check.command)
 
-# When run as a script
-if __name__ == "__main__":
-    # Call main function with empty object
-    sys.exit(main(obj={}))  # type: ignore
+@cli.command()
+@click.argument('query')
+@click.option('--case-sensitive', '-c', is_flag=True, help='Enable case-sensitive search')
+@click.option('--exact', '-e', is_flag=True, help='Require exact matches')
+@click.option('--json', '-j', is_flag=True, help='Output results in JSON format')
+@click.option('--filter', '-f', multiple=True, help='Add filters (e.g., -f "tags=gpt")')
+def search(query: str, case_sensitive: bool, exact: bool, json: bool, filter: tuple):
+    """Search for models in the local cache"""
+    # Parse filters
+    filters = {}
+    for f in filter:
+        if '=' in f:
+            key, value = f.split('=', 1)
+            filters[key.strip()] = value.strip()
 
-"""
-## KNOWN ERRORS: None
+    # Perform search
+    results = run_async(database.search_models(
+        get_config().db_path,
+        query,
+        case_sensitive=case_sensitive,
+        exact_match=exact,
+        filters=filters
+    ))
 
-## IMPROVEMENTS:
- - Added configuration file option
- - Load configuration for use in commands
- - Use configuration values for logging format
- - Updated to include only essential commands
- - Added command to display project information
- - Fixed linter errors with proper type annotations
+    if json:
+        import json as json_lib
+        click.echo(json_lib.dumps(results, indent=2))
+    else:
+        table = Table(show_header=True)
+        table.add_column("Name")
+        table.add_column("Author")
+        table.add_column("Downloads")
+        table.add_column("Last Updated")
 
-## FUTURE TODOs:
- - Consider adding command discovery mechanism
- - Add command group management for larger projects
- - Add support for environment variable configuration
-"""
+        for result in results:
+            table.add_row(
+                result['name'],
+                result['author'],
+                str(result.get('downloads', 'N/A')),
+                result['last_modified']
+            )
+
+        console.print(table)
+
+@cli.command()
+@click.argument('items', nargs=-1)
+@click.option('--type', '-t', type=click.Choice(['model', 'user', 'search']),
+              default='model', help='Type of items to refresh')
+def refresh(items: tuple, type: str):
+    """Manually refresh specific models, users, or searches"""
+    sched = run_async(scheduler.create_scheduler(get_config().db_path))
+    run_async(sched.refresh_models(list(items), type))
+    click.echo(f"Refreshed {len(items)} {type}(s)")
+
+@cli.command()
+@click.argument('creator')
+def follow(creator: str):
+    """Follow a creator to get automatic updates"""
+    async def _follow():
+        async with database.get_connection(get_config().db_path) as db:
+            await db.execute(
+                "INSERT OR REPLACE INTO followed_creators (author, last_checked) VALUES (?, ?)",
+                (creator, '1970-01-01T00:00:00')  # Force immediate update
+            )
+            await db.commit()
+
+        # Trigger immediate refresh of creator's models
+        sched = await scheduler.create_scheduler(get_config().db_path)
+        await sched.refresh_models([creator], 'user')
+        await sched.stop()
+
+    run_async(_follow())
+    click.echo(f"Now following {creator}")
+
+@cli.command()
+@click.argument('creator')
+def unfollow(creator: str):
+    """Stop following a creator"""
+    async def _unfollow():
+        async with database.get_connection(get_config().db_path) as db:
+            await db.execute(
+                "DELETE FROM followed_creators WHERE author = ?",
+                (creator,)
+            )
+            await db.commit()
+
+    run_async(_unfollow())
+    click.echo(f"Unfollowed {creator}")
+
+def main():
+    """Entry point for CLI"""
+    cli(obj={})
+
+if __name__ == '__main__':
+    main()

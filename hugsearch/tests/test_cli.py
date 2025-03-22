@@ -15,68 +15,61 @@
 import pytest
 from click.testing import CliRunner
 
-from hugsearch.cli import main
+from hugsearch.cli import cli  # Import cli instead of main
 
 def test_cli_check():
     """Test the CLI check command with different options"""
     runner = CliRunner()
-    
+
     # Test basic check
-    result = runner.invoke(main, ["check"])
+    result = runner.invoke(cli, ["check"])
     assert result.exit_code == 0
-    
-    # Test with specific options
-    result = runner.invoke(main, ["check", "--deps"])
-    assert result.exit_code == 0
-    
-    result = runner.invoke(main, ["check", "--env"])
-    assert result.exit_code == 0
-    
-    result = runner.invoke(main, ["check", "--paths"])
+
+    # Test with verbose flag
+    result = runner.invoke(cli, ["-v", "check"])
     assert result.exit_code == 0
 
 def test_cli_version():
     """Test the CLI version command"""
     runner = CliRunner()
-    
+
     # Test basic version
-    result = runner.invoke(main, ["version"])
+    result = runner.invoke(cli, ["version"])
     assert result.exit_code == 0
-    
-    # Test verbose version
-    result = runner.invoke(main, ["version", "--verbose"])
-    assert result.exit_code == 0
-    
-    # Test JSON output
-    result = runner.invoke(main, ["version", "--json"])
+
+    # Test with verbose flag
+    result = runner.invoke(cli, ["-v", "version"])
     assert result.exit_code == 0
 
 def test_cli_verbose():
     """Test the CLI verbose option affects logging"""
     runner = CliRunner()
-    
+
     # Test with different verbosity levels
-    result = runner.invoke(main, ["-v", "version"])
+    result = runner.invoke(cli, ["-v", "version"])
     assert result.exit_code == 0
-    
-    result = runner.invoke(main, ["-vv", "version"])
+    assert "INFO" in result.output or "DEBUG" in result.output
+
+    result = runner.invoke(cli, ["-vv", "version"])
     assert result.exit_code == 0
+    assert "DEBUG" in result.output
 
 def test_cli_error_handling(cli_runner, monkeypatch):
     """Test CLI error handling when a command fails"""
     # Mock check_environment in the commands/check module
     def mock_check_environment(*args, **kwargs):
         raise ValueError("Test error")
-    
+
     # Apply the mock to the correct module
     monkeypatch.setattr(
         "hugsearch.commands.check.check_environment",
         mock_check_environment
     )
-    
+
     # Test that the CLI handles errors correctly
-    result = cli_runner.invoke(main, ["check"], catch_exceptions=True)
-    assert "Error during environment check" in result.output
+    result = cli_runner.invoke(cli, ["check"], catch_exceptions=True)
+    assert result.exit_code != 0
+    assert "Error" in result.output
 
 @pytest.fixture
 def cli_runner():

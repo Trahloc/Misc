@@ -22,6 +22,9 @@ MD024:
 # MD025: Multiple top-level headings in the same document
 MD025: true
 
+# MD032: Blanks around lists
+MD032: false
+
 # MD033: Allow inline HTML (sometimes needed for complex formatting)
 MD033: false
 
@@ -41,4 +44,4 @@ MD049:
 # MD050: Strong style
 MD050:
   # Enforce consistent style for strong emphasis
-  style: "asterisk" 
+  style: "asterisk"

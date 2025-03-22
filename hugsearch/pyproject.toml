@@ -8,9 +8,9 @@ build-backend = "setuptools.build_meta"
 name = "hugsearch"
 version = "1742389364" # epoch date format for AI-driven versioning
 authors = [
-    { name = "Zeroth Law Developer", email = "developer@example.com" },
+    { name = "Trahloc colDhart", email = "github@trahloc.com" },
 ]
-description = "A Python project using the Zeroth Law framework"
+description = "A local cached search engine for Hugging Face models."
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -19,8 +19,15 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "click",
+    "aiosqlite>=0.19.0",       # Async SQLite support
+    "apscheduler>=3.10.4",     # For scheduled updates
     "autoinit", # Added autoinit
+    "click",
+    "huggingface-hub", #official huggingface hub python module
+    "rapidfuzz>=3.6.1",        # Fast fuzzy matching
+    "requests", # For making HTTP requests
+    "rich>=13.7.0",            # Rich text and styling (required by textual)
+    "textual>=0.47.1",         # Modern TUI framework
     "tomli",    # For reading TOML files (used in project setup warning tests)
 ]
 

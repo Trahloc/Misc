@@ -37,35 +37,59 @@ from hugsearch.utils import get_project_root
 def command(ctx: click.Context, deps: bool, env: bool, paths: bool):
     """
     Check the application environment and dependencies.
-    
+
     If no options are specified, all checks will be performed.
     """
     logger = ctx.obj['logger']
-    
+    # Get verbosity from parent context
+    verbose = 0
+    if ctx.parent:
+        verbose = ctx.parent.params.get('verbose', 0)
+
     # If no specific checks requested, do all checks
     if not any([deps, env, paths]):
         deps = env = paths = True
-    
+
     try:
         if env:
-            check_environment()
-        
+            log_msg = "Checking environment..."
+            if verbose > 0:
+                click.echo(f"[INFO] {log_msg}")
+            logger.info(log_msg)
+            check_environment(verbose)
+
         if deps:
-            check_dependencies()
-            
+            log_msg = "Checking dependencies..."
+            if verbose > 0:
+                click.echo(f"[INFO] {log_msg}")
+            logger.info(log_msg)
+            check_dependencies(verbose)
+
         if paths:
-            check_paths()
-            
+            log_msg = "Checking paths..."
+            if verbose > 0:
+                click.echo(f"[INFO] {log_msg}")
+            logger.info(log_msg)
+            check_paths(verbose)
+
+        log_msg = "Environment check completed successfully"
+        if verbose > 0:
+            click.echo(f"[INFO] {log_msg}")
+        logger.info(log_msg)
+        if verbose > 1:
+            click.echo("[DEBUG] All checks completed without errors")
         click.echo("✅ All checks passed successfully!")
-        logger.info("Environment check completed successfully")
+
     except Exception as e:
         error_msg = f"❌ Error during environment check: {str(e)}"
-        click.echo(error_msg, err=True)
+        click.echo(f"[ERROR] {error_msg}", err=True)
         logger.error(error_msg)
         ctx.exit(1)
 
-def check_environment():
+def check_environment(verbose: int = 0):
     """Check and display system and Python environment information."""
+    if verbose > 1:
+        click.echo("[DEBUG] Starting environment check")
     click.echo("\n🔍 Environment Information:")
     click.echo(f"  • Python version: {sys.version.split()[0]}")
     click.echo(f"  • Python executable: {sys.executable}")
@@ -74,13 +98,15 @@ def check_environment():
     click.echo(f"  • Machine: {platform.machine()}")
     click.echo(f"  • Processor: {platform.processor() or 'Unknown'}")
 
-def check_dependencies():
+def check_dependencies(verbose: int = 0):
     """Check installed dependencies and their versions."""
+    if verbose > 1:
+        click.echo("[DEBUG] Starting dependency check")
     click.echo("\n📦 Dependency Information:")
-    
+
     # Get all installed packages using our helper function
     installed_packages = get_installed_packages()
-    
+
     # Check key dependencies
     key_deps = [
         "click",
@@ -89,28 +115,30 @@ def check_dependencies():
         "tomli",
         "typing-extensions",
     ]
-    
+
     # Display key dependencies first
     for dep in key_deps:
         if dep in installed_packages:
-            click.echo(f"  • {dep}: {installed_packages[dep]}")
+            msg = f"  • {dep}: {installed_packages[dep]}"
+            click.echo(msg)
+            if verbose > 1:
+                click.echo(f"[DEBUG] Found {dep} version {installed_packages[dep]}")
         else:
-            click.echo(f"  • {dep}: ❌ Not installed")
-    
-    # Now show all other dependencies
-    click.echo("\n  Other dependencies:")
-    for pkg, version in sorted(installed_packages.items()):
-        if pkg not in key_deps:
-            click.echo(f"  • {pkg}: {version}")
+            msg = f"  • {dep}: ❌ Not installed"
+            click.echo(msg)
+            if verbose > 1:
+                click.echo(f"[DEBUG] Missing dependency: {dep}")
 
-def check_paths():
+def check_paths(verbose: int = 0):
     """Check and display important application paths."""
+    if verbose > 1:
+        click.echo("[DEBUG] Starting path check")
     click.echo("\n📂 Application Paths:")
-    
+
     # Get project root
     project_root = get_project_root()
     click.echo(f"  • Project root: {project_root}")
-    
+
     # Check for common directories
     common_dirs = {
         "Source": project_root / "src",
@@ -119,10 +147,13 @@ def check_paths():
         "Config": project_root / "config",
         "Docs": project_root / "docs",
     }
-    
+
     for name, path in common_dirs.items():
-        status = "✅" if path.exists() else "⚠️ Not found"
+        exists = path.exists()
+        status = "✅" if exists else "⚠️ Not found"
         click.echo(f"  • {name}: {path} {status}")
+        if verbose > 1:
+            click.echo(f"[DEBUG] {name} directory {'exists' if exists else 'not found'} at {path}")
 
 """
 ## KNOWN ERRORS: None

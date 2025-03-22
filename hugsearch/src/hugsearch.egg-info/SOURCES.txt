@@ -1,3 +1,4 @@
+LICENSE
 README.md
 pyproject.toml
 src/hugsearch/__init__.py
@@ -5,8 +6,11 @@ src/hugsearch/__main__.py
 src/hugsearch/cli.py
 src/hugsearch/cli_args.py
 src/hugsearch/config.py
+src/hugsearch/database.py
 src/hugsearch/exceptions.py
 src/hugsearch/logging.py
+src/hugsearch/scheduler.py
+src/hugsearch/tui.py
 src/hugsearch/types.py
 src/hugsearch/utils.py
 src/hugsearch.egg-info/PKG-INFO
