@@ -4,19 +4,31 @@
 ## INTERFACES:
  - verify_test_coverage(project_path: str, create_stubs: bool = False) -> dict: Verifies test coverage and optionally creates test stubs
  - create_test_stub(source_file: str, test_file: str) -> None: Creates a test stub for a source file
+ - get_project_name(project_path: str) -> str: Gets project name from pyproject.toml
 
 ## DEPENDENCIES:
  - os
  - logging
  - zeroth_law.exceptions
  - re
+ - tomli (for Python < 3.11) or tomllib (for Python >= 3.11)
 """
 import os
 import logging
 import re
-from typing import Dict, List, Set
+import sys
+from typing import Dict, List, Set, Tuple, Optional
 
 from zeroth_law.exceptions import ZerothLawError
+
+# Use tomllib (Python 3.11+) or tomli (Python < 3.11)
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +81,35 @@ def _find_python_files(directory: str, ignore_patterns: List[str] = None) -> Set
 
     return python_files
 
+def get_project_name(project_path: str) -> str:
+    """
+    Get the project name from pyproject.toml if available.
+
+    Args:
+        project_path: Path to the project root
+
+    Returns:
+        Project name or directory name if not found in pyproject.toml
+    """
+    # Try to read pyproject.toml
+    pyproject_path = os.path.join(project_path, "pyproject.toml")
+
+    if os.path.exists(pyproject_path) and tomllib is not None:
+        try:
+            with open(pyproject_path, "rb") as f:
+                pyproject_data = tomllib.load(f)
+                project_name = pyproject_data.get("project", {}).get("name", "")
+                if project_name:
+                    logger.debug("Found project name in pyproject.toml: %s", project_name)
+                    return project_name
+        except Exception as e:
+            logger.warning("Error reading pyproject.toml: %s", str(e))
+
+    # Fall back to directory name
+    dir_name = os.path.basename(project_path)
+    logger.debug("Using directory name as project name: %s", dir_name)
+    return dir_name
+
 def _get_test_path(source_file: str, project_root: str) -> str:
     """
     Determine the expected test file path for a source file.
@@ -104,6 +145,45 @@ def _get_test_path(source_file: str, project_root: str) -> str:
         test_path = os.path.join(project_root, 'tests', f"test_{filename}")
 
     return test_path
+
+def _get_source_dirs(project_path: str) -> List[str]:
+    """
+    Find source directories in the project.
+
+    Args:
+        project_path: Path to the project root
+
+    Returns:
+        List of source directories
+    """
+    src_dirs = []
+    project_name = get_project_name(project_path)
+
+    # Check for src/project_name structure
+    src_package_path = os.path.join(project_path, "src", project_name)
+    if os.path.isdir(src_package_path):
+        logger.debug("Found src/%s structure", project_name)
+        src_dirs.append(src_package_path)
+
+    # Check for direct project_name structure
+    direct_package_path = os.path.join(project_path, project_name)
+    if os.path.isdir(direct_package_path):
+        logger.debug("Found direct %s package structure", project_name)
+        src_dirs.append(direct_package_path)
+
+    # If neither of the above structures were found, look for src directory
+    if not src_dirs:
+        src_path = os.path.join(project_path, "src")
+        if os.path.isdir(src_path):
+            logger.debug("Found generic src directory structure")
+            src_dirs.append(src_path)
+
+    # If still no source dirs found, use the project root as fallback
+    if not src_dirs:
+        logger.debug("No specific package structure found, using project root")
+        src_dirs.append(project_path)
+
+    return src_dirs
 
 def create_test_stub(source_file: str, test_file: str) -> None:
     """
@@ -188,6 +268,8 @@ def verify_test_coverage(project_path: str, create_stubs: bool = False) -> Dict:
             missing_tests: List of source files without tests
             orphaned_tests: List of test files without source files
             coverage_percentage: Percentage of source files with tests
+            project_name: Name of the project
+            structure_type: Type of project structure detected
 
     Raises:
         CoverageError: If test coverage verification fails
@@ -195,16 +277,22 @@ def verify_test_coverage(project_path: str, create_stubs: bool = False) -> Dict:
     project_path = os.path.abspath(project_path)
     logger.debug("Verifying test coverage for %s", project_path)
 
-    # Find source files
-    src_dirs = []
-    for item in os.listdir(project_path):
-        item_path = os.path.join(project_path, item)
-        if os.path.isdir(item_path) and item == 'src':
-            src_dirs.append(item_path)
+    # Get project name from pyproject.toml or directory name
+    project_name = get_project_name(project_path)
 
-    if not src_dirs:
-        # If no src directory, use the project root
-        src_dirs = [project_path]
+    # Find source files
+    src_dirs = _get_source_dirs(project_path)
+
+    # Determine structure type
+    structure_type = "unknown"
+    if any("src" in d and project_name in d for d in src_dirs):
+        structure_type = f"src/{project_name}"
+    elif any(project_name in d and "src" not in d for d in src_dirs):
+        structure_type = project_name
+    elif any("src" in d for d in src_dirs):
+        structure_type = "src"
+    else:
+        structure_type = "flat"
 
     # Collect all Python files
     source_files = set()
@@ -268,7 +356,9 @@ def verify_test_coverage(project_path: str, create_stubs: bool = False) -> Dict:
         'total_test_files': len(test_files),
         'missing_tests': [os.path.relpath(source, project_path) for source, _ in missing_tests],
         'orphaned_tests': orphaned_tests,
-        'coverage_percentage': (len(source_files) - len(missing_tests)) / len(source_files) * 100 if source_files else 0
+        'coverage_percentage': (len(source_files) - len(missing_tests)) / len(source_files) * 100 if source_files else 0,
+        'project_name': project_name,
+        'structure_type': structure_type
     }
 
     logger.debug("Test coverage metrics: %s", metrics)

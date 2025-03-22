@@ -98,6 +98,11 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
 
             # Report the results
             click.echo(f"\nTest Coverage Report for {path}:")
+
+            # Show detected project structure
+            structure_type = metrics.get('structure_type', 'unknown')
+            click.echo(f"Detected package structure: {structure_type}")
+
             click.echo(f"Total source files: {metrics['total_source_files']}")
             click.echo(f"Total test files: {metrics['total_test_files']}")
             click.echo(f"Test coverage: {metrics['coverage_percentage']:.1f}%")

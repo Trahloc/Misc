@@ -16,7 +16,7 @@ from typing import Optional  # Only import what's needed for the type annotation
 
 import click
 
-from {{ cookiecutter.project_name }}.commands import check, version, info, test_coverage
+from {{ cookiecutter.project_name }}.commands import check, version, info
 from {{ cookiecutter.project_name }}.config import get_config
 
 @click.group()
@@ -57,8 +57,6 @@ def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> 
 main.add_command(version.command)
 main.add_command(check.command)
 main.add_command(info.command)
-main.add_command(test_coverage.command_test_coverage)
-main.add_command(test_coverage.command_create_test_stubs)
 
 # When run as a script
 if __name__ == "__main__":
@@ -75,7 +73,6 @@ if __name__ == "__main__":
  - Updated to include only essential commands
  - Added command to display project information
  - Fixed linter errors with proper type annotations
- - Added test coverage and test stub generation commands
 
 ## FUTURE TODOs:
  - Consider adding command discovery mechanism

@@ -14,9 +14,6 @@ MD013:
   # Code blocks are often long, so don't check them
   code_blocks: false
 
-# MD022: Headers should be wrapped in hash marks
-MD022: false
-
 # MD024: Multiple headings with the same content
 MD024:
   # Allow multiple headings with the same content if they're not siblings
@@ -24,9 +21,6 @@ MD024:
 
 # MD025: Multiple top-level headings in the same document
 MD025: true
-
-# MD032: Allow multiple top-level headings in the same document
-MD032: false
 
 # MD033: Allow inline HTML (sometimes needed for complex formatting)
 MD033: false

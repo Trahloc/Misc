@@ -32,6 +32,33 @@ def _get_pyproject_data():
         warnings.warn(f"Error reading pyproject.toml: {str(e)}")
         return {}
 
+
+def test_project_name_customized():
+    """
+    PURPOSE: Verify that the project name has been customized from the default value.
+    
+    CONTEXT: This test checks if the project name is still set to the default template value.
+    
+    PARAMS: None
+    
+    RETURNS: None
+    """
+    pyproject_data = _get_pyproject_data()
+    if not pyproject_data:
+        # Skip if we couldn't read the file
+        pytest.skip("Could not read pyproject.toml")
+    
+    project_name = pyproject_data.get("project", {}).get("name", "")
+    
+    # Check both for the default value and for the uncustomized template variable
+    if project_name == "my_project" or project_name == "{{ cookiecutter.project_name }}":
+        warnings.warn(
+            f"\nDEFAULT PROJECT NAME DETECTED: Project name is still set to '{project_name}'.\n"
+            "This suggests the project was not properly customized when created.\n"
+            "You should update the name in pyproject.toml to match your actual project name."
+        )
+
+
 def test_author_info_customized():
     """
     PURPOSE: Verify that the author information has been customized from default values.

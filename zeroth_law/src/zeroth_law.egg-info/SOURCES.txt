@@ -1,3 +1,4 @@
+LICENSE
 README.md
 pyproject.toml
 src/zeroth_law/__init__.py
@@ -5,14 +6,18 @@ src/zeroth_law/__main__.py
 src/zeroth_law/analyzer.py
 src/zeroth_law/cli.py
 src/zeroth_law/config.py
+src/zeroth_law/conftest.py
 src/zeroth_law/exceptions.py
 src/zeroth_law/reporting.py
 src/zeroth_law/skeleton.py
+src/zeroth_law/template_converter.py
+src/zeroth_law/test_coverage.py
 src/zeroth_law/utils.py
 src/zeroth_law.egg-info/PKG-INFO
 src/zeroth_law.egg-info/SOURCES.txt
 src/zeroth_law.egg-info/dependency_links.txt
 src/zeroth_law.egg-info/entry_points.txt
+src/zeroth_law.egg-info/requires.txt
 src/zeroth_law.egg-info/top_level.txt
 src/zeroth_law/metrics/__init__.py
 src/zeroth_law/metrics/cyclomatic_complexity.py
@@ -22,3 +27,6 @@ src/zeroth_law/metrics/function_size.py
 src/zeroth_law/metrics/imports.py
 src/zeroth_law/metrics/naming.py
 tests/test_analyzer.py
+tests/test_cli.py
+tests/test_cookiecutter_template.py
+tests/test_test_coverage.py
