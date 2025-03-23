@@ -1,7 +1,7 @@
 # Zeroth_Law_Template Project Tasks and Notes
 
 ## Repeating Tasks
-- [∞] [Critical] Adhere to the principles as laid out in Zeroth Law in [text](ZerothLawAIFramework.py.md)
+- [∞] [Critical] Adhere to the principles as laid out in Zeroth Law in [text](docs/ZerothLawAIFramework.py.md)
 - [∞] [High] Update [text](todo.md) every iteration
 - [∞] [Medium] Verify pytest tests for all files and features exist
 - [∞] [Low] Update Header and Footer of all modified files
