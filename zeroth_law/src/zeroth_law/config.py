@@ -8,6 +8,7 @@
  - toml
  - typing
 """
+
 from typing import Dict, List
 import toml
 from zeroth_law.exceptions import ConfigError
@@ -29,9 +30,10 @@ DEFAULT_CONFIG: Dict = {
         "**/*.pyc",
         "**/.pytest_cache/**",
         "**/.coverage",
-        "**/htmlcov/**"
-    ]
+        "**/htmlcov/**",
+    ],
 }
+
 
 def load_config(config_path: str) -> Dict:
     """Loads configuration from a TOML file."""
@@ -43,9 +45,13 @@ def load_config(config_path: str) -> Dict:
                 raise ConfigError(f"Unknown configuration option: {key}")
             if isinstance(DEFAULT_CONFIG[key], list):
                 if not isinstance(value, list):
-                    raise ConfigError(f"Invalid type for configuration option: {key}. Expected list, got {type(value)}")
+                    raise ConfigError(
+                        f"Invalid type for configuration option: {key}. Expected list, got {type(value)}"
+                    )
             elif not isinstance(value, type(DEFAULT_CONFIG[key])):
-                raise ConfigError(f"Invalid type for configuration option: {key}. Expected {type(DEFAULT_CONFIG[key])}, got {type(value)}")
+                raise ConfigError(
+                    f"Invalid type for configuration option: {key}. Expected {type(DEFAULT_CONFIG[key])}, got {type(value)}"
+                )
 
         # Merge with defaults (so unspecified options use defaults)
         return {**DEFAULT_CONFIG, **config}

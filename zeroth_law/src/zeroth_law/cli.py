@@ -32,26 +32,76 @@ from zeroth_law.config import load_config, DEFAULT_CONFIG
 from zeroth_law.exceptions import ZerothLawError
 from zeroth_law.template_converter import convert_to_template
 
+
 @click.command()
-@click.argument("path", required=False, type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True))
-@click.option("-r", "--recursive", is_flag=True, help="Analyze directories recursively.")
-@click.option("-s", "--summary", is_flag=True, help="Generate a summary report (for directories).")
-@click.option("-u", "--update", is_flag=True, help="Update file footers with analysis results.")
-@click.option("-c", "--config", "config_path", type=click.Path(exists=True, dir_okay=False, readable=True), help="Path to a configuration file.")
-@click.option("-v", "--verbose", count=True, help="Increase verbosity (e.g., -v for INFO, -vv for DEBUG).")
+@click.argument(
+    "path",
+    required=False,
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
+)
+@click.option(
+    "-r", "--recursive", is_flag=True, help="Analyze directories recursively."
+)
+@click.option(
+    "-s", "--summary", is_flag=True, help="Generate a summary report (for directories)."
+)
+@click.option(
+    "-u", "--update", is_flag=True, help="Update file footers with analysis results."
+)
+@click.option(
+    "-c",
+    "--config",
+    "config_path",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Path to a configuration file.",
+)
+@click.option(
+    "-v",
+    "--verbose",
+    count=True,
+    help="Increase verbosity (e.g., -v for INFO, -vv for DEBUG).",
+)
 @click.version_option(version="0.1.0")  # Replace with actual version
-@click.option("--skel", metavar="DIRECTORY", help="Create a new Zeroth Law project skeleton.")
+@click.option(
+    "--skel", metavar="DIRECTORY", help="Create a new Zeroth Law project skeleton."
+)
 @click.option("--template", help="Template to use with --skel (defaults to 'default')")
 @click.option("--list-templates", is_flag=True, help="List available project templates")
-@click.option("--test-coverage", is_flag=True, help="Verify test coverage for the project.")
-@click.option("--create-test-stubs", is_flag=True, help="Create test stubs for files without tests (used with --test-coverage).")
-@click.option('--template-from', help='Convert an existing project into a cookiecutter template')
-@click.option('--template-name', default='test_zeroth_law', help='Name for the template project (default: test_zeroth_law)')
-@click.option('--overwrite', is_flag=True, help='Overwrite existing template if it exists')
-def main(path: Optional[str], recursive: bool, summary: bool, update: bool, config_path: Optional[str],
-         verbose: int, skel: Optional[str], template: Optional[str], list_templates: bool,
-         test_coverage: bool, create_test_stubs: bool, template_from: Optional[str],
-         template_name: Optional[str], overwrite: bool):
+@click.option(
+    "--test-coverage", is_flag=True, help="Verify test coverage for the project."
+)
+@click.option(
+    "--create-test-stubs",
+    is_flag=True,
+    help="Create test stubs for files without tests (used with --test-coverage).",
+)
+@click.option(
+    "--template-from", help="Convert an existing project into a cookiecutter template"
+)
+@click.option(
+    "--template-name",
+    default="test_zeroth_law",
+    help="Name for the template project (default: test_zeroth_law)",
+)
+@click.option(
+    "--overwrite", is_flag=True, help="Overwrite existing template if it exists"
+)
+def main(
+    path: Optional[str],
+    recursive: bool,
+    summary: bool,
+    update: bool,
+    config_path: Optional[str],
+    verbose: int,
+    skel: Optional[str],
+    template: Optional[str],
+    list_templates: bool,
+    test_coverage: bool,
+    create_test_stubs: bool,
+    template_from: Optional[str],
+    template_name: Optional[str],
+    overwrite: bool,
+):
     """Command-line interface for the analyzer."""
     logger = logging.getLogger(__name__)
 
@@ -100,7 +150,7 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
             click.echo(f"\nTest Coverage Report for {path}:")
 
             # Show detected project structure
-            structure_type = metrics.get('structure_type', 'unknown')
+            structure_type = metrics.get("structure_type", "unknown")
             click.echo(f"Detected package structure: {structure_type}")
 
             click.echo(f"Total source files: {metrics['total_source_files']}")
@@ -108,24 +158,26 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
             click.echo(f"Test coverage: {metrics['coverage_percentage']:.1f}%")
 
             # Report missing tests
-            if metrics['missing_tests']:
+            if metrics["missing_tests"]:
                 click.echo("\nSource files missing tests:")
-                for source_file in metrics['missing_tests']:
+                for source_file in metrics["missing_tests"]:
                     click.echo(f"  - {source_file}")
 
                 if create_test_stubs:
                     click.echo("\nTest stubs created for missing tests.")
                 else:
-                    click.echo("\nUse --create-test-stubs to generate test stubs for these files.")
+                    click.echo(
+                        "\nUse --create-test-stubs to generate test stubs for these files."
+                    )
 
             # Report orphaned tests (tests without source files)
-            if metrics.get('orphaned_tests'):
+            if metrics.get("orphaned_tests"):
                 click.echo("\nTest files without corresponding source files:")
-                for test_file in metrics['orphaned_tests']:
+                for test_file in metrics["orphaned_tests"]:
                     click.echo(f"  - {test_file}")
 
             # Exit with non-zero status if coverage is below 90%
-            if metrics['coverage_percentage'] < 90:
+            if metrics["coverage_percentage"] < 90:
                 click.echo("\nZEROTH LAW VIOLATION: Test coverage below 90%.")
                 if not create_test_stubs:
                     sys.exit(1)
@@ -135,12 +187,16 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
             logger.error("Error verifying test coverage: %s", str(e))
             sys.exit(1)
         except KeyError as e:
-            logger.error("Invalid metrics format returned from verify_test_coverage: %s", str(e))
+            logger.error(
+                "Invalid metrics format returned from verify_test_coverage: %s", str(e)
+            )
             sys.exit(1)
 
     if template_from:
         try:
-            convert_to_template(template_from, template_name or 'test_zeroth_law', overwrite)
+            convert_to_template(
+                template_from, template_name or "test_zeroth_law", overwrite
+            )
         except (FileNotFoundError, FileExistsError, ValueError) as e:
             logger.error("Failed to convert project to template: %s", str(e))
             sys.exit(1)
@@ -169,7 +225,9 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
             metrics = analyze_file(path, update=update, config=config)
             click.echo(generate_report(metrics))
         elif os.path.isdir(path):
-            all_metrics = analyze_directory(path, recursive=recursive, update=update, config=config)
+            all_metrics = analyze_directory(
+                path, recursive=recursive, update=update, config=config
+            )
             if summary:
                 click.echo(generate_summary_report(all_metrics))
             else:
@@ -185,6 +243,7 @@ def main(path: Optional[str], recursive: bool, summary: bool, update: bool, conf
         if update:
             logger.warning("File updates may be incomplete due to the error.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()  # pylint: disable=no-value-for-parameter

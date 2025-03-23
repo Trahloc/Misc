@@ -22,5 +22,5 @@ __all__ = [
     "calculate_file_size_metrics",
     "calculate_function_size_metrics",
     "calculate_naming_score",
-    "calculate_import_metrics"
+    "calculate_import_metrics",
 ]

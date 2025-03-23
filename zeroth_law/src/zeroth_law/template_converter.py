@@ -12,6 +12,7 @@
  - datetime
  - os
 """
+
 import os
 import re
 import shutil
@@ -22,6 +23,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 def _create_cookiecutter_json(template_dir: Path, project_name: str) -> None:
     """Create the cookiecutter.json configuration file."""
     config = {
@@ -29,13 +31,12 @@ def _create_cookiecutter_json(template_dir: Path, project_name: str) -> None:
         "project_short_description": "A Python project using the Zeroth Law framework",
         "author_name": "Your Name",
         "author_email": "your.email@example.com",
-        "_copy_without_render": [
-            "*.template"
-        ]
+        "_copy_without_render": ["*.template"],
     }
 
-    with open(template_dir / "cookiecutter.json", "w", encoding='utf-8') as f:
+    with open(template_dir / "cookiecutter.json", "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
+
 
 def _replace_project_name(content: str, project_name: str) -> str:
     """Replace project name with cookiecutter variable in file contents."""
@@ -49,10 +50,12 @@ def _replace_project_name(content: str, project_name: str) -> str:
 
     return content
 
+
 def _replace_paths(path: str, project_name: str) -> str:
     """Replace project name in paths and filenames with cookiecutter variable."""
     pattern = re.compile(f"({project_name})")
     return pattern.sub("{{cookiecutter.project_name}}", path)
+
 
 def _process_file(src: Path, dest: Path, project_name: str) -> None:
     """Process a single file, replacing project-specific values with template variables."""
@@ -60,7 +63,7 @@ def _process_file(src: Path, dest: Path, project_name: str) -> None:
         return
 
     # Skip certain files and directories
-    skip_patterns = {'.git', '.pytest_cache', '__pycache__', '*.pyc', '*.egg-info'}
+    skip_patterns = {".git", ".pytest_cache", "__pycache__", "*.pyc", "*.egg-info"}
     if any(pattern in str(src) for pattern in skip_patterns):
         return
 
@@ -75,7 +78,9 @@ def _process_file(src: Path, dest: Path, project_name: str) -> None:
     # Ensure all parent directories are created with proper naming
     for parent in dest.parents:
         if str(parent).endswith(project_name):
-            new_parent = Path(str(parent).replace(project_name, "{{cookiecutter.project_name}}"))
+            new_parent = Path(
+                str(parent).replace(project_name, "{{cookiecutter.project_name}}")
+            )
             if not new_parent.exists():
                 new_parent.mkdir(parents=True, exist_ok=True)
         elif not parent.exists():
@@ -99,21 +104,29 @@ def _process_file(src: Path, dest: Path, project_name: str) -> None:
                     return
                 current = current.parent
 
-            logger.warning("Main ZerothLawAIFramework.py.md not found in any parent directory with docs/, falling back to file copy")
+            logger.warning(
+                "Main ZerothLawAIFramework.py.md not found in any parent directory with docs/, falling back to file copy"
+            )
         except (OSError, RuntimeError) as e:
-            logger.warning("Failed to create symlink for ZerothLawAIFramework.py.md: %s, falling back to file copy", str(e))
+            logger.warning(
+                "Failed to create symlink for ZerothLawAIFramework.py.md: %s, falling back to file copy",
+                str(e),
+            )
 
     # Try to read as text first - this will naturally handle both text and binary files
     try:
-        content = src.read_text(encoding='utf-8')
+        content = src.read_text(encoding="utf-8")
         # If we can read it as text, process it for template variables
         content = _replace_project_name(content, project_name)
-        dest.write_text(content, encoding='utf-8')
+        dest.write_text(content, encoding="utf-8")
     except UnicodeDecodeError:
         # If we can't read it as text, copy as binary
         shutil.copy2(src, dest)
 
-def convert_to_template(source_dir: str, template_name: str = "test_zeroth_law", overwrite: bool = False) -> None:
+
+def convert_to_template(
+    source_dir: str, template_name: str = "test_zeroth_law", overwrite: bool = False
+) -> None:
     """
     Convert an existing project into a cookiecutter template.
 
@@ -170,9 +183,16 @@ def convert_to_template(source_dir: str, template_name: str = "test_zeroth_law",
                 dest_path = template_project_dir / rel_path
                 processed_dest = Path(_replace_paths(str(dest_path), project_name))
                 # Skip files that would end up in unwanted directories
-                if not any(p.name == project_name and p.parent.name == "src" for p in processed_dest.parents):
+                if not any(
+                    p.name == project_name and p.parent.name == "src"
+                    for p in processed_dest.parents
+                ):
                     source_files.append((src_path, processed_dest))
-                    logger.debug("  Found source file: %s -> %s", rel_path, processed_dest.relative_to(template_dir))
+                    logger.debug(
+                        "  Found source file: %s -> %s",
+                        rel_path,
+                        processed_dest.relative_to(template_dir),
+                    )
 
         # Process each file, creating only the directories we need
         for src_path, dest_path in source_files:

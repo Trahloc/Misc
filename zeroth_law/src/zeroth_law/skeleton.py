@@ -14,6 +14,7 @@
  - datetime
  - shutil
 """
+
 import os
 import logging
 import subprocess
@@ -27,6 +28,7 @@ from zeroth_law.config import DEFAULT_CONFIG
 
 logger = logging.getLogger(__name__)
 
+
 def check_package_exists(package_name: str) -> bool:
     """Check if a package is already installed using importlib.metadata."""
     try:
@@ -35,9 +37,11 @@ def check_package_exists(package_name: str) -> bool:
     except metadata.PackageNotFoundError:
         return False
 
+
 def _is_test_environment() -> bool:
     """Check if we're running in a test environment."""
-    return 'pytest' in sys.modules
+    return "pytest" in sys.modules
+
 
 def user_confirms_overwrite(package_name: str) -> bool:
     """Ask user for confirmation to proceed when package conflict exists."""
@@ -45,8 +49,11 @@ def user_confirms_overwrite(package_name: str) -> bool:
     if _is_test_environment():
         return True
 
-    response = input(f"\nWARNING: A package named '{package_name}' is already installed.\nDo you want to proceed anyway? (y/N): ")
-    return response.lower() == 'y'
+    response = input(
+        f"\nWARNING: A package named '{package_name}' is already installed.\nDo you want to proceed anyway? (y/N): "
+    )
+    return response.lower() == "y"
+
 
 def list_templates() -> list[str]:
     """List available project templates."""
@@ -60,6 +67,7 @@ def list_templates() -> list[str]:
         old_template.rename(templates_dir / "default")
 
     return [d.name for d in templates_dir.iterdir() if d.is_dir()]
+
 
 def create_skeleton(directory: str, template_name: str = None):
     """
@@ -101,8 +109,12 @@ def create_skeleton(directory: str, template_name: str = None):
     if not template_dir.exists():
         available = list_templates()
         if not available:
-            raise FileNotFoundError("No templates found. Use --template-from to create one first.")
-        raise FileNotFoundError(f"Template '{template_name}' not found. Available templates: {', '.join(available)}")
+            raise FileNotFoundError(
+                "No templates found. Use --template-from to create one first."
+            )
+        raise FileNotFoundError(
+            f"Template '{template_name}' not found. Available templates: {', '.join(available)}"
+        )
 
     # Create context with variables for the template
     context = {
@@ -110,7 +122,7 @@ def create_skeleton(directory: str, template_name: str = None):
         "project_short_description": "A Python project using the Zeroth Law framework",
         "author_name": "Zeroth Law Developer",
         "author_email": "developer@example.com",
-        "default_config": DEFAULT_CONFIG
+        "default_config": DEFAULT_CONFIG,
     }
 
     # Use cookiecutter to create project from template
@@ -119,7 +131,7 @@ def create_skeleton(directory: str, template_name: str = None):
         str(template_dir),
         extra_context=context,
         no_input=True,
-        output_dir=os.path.dirname(os.path.abspath(directory))
+        output_dir=os.path.dirname(os.path.abspath(directory)),
     )
 
     logger.info("Created Zeroth Law skeleton in: %s", directory)
@@ -127,11 +139,13 @@ def create_skeleton(directory: str, template_name: str = None):
     # Install the package in development mode
     logger.info("Installing package in development mode...")
     try:
-        subprocess.run(["pip", "install", "-e", "."],
-                      cwd=directory,
-                      check=True,
-                      capture_output=True,
-                      text=True)
+        subprocess.run(
+            ["pip", "install", "-e", "."],
+            cwd=directory,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         logger.info("Package installed successfully in development mode")
     except subprocess.CalledProcessError as e:
         logger.error("Failed to install package: %s", e.stderr)

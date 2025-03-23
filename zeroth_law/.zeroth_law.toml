@@ -52,5 +52,7 @@ ignore_patterns = [
     "**/public/**", # ignore public folder
     "**/target/**", # ignore build target
     "**/venv/**", # ignore Python virtualenv
-    "**/*.pyc" # ignore Python bytecode
+    "**/*.pyc", # ignore Python bytecode
+    "**/templates/**/*.py",  # Add this to ignore template files
+    "**/{{cookiecutter.*}}/**"  # Add this to ignore cookiecutter template paths
 ]

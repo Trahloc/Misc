@@ -1,0 +1,50 @@
+---
+# Default state for all rules
+default: true
+
+# MD001: Heading levels should only increment by one level at a time
+MD001: true
+
+# MD013: Line length
+MD013:
+  # Number of characters
+  line_length: 140
+  # Headings are often long, so don't check them
+  headings: false
+  # Code blocks are often long, so don't check them
+  code_blocks: false
+
+# MD022: Headers should be wrapped in hash marks
+MD022: false
+
+# MD024: Multiple headings with the same content
+MD024:
+  # Allow multiple headings with the same content if they're not siblings
+  siblings_only: true
+
+# MD025: Multiple top-level headings in the same document
+MD025: true
+
+# MD032: Allow multiple top-level headings in the same document
+MD032: false
+
+# MD033: Allow inline HTML (sometimes needed for complex formatting)
+MD033: false
+
+# MD041: First line in a file should be a top-level heading
+MD041: true
+
+# MD046: Code block style
+MD046:
+  # Enforce consistent style for code blocks
+  style: "fenced"
+
+# MD049: Emphasis style
+MD049:
+  # Enforce consistent style for emphasis
+  style: "asterisk"
+
+# MD050: Strong style
+MD050:
+  # Enforce consistent style for strong emphasis
+  style: "asterisk" 

@@ -31,13 +31,20 @@ from zeroth_law.metrics import (
     calculate_cyclomatic_complexity,
     calculate_docstring_coverage,
     calculate_naming_score,
-    calculate_import_metrics
+    calculate_import_metrics,
 )
 from zeroth_law.reporting import generate_report, generate_summary_report
 from zeroth_law.utils import find_header_footer, count_executable_lines, replace_footer
-from zeroth_law.exceptions import ZerothLawError, FileNotFoundError, NotPythonFileError, AnalysisError, ConfigError
+from zeroth_law.exceptions import (
+    ZerothLawError,
+    FileNotFoundError,
+    NotPythonFileError,
+    AnalysisError,
+    ConfigError,
+)
 
 logger = logging.getLogger(__name__)
+
 
 def should_ignore(file_path: str, base_path: str, ignore_patterns: List[str]) -> bool:
     """Check if a file should be ignored based on the ignore patterns.
@@ -54,28 +61,33 @@ def should_ignore(file_path: str, base_path: str, ignore_patterns: List[str]) ->
         # Get path relative to the base directory
         rel_path = os.path.relpath(file_path, base_path)
         # Convert path to use forward slashes for consistent matching
-        normalized_path = rel_path.replace(os.sep, '/')
+        normalized_path = rel_path.replace(os.sep, "/")
 
         # Add a leading ./ to match patterns that start with . like .old/
-        if not normalized_path.startswith('./'):
-            normalized_path = './' + normalized_path
+        if not normalized_path.startswith("./"):
+            normalized_path = "./" + normalized_path
 
         for pattern in ignore_patterns:
             # Normalize pattern to use forward slashes
-            norm_pattern = pattern.replace(os.sep, '/')
+            norm_pattern = pattern.replace(os.sep, "/")
             # Add ./ prefix to pattern if it starts with a dot directory
-            if norm_pattern.startswith('.') and not norm_pattern.startswith('./'):
-                norm_pattern = './' + norm_pattern
+            if norm_pattern.startswith(".") and not norm_pattern.startswith("./"):
+                norm_pattern = "./" + norm_pattern
 
             if fnmatch.fnmatch(normalized_path, norm_pattern):
-                logger.debug(f"Path '{normalized_path}' matched pattern '{norm_pattern}'")
+                logger.debug(
+                    f"Path '{normalized_path}' matched pattern '{norm_pattern}'"
+                )
                 return True
         return False
     except ValueError:
         # Handle case where file_path is on different drive than base_path (Windows)
         return False
 
-def analyze_file(file_path: str, update: bool = False, config: dict = None) -> Dict[str, Any]:
+
+def analyze_file(
+    file_path: str, update: bool = False, config: dict = None
+) -> Dict[str, Any]:
     """Analyzes a single Python file for Zeroth Law compliance.
 
     Args:
@@ -101,12 +113,18 @@ def analyze_file(file_path: str, update: bool = False, config: dict = None) -> D
 
     # Check if this is a template file
     normalized_path = os.path.normpath(file_path)
-    is_template = (
-        "cookiecutter-template" in normalized_path or
-        any(part.startswith("{{") and part.endswith("}}") for part in normalized_path.split(os.sep)) or
-        os.path.basename(file_path).startswith("fix_cookiecutter") or
-        os.path.basename(file_path).startswith("convert_templates_to_cookiecutter")
-    )
+    templates_directory = os.path.normpath("templates")  # Update to just "templates"
+    is_template = normalized_path.startswith(
+        templates_directory
+    )  # Only consider files in the templates directory
+
+    # Exclude specific files from being flagged as templates
+    excluded_files = ["template_converter.py", "test_coverage.py", "conftest.py"]
+    if os.path.basename(file_path) in excluded_files:
+        is_template = False
+
+    # Debug logging to verify exclusion logic
+    logger.debug(f"Analyzing file: {file_path}, is_template: {is_template}")
 
     with open(file_path, "r", encoding="utf-8") as f:
         source_code = f.read()
@@ -125,16 +143,26 @@ def analyze_file(file_path: str, update: bool = False, config: dict = None) -> D
                 "file_path": file_path,
                 "file_name": os.path.basename(file_path),
                 "is_template": True,
-                "header_footer_status": "complete" if header and footer else ("missing_header" if not header else "missing_footer"),
+                "header_footer_status": (
+                    "complete"
+                    if header and footer
+                    else ("missing_header" if not header else "missing_footer")
+                ),
                 "executable_lines": executable_lines,
                 "overall_score": "N/A - Template File",
                 "compliance_level": "Template File",
                 "functions": [],
-                "penalties": []
+                "penalties": [],
             }
 
-        # Check for unrendered templates in non-template files, but skip analyzer.py
-        if not is_template and not file_path.endswith("analyzer.py") and re.search(r"\{\{.*?\}\}", source_code):
+        # Allow specific files to contain unrendered template variables without raising an error
+        if os.path.basename(file_path) in excluded_files:
+            logger.debug(f"Allowing unrendered templates in file: {file_path}")
+        elif (
+            not is_template
+            and not file_path.endswith("analyzer.py")
+            and re.search(r"\{\{.*?\}\}", source_code)
+        ):
             logger.warning(f"Skipping unrendered template file: {file_path}")
             raise AnalysisError(f"Unrendered template detected in file: {file_path}")
 
@@ -146,7 +174,11 @@ def analyze_file(file_path: str, update: bool = False, config: dict = None) -> D
         metrics: Dict[str, Any] = {
             "file_path": file_path,
             "file_name": os.path.basename(file_path),
-            "header_footer_status": "complete" if header and footer else ("missing_header" if not header else "missing_footer"),
+            "header_footer_status": (
+                "complete"
+                if header and footer
+                else ("missing_header" if not header else "missing_footer")
+            ),
             "executable_lines": executable_lines,
             **calculate_file_size_metrics(source_code, header, footer),
             "functions": [],
@@ -179,7 +211,9 @@ def analyze_file(file_path: str, update: bool = False, config: dict = None) -> D
         raise AnalysisError(f"Error analyzing file: {file_path}: {e}") from e
 
 
-def analyze_directory(dir_path: str, recursive: bool = False, update: bool = False, config: dict = None) -> List[Dict[str, Any]]:
+def analyze_directory(
+    dir_path: str, recursive: bool = False, update: bool = False, config: dict = None
+) -> List[Dict[str, Any]]:
     """Analyzes all Python files in a directory.
 
     Args:
@@ -205,7 +239,7 @@ def analyze_directory(dir_path: str, recursive: bool = False, update: bool = Fal
     if config is None:
         config = {}
 
-    ignore_patterns = config.get('ignore_patterns', [])
+    ignore_patterns = config.get("ignore_patterns", [])
     logger.debug(f"Loaded ignore patterns: {ignore_patterns}")
     all_metrics = []
 
@@ -226,7 +260,9 @@ def analyze_directory(dir_path: str, recursive: bool = False, update: bool = Fal
 
             # Skip the file if it matches any ignore pattern
             if should_ignore(file_path, abs_dir_path, ignore_patterns):
-                logger.debug(f"Ignoring file: {os.path.relpath(file_path, abs_dir_path)}")
+                logger.debug(
+                    f"Ignoring file: {os.path.relpath(file_path, abs_dir_path)}"
+                )
                 continue
 
             try:
@@ -257,38 +293,65 @@ def evaluate_compliance(metrics: Dict[str, Any], config: dict) -> None:
     missing_docstring_penalty = config.get("missing_docstring_penalty", 2)
 
     if metrics["executable_lines"] > max_executable_lines:
-        deduction = (min(50, metrics["executable_lines"] - max_executable_lines) // 5)
+        deduction = min(50, metrics["executable_lines"] - max_executable_lines) // 5
         score -= deduction
-        penalties.append({"reason": "Exceeded max executable lines", "deduction": deduction})
+        penalties.append(
+            {"reason": "Exceeded max executable lines", "deduction": deduction}
+        )
 
     if metrics["header_footer_status"] == "missing_header":
         score -= missing_header_penalty
-        penalties.append({"reason": "Missing header", "deduction": missing_header_penalty})
+        penalties.append(
+            {"reason": "Missing header", "deduction": missing_header_penalty}
+        )
     elif metrics["header_footer_status"] == "missing_footer":
         score -= missing_footer_penalty
-        penalties.append({"reason": "Missing footer", "deduction": missing_footer_penalty})
+        penalties.append(
+            {"reason": "Missing footer", "deduction": missing_footer_penalty}
+        )
     elif metrics["header_footer_status"] == "missing_both":
-        score -= (missing_header_penalty + missing_footer_penalty)
-        penalties.append({"reason": "Missing header and footer", "deduction": missing_header_penalty + missing_footer_penalty})
+        score -= missing_header_penalty + missing_footer_penalty
+        penalties.append(
+            {
+                "reason": "Missing header and footer",
+                "deduction": missing_header_penalty + missing_footer_penalty,
+            }
+        )
 
     function_deductions = 0
     for func in metrics["functions"]:
         if func["lines"] > max_function_lines:
             function_deductions += 5
-            penalties.append({"reason": f"Function {func['name']} exceeds max lines", "deduction": 5})
+            penalties.append(
+                {"reason": f"Function {func['name']} exceeds max lines", "deduction": 5}
+            )
         if func["cyclomatic_complexity"] > max_cyclomatic_complexity:
             function_deductions += 5
-            penalties.append({"reason": f"Function {func['name']} exceeds max cyclomatic complexity", "deduction": 5})
+            penalties.append(
+                {
+                    "reason": f"Function {func['name']} exceeds max cyclomatic complexity",
+                    "deduction": 5,
+                }
+            )
         if func["parameter_count"] > max_parameters:
             function_deductions += 5
-            penalties.append({"reason": f"Function {func['name']} exceeds max parameters", "deduction": 5})
+            penalties.append(
+                {
+                    "reason": f"Function {func['name']} exceeds max parameters",
+                    "deduction": 5,
+                }
+            )
         if not func["has_docstring"]:
             function_deductions += missing_docstring_penalty
-            penalties.append({"reason": f"Function {func['name']} is missing docstring", "deduction": missing_docstring_penalty})
-
+            penalties.append(
+                {
+                    "reason": f"Function {func['name']} is missing docstring",
+                    "deduction": missing_docstring_penalty,
+                }
+            )
 
     score -= min(50, function_deductions)  # Max penalty for functions
-    score -= (100 - metrics.get("imports_score", 100))
+    score -= 100 - metrics.get("imports_score", 100)
 
     metrics["overall_score"] = max(0, score)
     metrics["compliance_level"] = determine_compliance_level(metrics["overall_score"])
@@ -309,7 +372,9 @@ def determine_compliance_level(score: int) -> str:
 def update_file_footer(file_path: str, metrics: Dict[str, Any]) -> None:
     """Updates the file footer with compliance information."""
     try:
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", delete=False
+        ) as tmp_file:
             with open(file_path, "r", encoding="utf-8") as original_file:
                 content = original_file.read()
 
@@ -342,7 +407,7 @@ def generate_footer(metrics: Dict[str, Any]) -> str:
     - Penalties:'''
 
     for penalty in metrics["penalties"]:
-        footer += f'''\n      - {penalty["reason"]}: -{penalty["deduction"]}'''
+        footer += f"""\n      - {penalty["reason"]}: -{penalty["deduction"]}"""
 
     footer += f'''\n    - Analysis Timestamp: {datetime.now().isoformat()}
 """'''

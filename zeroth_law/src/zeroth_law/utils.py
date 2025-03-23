@@ -13,17 +13,25 @@
 import re
 from typing import Tuple
 
+
 def find_header_footer(source_code: str) -> Tuple[str | None, str | None]:
     """Finds the Zeroth Law header and footer in the source code."""
     header_match = re.search(r'""".*?PURPOSE:.*?(""")', source_code, re.DOTALL)
-    footer_match = re.search(r'""".*?ZEROTH LAW COMPLIANCE:.*?(""")', source_code, re.DOTALL)
-    if not footer_match: #Check for old style
-        footer_match = re.search(r'""".*?(KNOWN ERRORS:|IMPROVEMENTS:|FUTURE TODOs:).*?(""")', source_code, re.DOTALL)
+    footer_match = re.search(
+        r'""".*?ZEROTH LAW COMPLIANCE:.*?(""")', source_code, re.DOTALL
+    )
+    if not footer_match:  # Check for old style
+        footer_match = re.search(
+            r'""".*?(KNOWN ERRORS:|IMPROVEMENTS:|FUTURE TODOs:).*?(""")',
+            source_code,
+            re.DOTALL,
+        )
 
     header = header_match.group(0) if header_match else None
     footer = footer_match.group(0) if footer_match else None
 
     return header, footer
+
 
 def count_executable_lines(content: str) -> int:
     """
@@ -38,7 +46,7 @@ def count_executable_lines(content: str) -> int:
     - Braces
     - Imports
     """
-    lines = content.split('\n')
+    lines = content.split("\n")
     executable_count = 0
     in_docstring = False
 
@@ -59,13 +67,14 @@ def count_executable_lines(content: str) -> int:
             continue
 
         # Skip comments and lines inside docstrings
-        if stripped.startswith('#') or in_docstring:
+        if stripped.startswith("#") or in_docstring:
             continue
 
         # This is an executable line
         executable_count += 1
 
     return executable_count
+
 
 def replace_footer(content: str, new_footer: str) -> str:
     """Replaces the existing footer sections in the content with the new footer."""
@@ -74,24 +83,28 @@ def replace_footer(content: str, new_footer: str) -> str:
     if old_footer:
         # Check if a ZEROTH LAW COMPLIANCE section exists
         if "ZEROTH LAW COMPLIANCE:" in old_footer:
-            return content.replace(old_footer, new_footer) # Replace entire old footer
+            return content.replace(old_footer, new_footer)  # Replace entire old footer
 
-        #If no compliance section, replace existing sections, and append
+        # If no compliance section, replace existing sections, and append
         updated_content = content
         for section in ["KNOWN ERRORS:", "IMPROVEMENTS:", "FUTURE TODOs:"]:
             pattern = r'"""\s*' + section + r'.*?(""")'
             match = re.search(pattern, updated_content, re.DOTALL)
             if match:
-                updated_content = updated_content.replace(match.group(0), "") #Remove old
+                updated_content = updated_content.replace(
+                    match.group(0), ""
+                )  # Remove old
 
         # Remove last """ if exists
         updated_content = updated_content.rstrip()
         if updated_content.endswith('"""'):
             end_index = updated_content.rfind('"""')
-            start_index = updated_content.rfind('"""', 0, end_index) #Find second to last
-            if start_index != -1: #Shouldn't happen, but just in case
+            start_index = updated_content.rfind(
+                '"""', 0, end_index
+            )  # Find second to last
+            if start_index != -1:  # Shouldn't happen, but just in case
                 updated_content = updated_content[:start_index]
         return updated_content + "\n" + new_footer
 
-    else: #No footer
+    else:  # No footer
         return content + "\n" + new_footer

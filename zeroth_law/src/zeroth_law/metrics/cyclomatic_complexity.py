@@ -11,8 +11,10 @@
 import ast
 from typing import Dict, Any
 
+
 class CyclomaticComplexityVisitor(ast.NodeVisitor):
     """Visitor to count cyclomatic complexity."""
+
     def __init__(self):
         self.complexity = 1
 
@@ -41,16 +43,15 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_BoolOp(self, node: ast.BoolOp):
-        self.complexity += len(node.values) -1
+        self.complexity += len(node.values) - 1
         self.generic_visit(node)
 
-    def visit_Assert(self, node: ast.Assert): # Count asserts
+    def visit_Assert(self, node: ast.Assert):  # Count asserts
         self.complexity += 1
         self.generic_visit(node)
 
 
-
-def calculate_cyclomatic_complexity(node: ast.FunctionDef) -> Dict[str,Any]:
+def calculate_cyclomatic_complexity(node: ast.FunctionDef) -> Dict[str, Any]:
     """Calculates the cyclomatic complexity of a function."""
     visitor = CyclomaticComplexityVisitor()
     visitor.visit(node)

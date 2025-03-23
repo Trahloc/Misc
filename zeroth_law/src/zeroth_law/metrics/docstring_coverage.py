@@ -11,6 +11,8 @@
 
 import ast
 from typing import Dict, Any
+
+
 def calculate_docstring_coverage(node: ast.FunctionDef) -> Dict[str, Any]:
     """Checks if a function has a docstring."""
     has_docstring = ast.get_docstring(node) is not None

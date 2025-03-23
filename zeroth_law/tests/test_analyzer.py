@@ -12,11 +12,17 @@
 """
 import pytest
 import os
-from zeroth_law.analyzer import analyze_file, analyze_directory, generate_footer, should_ignore
+from zeroth_law.analyzer import (
+    analyze_file,
+    analyze_directory,
+    generate_footer,
+    should_ignore,
+)
 from zeroth_law.exceptions import FileNotFoundError, NotPythonFileError, AnalysisError
 
 # Create a temporary directory for test files
 TEST_DIR = "test_files"
+
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_files():
@@ -62,6 +68,7 @@ def create_test_files():
             os.rmdir(os.path.join(root, name))
     os.rmdir(TEST_DIR)
 
+
 def test_should_ignore_dot_directory():
     """Test that dot-prefixed directories are properly ignored."""
     base_path = TEST_DIR
@@ -69,11 +76,16 @@ def test_should_ignore_dot_directory():
 
     # Test .old directory
     file_path = os.path.join(TEST_DIR, ".old", "old_file.py")
-    assert should_ignore(file_path, base_path, patterns), "Should ignore files in .old directory"
+    assert should_ignore(
+        file_path, base_path, patterns
+    ), "Should ignore files in .old directory"
 
     # Test non-dot directory
     file_path = os.path.join(TEST_DIR, "src", "file.py")
-    assert not should_ignore(file_path, base_path, patterns), "Should not ignore files in normal directories"
+    assert not should_ignore(
+        file_path, base_path, patterns
+    ), "Should not ignore files in normal directories"
+
 
 def test_should_ignore_cached_files():
     """Test that cache directories and files are properly ignored."""
@@ -82,11 +94,14 @@ def test_should_ignore_cached_files():
 
     # Test __pycache__ directory
     file_path = os.path.join(TEST_DIR, "__pycache__", "cached.pyc")
-    assert should_ignore(file_path, base_path, patterns), "Should ignore files in __pycache__ directory"
+    assert should_ignore(
+        file_path, base_path, patterns
+    ), "Should ignore files in __pycache__ directory"
 
     # Test .pyc file in regular directory
     file_path = os.path.join(TEST_DIR, "module.pyc")
     assert should_ignore(file_path, base_path, patterns), "Should ignore .pyc files"
+
 
 def test_should_ignore_with_multiple_patterns():
     """Test that multiple ignore patterns work correctly."""
@@ -95,10 +110,17 @@ def test_should_ignore_with_multiple_patterns():
 
     # Test various paths against multiple patterns
     assert should_ignore(os.path.join(TEST_DIR, ".old", "file.py"), base_path, patterns)
-    assert should_ignore(os.path.join(TEST_DIR, "__pycache__", "file.pyc"), base_path, patterns)
+    assert should_ignore(
+        os.path.join(TEST_DIR, "__pycache__", "file.pyc"), base_path, patterns
+    )
     assert should_ignore(os.path.join(TEST_DIR, "module.pyc"), base_path, patterns)
-    assert should_ignore(os.path.join(TEST_DIR, ".git", "objects", "file"), base_path, patterns)
-    assert not should_ignore(os.path.join(TEST_DIR, "src", "file.py"), base_path, patterns)
+    assert should_ignore(
+        os.path.join(TEST_DIR, ".git", "objects", "file"), base_path, patterns
+    )
+    assert not should_ignore(
+        os.path.join(TEST_DIR, "src", "file.py"), base_path, patterns
+    )
+
 
 def test_should_ignore_relative_paths():
     """Test that relative paths are handled correctly."""
@@ -109,6 +131,7 @@ def test_should_ignore_relative_paths():
     assert should_ignore(os.path.join(TEST_DIR, ".old", "file.py"), base_path, patterns)
     assert should_ignore(os.path.join(TEST_DIR, ".old/file.py"), base_path, patterns)
     assert should_ignore(".old/file.py", TEST_DIR, patterns)
+
 
 def test_analyze_valid_file():
     """Tests analyzing a valid Python file."""
@@ -129,15 +152,18 @@ def test_analyze_not_python_file():
     with pytest.raises(NotPythonFileError):
         analyze_file(os.path.join(TEST_DIR, "not_a_python_file.txt"))
 
+
 def test_analyze_syntax_error():
     """Tests handling of a file with a syntax error."""
     with pytest.raises(AnalysisError) as e:
         analyze_file(os.path.join(TEST_DIR, "syntax_error.py"))
     assert "Syntax error" in str(e.value)
 
+
 def test_analyze_directory_not_found():
     with pytest.raises(FileNotFoundError):
         analyze_directory("non_existent_directory", False, False, None)
+
 
 def test_generate_footer():
     """Tests the generate_footer function."""
