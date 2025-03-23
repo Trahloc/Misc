@@ -25,6 +25,9 @@ MD024:
 # MD025: Multiple top-level headings in the same document
 MD025: true
 
+# MD031: Fenced code blocks should be surrounded by blank lines
+MD031: false
+
 # MD032: Allow multiple top-level headings in the same document
 MD032: false
 
@@ -37,14 +40,14 @@ MD041: true
 # MD046: Code block style
 MD046:
   # Enforce consistent style for code blocks
-  style: "fenced"
+  style: fenced
 
 # MD049: Emphasis style
 MD049:
   # Enforce consistent style for emphasis
-  style: "asterisk"
+  style: asterisk
 
 # MD050: Strong style
 MD050:
   # Enforce consistent style for strong emphasis
-  style: "asterisk" 
+  style: asterisk
