@@ -47,6 +47,8 @@ All new or modified code must pass these guidelines before merging into the main
 
 ## 4. IN-FILE DOCUMENTATION PATTERN
 
+Use these sections (Header, Implementation, Footer) as a consistent pattern in every file to maintain clarity and reduce guesswork.
+
 ### 4.1 Header
 ```python
 # FILE: project_head/src/project_module/file_name.py
@@ -62,14 +64,22 @@ All new or modified code must pass these guidelines before merging into the main
 ### 4.2 Implementation
 ```python
 def a_very_descriptive_function_name(param1: type, param2: type = default) -> return_type:
-    """
-    PURPOSE: [Single responsibility for this function]
-    CONTEXT: [Any local or domain-specific context]
-    PARAMS:  [Explain parameters in bullet form if needed]
-    RETURNS: [Description of the return value or side effects]
-    """
-    # ... implementation ...
-```
+  """
+  PURPOSE: [Single responsibility for this function]
+  CONTEXT: [Any local or domain-specific context]
+  PRE-CONDITIONS & ASSUMPTIONS: [What must be true before calling]
+  PARAMS:
+    param1 (type): [Ranges/constraints]
+    param2 (type): [Ranges/constraints]
+  POST-CONDITIONS & GUARANTEES: [What changes or conditions are ensured]
+  RETURNS:
+    [Return value semantics and special cases]
+  EXCEPTIONS:
+    [Exceptions that may be raised]
+  USAGE EXAMPLES:
+    [Illustrative sample usage]
+  """
+  # ... implementation ...
 
 ### 4.3 Footer
 ```python
@@ -79,8 +89,6 @@ def a_very_descriptive_function_name(param1: type, param2: type = default) -> re
 ## FUTURE TODOs: [Ideas for next session or releases]
 """
 ```
-
-Use these sections (Header, Implementation, Footer) as a consistent pattern in every file to maintain clarity and reduce guesswork.
 
 ---
 
@@ -102,6 +110,7 @@ Use these sections (Header, Implementation, Footer) as a consistent pattern in e
 - **Function Signature**: Aim for ≤4 parameters. If more are required, consider using data classes. Employ `mypy` for type-checking.
 - **Cyclomatic Complexity**: Prefer <8, handled by guard clauses or polymorphic strategies.
 - **Code Duplication**: Keep it under 2%. If duplication appears, consolidate into a single-function module.
+- **Mandatory Type Annotation**: Every function parameter, return value, and variable declaration must include explicit type hints. Use specialized types from the `typing` module (Union, Optional, Callable, etc.) where appropriate. Enforce with strict mypy configuration that rejects any functions lacking complete annotations.
 
 ### 5.4 Error Handling
 - **Traceability**: Include function name, parameters, and context in exception messages.
@@ -109,7 +118,24 @@ Use these sections (Header, Implementation, Footer) as a consistent pattern in e
 - **Exception Management**: Raise specific exceptions where suitable, avoiding silent catch-all.
 - **No Fallbacks**: For internal code, fail explicitly rather than guess. Fallbacks apply only to external dependencies.
 
-### 5.5 Dependencies
+### 5.5 Error Handling
+
+- **Strategic Assertions**: Place assertions in code to validate internal assumptions and catch invalid states early.
+- **Pre-conditions**: Verify input parameters at function entry points to ensure they meet expected formats or ranges.
+- **Post-conditions**: Check return values and state before exiting functions, confirming correct or expected outcomes.
+- **Invariants**: Maintain consistent properties throughout processing, asserting these remain unchanged where needed.
+- **State Transitions**: Ensure objects only move between valid states, raising clear errors when transitions are violated.
+- **Assertion Coverage**: Require at least one entry and one exit assertion in every non-trivial function, each with descriptive error messages.
+- **Verbose Testing**: Run pytest with the “-xvs” flag so assertion messages are fully visible, ensuring quick detection of unexpected states.
+
+### 5.6 Validation Metrics
+- **Type Coverage**: 100% of code has type annotations
+- **Assertion Density**: Minimum 1 assertion per 10 lines of code
+- **Documentation Coverage**: 100% of public APIs documented
+- **Docstring Example Coverage**: All complex functions include usage examples
+- **Runtime Type Guards**: Validate external inputs even when type hints exist
+
+### 5.7 Dependencies
 - **Vetting**: Prefer standard libraries and widely trusted PyPI packages.
 - **Discernment**: Document justification for each third-party dependency over alternatives.
 
@@ -117,14 +143,40 @@ Use these sections (Header, Implementation, Footer) as a consistent pattern in e
 
 ## 6. AUTOMATION
 
-- **`pre-commit`**: Automate code formatting, linting, and checks before every commit.
-- **`autoinit`**: Auto-generate and update `__init__.py` files, ensuring correct exports.
-- **`pytest`**: Standard testing framework for unit and integration tests.
-- **`black`**: Enforce uniform formatting.
-- **`flake8`**: Lint for stylistic or logical errors.
-- **`mypy`**: Provide static type-checking for safer refactoring.
+### 6.1 Tools
 
-### 6.1 Example Project Layout
+Use the following tools and checks to maintain code quality and consistency:
+
+1. **pre-commit**
+  Configure hooks to run formatters, linters, type-checkers, docstyle validators, and tests before every commit. This prevents incomplete or inconsistent commits from reaching the repository.
+
+2. **autoinit**
+  Automatically generate and maintain `__init__.py` files for each module, ensuring that only necessary functions and classes are exported.
+
+3. **pytest**
+  Serve as the main testing framework, covering both unit and integration scenarios. Use the “--enable-assertions” flag so assertion-based checks remain active, capturing unexpected failures.
+
+4. **black**
+  Enforce a consistent code format so that diffs focus on logic rather than style adjustments.
+
+5. **flake8**
+  Lint for style and logical errors, flagging anything that violates PEP 8 or recognized best practices.
+
+6. **mypy**
+  Employ strict type-checking (“--strict”) to enforce explicit type annotations in every function and data definition, reducing runtime surprises.
+
+7. **pydocstyle**
+  Validate the presence and format of docstrings, keeping inline documentation consistent and instructive.
+
+8. **Custom Assert Validator**
+  Inspect the volume and placement of assertions in relation to function complexity. Encourage thorough coverage of pre-conditions and post-conditions.
+
+9. **interrogate**
+  Measure documentation coverage, aiming for 100% to ensure every module, function, and class is clearly explained.
+
+Integrate these tools into continuous integration (CI) so any violations produce error cli errors and block merges until resolved. This comprehensive approach automates compliance with Zeroth Law standards, reducing risk while improving code clarity.
+
+### 6.2 Example Project Layout
 ```md
 project_head/
 ├── pyproject.toml
@@ -134,7 +186,7 @@ project_head/
     └── ...
 ```
 
-### 6.2 `pyproject.toml`
+### 6.3 `pyproject.toml`
 ```toml
 # filepath: /project_head/pyproject.toml
 [build-system]
@@ -142,8 +194,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tmux_manager"
-version = "100.0.1"
+name = "example_zeroth"
+version = "1742729946"
 authors = [
   { name = "Trahloc colDhart", email = "github@trahloc.com" }
 ]
@@ -167,7 +219,7 @@ dev = [
 ]
 
 [project.scripts]
-tmux_manager = "tmux_manager.__main__:main"
+example_zeroth = "example_zeroth.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
