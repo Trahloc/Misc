@@ -1,5 +1,30 @@
 {
   "ignores": [
     "docs/ZerothLawAIFramework.py.md"
-  ]
+  ],
+  "default": true,
+  "MD001": true,
+  "MD013": {
+    "line_length": 140,
+    "headings": false,
+    "code_blocks": false
+  },
+  "MD022": false,
+  "MD024": {
+    "siblings_only": true
+  },
+  "MD025": true,
+  "MD031": false,
+  "MD032": false,
+  "MD033": false,
+  "MD041": true,
+  "MD046": {
+    "style": "fenced"
+  },
+  "MD049": {
+    "style": "asterisk"
+  },
+  "MD050": {
+    "style": "asterisk"
+  }
 }
