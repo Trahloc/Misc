@@ -20,7 +20,7 @@
 import os
 import click
 from pathlib import Path
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Any
 import sys
 
 from template_zeroth_law.utils import get_project_root
@@ -160,7 +160,7 @@ def find_source_and_test_files(
 
 def calculate_coverage(
     source_files: List[Path], test_files: List[Path], project_name: str
-) -> Dict:
+) -> Dict[str, Any]:
     """
     Calculate test coverage for the project.
 
@@ -182,115 +182,80 @@ def calculate_coverage(
         try:
             # Try src layout first
             if "src" in file.parts:
-                rel_path = file.relative_to(file.parts[0] / "src")
+                # Find the index of 'src' in the path
+                src_index = file.parts.index("src")
+                # Get the path relative to the directory after 'src'
+                rel_path = Path(*file.parts[src_index + 2:])
             else:
-                # Try package in root directory
+                # For direct layout, get path relative to project root
                 rel_path = file.relative_to(file.parts[0])
 
-            # Remove .py extension and convert to module path
-            module_path = str(rel_path).replace("/", ".")[:-3]
-            source_modules.add(module_path)
-        except ValueError:
-            # Skip files that don't match expected structure
+            # Convert path to module notation
+            module = str(rel_path).replace("/", ".").replace("\\", ".").removesuffix(".py")
+            source_modules.add(module)
+        except (ValueError, IndexError):
             continue
 
     # Convert test files to module paths
     test_modules = set()
-    test_files_without_source = []
-
     for file in test_files:
-        if "__pycache__" in str(file) or "conftest.py" in str(file):
-            test_files_without_source.append(file)
+        if "__pycache__" in str(file):
             continue
 
-        # Get relative path
         try:
-            rel_path = str(file.relative_to(file.parts[0]))
-        except ValueError:
-            test_files_without_source.append(file)
+            # Get path relative to tests directory
+            tests_dir = Path(file.parts[0]) / "tests"
+            rel_path = file.relative_to(tests_dir)
+
+            # Convert path to module notation and remove test_ prefix if present
+            module = str(rel_path).replace("/", ".").replace("\\", ".").removesuffix(".py")
+            if module.startswith("test_"):
+                module = module[5:]  # Remove "test_" prefix
+            test_modules.add(module)
+        except (ValueError, IndexError):
             continue
 
-        # Check if it's a test for a source module
-        is_source_test = False
-        for src_module in source_modules:
-            # Convert src_module to test module format
-            src_parts = src_module.split(".")
-            if len(src_parts) > 1:  # Ignore the project name itself
-                test_module = f"tests.{'.'.join(src_parts[1:])}"
-                test_file = f"test_{src_parts[-1]}"
+    # Calculate coverage metrics
+    covered_modules = source_modules & test_modules
+    total_modules = len(source_modules)
+    covered_count = len(covered_modules)
+    coverage_percentage = (covered_count / total_modules * 100) if total_modules > 0 else 100.0
 
-                if test_file in rel_path and rel_path.replace("/", ".")[:-3].startswith(
-                    test_module.replace(f".{src_parts[-1]}", "")
-                ):
-                    test_modules.add(src_module)
-                    is_source_test = True
-                    break
-
-        if not is_source_test:
-            test_files_without_source.append(file)
-
-    # Calculate coverage percentage
-    total_source_modules = len(source_modules)
-    covered_modules = len(test_modules)
-    coverage_percentage = (
-        100.0
-        if total_source_modules == 0
-        else (covered_modules / total_source_modules) * 100
-    )
-
-    # Identify source files without tests
-    source_modules_without_tests = source_modules - test_modules
+    # Prepare uncovered modules list
+    uncovered = sorted(list(source_modules - test_modules))
 
     return {
-        "total_source_files": total_source_modules,
-        "total_test_files": len(test_files),
+        "total_modules": total_modules,
+        "covered_modules": covered_count,
         "coverage_percentage": coverage_percentage,
-        "source_modules_without_tests": source_modules_without_tests,
-        "test_files_without_source": test_files_without_source,
+        "uncovered_modules": uncovered,
+        "source_modules_without_tests": uncovered  # For backward compatibility
     }
 
 
-def display_coverage_report(coverage_info: Dict, project_root: Path) -> None:
-    """
-    Display test coverage report.
-
-    Args:
-        coverage_info: Dictionary containing coverage information
-        project_root: Path to the project root
-    """
-    # Print the report
+def display_coverage_report(coverage_info: Dict[str, Any], project_root: Path) -> None:
+    """Display test coverage report."""
     click.echo(f"\nTest Coverage Report for {project_root}:")
 
-    # Check if structure was detected correctly
-    src_structure_detected = (project_root / "src").exists()
-    project_name = os.path.basename(project_root)
+    # Report on coverage
+    total_modules = coverage_info.get('total_modules', 0)
+    covered_modules = coverage_info.get('covered_modules', 0)
+    coverage_percentage = coverage_info.get('coverage_percentage', 0.0)
+    uncovered_modules = coverage_info.get('uncovered_modules', [])
 
-    if src_structure_detected:
-        click.echo(f"Detected package structure: src/{project_name}")
-    else:
-        click.echo(f"Detected package structure: {project_name}")
+    # Print basic stats
+    click.echo(f"Total source modules: {total_modules}")
+    click.echo(f"Covered modules: {covered_modules}")
+    click.echo(f"Coverage: {coverage_percentage:.1f}%")
 
-    click.echo(f"Total source files: {coverage_info['total_source_files']}")
-    click.echo(f"Total test files: {coverage_info['total_test_files']}")
-    click.echo(f"Test coverage: {coverage_info['coverage_percentage']:.1f}%")
+    # Report uncovered modules
+    if uncovered_modules:
+        click.echo("\nModules without tests:")
+        for module in uncovered_modules:
+            click.echo(f"  - {module}")
 
-    if coverage_info["test_files_without_source"]:
-        click.echo("\nTest files without corresponding source files:")
-        for file in coverage_info["test_files_without_source"]:
-            click.echo(f"  - {file.relative_to(project_root)}")
-
-    if coverage_info["source_modules_without_tests"]:
-        # Count modules without tests
-        modules_without_tests = len(coverage_info["source_modules_without_tests"])
-        if modules_without_tests > 0:
-            click.echo(f"\nSource modules without tests: {modules_without_tests}")
-            if modules_without_tests <= 5:  # Only list if there are few missing tests
-                for module in coverage_info["source_modules_without_tests"]:
-                    click.echo(f"  - {module}")
-            else:
-                click.echo(
-                    "Run 'zeroth-law create-test-stubs' to generate test stubs for missing tests."
-                )
+        if len(uncovered_modules) > 5:
+            click.echo("\nRun 'create-test-stubs' to generate test stubs for uncovered modules.")
 
 
 def create_test_stubs(
@@ -354,10 +319,10 @@ from {module} import *
 def test_{parts[-1]}_exists():
     """
     ZEROTH LAW VIOLATION: This is a placeholder test.
-    
+
     This file was auto-generated by the Zeroth Law test coverage tool.
     Replace this with actual tests for the {parts[-1]} module.
-    
+
     According to Zeroth Law section 6.1:
     - Test Coverage: >90% business logic coverage
     - Each feature should have a corresponding pytest for testing

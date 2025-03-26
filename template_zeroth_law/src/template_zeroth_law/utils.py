@@ -49,24 +49,87 @@ def get_project_root() -> Path:
 
 def sanitize_filename(filename: str) -> str:
     """
-    PURPOSE: Sanitize a filename to be safe for the filesystem.
+    Sanitize a filename by removing/replacing invalid characters.
 
-    PARAMS:
-        filename: The original filename
+    Args:
+        filename: Original filename
 
-    RETURNS:
-        A sanitized filename with unsafe characters removed
+    Returns:
+        Sanitized filename
     """
-    # Replace unsafe characters with underscores
-    sanitized = re.sub(r'[\\/*?:"<>|]', "_", filename)
-    # Replace multiple spaces with a single space
-    sanitized = re.sub(r"\s+", " ", sanitized)
-    # Trim spaces from the ends
-    sanitized = sanitized.strip()
-    # Ensure filename isn't empty after sanitization
-    if not sanitized:
-        sanitized = "unnamed_file"
-    return sanitized
+    if not filename:
+        return "unnamed_file"
+
+    # Handle path traversal attempts
+    if '..' in filename:
+        prefix = '_'
+    else:
+        prefix = ''
+
+    # Get original parts for handling paths with invalid characters
+    # but preserve all components for complex paths
+    if '/' in filename or '\\' in filename:
+        # Extract file name part (last component) and process it separately
+        parts = re.split(r'[/\\]+', filename.replace('..', ''))
+        # Skip empty parts
+        parts = [p for p in parts if p]
+
+        if not parts:
+            return "unnamed_file"
+
+        # Sanitize each part individually
+        sanitized_parts = []
+        for part in parts:
+            # Replace invalid characters with underscores
+            part = re.sub(r'[<>:"|?*\'\\]+', '_', part)
+            # Clean up multiple underscores
+            part = re.sub(r'_{2,}', '_', part)
+            # Clean up spaces
+            part = re.sub(r'\s+', ' ', part)
+            # Trim leading/trailing spaces and underscores
+            part = part.strip(' _')
+
+            if part:  # Skip empty parts
+                sanitized_parts.append(part)
+
+        if not sanitized_parts:
+            return "unnamed_file"
+
+        # Join the processed parts with underscores
+        name = '_'.join(sanitized_parts)
+
+        # Split into name and extension
+        name_parts = name.rsplit('.', 1)
+        base_name = name_parts[0]
+        ext = f".{name_parts[1]}" if len(name_parts) > 1 else ""
+
+        return prefix + base_name + ext
+    else:
+        # Handle simple filenames (no path separators)
+        # Split into name and extension
+        name_parts = filename.rsplit('.', 1)
+        name = name_parts[0]
+        ext = f".{name_parts[1]}" if len(name_parts) > 1 else ""
+
+        # Handle hidden files
+        if name.startswith('.'):
+            name = '_' + name[1:]
+
+        # Replace invalid characters
+        name = re.sub(r'[<>:"|?*\'\\]+', '_', name)
+
+        # Clean up multiple underscores and spaces
+        name = re.sub(r'_{2,}', '_', name)
+        name = re.sub(r'\s+', ' ', name)
+
+        # Clean up leading/trailing spaces and underscores
+        name = name.strip(' _')
+
+        # Handle empty or whitespace-only names
+        if not name or name.isspace():
+            return "unnamed_file"
+
+        return prefix + name + ext
 
 
 def merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:

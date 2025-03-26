@@ -12,3 +12,6 @@ max-line-length=140
 
 [DESIGN]
 max-args=7
+
+[STRING]
+    W0105,  # string-string-concatenation: String concatenation is handled by f-strings.

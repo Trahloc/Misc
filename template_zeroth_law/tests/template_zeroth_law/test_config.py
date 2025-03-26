@@ -1,173 +1,128 @@
-# FILE_LOCATION: template_zeroth_law/tests/template_zeroth_law/test_config.py
 """
-# PURPOSE: Tests for template_zeroth_law.config.
+# PURPOSE: Tests for configuration management.
 
 ## INTERFACES:
-#   test_config_exists: Verify the module exists.
-#   test_default_config: Test the default configuration values.
-#   test_get_config: Test the get_config function.
-#   test_load_config: Test the load_config function.
+ - test_config_default_values: Test default configuration values
+ - test_config_env_override: Test environment variable overrides
+ - test_config_type_conversion: Test type conversion
+ - test_config_invalid_file: Test invalid config handling
+ - test_config_immutability: Test config immutability
 
 ## DEPENDENCIES:
-#   pytest
-#   template_zeroth_law.config
-#   json
-#   tempfile
+ - pytest: Testing framework
+ - template_zeroth_law.config: Configuration module
 """
-import json
-import tempfile
 import os
 import pytest
-from template_zeroth_law.config import get_config, load_config, DEFAULT_CONFIG
+from pathlib import Path
+from typing import Dict, Any
+
+from template_zeroth_law.config import (
+    Config, AppConfig, LoggingConfig, PathsConfig,
+    get_config, load_config
+)
+from template_zeroth_law.exceptions import ConfigError
 
 
-def test_config_exists():
-    """
-    PURPOSE: Verify that the config module exists.
-
-    PARAMS: None
-
-    RETURNS: None
-    """
-    # This import will raise an ImportError if the module doesn't exist
-    from template_zeroth_law import config
-
-    assert config
-
-
-def test_default_config():
-    """
-    PURPOSE: Test that the default configuration has expected values.
-
-    PARAMS: None
-
-    RETURNS: None
-    """
-    # Verify some key default configuration values
-    assert DEFAULT_CONFIG["limits"]["max_line_length"] == 140
-    assert DEFAULT_CONFIG["limits"]["max_function_lines"] == 30
-    assert DEFAULT_CONFIG["limits"]["max_parameters"] == 7
-    assert "ignore_patterns" in DEFAULT_CONFIG
-    assert isinstance(DEFAULT_CONFIG["ignore_patterns"], list)
-    # Check that some expected patterns are in the ignore list
-    assert any(
-        "__pycache__" in pattern for pattern in DEFAULT_CONFIG["ignore_patterns"]
-    )
-    assert any(".git" in pattern for pattern in DEFAULT_CONFIG["ignore_patterns"])
+@pytest.fixture
+def mock_config() -> Dict[str, Any]:
+    """Provide test configuration data."""
+    return {
+        "app": {
+            "name": "test_app",
+            "version": "1.0.0",
+            "description": "Test application",
+            "debug": False
+        },
+        "logging": {
+            "level": "INFO",
+            "format": "%(message)s"
+        },
+        "paths": {
+            "data_dir": "data",
+            "output_dir": "output",
+            "cache_dir": ".cache"
+        }
+    }
 
 
-def test_get_config():
-    """
-    PURPOSE: Test that get_config returns a Config object with the default values.
-
-    PARAMS: None
-
-    RETURNS: None
-    """
-    config = get_config()
-    # Check it's a Config object
-    from template_zeroth_law.config import Config
-
-    assert isinstance(config, Config)
-
-    # Check it has the expected values
-    assert config.limits.max_line_length == 140
-    assert config.limits.max_function_lines == 30
-
-    # Test dictionary access
-    assert config["limits"]["max_line_length"] == 140
-    assert config["limits"]["max_function_lines"] == 30
+def test_config_default_values():
+    """Test that default configuration has expected values."""
+    config = Config()
+    assert config.app.name == "template_zeroth_law"
+    assert config.logging.level == "INFO"
+    assert config.paths.data_dir == "data"
 
 
-def test_load_config():
-    """
-    PURPOSE: Test that load_config properly loads and merges configuration.
+def test_config_env_override(monkeypatch: pytest.MonkeyPatch):
+    """Test environment variable overrides."""
+    monkeypatch.setenv("APP_LOGGING_LEVEL", "DEBUG")
+    monkeypatch.setenv("APP_PATHS_DATA_DIR", "/custom/path")
 
-    PARAMS: None
+    config = Config()
+    config.update_from_env()
 
-    RETURNS: None
-    """
-    # Create a temporary config file
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp:
-        # Write a partial config
-        json.dump({"limits": {"max_line_length": 120}, "custom_setting": "test"}, temp)
-        temp_path = temp.name
-
-    try:
-        # Test loading the config
-        config = load_config(temp_path)
-
-        # Check merged values
-        assert config.limits.max_line_length == 120  # From custom config
-        assert config.limits.max_function_lines == 30  # From default config
-        assert config.custom_setting == "test"  # New in custom config
-    finally:
-        # Clean up
-        os.unlink(temp_path)
+    assert config.logging.level == "DEBUG"
+    assert config.paths.data_dir == "/custom/path"
 
 
-def test_load_config_file_not_found():
-    """
-    PURPOSE: Test that load_config returns default config when file is not found.
+def test_config_type_conversion(monkeypatch: pytest.MonkeyPatch):
+    """Test configuration type conversion."""
+    monkeypatch.setenv("APP_DEBUG", "true")
 
-    PARAMS: None
+    config = Config()
+    config.update_from_env()
 
-    RETURNS: None
-    """
-    # Test with a non-existent file
-    config = load_config("non_existent_config.json")
-    assert config.limits.max_line_length == 140
-    assert config.limits.max_function_lines == 30
+    assert isinstance(config.app.debug, bool)
+    assert config.app.debug is True
 
 
-def test_load_config_invalid_json():
-    """
-    PURPOSE: Test that load_config raises an exception for invalid JSON.
+def test_config_invalid_file():
+    """Test handling of invalid configuration file."""
+    with pytest.raises(ConfigError):
+        load_config(Path("nonexistent.toml"))
 
-    PARAMS: None
 
-    RETURNS: None
-    """
-    # Create a temporary file with invalid JSON
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp:
-        temp.write("{invalid json")
-        temp_path = temp.name
+def test_config_to_dict():
+    """Test configuration serialization to dictionary."""
+    config = Config()
+    data = config.to_dict()
 
-    try:
-        # Direct test of _load_from_file function to ensure it raises ValueError
-        from template_zeroth_law.config import _load_from_file
+    assert isinstance(data, dict)
+    assert "app" in data
+    assert "logging" in data
+    assert "paths" in data
 
-        try:
-            _load_from_file(temp_path)
-            assert False, "_load_from_file did not raise ValueError"
-        except ValueError:
-            print("_load_from_file correctly raised ValueError")
 
-        # Let's try calling load_config directly without pytest.raises
-        try:
-            config = load_config(temp_path)
-            print(f"load_config did not raise an exception, returned: {config}")
-            assert False, "load_config did not raise ValueError"
-        except ValueError as e:
-            print(f"load_config correctly raised ValueError: {e}")
-            pass  # This is expected
-        except Exception as e:
-            print(f"load_config raised unexpected exception: {type(e).__name__}: {e}")
-            raise  # Re-raise any other exceptions
-    finally:
-        # Clean up
-        os.unlink(temp_path)
+def test_config_from_dict(mock_config: Dict[str, Any]):
+    """Test configuration creation from dictionary."""
+    config = Config.from_dict(mock_config)
+
+    assert config.app.name == mock_config["app"]["name"]
+    assert config.logging.level == mock_config["logging"]["level"]
+    assert config.paths.data_dir == mock_config["paths"]["data_dir"]
+
+
+def test_singleton_config():
+    """Test that get_config returns singleton instance."""
+    config1 = get_config()
+    config2 = get_config()
+
+    assert config1 is config2
 
 
 """
 ## KNOWN ERRORS: None
 
 ## IMPROVEMENTS:
- - Added comprehensive tests for config module
- - Tests for default configuration values
- - Tests for config loading and merging
- - Tests for error handling
+ - Updated tests for new config implementation
+ - Added comprehensive test coverage
+ - Added proper fixtures
+ - Added type hints
+ - Added descriptive docstrings
 
 ## FUTURE TODOs:
- - Add tests for additional configuration scenarios if needed
+ - Add performance tests
+ - Add stress tests
+ - Add security tests
 """

@@ -21,6 +21,7 @@ import subprocess
 from pathlib import Path
 import tempfile
 import pytest
+from unittest.mock import MagicMock, patch
 
 
 def pytest_configure(config):
@@ -126,6 +127,23 @@ def base_fixture():
     RETURNS: None - placeholder for actual test resources.
     """
     return None
+
+
+@pytest.fixture
+def mock_stdout():
+    """
+    PURPOSE: Fixture to provide a properly configured mock for sys.stdout.
+
+    This handles Click's encoding checks by providing a str encoding attribute.
+
+    RETURNS:
+        MagicMock: A mock object for sys.stdout with proper encoding
+    """
+    mock = MagicMock()
+    # Add encoding attribute that Click needs
+    mock.encoding = "utf-8"
+    with patch("sys.stdout", mock):
+        yield mock
 
 
 """

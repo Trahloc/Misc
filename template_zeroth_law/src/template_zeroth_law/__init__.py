@@ -27,3 +27,15 @@ __all__ = [
     "types",
     "utils",
 ]
+
+"""
+## KNOWN ERRORS: None
+## IMPROVEMENTS:
+- Added proper documentation structure
+- Organized imports consistently
+- Added explicit __all__ definition
+## FUTURE TODOs:
+- Consider adding version information
+- Consider adding module-level type hints
+- Add automated __all__ generation using autoinit
+"""

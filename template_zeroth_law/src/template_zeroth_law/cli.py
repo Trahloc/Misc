@@ -31,22 +31,26 @@ from template_zeroth_law.config import get_config
 @click.pass_context
 def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> None:
     """Command-line interface for the template_zeroth_law package."""
+    # Input validation
+    assert isinstance(verbose, int) and verbose >= 0, f"Verbosity must be non-negative integer, got {verbose}"
+    assert config is None or isinstance(config, str), f"Config must be string or None, got {type(config)}"
+
     # Initialize context object to store shared data
     ctx.ensure_object(dict)
 
     # Load configuration
     app_config = get_config(config)
+    assert hasattr(app_config, 'logging'), "Configuration must contain logging settings"
 
     # Use config version or fallback to default
     version_str = getattr(app_config.app, "version", "0.1.0")
 
     # Set up logging based on verbosity
-    if verbose == 0:
-        log_level = logging.WARNING
-    elif verbose == 1:
-        log_level = logging.INFO
-    else:
-        log_level = logging.DEBUG
+    log_level = {
+        0: logging.WARNING,
+        1: logging.INFO,
+        2: logging.DEBUG
+    }.get(verbose, logging.DEBUG)  # Default to DEBUG for verbose > 2
 
     logging.basicConfig(
         level=log_level,
@@ -55,9 +59,16 @@ def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> 
     )
 
     # Store logger and config in context for commands to use
-    ctx.obj["logger"] = logging.getLogger("template_zeroth_law")
+    logger = logging.getLogger("template_zeroth_law")
+    assert logger is not None, "Failed to create logger"
+
+    ctx.obj["logger"] = logger
     ctx.obj["config"] = app_config
     ctx.obj["verbose"] = verbose
+
+    # Validate context setup
+    assert all(key in ctx.obj for key in ["logger", "config", "verbose"]), \
+        "Context missing required keys"
 
 
 # Register commands
