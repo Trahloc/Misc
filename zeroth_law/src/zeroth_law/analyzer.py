@@ -33,14 +33,12 @@ from zeroth_law.metrics import (
     calculate_naming_score,
     calculate_import_metrics,
 )
-from zeroth_law.reporting import generate_report, generate_summary_report
 from zeroth_law.utils import find_header_footer, count_executable_lines, replace_footer
 from zeroth_law.exceptions import (
     ZerothLawError,
     FileNotFoundError,
     NotPythonFileError,
     AnalysisError,
-    ConfigError,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,13 +47,24 @@ logger = logging.getLogger(__name__)
 def should_ignore(file_path: str, base_path: str, ignore_patterns: List[str]) -> bool:
     """Check if a file should be ignored based on the ignore patterns.
 
+    This function determines whether a file should be excluded from analysis based on
+    a list of glob patterns. It normalizes both the file path and patterns to ensure
+    consistent matching across different operating systems.
+
     Args:
-        file_path: The absolute path to check
-        base_path: The base directory path to make paths relative to
-        ignore_patterns: List of glob patterns to match against
+        file_path (str): The absolute path of the file to check.
+        base_path (str): The base directory path to make paths relative to.
+        ignore_patterns (List[str]): List of glob patterns to match against.
+            Patterns should use forward slashes and can include wildcards.
 
     Returns:
-        True if the file should be ignored, False otherwise
+        bool: True if the file should be ignored, False otherwise.
+
+    Examples:
+        >>> should_ignore("/path/to/file.py", "/path", ["*.pyc", "test/*"])
+        False
+        >>> should_ignore("/path/to/test/file.py", "/path", ["test/*"])
+        True
     """
     try:
         # Get path relative to the base directory
@@ -88,20 +97,40 @@ def should_ignore(file_path: str, base_path: str, ignore_patterns: List[str]) ->
 def analyze_file(
     file_path: str, update: bool = False, config: dict = None
 ) -> Dict[str, Any]:
-    """Analyzes a single Python file for Zeroth Law compliance.
+    """Analyze a single Python file for Zeroth Law compliance.
+
+    This function performs a comprehensive analysis of a Python file, checking various
+    metrics including code size, complexity, docstring coverage, naming conventions,
+    and import usage. For template files, it performs a simplified analysis.
 
     Args:
-        file_path: The path to the Python file.
-        update: Whether to update the file's footer.
-        config: Configuration dictionary.
+        file_path (str): Path to the Python file to analyze.
+        update (bool, optional): Whether to update the file's footer with analysis results.
+            Defaults to False.
+        config (dict, optional): Configuration dictionary containing analysis thresholds
+            and settings. If None, default values are used.
 
     Returns:
-        A dictionary containing the analysis metrics.
+        Dict[str, Any]: A dictionary containing analysis metrics including:
+            - file_path: Path to the analyzed file
+            - file_name: Base name of the file
+            - is_template: Whether the file is a template
+            - header_footer_status: Status of header and footer ("complete", "missing_header", or "missing_footer")
+            - executable_lines: Number of executable lines
+            - functions: List of function-level metrics
+            - penalties: List of compliance penalties
+            - overall_score: Numerical compliance score
+            - compliance_level: String indicating compliance level
 
     Raises:
-        FileNotFoundError: If the file does not exist.
-        NotPythonFileError: If the file is not a Python file.
-        AnalysisError: If any error occurs during analysis.
+        FileNotFoundError: If the specified file does not exist.
+        NotPythonFileError: If the file is not a Python file (.py extension).
+        AnalysisError: If an error occurs during analysis (e.g., syntax error).
+
+    Examples:
+        >>> metrics = analyze_file("example.py")
+        >>> print(metrics["compliance_level"])
+        'High'
     """
     logger.info(f"Analyzing file: {file_path}")
 
@@ -214,20 +243,33 @@ def analyze_file(
 def analyze_directory(
     dir_path: str, recursive: bool = False, update: bool = False, config: dict = None
 ) -> List[Dict[str, Any]]:
-    """Analyzes all Python files in a directory.
+    """Analyze all Python files in a directory for Zeroth Law compliance.
+
+    This function walks through a directory and analyzes all Python files found.
+    It can optionally recurse into subdirectories and update file footers with
+    analysis results.
 
     Args:
-        dir_path: Path to the directory.
-        recursive: Analyze subdirectories.
-        update: Update file footers.
-        config: Configuration dictionary.
+        dir_path (str): Path to the directory to analyze.
+        recursive (bool, optional): Whether to analyze files in subdirectories.
+            Defaults to False.
+        update (bool, optional): Whether to update file footers with analysis results.
+            Defaults to False.
+        config (dict, optional): Configuration dictionary containing analysis thresholds
+            and settings. If None, default values are used.
 
     Returns:
-        List of analysis metrics for each file.
+        List[Dict[str, Any]]: A list of dictionaries, each containing metrics for one file.
+            See analyze_file() for details of the metrics dictionary structure.
 
     Raises:
-        FileNotFoundError: If the directory does not exist.
-        AnalysisError: If any error occurs during analysis.
+        NotADirectoryError: If dir_path is not a directory.
+        FileNotFoundError: If dir_path does not exist.
+
+    Examples:
+        >>> metrics = analyze_directory("src/", recursive=True)
+        >>> print(len(metrics))  # Number of files analyzed
+        5
     """
     logger.info(f"Analyzing directory: {dir_path}")
 
@@ -279,7 +321,31 @@ def analyze_directory(
 
 
 def evaluate_compliance(metrics: Dict[str, Any], config: dict) -> None:
-    """Calculates compliance scores."""
+    """Evaluate the compliance level of a Python file based on its metrics.
+
+    This function analyzes various metrics and assigns penalties based on
+    violations of Zeroth Law principles. It updates the metrics dictionary
+    in place with compliance scores and levels.
+
+    Args:
+        metrics (Dict[str, Any]): Dictionary containing file metrics to evaluate.
+            Must include keys for functions, executable_lines, and other metrics
+            collected by analyze_file().
+        config (dict): Configuration dictionary containing thresholds and weights
+            for compliance evaluation. If empty, default values are used.
+
+    Note:
+        This function modifies the metrics dictionary in place, adding:
+        - penalties: List of compliance violations
+        - overall_score: Numerical compliance score (0-100)
+        - compliance_level: String indicating compliance level
+
+    Examples:
+        >>> metrics = {"functions": [], "executable_lines": 50}
+        >>> evaluate_compliance(metrics, {})
+        >>> print(metrics["compliance_level"])
+        'High'
+    """
     score = 100
     penalties = metrics["penalties"]
 
@@ -358,7 +424,24 @@ def evaluate_compliance(metrics: Dict[str, Any], config: dict) -> None:
 
 
 def determine_compliance_level(score: int) -> str:
-    """Determines the compliance level."""
+    """Convert a numerical compliance score to a descriptive level.
+
+    Args:
+        score (int): The numerical compliance score (0-100).
+
+    Returns:
+        str: One of "Critical", "Low", "Medium", or "High" based on the score:
+            - "Critical": score < 60
+            - "Low": 60 <= score < 75
+            - "Medium": 75 <= score < 90
+            - "High": score >= 90
+
+    Examples:
+        >>> determine_compliance_level(95)
+        'High'
+        >>> determine_compliance_level(50)
+        'Critical'
+    """
     if score >= 90:
         return "Excellent"
     elif score >= 75:
@@ -370,7 +453,24 @@ def determine_compliance_level(score: int) -> str:
 
 
 def update_file_footer(file_path: str, metrics: Dict[str, Any]) -> None:
-    """Updates the file footer with compliance information."""
+    """Update a file's footer with new compliance metrics.
+
+    This function generates a new footer containing compliance information
+    and updates the file in place, preserving the original content and header.
+
+    Args:
+        file_path (str): Path to the file to update.
+        metrics (Dict[str, Any]): Dictionary containing the metrics to include
+            in the footer. Must include compliance_level and overall_score.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        IOError: If there are issues reading or writing the file.
+
+    Note:
+        This function creates a backup of the original file before making changes.
+        If an error occurs during the update, the original file is restored.
+    """
     try:
         with tempfile.NamedTemporaryFile(
             mode="w", encoding="utf-8", delete=False
@@ -394,7 +494,31 @@ def update_file_footer(file_path: str, metrics: Dict[str, Any]) -> None:
 
 
 def generate_footer(metrics: Dict[str, Any]) -> str:
-    """Generates the Zeroth Law footer content."""
+    """Generate a standardized footer containing compliance metrics.
+
+    This function creates a formatted footer string containing compliance
+    information and metrics from the analysis.
+
+    Args:
+        metrics (Dict[str, Any]): Dictionary containing metrics to include
+            in the footer. Must include:
+            - compliance_level: Overall compliance level
+            - overall_score: Numerical compliance score
+            - penalties: List of compliance violations
+
+    Returns:
+        str: A formatted footer string containing:
+            - Current timestamp
+            - Compliance level and score
+            - List of penalties (if any)
+            - Standard footer markers
+
+    Examples:
+        >>> metrics = {"compliance_level": "High", "overall_score": 95, "penalties": []}
+        >>> footer = generate_footer(metrics)
+        >>> "Compliance Level: High" in footer
+        True
+    """
     footer = f'''"""
 ## KNOWN ERRORS: [List with severity.]
 

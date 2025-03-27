@@ -12,14 +12,38 @@ The Zeroth Law is a set of coding principles designed to maximize code comprehen
 
 ## Features
 
-*   **Analyzes Python code** for compliance with the Zeroth Law.
-*   **Uses the `ast` module** for accurate parsing (no fragile regex!).
-*   **Modular design:** Follows the Zeroth Law itself (one function per file, mostly).
-*   **Provides detailed reports:** Highlights areas for improvement.
-*   **Supports file and directory analysis** (including recursive analysis).
-*   **Integrates with `pre-commit`:** Automate checks before committing code.
-*   **Type-hinted:** For clarity and static analysis.
-*   **Test coverage verification:** Ensures every Python file has a corresponding test file.
+*   **Comprehensive Code Analysis:**
+    - Cyclomatic complexity measurement
+    - Docstring coverage verification
+    - Semantic naming evaluation
+    - Import usage analysis
+    - File and function size metrics
+*   **High-Quality Implementation:**
+    - Comprehensive docstrings with examples
+    - 100% test coverage for core modules
+    - Type hints throughout
+    - Modular design following Zeroth Law principles
+*   **Developer-Friendly Tools:**
+    - Detailed compliance reports
+    - Automatic footer updates with metrics
+    - Pre-commit integration
+    - Test coverage verification
+    - Template project generation
+
+## Recent Improvements
+
+*   **Enhanced Documentation:**
+    - Added comprehensive docstrings to all core modules
+    - Included usage examples in complex functions
+    - Improved type hints and parameter descriptions
+*   **Code Quality:**
+    - Removed unused imports
+    - Fixed deprecation warnings
+    - Enhanced test coverage
+*   **Metrics Calculation:**
+    - Improved cyclomatic complexity calculation
+    - Enhanced semantic naming score algorithm
+    - Better docstring coverage detection
 
 ## Installation
 
@@ -113,12 +137,6 @@ python -m zeroth_law.cli <path> [options]
 
 Now, the Zeroth Law analyzer will run automatically before each commit.
 
-### --init option (Future Development)
-```bash
-python -m zeroth_law.cli --init <directory>
-```
-Creates a directory with sample `__init__.py` and a python module file.
-
 ## Project Structure
 
 ```
@@ -126,9 +144,9 @@ zeroth_law_project/
 ├── src/
 │   └── zeroth_law/
 │       ├── __init__.py        # Public API
-│       ├── analyzer.py      # Main analysis logic
-│       ├── cli.py           # Command-line interface
-│       ├── metrics/         # Metric calculation modules
+│       ├── analyzer.py        # Main analysis logic
+│       ├── cli.py            # Command-line interface
+│       ├── metrics/          # Metric calculation modules
 │       │   ├── __init__.py
 │       │   ├── cyclomatic_complexity.py
 │       │   ├── docstring_coverage.py
@@ -136,19 +154,26 @@ zeroth_law_project/
 │       │   ├── function_size.py
 │       │   ├── imports.py
 │       │   └── naming.py
-│       ├── pyproject.toml   # Python packaging
-│       ├── reporting.py     # Report generation
-│       └── utils.py         # Utility functions
-└── tests/               # Unit tests (mirroring src structure)
+│       ├── pyproject.toml    # Python packaging
+│       ├── reporting.py      # Report generation
+│       └── utils.py          # Utility functions
+└── tests/                    # Unit tests (mirroring src structure)
     └── zeroth_law/
-       ├── __init__.py
-       ├── test_analyzer.py
-        ...
+        ├── __init__.py
+        ├── test_analyzer.py
+        ├── test_utils.py
+        └── test_reporting.py
 ```
 
 ## Contributing
 
-Contributions are welcome! Please follow the Zeroth Law principles when contributing code.
+Contributions are welcome! Please follow these guidelines:
+
+1. Follow the Zeroth Law principles in your code
+2. Add comprehensive docstrings with examples
+3. Include unit tests for new functionality
+4. Use type hints consistently
+5. Run the analyzer on your code before submitting
 
 ## License
 

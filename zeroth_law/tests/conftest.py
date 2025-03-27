@@ -53,18 +53,18 @@ def pytest_configure(config):
     config.option.basetemp = Path(temp_dir)
 
 
-def pytest_ignore_collect(path):
+def pytest_ignore_collect(collection_path: Path):
     """
     PURPOSE: Ignore cookiecutter template files during test collection.
 
     PARAMS:
-        path: The path to check
+        collection_path: The pathlib.Path to check
 
     RETURNS:
         bool: True if the path should be ignored, False otherwise
     """
     # Convert path to string for easier checking
-    path_str = str(path)
+    path_str = str(collection_path)
 
     # Ignore files in cookiecutter template directories
     if "cookiecutter-template" in path_str:

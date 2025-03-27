@@ -6,7 +6,6 @@ src/zeroth_law/__main__.py
 src/zeroth_law/analyzer.py
 src/zeroth_law/cli.py
 src/zeroth_law/config.py
-src/zeroth_law/conftest.py
 src/zeroth_law/exceptions.py
 src/zeroth_law/reporting.py
 src/zeroth_law/skeleton.py
@@ -28,5 +27,6 @@ src/zeroth_law/metrics/imports.py
 src/zeroth_law/metrics/naming.py
 tests/test_analyzer.py
 tests/test_cli.py
-tests/test_cookiecutter_template.py
+tests/test_reporting.py
 tests/test_test_coverage.py
+tests/test_utils.py
