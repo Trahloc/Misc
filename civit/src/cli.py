@@ -88,6 +88,8 @@ def setup_logging(
         debug: Whether to enable debug level logging
         quiet: Whether to disable all but error logging
     """
+    logger = logging.getLogger()
+
     if debug:
         log_level = logging.DEBUG
         # Create a more detailed formatter for debug mode
@@ -100,23 +102,51 @@ def setup_logging(
         log_format = "%(levelname)s: %(message)s"
     else:
         log_level = logging.WARNING
-        log_format = "%(asctime)s - %(levelname)s - %(message)s"
+        log_format = "%(levelname)s: %(message)s"
 
-    # Remove all existing handlers
-    root = logging.getLogger()
-    for handler in root.handlers[:]:
-        root.removeHandler(handler)
+    # Create formatter
+    formatter = logging.Formatter(log_format)
 
-    # Set up new configuration
-    logging.basicConfig(
-        level=log_level, format=log_format, handlers=[logging.StreamHandler()]
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    # Clear any existing handlers
+    logger.handlers.clear()
+    logger.addHandler(console_handler)
+    logger.setLevel(log_level)
+
+
+def main() -> None:
+    """Main entry point for the CLI."""
+    args = parse_args()
+    
+    # Configure logging based on verbosity flags
+    setup_logging(
+        verbose=args.verbose,
+        debug=args.debug,
+        quiet=args.quiet
     )
 
-    # Add a debug message to confirm logging setup
-    logger = logging.getLogger(__name__)
-    if debug:
-        logger.debug("Debug logging enabled - showing detailed information")
-    elif verbose:
-        logger.debug("Verbose logging enabled")
-    elif quiet:
-        logger.debug("Quiet mode enabled - showing only errors")
+    # Import here to avoid circular imports
+    from src.download_handler import download_file
+
+    # Process each URL
+    for url in args.urls:
+        try:
+            result = download_file(
+                url=url,
+                output_folder=args.output_folder,
+                api_key=args.api_key,
+                custom_filename=args.custom_naming
+            )
+            if result:
+                logging.info(f"Successfully downloaded: {result}")
+            else:
+                logging.error(f"Failed to download: {url}")
+        except Exception as e:
+            logging.error(f"Error downloading {url}: {e}")
+
+
+if __name__ == "__main__":
+    main()
