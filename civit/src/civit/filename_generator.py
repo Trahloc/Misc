@@ -116,40 +116,42 @@ def should_use_custom_filename(args, model_data=None) -> bool:
 
 
 @test_aware
-def generate_custom_filename(model_data: Dict) -> str:
-    """
-    Generate a custom filename based on model metadata.
-    
-    Format: LORA-Flux_1_D-{model_name}-{model_id}-{crc32}-{file_size}-{original_filename}
-    """
+def generate_custom_filename(model_data: Dict) -> Optional[str]:
+    """Generate a custom filename from model metadata."""
     try:
         # Extract fields from model data
-        model_type = model_data.get('type', 'LORA')
-        model_name = model_data.get('name', 'unknown')
-        model_id = model_data.get('modelId', 'unknown')
-        version_id = model_data.get('id', 'unknown')
+        model_type = model_data.get('model', {}).get('type', '')
+        model_name = model_data.get('model', {}).get('name', '')
+        model_id = model_data.get('modelId', '')
+        version_id = model_data.get('id', '')
         
-        # Get file info
+        # Get file information
         files = model_data.get('files', [])
         if not files:
             logger.error("No file information in model data")
             return None
             
         file_info = files[0]  # Use first file
-        crc32 = file_info.get('hashes', {}).get('CRC32', 'unknown')
         file_size = file_info.get('sizeKB', 0) * 1024  # Convert KB to bytes
-        original_filename = file_info.get('name', 'unknown')
+        crc32 = file_info.get('hashes', {}).get('CRC32', '')
+        original_filename = file_info.get('name', '')
         
-        # Sanitize model name (only replace problematic characters, keep hyphens)
-        model_name = re.sub(r'[<>:"/\\|?*]', '_', model_name)
+        # Sanitize model name - replace problematic characters with underscores
+        # Keep hyphens but replace other special characters
+        sanitized_name = re.sub(r'[^\w\-]', '_', model_name)
+        # Replace multiple consecutive underscores with a single one
+        sanitized_name = re.sub(r'_+', '_', sanitized_name)
+        # Remove leading/trailing underscores
+        sanitized_name = sanitized_name.strip('_')
         
-        # Format the filename
-        filename = f"{model_type}-Flux_1_D-{model_name}-{model_id}-{crc32}-{file_size}-{original_filename}"
+        # Generate filename
+        filename = f"LORA-Flux_1_D-{sanitized_name}-{model_id}-{crc32}-{file_size}-{original_filename}"
         
-        # Ensure the filename is valid for all operating systems
+        # Ensure filename is valid across operating systems
         filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+        filename = filename.strip()
         
         return filename
     except Exception as e:
-        logger.error(f"Failed to generate custom filename: {e}")
+        logger.error(f"Error generating filename: {e}")
         return None
