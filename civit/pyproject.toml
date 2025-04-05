@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "civit"
 version = "100.0.1"
 authors = [
-  { name = "Trahloc colDhart", email = "github@trahloc.com" },
+  { name="Trahloc colDhart", email="github@trahloc.com" },
 ]
 description = "Tool for downloading models from Civitai"
 readme = "README.md"
@@ -22,7 +22,11 @@ dependencies = [
 ]
 
 [project.scripts]
-civit = "src.civit.cli:main"
+civit = "civit.cli:main"
+
+[project.urls]
+"Homepage" = "https://github.com/yourusername/civit"
+"Bug Tracker" = "https://github.com/yourusername/civit/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

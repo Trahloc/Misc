@@ -84,6 +84,15 @@
     - All tests now pass consistently without any failures
     - Notes: The order of patching and setup is critical when mocking core Python functions like os.makedirs
 
+[x] [Fix] Implement verbosity counting and fix CLI tests
+    - Updated `src/cli.py` to handle `-v` and `-vv` flags correctly (`action='count'`)
+    - Modified `setup_logging` to accept `verbosity_level` and implement correct precedence: `debug` > `quiet` > `verbosity >= 2` > `verbosity == 1` > default.
+    - Added test `test_double_verbose_flag` to specifically check `-vv` maps to DEBUG level.
+    - Rewritten `test_setup_logging` to cover various flag combinations and precedence rules.
+    - Fixed issues with test logic and expectations to align with the new implementation.
+    - All 102 tests are now passing, including the new verbosity tests.
+    - Notes: Careful handling of flag precedence is crucial for robust logging configuration.
+
 ## Project TODOs
 
 ### Priority

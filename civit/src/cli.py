@@ -31,7 +31,7 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "-k",
         "--api-key",
-        help="Civitai API key for authenticated downloads",
+        help="Civitai API key for authenticated downloads (can also use CIVITAI_API_KEY env var)",
     )
 
     # Add custom filename options
@@ -49,58 +49,69 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         help="Disable custom naming pattern (use original filenames)",
     )
 
+    # Add resume option
+    parser.add_argument(
+        "-r",
+        "--resume",
+        action="store_true",
+        help="Attempt to resume interrupted downloads",
+    )
+
     # Set default for custom naming
     parser.set_defaults(custom_naming=True)
 
-    # Verbosity options in a mutually exclusive group
-    verbosity_group = parser.add_argument_group("verbosity")
-
-    # Create mutually exclusive group for verbosity options
-    verbosity = verbosity_group.add_mutually_exclusive_group()
-
-    verbosity.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose output"
+    # Verbosity and Debugging options
+    verbosity_group = parser.add_argument_group("verbosity and debugging")
+    verbosity_group.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity level (-v for INFO, -vv for DEBUG)",
     )
-
-    verbosity.add_argument(
-        "-q", "--quiet", action="store_true", help="Disable all output except errors"
+    verbosity_group.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress all output except errors (overrides -v)",
     )
-
-    # Debug option
     verbosity_group.add_argument(
         "-d",
         "--debug",
         action="store_true",
-        help="Enable detailed debug output (implies verbose)",
+        help="Enable detailed debug output (equivalent to -vv, overrides -v and -q)",
     )
 
     return parser.parse_args(args)
 
 
 def setup_logging(
-    verbose: bool = False, debug: bool = False, quiet: bool = False
+    verbosity_level: int = 0, debug: bool = False, quiet: bool = False
 ) -> None:
     """
     Configure logging based on verbosity level.
 
     Args:
-        verbose: Whether to enable verbose logging
-        debug: Whether to enable debug level logging
-        quiet: Whether to disable all but error logging
+        verbosity_level: Level of verbosity (0=WARN, 1=INFO, 2+=DEBUG).
+        debug: Whether to force debug level logging.
+        quiet: Whether to disable all but error logging.
     """
     logger = logging.getLogger()
 
+    # Determine log level and format based on flags (precedence: debug > quiet > verbosity)
     if debug:
         log_level = logging.DEBUG
-        # Create a more detailed formatter for debug mode
         log_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
-    elif verbose:
-        log_level = logging.INFO
-        log_format = "%(asctime)s - %(levelname)s - %(message)s"
     elif quiet:
         log_level = logging.ERROR
         log_format = "%(levelname)s: %(message)s"
-    else:
+    elif verbosity_level >= 2:
+        log_level = logging.DEBUG
+        log_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+    elif verbosity_level == 1:
+        log_level = logging.INFO
+        log_format = "%(asctime)s - %(levelname)s - %(message)s"
+    else:  # Default (verbosity_level == 0)
         log_level = logging.WARNING
         log_format = "%(levelname)s: %(message)s"
 
@@ -123,7 +134,7 @@ def main() -> None:
     
     # Configure logging based on verbosity flags
     setup_logging(
-        verbose=args.verbose,
+        verbosity_level=args.verbose,
         debug=args.debug,
         quiet=args.quiet
     )
@@ -138,7 +149,8 @@ def main() -> None:
                 url=url,
                 output_folder=args.output_folder,
                 api_key=args.api_key,
-                custom_filename=args.custom_naming
+                custom_filename=args.custom_naming,
+                resume=args.resume
             )
             if result:
                 logging.info(f"Successfully downloaded: {result}")

@@ -1,2 +1,2 @@
 [console_scripts]
-civit = src.civit.cli:main
+civit = civit.cli:main

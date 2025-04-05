@@ -3,6 +3,8 @@ Name: civit
 Version: 100.0.1
 Summary: Tool for downloading models from Civitai
 Author-email: Trahloc colDhart <github@trahloc.com>
+Project-URL: Homepage, https://github.com/yourusername/civit
+Project-URL: Bug Tracker, https://github.com/yourusername/civit/issues
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
