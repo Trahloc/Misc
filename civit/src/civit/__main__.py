@@ -1,17 +1,9 @@
 """
-# PURPOSE: Entry point for the civit package.
-
-## INTERFACES:
- # main(): executes the main function from cli.py
-
-## DEPENDENCIES:
- - civit.cli
+Main entry point for the civit command-line tool.
 """
+
 import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+from .cli import main
 
-from civit.cli import main
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

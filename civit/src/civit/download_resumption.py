@@ -1,65 +1,114 @@
 """
-# PURPOSE
+# PURPOSE: Handle download resumption logic.
 
-  Handles download resumption logic for partially downloaded files.
+## INTERFACES:
+    prepare_resumption(filepath: Path, headers: Dict[str, str]) -> tuple[bool, int, str]
 
-## 1. INTERFACES
-
-  prepare_resumption(filepath: Path, headers: dict) -> tuple[bool, int, str]:
-    Prepares headers and determines if download can be resumed
-
-## 2. DEPENDENCIES
-
-  pathlib: Path handling
-  logging: Logging functionality
-  typing: Type hints
-
+## DEPENDENCIES:
+    pathlib: Path handling
+    logging: Logging functionality
+    typing: Type hints
 """
 
 import logging
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
+from logging import LoggerAdapter
+from datetime import datetime
+from dataclasses import dataclass
+
+# Create structured logger
+logger = LoggerAdapter(
+    logging.getLogger(__name__), {"component": "download_resumption"}
+)
 
 
-def prepare_resumption(
-    filepath: Path, headers: Dict[str, str]
-) -> Tuple[bool, int, str]:
+@dataclass
+class ResumptionInfo:
+    """Data class for download resumption information."""
+
+    is_resuming: bool
+    existing_size: int
+    file_mode: str
+    headers: Dict[str, str]
+
+
+def prepare_resumption(filepath: Path, headers: Dict[str, str]) -> ResumptionInfo:
     """
-    Prepares download resumption by checking existing file and setting up headers.
+    Prepare download resumption by checking existing file and setting up headers.
+
+    PRE-CONDITIONS:
+        - filepath must be a valid Path object
+        - headers must be a non-None dictionary
+        - if resuming, file must exist and be readable
+
+    POST-CONDITIONS:
+        - returned file_mode is either 'ab' or 'wb'
+        - if resuming, Range header is set correctly
+        - existing_size matches file size if resuming
 
     PARAMS:
-        filepath (Path): Path to the file being downloaded
-        headers (dict): Request headers to be modified for resumption
+        filepath: Path to the file being downloaded
+        headers: Request headers to be modified for resumption
 
     RETURNS:
-        tuple[bool, int, str]: (is_resuming, existing_size, file_mode)
+        ResumptionInfo containing:
             - is_resuming: Whether download can be resumed
             - existing_size: Size of existing file (0 if not resuming)
             - file_mode: File mode to use ('ab' for append, 'wb' for write)
-    """
-    existing_file_size = 0
-    if filepath.exists():
-        existing_file_size = filepath.stat().st_size
-        headers["Range"] = f"bytes={existing_file_size}-"
-        logging.info(
-            "Resuming download for %s from byte %d", filepath.name, existing_file_size
-        )
-        return True, existing_file_size, "ab"
+            - headers: Updated headers dict
 
-    return False, 0, "wb"
+    USAGE:
+        >>> info = prepare_resumption(Path('file.zip'), {})
+        >>> if info.is_resuming:
+        ...     print(f"Resuming from byte {info.existing_size}")
+    """
+    # Validate pre-conditions
+    assert isinstance(filepath, Path), "filepath must be a Path object"
+    assert isinstance(headers, dict), "headers must be a dictionary"
+
+    log_context = {
+        "filepath": str(filepath),
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+    try:
+        if filepath.exists():
+            existing_size = filepath.stat().st_size
+            headers["Range"] = f"bytes={existing_size}-"
+
+            logger.info(
+                "Resuming download",
+                extra={**log_context, "existing_size": existing_size},
+            )
+
+            # Validate post-conditions for resume
+            assert existing_size >= 0, "File size must be non-negative"
+            return ResumptionInfo(True, existing_size, "ab", headers)
+
+        logger.debug("Starting new download", extra=log_context)
+        return ResumptionInfo(False, 0, "wb", headers)
+
+    except (OSError, PermissionError) as e:
+        logger.error(
+            "Failed to prepare download resumption",
+            extra={**log_context, "error": str(e)},
+        )
+        # Fall back to new download on error
+        return ResumptionInfo(False, 0, "wb", headers)
 
 
 """
-## Current Known Errors
+## KNOWN ERRORS: None
 
-None
+## IMPROVEMENTS:
+- Added structured logging with context
+- Added pre/post condition assertions
+- Added ResumptionInfo dataclass for better type safety
+- Added error handling with fallbacks
+- Added usage examples
 
-## Improvements Made
-
-- Initial implementation
-
-## Future TODOs
-
-- Add validation for file integrity
-- Add support for checksums
+## FUTURE TODOs:
+- Add file integrity validation
+- Add support for checksum verification
 """

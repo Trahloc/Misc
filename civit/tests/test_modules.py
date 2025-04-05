@@ -3,10 +3,11 @@ from unittest.mock import patch, MagicMock
 import logging
 import os
 from src.civit.signal_handler import signal_handler
-from src.civit.logging_setup import setup_logging
+from src.civit.logging_setup import setup_logging, JsonFormatter
 from src.civit.api_key import get_api_key
 from src.civit.model_info import get_model_info
 from src.civit.url_extraction import extract_model_id, extract_download_url
+import pytest
 
 
 class TestSignalHandler(unittest.TestCase):
@@ -78,7 +79,7 @@ class TestModelInfo(unittest.TestCase):
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "name": "Test Model",
-            "modelVersions": [{"downloadUrl": "https://download.url"}]
+            "modelVersions": [{"downloadUrl": "https://download.url"}],
         }
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
@@ -112,6 +113,15 @@ class TestUrlExtraction(unittest.TestCase):
         )
         mock_get_model_info.return_value = None
         self.assertIsNone(extract_download_url("https://civitai.com/models/1234"))
+
+
+class TestLoggingSetup:
+    def test_setup_logging(self):
+        logger = setup_logging(level=logging.INFO, json_format=True)
+        assert logger.level == logging.INFO
+        assert len(logger.handlers) == 1
+        handler = logger.handlers[0]
+        assert isinstance(handler.formatter, JsonFormatter)
 
 
 if __name__ == "__main__":

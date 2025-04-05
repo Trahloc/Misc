@@ -1,0 +1,627 @@
+{
+    "id": 1447126,
+    "modelId": 1204563,
+    "name": "Style_B",
+    "createdAt": "2025-02-22T12:38:43.632Z",
+    "updatedAt": "2025-02-22T12:42:43.308Z",
+    "status": "Published",
+    "publishedAt": "2025-02-22T18:30:00.000Z",
+    "trainedWords": [
+        "ma1ma1helmes_b_illu,sketch"
+    ],
+    "trainingStatus": null,
+    "trainingDetails": null,
+    "baseModel": "Illustrious",
+    "baseModelType": null,
+    "earlyAccessEndsAt": null,
+    "earlyAccessConfig": null,
+    "description": null,
+    "uploadType": "Created",
+    "usageControl": "Download",
+    "air": "urn:air:sdxl:lora:civitai:1204563@1447126",
+    "stats": {
+        "downloadCount": 3304,
+        "ratingCount": 0,
+        "rating": 0,
+        "thumbsUpCount": 554
+    },
+    "model": {
+        "name": "ma1ma1helmes | Shiiro's Styles | Niji",
+        "type": "LORA",
+        "nsfw": false,
+        "poi": false
+    },
+    "files": [
+        {
+            "id": 1348296,
+            "sizeKB": 111758.98828125,
+            "name": "ma1ma1helmes_b-000014.safetensors",
+            "type": "Model",
+            "pickleScanResult": "Success",
+            "pickleScanMessage": "No Pickle imports",
+            "virusScanResult": "Success",
+            "virusScanMessage": null,
+            "scannedAt": "2025-02-22T12:40:54.847Z",
+            "metadata": {
+                "format": "SafeTensor",
+                "size": null,
+                "fp": null
+            },
+            "hashes": {
+                "AutoV1": "ECFF7E62",
+                "AutoV2": "7C18D2A61F",
+                "SHA256": "7C18D2A61F63E84C194A605A88A57E619D2CA22FA29196FD96E84532D6726499",
+                "CRC32": "EA1FC919",
+                "BLAKE3": "51BDD6BEE7A9424D4CA3BB28C2E80F77F7DB521C9DF3934B62A9079AB2B4192B",
+                "AutoV3": "9B24D1D8E03C"
+            },
+            "primary": true,
+            "downloadUrl": "https://civitai.com/api/download/models/1447126"
+        }
+    ],
+    "images": [
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/d21d65a7-49cc-4842-a0ac-ca45c000184a/width=1608/59400900.jpeg",
+            "nsfwLevel": 1,
+            "width": 1608,
+            "height": 2064,
+            "hash": "UIP%VL-q^~x^~oIXn}xW^zk8WCs:tSxZM}tQ",
+            "type": "image",
+            "metadata": {
+                "hash": "UIP%VL-q^~x^~oIXn}xW^zk8WCs:tSxZM}tQ",
+                "size": 3518915,
+                "width": 1608,
+                "height": 2064
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 2530420516,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b-000014": "9b24d1d8e03c"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b-000014:1>,ma1ma1helmes_b_illu, sketch,1girl, skeleton, jewelry, earrings, hood, solo, long hair, halo, white background, ribs, simple background, monochrome, from side, wings, looking up",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "9b24d1d8e03c",
+                        "name": "ma1ma1helmes_b-000014",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "ADetailer model": "face_yolov8n.pt",
+                "ADetailer steps": "5",
+                "ADetailer version": "24.11.1",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "ADetailer mask blur": "4",
+                "ADetailer model 2nd": "hand_yolov8n.pt",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B",
+                "ADetailer confidence": "0.3",
+                "ADetailer dilate erode": "4",
+                "ADetailer mask blur 2nd": "4",
+                "ADetailer confidence 2nd": "0.13",
+                "ADetailer inpaint padding": "32",
+                "ADetailer dilate erode 2nd": "4",
+                "ADetailer denoising strength": "0.4",
+                "ADetailer use separate steps": "True",
+                "ADetailer inpaint only masked": "True",
+                "ADetailer inpaint padding 2nd": "32",
+                "ADetailer denoising strength 2nd": "0.4",
+                "ADetailer inpaint only masked 2nd": "True"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/fd7adf27-1b98-472c-9a3f-1c06653067aa/width=1656/59400882.jpeg",
+            "nsfwLevel": 1,
+            "width": 1656,
+            "height": 2128,
+            "hash": "UMGlxu-@00i~H[x{x_alriM_yGt94=Ri-VW@",
+            "type": "image",
+            "metadata": {
+                "hash": "UMGlxu-@00i~H[x{x_alriM_yGt94=Ri-VW@",
+                "size": 3679866,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 2252951059,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b": "564a7764ba32"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b:1>,ma1ma1helmes_b_illu, sketch,1girl, solo, flower, long hair, wisteria, hair ornament, looking up, upper body, white hair, parted lips, from side, pink eyes, neckerchief, hair flower, sailor collar, scarf, school uniform, black background, blue theme, serafuku",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "564a7764ba32",
+                        "name": "ma1ma1helmes_b",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/14a64240-29aa-4594-a60b-762158fdd6ab/width=1656/59400873.jpeg",
+            "nsfwLevel": 1,
+            "width": 1656,
+            "height": 2128,
+            "hash": "UNNnj[-:~lxI.QRlE4t5^MjsxVWY=]xZ=_WB",
+            "type": "image",
+            "metadata": {
+                "hash": "UNNnj[-:~lxI.QRlE4t5^MjsxVWY=]xZ=_WB",
+                "size": 3247085,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 852442678,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b": "564a7764ba32"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b:1>,ma1ma1helmes_b_illu, sketch,1girl, solo, skirt, smile, blue eyes, looking at viewer, hood, thighhighs, white background, star (symbol), blush, fur trim, animal hood, animal ears, open mouth, jacket, fake animal ears, outstretched arms, blue hair, hood up",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "564a7764ba32",
+                        "name": "ma1ma1helmes_b",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/7ee50416-23e1-4fbc-b42b-3798fae74b36/width=1656/59400881.jpeg",
+            "nsfwLevel": 1,
+            "width": 1656,
+            "height": 2128,
+            "hash": "UGPs#L%MRO%f~pflt6%L%e8{-;Rj-:j?IUR*",
+            "type": "image",
+            "metadata": {
+                "hash": "UGPs#L%MRO%f~pflt6%L%e8{-;Rj-:j?IUR*",
+                "size": 3281185,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 1543487774,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b": "564a7764ba32"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b:1>,ma1ma1helmes_b_illu, 1girl, solo, animal ears, animal hands, gloves, cat ears, necktie, long hair, paw gloves, tail, simple background, blush, animal ear fluff, cat tail, bangs, looking at viewer, ear piercing, shirt, piercing, upper body",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "DPM++ 2M SDE",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "564a7764ba32",
+                        "name": "ma1ma1helmes_b",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "ADetailer model": "face_yolov8n.pt",
+                "ADetailer version": "24.11.1",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "ADetailer mask blur": "4",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B",
+                "ADetailer confidence": "0.3",
+                "ADetailer dilate erode": "4",
+                "ADetailer inpaint padding": "32",
+                "ADetailer denoising strength": "0.4",
+                "ADetailer inpaint only masked": "True"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/08214bb5-fe8f-4449-8baf-120643b639b2/width=1656/59400879.jpeg",
+            "nsfwLevel": 1,
+            "width": 1656,
+            "height": 2128,
+            "hash": "UEMRfgJY0p-W0Fr=5ERo{NwvN_5Xt,ae-6V]",
+            "type": "image",
+            "metadata": {
+                "hash": "UEMRfgJY0p-W0Fr=5ERo{NwvN_5Xt,ae-6V]",
+                "size": 3233811,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 2802000630,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b-000014": "9b24d1d8e03c"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b-000014:1>,ma1ma1helmes_b_illu, sketch,1girl,nurse cap, cherry blossom, transparent umbrella, flowing dress, pink hair, dynamic pose, ethereal lighting, soft colors, springtime, manga style, detailed illustration, dreamy atmosphere, sakura petals, blue sky, whimsical, magical realism, digital art, high detail, pastel palette, sunlight glow, fantasy setting",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "9b24d1d8e03c",
+                        "name": "ma1ma1helmes_b-000014",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/4771c097-5410-4212-80e9-2979d7b5998a/width=1656/59400878.jpeg",
+            "nsfwLevel": 4,
+            "width": 1656,
+            "height": 2128,
+            "hash": "UWH2j0D%.T-;XAs,t8WBD%-pxaa{-:bIjYxu",
+            "type": "image",
+            "metadata": {
+                "hash": "UWH2j0D%.T-;XAs,t8WBD%-pxaa{-:bIjYxu",
+                "size": 3446807,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 384737023,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b": "564a7764ba32"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b:1>,ma1ma1helmes_b_illu, 1girl, solo, cigarette, black hair, long hair, smoking, black eyes, bangs, choker, bow, black choker, hair between eyes, upper body, breasts, smoke, cleavage,color guide, abstract background,",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "DPM++ 2M SDE",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "564a7764ba32",
+                        "name": "ma1ma1helmes_b",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "Denoising strength": "0.3",
+                "SD upscale overlap": "64",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/a59a60cf-d85f-4d38-b0c9-f66add26625c/width=1608/59400922.jpeg",
+            "nsfwLevel": 1,
+            "width": 1608,
+            "height": 2064,
+            "hash": "UBH0}5VV{l1Gqb0JR.%#C4uP5jQlQ,ADRj^Q",
+            "type": "image",
+            "metadata": {
+                "hash": "UBH0}5VV{l1Gqb0JR.%#C4uP5jQlQ,ADRj^Q",
+                "size": 4114567,
+                "width": 1608,
+                "height": 2064
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 1410546938,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b-000014": "9b24d1d8e03c"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b-000014:1>,ma1ma1helmes_b_illu, sketch, 1girl, wings, solo, braid, thorns, halo, red background, black hair, dress, pointy ears, butterfly wings, twin braids, sitting, vines, long hair, black dress",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "9b24d1d8e03c",
+                        "name": "ma1ma1helmes_b-000014",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "ADetailer model": "face_yolov8n.pt",
+                "ADetailer steps": "5",
+                "ADetailer version": "24.11.1",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "ADetailer mask blur": "4",
+                "ADetailer model 2nd": "hand_yolov8n.pt",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B",
+                "ADetailer confidence": "0.3",
+                "ADetailer dilate erode": "4",
+                "ADetailer mask blur 2nd": "4",
+                "ADetailer confidence 2nd": "0.13",
+                "ADetailer inpaint padding": "32",
+                "ADetailer dilate erode 2nd": "4",
+                "ADetailer denoising strength": "0.4",
+                "ADetailer use separate steps": "True",
+                "ADetailer inpaint only masked": "True",
+                "ADetailer inpaint padding 2nd": "32",
+                "ADetailer denoising strength 2nd": "0.4",
+                "ADetailer inpaint only masked 2nd": "True"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/7b83eb31-4b37-42bb-a024-e865cdbeda39/width=1656/59400874.jpeg",
+            "nsfwLevel": 2,
+            "width": 1656,
+            "height": 2128,
+            "hash": "UdNm.:IA~q%M%Lt7-;xvxuRjIVR%Rjoextf6",
+            "type": "image",
+            "metadata": {
+                "hash": "UdNm.:IA~q%M%Lt7-;xvxuRjIVR%Rjoextf6",
+                "size": 3294757,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 3580506004,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b": "564a7764ba32"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b:1>,ma1ma1helmes_b_illu, sketch,1girl, solo, black hair, multicolored hair, long hair, split-color hair, white background, purple eyes, simple background, looking at viewer, sitting, two-tone hair, detached sleeves, bangs, piercing, white hair, blush, skirt, ear piercing, closed mouth",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "564a7764ba32",
+                        "name": "ma1ma1helmes_b",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/bff27700-51be-4fa3-bc80-315c861c2997/width=1656/59400875.jpeg",
+            "nsfwLevel": 4,
+            "width": 1656,
+            "height": 2128,
+            "hash": "UGO;Mc-;~p-o~UWCnM%0?bR%4.%LoaWCx]ae",
+            "type": "image",
+            "metadata": {
+                "hash": "UGO;Mc-;~p-o~UWCnM%0?bR%4.%LoaWCx]ae",
+                "size": 3735659,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 2854206712,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b-000014": "9b24d1d8e03c"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b-000014:1>,ma1ma1helmes_b_illu, sketch,1girl, snake, solo, thighhighs, long hair, white background, hat, jewelry, pink eyes, sitting, blue nails, necklace, bangs, simple background, sparkle, fur trim, yokozuwari, very long hair, nail polish, wrist cuffs",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "9b24d1d8e03c",
+                        "name": "ma1ma1helmes_b-000014",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/1b410e54-0474-40f8-bc9e-cb6c6ba4d904/width=1656/59400877.jpeg",
+            "nsfwLevel": 4,
+            "width": 1656,
+            "height": 2128,
+            "hash": "USL;z8WDx]?b?bxuWAWA_4oeNGR*_3RPD%t7",
+            "type": "image",
+            "metadata": {
+                "hash": "USL;z8WDx]?b?bxuWAWA_4oeNGR*_3RPD%t7",
+                "size": 3962114,
+                "width": 1656,
+                "height": 2128
+            },
+            "meta": {
+                "Size": "1072x1376",
+                "seed": 2001765958,
+                "Model": "Koki'o_illu_v2",
+                "steps": 30,
+                "hashes": {
+                    "model": "9d06924180",
+                    "lora:ma1ma1helmes_b": "564a7764ba32"
+                },
+                "prompt": "masterpiece, best quality, good quality, newest, highres, absurdres, <lora:ma1ma1helmes_b:1>,ma1ma1helmes_b_illu, sketch,1girl, solo, gloves, jewelry, black gloves, crossed legs, earrings, thighhighs, sitting, blue eyes, breasts, open mouth, dress, looking at viewer, white hair, smile, white thighhighs, cleavage, white background, cleavage cutout,abstract background, color guide,",
+                "Version": "f2.0.1v1.10.1-1.10.1",
+                "sampler": "Euler a",
+                "cfgScale": 5,
+                "resources": [
+                    {
+                        "hash": "564a7764ba32",
+                        "name": "ma1ma1helmes_b",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "9d06924180",
+                        "name": "Koki'o_illu_v2",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "9d06924180",
+                "Schedule type": "Karras",
+                "negativePrompt": "worst quality, normal quality, anatomical nonsense, bad anatomy,interlocked fingers, extra fingers,watermark,simple background, transparent background,",
+                "Denoising strength": "0.35",
+                "SD upscale overlap": "64",
+                "SD upscale upscaler": "R-ESRGAN 4x+ Anime6B"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        }
+    ],
+    "downloadUrl": "https://civitai.com/api/download/models/1447126"
+}

@@ -1,127 +1,116 @@
 # FILE: src/civit/filename_pattern.py
 """
-# PURPOSE: Handles filename pattern parsing and validation for custom filenames.
+# PURPOSE: Process and generate file names based on patterns and metadata.
 
-## INTERFACES: process_filename_pattern(pattern: str, metadata: dict, original_filename: str) -> str: Process a filename pattern with metadata and returns a valid filename.
+## INTERFACES:
+    - process_filename_pattern(pattern: str, metadata: Dict, original_filename: str) -> str
+    - prepare_metadata(metadata: Dict, original_filename: str) -> Dict
+    - sanitize_filename(filename: str) -> str
 
-## DEPENDENCIES: re, os, zlib, logging - For regular expressions, file operations, CRC32 computation, and logging.
-
-## TODO: None
+## DEPENDENCIES:
+    - re: Regular expressions for pattern matching
+    - os: For file path handling
+    - zlib: For CRC32 hash generation
 """
 
 import re
-import os
 import zlib
-import logging
-from pathlib import Path
-from typing import Dict, Any, Optional
+import os
+from typing import Dict, Any
+from ..filename_generator import sanitize_filename
+from .exceptions import InvalidPatternError, MetadataError
 
 
-def process_filename_pattern(pattern: str, metadata: Dict[str, Any], original_filename: str) -> str:
+def process_filename_pattern(
+    pattern: str, metadata: Dict[str, Any], original_filename: str
+) -> str:
     """
-    PURPOSE: Process a filename pattern with metadata and return a valid filename.
+    Process a filename pattern to create a custom filename.
 
-    PARAMS:
-        pattern (str): The pattern to use for the filename with placeholders like {model_id}_{model_name}.
-        metadata (Dict[str, Any]): Metadata to use for filename placeholders.
-        original_filename (str): The original filename to use as fallback and for extension extraction.
+    Args:
+        pattern: The pattern template with {placeholders}
+        metadata: Dict containing values to substitute into the pattern
+        original_filename: Original filename to extract extension from
 
-    RETURNS:
-        str: The processed filename with placeholders replaced by metadata values.
+    Returns:
+        Processed filename string
     """
-    if not pattern or not isinstance(pattern, str):
-        logging.warning("Invalid filename pattern, using original filename")
-        return original_filename
+    if not pattern:
+        raise InvalidPatternError("Pattern cannot be empty")
 
-    # Prepare the metadata
-    processed_metadata = prepare_metadata(metadata, original_filename)
+    # Prepare metadata with additional fields and defaults
+    prepared_metadata = prepare_metadata(metadata, original_filename)
 
     try:
-        # Replace placeholders with values from metadata
-        filename = pattern.format(**processed_metadata)
+        # Replace placeholders in the pattern
+        result = pattern.format(**prepared_metadata)
 
-        # Ensure the filename is safe and valid
-        sanitized_filename = sanitize_filename(filename)
-
-        # Make sure we have a proper extension
-        if not Path(sanitized_filename).suffix and Path(original_filename).suffix:
-            sanitized_filename = f"{sanitized_filename}{Path(original_filename).suffix}"
-
-        return sanitized_filename
+        # Sanitize the final filename to ensure it's safe across platforms
+        return sanitize_filename(result)
     except KeyError as e:
-        logging.warning(f"Missing placeholder in filename pattern: {e}")
-        return original_filename
-    except Exception as e:
-        logging.error(f"Error processing filename pattern: {e}")
-        return original_filename
+        missing_key = str(e).strip("'")
+        raise MetadataError(f"Missing required metadata field: {missing_key}")
 
 
-def prepare_metadata(metadata: Optional[Dict[str, Any]], original_filename: str) -> Dict[str, Any]:
+def prepare_metadata(
+    metadata: Dict[str, Any], original_filename: str
+) -> Dict[str, Any]:
     """
-    PURPOSE: Prepare metadata for filename pattern processing.
+    Prepare metadata for filename pattern processing.
 
-    PARAMS:
-        metadata (Optional[Dict[str, Any]]): User-provided metadata dictionary.
-        original_filename (str): The original filename.
+    Args:
+        metadata: Original metadata
+        original_filename: Original filename
 
-    RETURNS:
-        Dict[str, Any]: Processed metadata including defaults and computed values.
+    Returns:
+        Enhanced metadata with additional fields
     """
-    result = metadata.copy() if metadata else {}
+    result = metadata.copy()
 
-    # Extract extension from the original filename
-    _, ext = os.path.splitext(original_filename)
-    ext = ext.lstrip('.')  # Remove the leading dot
+    # Extract extension from original filename
+    if "." in original_filename:
+        ext = original_filename.rsplit(".", 1)[1]
+    else:
+        ext = ""
 
-    # Add extension to metadata
-    result['ext'] = ext
+    # Add useful fields that aren't in the original metadata
+    result.update(
+        {
+            "original_filename": original_filename,
+            "ext": ext,
+            "crc32": format(zlib.crc32(original_filename.encode()) & 0xFFFFFFFF, "08x"),
+        }
+    )
 
-    # Add original filename to metadata
-    result['original_filename'] = original_filename
-
-    # Generate CRC32 checksum if not provided
-    if 'crc32' not in result:
-        crc32 = format(zlib.crc32(original_filename.encode()) & 0xFFFFFFFF, '08X')
-        result['crc32'] = crc32
+    # Sanitize all metadata values that will be used in filenames
+    # Leave hyphens intact for now as they'll be handled by the final sanitize_filename call
+    for key, value in list(result.items()):
+        if isinstance(value, str):
+            # Convert all individual field values to be safe for filename use
+            result[key] = sanitize_field_value(value)
 
     return result
 
 
-def sanitize_filename(filename: str) -> str:
+def sanitize_field_value(value: str) -> str:
     """
-    PURPOSE: Sanitize the filename to ensure it's safe and valid.
+    Sanitize individual field values before they're used in filenames.
+    This preserves hyphens as they're used for field separation.
 
-    PARAMS:
-        filename (str): The filename to sanitize.
+    Args:
+        value: String value to sanitize
 
-    RETURNS:
-        str: The sanitized filename.
+    Returns:
+        Sanitized string with invalid chars replaced by underscores
     """
-    # Replace undesirable characters with underscores
-    sanitized = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    # Replace invalid characters with underscores (but leave hyphens intact)
+    invalid_chars = ["<", ">", ":", '"', "/", "\\", "|", "?", "*", " "]
+    result = value
+    for char in invalid_chars:
+        result = result.replace(char, "_")
 
-    # Remove control characters
-    sanitized = re.sub(r'[\x00-\x1f]', '', sanitized)
+    # Clean up multiple and trailing underscores
+    while "__" in result:
+        result = result.replace("__", "_")
 
-    # Replace multiple consecutive underscores with a single one
-    sanitized = re.sub(r'_+', '_', sanitized)
-
-    # Remove leading/trailing dots and spaces (not allowed in Windows)
-    sanitized = sanitized.strip('. _')  # Added underscore to strip
-
-    # Ensure the filename is not empty or just underscores
-    if not sanitized or sanitized == '_':
-        sanitized = "download"
-
-    return sanitized
-
-
-"""
-## KNOWN ERRORS: None
-
-## IMPROVEMENTS: Initial implementation.
-
-## FUTURE TODOs:
-- Add support for more advanced template expressions.
-- Consider adding filename length limits for different filesystems.
-"""
+    return result.rstrip("_")

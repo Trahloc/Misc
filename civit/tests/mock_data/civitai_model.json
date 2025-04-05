@@ -1,0 +1,80 @@
+{
+  "id": 1447126,
+  "modelId": 1204563,
+  "name": "v1.0",
+  "createdAt": "2023-05-15T14:02:31.942Z",
+  "updatedAt": "2023-08-23T07:23:39.166Z",
+  "trainedWords": ["ma1ma1helmes", "shiiro style", "niji"],
+  "baseModel": "SD 1.5",
+  "earlyAccessTimeFrame": 0,
+  "description": "Initial release with full model weights. Trained on a curated dataset of anime-style illustrations.",
+  "stats": {
+    "downloadCount": 8752,
+    "ratingCount": 125,
+    "rating": 4.92
+  },
+  "model": {
+    "name": "Ma1ma1helmes | Shiiro's Styles | Niji",
+    "type": "LORA",
+    "nsfw": false,
+    "poi": false
+  },
+  "files": [
+    {
+      "name": "ma1ma1helmes_v1.safetensors",
+      "id": 12897,
+      "sizeKB": 147456.32,
+      "type": "Model",
+      "metadata": {
+        "fp": "fp16",
+        "size": "pruned",
+        "format": "SafeTensor"
+      },
+      "pickleScanResult": "Clean",
+      "pickleScanMessage": "No pickles found",
+      "virusScanResult": "Clean",
+      "scannedAt": "2023-05-15T14:10:22.942Z",
+      "hashes": {
+        "AutoV1": "1A2B3C4D",
+        "AutoV2": "5E6F7G8H",
+        "SHA256": "9a8b7c6d5e4f3g2h1i0j9k8l7m6n5o4p3q2r1s0t9u8v7w6x5y4z"
+      },
+      "downloadUrl": "https://civitai.com/api/download/models/1447126"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/sample-image-1.png",
+      "nsfw": false,
+      "width": 1024,
+      "height": 1024,
+      "hash": "abcdef123456",
+      "meta": {
+        "prompt": "1girl, ma1ma1helmes, shiiro style, cute anime character with blue eyes",
+        "negativePrompt": "bad anatomy, deformed, ugly, poorly drawn",
+        "seed": 1234567890,
+        "steps": 30,
+        "sampler": "DPM++ 2M Karras",
+        "cfgScale": 7,
+        "clipSkip": 2
+      }
+    },
+    {
+      "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/sample-image-2.png",
+      "nsfw": false,
+      "width": 768,
+      "height": 1024,
+      "hash": "fedcba654321",
+      "meta": {
+        "prompt": "1girl, ma1ma1helmes, shiiro style, niji, vibrant colors, detailed landscape",
+        "negativePrompt": "bad anatomy, deformed, ugly, poorly drawn",
+        "seed": 987654321,
+        "steps": 35,
+        "sampler": "Euler a",
+        "cfgScale": 7.5,
+        "clipSkip": 2
+      }
+    }
+  ],
+  "downloadUrl": "https://civitai.com/api/download/models/1447126"
+}

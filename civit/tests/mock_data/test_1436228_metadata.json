@@ -1,0 +1,568 @@
+{
+    "id": 1436228,
+    "modelId": 101892,
+    "name": "-PONY XL-",
+    "createdAt": "2025-02-19T20:40:44.693Z",
+    "updatedAt": "2025-02-22T19:29:51.861Z",
+    "status": "Published",
+    "publishedAt": "2025-02-19T20:42:57.410Z",
+    "trainedWords": [
+        "RetroXL,,",
+        "toon \\(style\\), flat color, full body, colorful background,,"
+    ],
+    "trainingStatus": null,
+    "trainingDetails": null,
+    "baseModel": "Pony",
+    "baseModelType": null,
+    "earlyAccessEndsAt": null,
+    "earlyAccessConfig": null,
+    "description": "<p>I recommend using only Score_9 to consistent results</p>",
+    "uploadType": "Created",
+    "usageControl": "Download",
+    "air": "urn:air:sdxl:lora:civitai:101892@1436228",
+    "stats": {
+        "downloadCount": 412,
+        "ratingCount": 0,
+        "rating": 0,
+        "thumbsUpCount": 105
+    },
+    "model": {
+        "name": "Retro Cartoon / Toon - Style - | Illustrious XL | PONY XL | SD 1.5 | - COMMISSION by YeiyeiArt",
+        "type": "LORA",
+        "nsfw": false,
+        "poi": false
+    },
+    "files": [
+        {
+            "id": 1337443,
+            "sizeKB": 56086.43359375,
+            "name": "RetroToonXL_Style-10.safetensors",
+            "type": "Model",
+            "pickleScanResult": "Success",
+            "pickleScanMessage": "No Pickle imports",
+            "virusScanResult": "Success",
+            "virusScanMessage": null,
+            "scannedAt": "2025-02-19T20:45:37.000Z",
+            "metadata": {
+                "format": "SafeTensor",
+                "size": null,
+                "fp": null
+            },
+            "hashes": {
+                "AutoV1": "DFA81088",
+                "AutoV2": "75DF157CEA",
+                "SHA256": "75DF157CEABF1ACF266DE6EA7017FAFB6610B4AB4F984E165D2C81F62B65FD21",
+                "CRC32": "F8106269",
+                "BLAKE3": "1069FFF289D610E226277FD7A4E6428A3A03E56C4139C37A57527E5101940C4F",
+                "AutoV3": "6FE46C8D511F"
+            },
+            "primary": true,
+            "downloadUrl": "https://civitai.com/api/download/models/1436228"
+        }
+    ],
+    "images": [
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/e008fffb-5fec-40f8-b508-cea602f8bc5d/width=768/58865584.mp4",
+            "nsfwLevel": 1,
+            "width": 768,
+            "height": 1024,
+            "hash": "UMM$Y@s:}E$*R%jut7WVVFbGozj[=|WVkVxa",
+            "type": "video",
+            "metadata": {
+                "hash": "UMM$Y@s:}E$*R%jut7WVVFbGozj[=|WVkVxa",
+                "size": 1011532,
+                "audio": false,
+                "width": 768,
+                "height": 1024,
+                "duration": 6
+            },
+            "meta": null,
+            "availability": "Public",
+            "hasMeta": false,
+            "hasPositivePrompt": false,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/8d8694d0-daba-4d41-a42f-70b7e39a8c43/width=1072/58865656.jpeg",
+            "nsfwLevel": 1,
+            "width": 1072,
+            "height": 1432,
+            "hash": "U6KKp9I^G[^%MJxt%#M|00$}D@9d*0ICQ-?t",
+            "type": "image",
+            "metadata": {
+                "hash": "U6KKp9I^G[^%MJxt%#M|00$}D@9d*0ICQ-?t",
+                "size": 1659375,
+                "width": 1072,
+                "height": 1432
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 1014979274,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9, \n1girl, school uniform, backpack, white thighhighs, medium breasts, narrow waist, wide hips, thick thighs, one hand on hips, one hand up,\nfront, looking at viewer, (dynamic pose:1.1), full body, colorful background, \n, RetroXL, toon \\(style\\),  <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Hires upscale": "1.4",
+                "Schedule type": "Automatic",
+                "Hires upscaler": "remacri_original",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms",
+                "Denoising strength": "0.5"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/39b37223-2426-4083-81b5-fd74b91dab80/width=768/58865658.jpeg",
+            "nsfwLevel": 1,
+            "width": 768,
+            "height": 1024,
+            "hash": "UINv-m?GV;xr~of89GoyD~RjD*ae9atQ-.ae",
+            "type": "image",
+            "metadata": {
+                "hash": "UINv-m?GV;xr~of89GoyD~RjD*ae9atQ-.ae",
+                "size": 1057621,
+                "width": 768,
+                "height": 1024
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 3591773072,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9,\n1boy, blonde, viking, armor, arm tattoo, bone necklace, double biceps pose,\nfront, looking at viewer, (dynamic pose:1.1), full body, colorful background,\n, RetroXL, toon \\(style\\), semi chibi, flat color, black eyes, <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Schedule type": "Automatic",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms, furry"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/e4404f0b-632b-45d0-817b-477e7d1ba152/width=1072/58865661.jpeg",
+            "nsfwLevel": 2,
+            "width": 1072,
+            "height": 1432,
+            "hash": "UCI=b~x]AAM{~qRk4nt656WAxGxuSxt6%2Io",
+            "type": "image",
+            "metadata": {
+                "hash": "UCI=b~x]AAM{~qRk4nt656WAxGxuSxt6%2Io",
+                "size": 1530532,
+                "width": 1072,
+                "height": 1432
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 372454517,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9,\n1girl, white hair, blunt bangs, blue eyes, black suit, cleavage, tie, black pants, serious, white gloves, mole under eye, large breasts, torn clothes, one hand on hips, one hand up,\nfront, looking at viewer, (dynamic pose:1.1), full body, colorful background,\n, RetroXL, toon \\(style\\), semi chibi, flat color, big eyes, <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Hires upscale": "1.4",
+                "Schedule type": "Automatic",
+                "Hires upscaler": "remacri_original",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms",
+                "Denoising strength": "0.5"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/734d7af4-ffa1-4ab2-9805-07e800391809/width=768/58865657.jpeg",
+            "nsfwLevel": 1,
+            "width": 768,
+            "height": 1024,
+            "hash": "U2IzoIt-.nZm0Gj:{al900qu4I5?ICRi~pRQ",
+            "type": "image",
+            "metadata": {
+                "hash": "U2IzoIt-.nZm0Gj:{al900qu4I5?ICRi~pRQ",
+                "size": 1131616,
+                "width": 768,
+                "height": 1024
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 3591773071,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9,\n1boy, multicolored clothes, jacket, sunglasses, blue hair, pants, short hair, cyberpunk,\nfront, looking at viewer, (dynamic pose:1.1), full body, colorful background,\n, RetroXL, toon \\(style\\), semi chibi, flat color, black eyes, <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Schedule type": "Automatic",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms, furry"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/43d277ee-af64-4ad5-a138-16e58e897cd5/width=1072/58865659.jpeg",
+            "nsfwLevel": 2,
+            "width": 1072,
+            "height": 1432,
+            "hash": "U7LzW}Kcwi;8[IOmGVvizM$754OE_M+$v%Ta",
+            "type": "image",
+            "metadata": {
+                "hash": "U7LzW}Kcwi;8[IOmGVvizM$754OE_M+$v%Ta",
+                "size": 1528194,
+                "width": 1072,
+                "height": 1432
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 3591773069,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9,\n1girl, short hair, pink hair, wavy hair, green eyes, orange jacket, (white shirt:1.1), navel, green pendant, (red baggy shorts:1.1), oversize clothes, cute, green slime \\(substance\\) on all her body, red shoes, slime drip on hands ,curvy, one hand on hips, one hand up,\nfront, looking at viewer, (dynamic pose:1.1), full body, colorful background,\n, RetroXL, toon \\(style\\), semi chibi, flat color, black eyes, <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Hires upscale": "1.4",
+                "Schedule type": "Automatic",
+                "Hires upscaler": "remacri_original",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms",
+                "Denoising strength": "0.5"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/038694fa-f03f-4577-856d-a6d7ad8ff823/width=1072/58865665.jpeg",
+            "nsfwLevel": 2,
+            "width": 1072,
+            "height": 1432,
+            "hash": "U6JuD3It0v_JwGM~?ZtQ00s*i:9cA9xtaQsl",
+            "type": "image",
+            "metadata": {
+                "hash": "U6JuD3It0v_JwGM~?ZtQ00s*i:9cA9xtaQsl",
+                "size": 2661455,
+                "width": 1072,
+                "height": 1432
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 1014979275,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9, \n1girl, tomboy, short brown hair, white tank top, denim shorts, navel, black thighhighs, cleavage, sexy, one hand up,\n,looking at viewer, (dynamic pose:1.1), full body, colorful background, \n, RetroXL, toon \\(style\\), semi chibi,  <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Hires upscale": "1.4",
+                "Schedule type": "Automatic",
+                "Hires upscaler": "remacri_original",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms",
+                "Denoising strength": "0.5"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/778022df-45d6-4b1c-a749-a56696392499/width=1072/58865654.jpeg",
+            "nsfwLevel": 2,
+            "width": 1072,
+            "height": 1432,
+            "hash": "U6JHK_xu}?^*n5RQNaE100MyM|W;k;xu^kxu",
+            "type": "image",
+            "metadata": {
+                "hash": "U6JHK_xu}?^*n5RQNaE100MyM|W;k;xu^kxu",
+                "size": 1519342,
+                "width": 1072,
+                "height": 1432
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 2021323767,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9,\n1girl, witch girl, gothic dress, hat, staff, magic particles, cleavage, red hair, evil smile ,curvy, one hand on hips, one hand up,\nfront, looking at viewer, (dynamic pose:1.1), full body, colorful background,\n, RetroXL, toon \\(style\\), semi chibi, flat color, black eyes, <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Hires upscale": "1.4",
+                "Schedule type": "Automatic",
+                "Hires upscaler": "remacri_original",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms",
+                "Denoising strength": "0.5"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/9fb475bb-3422-4b3d-9bdd-09012adeff47/width=1072/58865662.jpeg",
+            "nsfwLevel": 1,
+            "width": 1072,
+            "height": 1432,
+            "hash": "UAJ[62t70JoH~8kCIXV[00nzEVJCkqV[NFx[",
+            "type": "image",
+            "metadata": {
+                "hash": "UAJ[62t70JoH~8kCIXV[00nzEVJCkqV[NFx[",
+                "size": 1740893,
+                "width": 1072,
+                "height": 1432
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 1014979275,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9, \n1girl, blonde hair, medium hair, sailor uniform, hat, skirt, cute pose, nervous, medium breasts, blue eyes, long sleeves, red tie, one hand on hips, one hand up,\n,looking at viewer, (dynamic pose:1.1), full body, colorful background, \n, RetroXL, toon \\(style\\), semi chibi,  <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Hires upscale": "1.4",
+                "Schedule type": "Automatic",
+                "Hires upscaler": "remacri_original",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms",
+                "Denoising strength": "0.5"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        },
+        {
+            "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/58ec418e-3f86-4543-bb03-ed90120d90c2/width=1072/58865655.jpeg",
+            "nsfwLevel": 2,
+            "width": 1072,
+            "height": 1432,
+            "hash": "U4K9li_300RN}]ozISa000E20:$SDhRPp0yC",
+            "type": "image",
+            "metadata": {
+                "hash": "U4K9li_300RN}]ozISa000E20:$SDhRPp0yC",
+                "size": 2532960,
+                "width": 1072,
+                "height": 1432
+            },
+            "meta": {
+                "ENSD": "31337",
+                "Size": "768x1024",
+                "seed": 2653774644,
+                "Model": "autismmixSDXL_autismmixPony",
+                "steps": 25,
+                "hashes": {
+                    "model": "821aa5537f",
+                    "lora:RetroToonXL_Style": "6fe46c8d511f"
+                },
+                "prompt": "score_9,\n1girl, oni girl, red skin, horns, dress, sexy, curvy, huge breasts, narrow waist, wide hips, thick thighs, one hand on hips, one hand up,\nfront, looking at viewer, (dynamic pose:1.1), full body, colorful background,\n, RetroXL, toon \\(style\\), semi chibi, flat color,  <lora:RetroToonXL_Style:1>",
+                "Version": "v1.10.1-72-g021154d8",
+                "sampler": "Euler a",
+                "cfgScale": 7,
+                "clipSkip": 2,
+                "resources": [
+                    {
+                        "hash": "6fe46c8d511f",
+                        "name": "RetroToonXL_Style",
+                        "type": "lora",
+                        "weight": 1
+                    },
+                    {
+                        "hash": "821aa5537f",
+                        "name": "autismmixSDXL_autismmixPony",
+                        "type": "model"
+                    }
+                ],
+                "Model hash": "821aa5537f",
+                "Hires upscale": "1.4",
+                "Schedule type": "Automatic",
+                "Hires upscaler": "remacri_original",
+                "negativePrompt": "wrong hand, low quality, watermark, blur, 3d, multiple arms",
+                "Denoising strength": "0.5"
+            },
+            "availability": "Public",
+            "hasMeta": true,
+            "hasPositivePrompt": true,
+            "onSite": false,
+            "remixOfId": null
+        }
+    ],
+    "downloadUrl": "https://civitai.com/api/download/models/1436228"
+}

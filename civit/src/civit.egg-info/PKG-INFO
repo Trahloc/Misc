@@ -1,10 +1,19 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.1
 Name: civit
-Version: 100.0.1
-Summary: A small example package
-Author-email: Trahloc colDhart <github@trahloc.com>
-Classifier: Programming Language :: Python :: 3
-Classifier: License :: OSI Approved :: MIT License
-Classifier: Operating System :: OS Independent
+Version: 0.1.0
+Summary: A Python package for interacting with Civitai
+Home-page: https://github.com/trahloc/civit
+Author: Trahloc colDhart
+Author-email: github@trahloc.com
+License: MIT
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: requests>=2.28.0
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: pydocstyle>=6.0.0; extra == "dev"
