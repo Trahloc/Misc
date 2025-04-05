@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: civit
-Version: 100.0.1
+Version: 100.0.2
 Summary: Tool for downloading models from Civitai
 Author-email: Trahloc colDhart <github@trahloc.com>
 Project-URL: Homepage, https://github.com/yourusername/civit
@@ -17,6 +17,7 @@ Requires-Dist: pytest>=7.0; extra == "dev"
 Requires-Dist: black>=23.0; extra == "dev"
 Requires-Dist: mypy>=1.0; extra == "dev"
 Requires-Dist: flake8>=6.0; extra == "dev"
+Requires-Dist: hypothesis; extra == "dev"
 
 # Civit Downloader
 

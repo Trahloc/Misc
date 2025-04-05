@@ -21,7 +21,10 @@ from src.civit.filename_pattern import (
     prepare_metadata,
 )
 from src.civit.exceptions import InvalidPatternError, MetadataError
-from src.filename_generator import sanitize_filename
+from src.civit.filename_generator import sanitize_filename
+hypothesis = pytest.importorskip("hypothesis", reason="Hypothesis library not found, skipping property-based tests")
+from hypothesis import given, strategies as st, settings
+import re
 
 
 def test_basic_pattern_processing():

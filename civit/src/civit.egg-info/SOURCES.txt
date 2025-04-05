@@ -5,7 +5,9 @@ src/civit/__init__.py
 src/civit/__main__.py
 src/civit/api_key.py
 src/civit/civit.py
+src/civit/civit_debug.py
 src/civit/cli.py
+src/civit/custom_filename.py
 src/civit/debug.py
 src/civit/download_file.py
 src/civit/download_handler.py
@@ -39,7 +41,6 @@ tests/test_filename_pattern.py
 tests/test_logging_setup.py
 tests/test_modules.py
 tests/test_network_safety.py
-tests/test_property_based.py
 tests/test_resumable_download.py
 tests/test_should_use_custom_filename.py
 tests/test_url_validator.py

@@ -2,95 +2,195 @@
 
 import argparse
 import logging
+import os
+import signal
 import sys
+from typing import List, Optional
 
 logger = logging.getLogger("civit")
 
 
-def setup_logging(verbosity=0):
+def handle_interrupt(sig, frame):
+    """Handle Ctrl+C gracefully."""
+    print("", file=sys.stderr)
+    logger.warning("Download interrupted by user (Ctrl+C).")
+    sys.exit(1)
+
+
+def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     """
-    Set up logging based on verbosity level.
+    Parse command line arguments.
 
     Args:
-        verbosity: 0=warning, 1=info, 2+=debug
-    """
-    if verbosity == 0:
-        log_level = logging.WARNING
-    elif verbosity == 1:
-        log_level = logging.INFO
-    else:
-        log_level = logging.DEBUG
+        args: Command line arguments to parse
 
-    # Configure the root logger
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+    Returns:
+        Parsed arguments
+    """
+    parser = argparse.ArgumentParser(description="Download models from Civitai")
+
+    # Positional arguments
+    parser.add_argument("urls", nargs="+", help="URLs of the models to download")
+
+    # Output options
+    parser.add_argument(
+        "-o",
+        "--output-folder",
+        help="Output folder for downloaded files",
+        default=os.getcwd(),
     )
 
-    # Set the level for our package logger as well
-    logger.setLevel(log_level)
-
-    return log_level
-
-
-def parse_args(args=None):
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Civitai downloader utility")
-
-    # Common options
     parser.add_argument(
+        "-k",
+        "--api-key",
+        help="Civitai API key for authenticated downloads (can also use CIVITAPI env var)",
+        default=os.getenv("CIVITAPI"),  # Use CIVITAPI environment variable
+    )
+
+    # Add custom filename options
+    parser.add_argument(
+        "--custom-naming",
+        action="store_true",
+        help="Use custom naming pattern for downloaded files",
+        dest="custom_naming",
+    )
+
+    parser.add_argument(
+        "--no-custom-naming",
+        action="store_false",
+        dest="custom_naming",
+        help="Disable custom naming pattern (use original filenames)",
+    )
+
+    # Add resume option
+    parser.add_argument(
+        "-r",
+        "--resume",
+        action="store_true",
+        help="Attempt to resume interrupted downloads",
+    )
+
+    # Set default for custom naming
+    parser.set_defaults(custom_naming=True)
+
+    # Verbosity and Debugging options
+    verbosity_group = parser.add_argument_group("verbosity and debugging")
+    verbosity_group.add_argument(
         "-v",
         "--verbose",
         action="count",
         default=0,
-        help="Increase verbosity (can be used multiple times)",
+        help="Increase verbosity level (-v for INFO, -vv for DEBUG)",
     )
-    parser.add_argument(
-        "--debug", action="store_true", help="Enable debug logging (same as -vv)"
+    verbosity_group.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress all output except errors (overrides -v)",
     )
-
-    # Download options
-    parser.add_argument(
-        "-o",
-        "--output",
-        default="./downloads",
-        help="Output directory for downloads (default: ./downloads)",
+    verbosity_group.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        help="Enable detailed debug output (equivalent to -vv, overrides -v and -q)",
     )
-    parser.add_argument(
-        "-r", "--resume", action="store_true", help="Resume interrupted downloads"
-    )
-    parser.add_argument("-k", "--api-key", help="Civitai API key")
-
-    # URL argument
-    parser.add_argument("url", nargs="?", help="URL to download")
 
     return parser.parse_args(args)
 
 
-def main(args=None):
+def setup_logging(
+    verbosity_level: int = 0, debug: bool = False, quiet: bool = False
+) -> None:
+    """
+    Configure logging based on verbosity level.
+
+    Args:
+        verbosity_level: Level of verbosity (0=WARN, 1=INFO, 2+=DEBUG).
+        debug: Whether to force debug level logging.
+        quiet: Whether to disable all but error logging.
+    """
+    logger = logging.getLogger() # Get root logger to configure handlers
+
+    # Determine log level and format based on flags (precedence: debug > quiet > verbosity)
+    if debug:
+        log_level = logging.DEBUG
+        log_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+    elif quiet:
+        log_level = logging.ERROR
+        log_format = "%(levelname)s: %(message)s"
+    elif verbosity_level >= 2:
+        log_level = logging.DEBUG
+        log_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+    elif verbosity_level == 1:
+        log_level = logging.INFO
+        log_format = "%(asctime)s - %(levelname)s - %(message)s"
+    else:  # Default (verbosity_level == 0)
+        log_level = logging.WARNING
+        log_format = "%(levelname)s: %(message)s"
+
+    # Create formatter
+    formatter = logging.Formatter(log_format)
+
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    # Clear any existing handlers on the root logger and add ours
+    # This prevents potential duplicate logging if the function is called multiple times
+    # or if other libraries configure the root logger.
+    logger.handlers.clear()
+    logger.addHandler(console_handler)
+    logger.setLevel(log_level)
+
+    # Optionally set level for specific package loggers if needed
+    # logging.getLogger('civit').setLevel(log_level)
+
+
+def main() -> None:
     """Main entry point for the CLI."""
-    parsed_args = parse_args(args)
+    # Register the interrupt handler
+    signal.signal(signal.SIGINT, handle_interrupt)
 
-    # Set up logging
-    verbosity = parsed_args.verbose
-    if parsed_args.debug:
-        verbosity = 2  # Debug level
+    args = parse_args()
 
-    setup_logging(verbosity)
+    # Configure logging based on verbosity flags
+    setup_logging(
+        verbosity_level=args.verbose, debug=args.debug, quiet=args.quiet
+    )
 
-    # If no URL provided, show help
-    if not parsed_args.url and len(sys.argv) == 1:
-        parse_args(["--help"])
-        return
+    # Import download_handler dynamically AFTER logging is set up,
+    # and potentially within the function to avoid top-level import issues
+    # if download_handler itself logs at import time.
+    try:
+        # Assuming download_handler is in the same package level or src level
+        # Adjust the import path based on your actual structure
+        from .download_handler import download_file # Use relative import
+    except ImportError:
+        logging.error("Failed to import download_handler. Check project structure and installation.")
+        sys.exit(1)
 
-    # Just for testing, log the arguments
-    logger.debug(f"Arguments: {parsed_args}")
-    logger.info(f"Output directory: {parsed_args.output}")
 
-    # Return 0 for success
-    return 0
+    # Process each URL
+    for url in args.urls:
+        try:
+            logging.debug(f"Processing URL: {url}") # Add debug log
+            result = download_file(
+                url=url,
+                output_folder=args.output_folder,
+                api_key=args.api_key,
+                custom_filename=args.custom_naming,
+                resume=args.resume
+            )
+            if result:
+                logging.info(f"Successfully downloaded: {result}")
+            else:
+                # download_file logs errors internally, but we can add a summary error
+                logging.error(f"Failed to download: {url}")
+        except Exception as e:
+            # Catch any unexpected errors during the download process for a specific URL
+            logging.exception(f"Unexpected error downloading {url}: {e}")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # This allows running the script directly, e.g., python src/civit/cli.py
+    main()

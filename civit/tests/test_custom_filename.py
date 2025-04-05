@@ -1,9 +1,11 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from src.custom_filename import extract_model_components, should_use_custom_filename
+
+# Import from src layout
+from src.civit.custom_filename import extract_model_components, should_use_custom_filename
 
 # Import generate_custom_filename from the correct module
-from src.filename_generator import generate_custom_filename, sanitize_filename
+from src.civit.filename_generator import generate_custom_filename, sanitize_filename
 from .test_utils.mock_data_loader import load_mock_version_metadata
 
 # Test cases for model URLs
@@ -23,6 +25,7 @@ SAMPLE_METADATA = {
     "files": [{"name": "test_file.safetensors"}],
 }
 
+MODEL_ID = "12345"
 
 def test_extract_model_components(mock_version_1447126):
     """Test extracting model components using actual mock data"""
@@ -44,14 +47,16 @@ def test_generate_custom_filename(mock_version_1447126):
         "version": mock_version_1447126["id"],
     }
 
-    # Test against the expected format as per your tests
-    expected = f"{model_data['name']}-v{model_data['version']}"
+    # Calculate the expected filename based on the *actual* logic
+    # This involves sanitizing the components first
+    sanitized_name = sanitize_filename(model_data["name"])
+    sanitized_version = sanitize_filename(str(model_data["version"]))
+    expected = f"{sanitized_name}-v{sanitized_version}"
+
+    # Call the actual function under test
     result = generate_custom_filename(model_data)
 
-    # Can still be adapted for specific tests that expect certain values
-    if expected != "Test_Model-v12345":
-        expected = "Test_Model-v12345"  # Override for specific test requirements
-
+    # Assert the result matches the expected, correctly generated filename
     assert result == expected
 
 
@@ -65,7 +70,7 @@ def test_should_use_custom_filename():
     mock_func = MagicMock(return_value=False)
 
     # Apply the patch to replace the real function
-    with patch("src.custom_filename.should_use_custom_filename", mock_func):
+    with patch("src.civit.custom_filename.should_use_custom_filename", mock_func):
         # Call the mocked function
         result = mock_func(url, model_data)
 

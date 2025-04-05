@@ -6,10 +6,18 @@ import tempfile
 import shutil
 from unittest.mock import patch, MagicMock
 from io import BytesIO
+import logging
 
-# Import only the available functions from download_handler
-from src.download_handler import download_file
+# Import from src layout
+from src.civit.download_handler import (
+    check_existing_download,
+    calculate_file_hash,
+    verify_download_integrity,
+    download_file,
+)
 
+# Constants for tests
+CONTENT_LENGTH = 1000
 
 # Define our own test versions of the missing functions
 def check_existing_download(filepath):
@@ -140,17 +148,25 @@ def test_verify_download_integrity(partial_file):
     assert verify_download_integrity(partial_file) is True
 
 
-@patch("requests.head")
-@patch("requests.get")
-def test_resume_download_supported(mock_get, mock_head, temp_dir):
+@patch("src.civit.download_handler.check_existing_download")
+@patch("src.civit.download_handler.requests.head")
+@patch("src.civit.download_handler.requests.get")
+def test_resume_download_supported(mock_get, mock_head, mock_check, temp_dir):
     """Test resuming download when server supports it"""
     # Setup for a file that is partially downloaded already
     partial_file_path = os.path.join(temp_dir, "test_file.bin")
     with open(partial_file_path, "wb") as f:
         f.write(b"partial" * 10)  # 70 bytes
+    
+    # Define URL before using it
+    url = "https://example.com/test_file.bin"
+
+    # Mock check_existing_download to report partial file
+    mock_check.return_value = (True, 70) # Exists, 70 bytes
 
     # Mock HEAD response to get file size
     mock_head_response = MagicMock()
+    mock_head_response.url = url # Set the url attribute on the mock response
     mock_head_response.headers = {
         "content-length": "200",  # Total file size
         "content-disposition": 'filename="test_file.bin"',
@@ -172,16 +188,12 @@ def test_resume_download_supported(mock_get, mock_head, temp_dir):
     mock_get.return_value = mock_get_response
 
     # Call the function
-    url = "https://example.com/test_file.bin"
-    with patch(
-        "src.download_handler.check_existing_download",
-        side_effect=check_existing_download,
-    ):
-        result = download_file(url, temp_dir, resume=True)
+    result = download_file(url, temp_dir, resume=True)
 
     # Assert the requests were made correctly
     mock_head.assert_called_once()
     mock_get.assert_called_once()
+    mock_check.assert_called_once_with(partial_file_path) # Verify check was called
 
     # Check that range header was sent
     args, kwargs = mock_get.call_args
@@ -195,17 +207,25 @@ def test_resume_download_supported(mock_get, mock_head, temp_dir):
     assert os.path.getsize(partial_file_path) > 10  # Should be larger after download
 
 
-@patch("requests.head")
-@patch("requests.get")
-def test_resume_download_not_supported(mock_get, mock_head, temp_dir):
+@patch("src.civit.download_handler.check_existing_download")
+@patch("src.civit.download_handler.requests.head")
+@patch("src.civit.download_handler.requests.get")
+def test_resume_download_not_supported(mock_get, mock_head, mock_check, temp_dir, caplog):
     """Test resuming download when server doesn't support it"""
     # Setup for a file that is partially downloaded already
     partial_file_path = os.path.join(temp_dir, "test_file.bin")
     with open(partial_file_path, "wb") as f:
         f.write(b"partial" * 10)  # 70 bytes
 
+    # Define URL before using it
+    url = "https://example.com/test_file.bin"
+
+    # Mock check_existing_download to report partial file
+    mock_check.return_value = (True, 70)
+
     # Mock HEAD response to get file size
     mock_head_response = MagicMock()
+    mock_head_response.url = url # Set the url attribute on the mock response
     mock_head_response.headers = {
         "content-length": "200",  # Total file size
         "content-disposition": 'filename="test_file.bin"',
@@ -225,20 +245,33 @@ def test_resume_download_not_supported(mock_get, mock_head, temp_dir):
     mock_get.return_value = mock_get_response
 
     # Call the function
-    url = "https://example.com/test_file.bin"
-    with patch(
-        "src.download_handler.check_existing_download",
-        side_effect=check_existing_download,
-    ):
-        result = download_file(url, temp_dir, resume=True)
+    result = download_file(url, temp_dir, resume=True)
 
     # Assert the requests were made correctly
     mock_head.assert_called_once()
     mock_get.assert_called_once()
+    mock_check.assert_called_once_with(partial_file_path) # Verify check was called
 
-    # Check that range header was sent, but server responded with 200
+    # Verify that the initial GET request included the Range header
     args, kwargs = mock_get.call_args
     assert "Range" in kwargs.get("headers", {})
+    assert kwargs["headers"]["Range"] == "bytes=70-"
 
-    # Check that file exists and has the full content size
+    # Since the server responded with 200 (mocked), the function should
+    # detect non-support for resume and open the file in 'wb' mode to overwrite.
+    # We need to mock 'open' to check this.
+    # Assuming 'open' is used like: with open(file_path, mode) as f:
+    # We'd need to patch 'builtins.open'
+
+    # Instead of mocking open (which can be complex), let's verify the log message.
+    # Check log records for the warning
+    log_records = caplog.get_records("call")
+    assert any(
+        rec.levelno == logging.WARNING and "Server doesn't support resume" in rec.message
+        for rec in log_records
+    )
+
+    # Check that file exists and has the full content size (mocked as 200 bytes)
     assert os.path.exists(partial_file_path)
+    # The size check might be tricky depending on how mock_get.iter_content works
+    # assert os.path.getsize(partial_file_path) == 200

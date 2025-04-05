@@ -9,6 +9,8 @@
     logging: Logging functionality
     requests: HTTP response handling
     pathlib: Path operations
+    urllib.parse: URL parsing
+    os: Operating system path operations
 """
 
 import re
@@ -18,6 +20,8 @@ from typing import Tuple, Dict, Any
 from logging import LoggerAdapter
 from datetime import datetime
 from requests import Response
+from urllib.parse import urlparse
+import os
 
 logger = LoggerAdapter(logging.getLogger(__name__), {"component": "response_handler"})
 
@@ -110,12 +114,41 @@ def process_response_headers(
 def _extract_filename(response: Response) -> str:
     """Extract filename from Content-Disposition header or URL."""
     content_disposition = response.headers.get("Content-Disposition", "")
-    if "filename=" in content_disposition:
-        matches = re.findall("filename=(.+)", content_disposition)[0].strip('"')
+    if content_disposition:
+        # More robust regex for filename extraction (handles quotes optionally)
+        matches = re.findall('filename="?([^"\n]+)"?', content_disposition)
         if matches:
-            return matches
+            # Take the first match and remove potential path characters
+            filename = os.path.basename(matches[0])
+            if filename:
+                logger.debug(f"Extracted filename from Content-Disposition: {filename}")
+                return filename
 
-    return Path(response.url).name
+    # Fallback to URL if Content-Disposition doesn't provide a filename
+    try:
+        parsed_url = urlparse(response.url)
+        filename_from_url = os.path.basename(parsed_url.path)
+        if filename_from_url:
+            logger.debug(f"Extracted filename from URL: {filename_from_url}")
+            return filename_from_url
+    except Exception as e:
+        logger.warning(f"Could not parse filename from URL {response.url}: {e}")
+
+    # Final fallback
+    logger.warning("Could not determine filename, using default.")
+    content_type = response.headers.get("Content-Type", "").lower()
+    if "image/jpeg" in content_type or "image/jpg" in content_type:
+        return "downloaded_file.jpg"
+    elif "image/png" in content_type:
+        return "downloaded_file.png"
+    elif "image/gif" in content_type:
+        return "downloaded_file.gif"
+    elif "image/webp" in content_type:
+        return "downloaded_file.webp"
+    elif "image/svg+xml" in content_type:
+        return "downloaded_file.svg"
+    else:
+        return "downloaded_file.bin"  # Generic fallback for unknown types
 
 
 """

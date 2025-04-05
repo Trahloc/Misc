@@ -8,8 +8,8 @@ import logging
 from unittest.mock import patch, MagicMock, call
 from io import StringIO
 
-# Import the CLI module
-from src.cli import main as cli_main, setup_logging, parse_args
+# Import from src layout
+from src.civit.cli import main as cli_main, setup_logging, parse_args
 
 
 def test_help_command():
@@ -161,7 +161,7 @@ def test_setup_logging():
 def test_output_folder_arg():
     """Test the -o/--output-folder argument parsing."""
     test_path = "/tmp/test/downloads"
-    with patch("src.cli.parse_args") as mock_parse:
+    with patch("src.civit.cli.parse_args") as mock_parse:
         # We only need to test parsing, not the full main function
         args = parse_args(["some_url", "-o", test_path])
         assert args.output_folder == test_path
@@ -178,62 +178,62 @@ def test_output_folder_arg():
 def test_api_key_arg():
     """Test the -k/--api-key argument parsing."""
     test_key = "test_api_12345"
-    with patch("src.cli.parse_args") as mock_parse:
-        args = parse_args(["some_url", "-k", test_key])
-        assert args.api_key == test_key
+    # We test parse_args directly
+    args = parse_args(["some_url", "-k", test_key])
+    assert args.api_key == test_key
 
-        args_long = parse_args(["some_url", "--api-key", test_key])
-        assert args_long.api_key == test_key
+    args_long = parse_args(["some_url", "--api-key", test_key])
+    assert args_long.api_key == test_key
 
-        args_default = parse_args(["some_url"])
-        assert args_default.api_key is None
+    args_default = parse_args(["some_url"])
+    assert args_default.api_key is None
 
 
 def test_urls_arg():
     """Test the positional urls argument parsing."""
     url1 = "https://example.com/model1"
     url2 = "https://example.com/model2"
-    with patch("src.cli.parse_args") as mock_parse:
-        # Test single URL
-        args_single = parse_args([url1])
-        assert args_single.urls == [url1]
+    # Test parse_args directly
+    # Test single URL
+    args_single = parse_args([url1])
+    assert args_single.urls == [url1]
 
-        # Test multiple URLs
-        args_multi = parse_args([url1, url2])
-        assert args_multi.urls == [url1, url2]
+    # Test multiple URLs
+    args_multi = parse_args([url1, url2])
+    assert args_multi.urls == [url1, url2]
 
-        # Test requires at least one URL
-        with pytest.raises(SystemExit): # argparse exits on error
-            parse_args([]) # No URLs provided
+    # Test requires at least one URL
+    with pytest.raises(SystemExit): # argparse exits on error
+         parse_args([]) # No URLs provided
 
 
 def test_custom_naming_args():
     """Test the --custom-naming and --no-custom-naming flags."""
-    with patch("src.cli.parse_args") as mock_parse:
-        # Test default (should be True)
-        args_default = parse_args(["some_url"])
-        assert args_default.custom_naming is True
+    # Test parse_args directly
+    # Test default (should be True)
+    args_default = parse_args(["some_url"])
+    assert args_default.custom_naming is True
 
-        # Test explicit --custom-naming
-        args_custom = parse_args(["some_url", "--custom-naming"])
-        assert args_custom.custom_naming is True
+    # Test explicit --custom-naming
+    args_custom = parse_args(["some_url", "--custom-naming"])
+    assert args_custom.custom_naming is True
 
-        # Test explicit --no-custom-naming
-        args_no_custom = parse_args(["some_url", "--no-custom-naming"])
-        assert args_no_custom.custom_naming is False
+    # Test explicit --no-custom-naming
+    args_no_custom = parse_args(["some_url", "--no-custom-naming"])
+    assert args_no_custom.custom_naming is False
 
 
 def test_resume_arg():
     """Test the -r/--resume argument parsing."""
-    with patch("src.cli.parse_args") as mock_parse:
-        # Test default (should be False)
-        args_default = parse_args(["some_url"])
-        assert args_default.resume is False
+    # Test parse_args directly
+    # Test default (should be False)
+    args_default = parse_args(["some_url"])
+    assert args_default.resume is False
 
-        # Test explicit -r
-        args_short = parse_args(["some_url", "-r"])
-        assert args_short.resume is True
+    # Test explicit -r
+    args_short = parse_args(["some_url", "-r"])
+    assert args_short.resume is True
 
-        # Test explicit --resume
-        args_long = parse_args(["some_url", "--resume"])
-        assert args_long.resume is True
+    # Test explicit --resume
+    args_long = parse_args(["some_url", "--resume"])
+    assert args_long.resume is True

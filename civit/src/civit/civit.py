@@ -7,7 +7,7 @@ import logging
 import sys
 import signal
 import time
-from typing import Optional
+from typing import Optional, Union, Tuple
 from pathlib import Path
 import configparser
 import requests
@@ -28,7 +28,7 @@ def download_file(
     api_key: Optional[str] = None,
     retries: int = 3,
     delay: int = 5,
-    timeout: int = 30,
+    timeout: Union[int, Tuple[int, int]] = (30, 60),
 ) -> bool:
     """
     Coordinate the download process for a file from civitai.com.
@@ -39,7 +39,8 @@ def download_file(
         api_key (Optional[str]): Civitai API key for authentication
         retries (int): Number of retries for rate limiting
         delay (int): Delay between retries in seconds
-        timeout (int): Timeout for requests in seconds
+        timeout (Union[int, Tuple[int, int]]): Request timeout in seconds, either a number for both connect and read
+               timeouts, or a tuple of (connect_timeout, read_timeout)
 
     RETURNS:
         bool: True if download successful, False otherwise
@@ -179,7 +180,7 @@ def download_files(
     urls: list[str],
     output_dir: str = ".",
     api_key: Optional[str] = None,
-    timeout: int = 30
+    timeout: Union[int, Tuple[int, int]] = (30, 60)
 ) -> bool:
     """
     Download multiple files from civitai.com and save them to the specified directory.
@@ -188,7 +189,8 @@ def download_files(
         urls (list[str]): List of URLs to download from
         output_dir (str): Directory to save the downloaded files
         api_key (Optional[str]): Civitai API key for authentication
-        timeout (int): Timeout for requests in seconds
+        timeout (Union[int, Tuple[int, int]]): Request timeout in seconds, either a number for both connect and read
+               timeouts, or a tuple of (connect_timeout, read_timeout)
 
     RETURNS:
         bool: True if all downloads are successful, False otherwise

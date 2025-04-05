@@ -35,12 +35,12 @@ def temp_directory():
         shutil.rmtree(temp_dir)
 
 
-@patch("requests.head")
-@patch("requests.get")
+@patch("src.civit.download_handler.requests.head")
+@patch("src.civit.download_handler.requests.get")
 def test_successful_download(mock_get, mock_head, setup_test_dir):
     """Test successful file download"""
     # Import function after patching
-    from src.download_handler import download_file
+    from src.civit.download_handler import download_file
 
     # Mock the HEAD response
     mock_head_response = MagicMock()
@@ -71,15 +71,15 @@ def test_successful_download(mock_get, mock_head, setup_test_dir):
     assert result is not None
 
 
-@patch("requests.head")
-@patch("requests.get")
+@patch("src.civit.download_handler.requests.head")
+@patch("src.civit.download_handler.requests.get")
 def test_failed_download(mock_get, mock_head):
     """Test that download_file returns None when download fails."""
     # Set up the mock to raise an exception
     mock_head.side_effect = Exception("Mock download failure")
 
     # Import the function after patching
-    from src.download_handler import download_file
+    from src.civit.download_handler import download_file
 
     # Call the function
     result = download_file("https://example.com/file.zip", "output_dir")
@@ -88,12 +88,12 @@ def test_failed_download(mock_get, mock_head):
     assert result is None
 
 
-@patch("src.download_handler.requests.head")
-@patch("src.download_handler.requests.get")
+@patch("src.civit.download_handler.requests.head")
+@patch("src.civit.download_handler.requests.get")
 def test_resume_interrupted_download(mock_get, mock_head, setup_test_dir):
     """Test resuming interrupted download"""
     # Import after patching
-    from src.download_handler import download_file
+    from src.civit.download_handler import download_file
 
     # Create a partial file to simulate an interrupted download
     partial_file = setup_test_dir / "test.zip"

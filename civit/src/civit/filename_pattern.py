@@ -17,8 +17,11 @@ import re
 import zlib
 import os
 from typing import Dict, Any
-from ..filename_generator import sanitize_filename
+from .filename_generator import sanitize_filename
 from .exceptions import InvalidPatternError, MetadataError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def process_filename_pattern(

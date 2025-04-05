@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "civit"
-version = "100.0.1"
+version = "100.0.2"
 authors = [
   { name="Trahloc colDhart", email="github@trahloc.com" },
 ]
@@ -21,8 +21,14 @@ dependencies = [
     "tqdm",
 ]
 
+# --- AI/Developer Note ---
+# Project uses a standard "src layout" where the package 'civit' is inside the 'src' directory.
+# The main CLI module is located at: src/civit/cli.py
+# The entry point below correctly targets this file's main function.
+# Do NOT create or edit a file at src/cli.py.
+# --- End Note ---
 [project.scripts]
-civit = "civit.cli:main"
+civit = "civit.cli:main" # Pointing to the module within the installed package
 
 [project.urls]
 "Homepage" = "https://github.com/yourusername/civit"
@@ -31,10 +37,17 @@ civit = "civit.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.pytest.ini_options]
+pythonpath = [
+    "src"
+]
+addopts = "-ra -q"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "black>=23.0",
     "mypy>=1.0",
     "flake8>=6.0",
+    "hypothesis",
 ]
