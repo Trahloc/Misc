@@ -25,25 +25,38 @@ import datetime
 logger = logging.getLogger(__name__)
 
 
-def check_existing_download(filepath: Union[str, Path]) -> Tuple[bool, int]:
+def check_existing_download(filepath: Union[str, Path], expected_crc32: Optional[str] = None) -> Tuple[bool, int, bool]:
     """
-    Check if a partial download already exists and return its size.
+    Check if a partial download already exists and verify its integrity.
 
     Args:
         filepath: Path to the potential existing file
+        expected_crc32: Optional expected CRC32 hash to verify file integrity
 
     Returns:
-        Tuple of (file_exists, file_size_in_bytes)
+        Tuple of (file_exists, file_size_in_bytes, is_valid)
     """
     filepath = Path(filepath) # Ensure it's a Path object
     if filepath.exists():
         try:
             file_size = filepath.stat().st_size
-            return True, file_size
+            
+            # If we have an expected CRC32, verify the file
+            if expected_crc32:
+                import zlib
+                with open(filepath, 'rb') as f:
+                    crc32_hash = format(zlib.crc32(f.read()) & 0xffffffff, '08x')
+                    is_valid = crc32_hash.lower() == expected_crc32.lower()
+                    if not is_valid:
+                        logger.warning(f"File exists but CRC32 verification failed: {filepath}")
+                        logger.warning(f"Expected: {expected_crc32}, Got: {crc32_hash}")
+                        return True, file_size, False
+                    
+            return True, file_size, True
         except OSError as e:
             logger.error(f"Error accessing file {filepath}: {e}")
-            return False, 0
-    return False, 0
+            return False, 0, False
+    return False, 0, False
 
 
 def get_model_metadata(model_id: str, api_key: Optional[str] = None) -> Dict[str, Any]:
@@ -204,6 +217,7 @@ def download_file(
     hash_type: str = "sha256",
     resume: bool = True,
     timeout: Union[int, Tuple[int, int]] = (5, None),
+    force_delete: bool = False,
 ):
     """Download a file with progress bar and resume support.
 
@@ -220,6 +234,7 @@ def download_file(
         resume: Whether to attempt resuming partial downloads
         timeout: Request timeout in seconds. First number is connection timeout (default 5s),
                second number is read timeout (default None - no timeout as long as we're receiving data)
+        force_delete: Whether to skip confirmation when deleting corrupted files
 
     Returns:
         Path to downloaded file or None if failed
@@ -316,14 +331,43 @@ def download_file(
         file_path = os.path.join(output_folder, filename)
         counter = 1
         
+        # Get expected CRC32 from metadata if available
+        expected_crc32 = None
+        if custom_filename and model_metadata:
+            try:
+                expected_crc32 = model_metadata.get('files', [{}])[0].get('hashes', {}).get('CRC32')
+                if expected_crc32:
+                    logger.info(f"Found expected CRC32 hash: {expected_crc32}")
+            except (IndexError, KeyError, AttributeError) as e:
+                logger.warning(f"Failed to get CRC32 from metadata: {e}")
+        
         while os.path.exists(file_path):
-            # Check if the existing file is complete
-            existing_size = os.path.getsize(file_path)
+            # Check if the existing file is complete and valid
+            file_exists, existing_size, is_valid = check_existing_download(file_path, expected_crc32)
             total_size = int(response_headers.get("Content-Length", 0))
             
-            if existing_size == total_size:
-                logger.info(f"File already exists and is complete: {file_path}")
+            if file_exists and existing_size == total_size and is_valid:
+                logger.info(f"File already exists and is valid: {file_path}")
                 return file_path
+            elif file_exists and not is_valid:
+                logger.warning(f"File exists but failed CRC32 verification: {file_path}")
+                if not force_delete:
+                    response = input(f"File {file_path} failed CRC32 verification. Delete and redownload? [y/N] ").lower()
+                    if response != 'y':
+                        logger.info("Skipping download of corrupted file")
+                        return None
+                
+                try:
+                    os.remove(file_path)
+                    logger.info(f"Deleted corrupted file: {file_path}")
+                except OSError as e:
+                    logger.error(f"Failed to remove corrupted file: {e}")
+                    # Add timestamp to filename to avoid conflict
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    new_filename = f"{base_name}_{timestamp}{ext}"
+                    file_path = os.path.join(output_folder, new_filename)
+                    logger.debug(f"Using new filename: {new_filename}")
+                    continue
                 
             # If file exists but is incomplete or different size, add a timestamp
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -337,13 +381,13 @@ def download_file(
         logger.info(f"Full file path: {file_path}")
 
         # Check for existing partial download
-        file_exists, existing_size = check_existing_download(file_path)
+        file_exists, existing_size, is_valid = check_existing_download(file_path, expected_crc32)
         total_size = int(response_headers.get("Content-Length", 0))
-        logger.info(f"File exists: {file_exists}, Size: {existing_size}/{total_size} bytes")
+        logger.info(f"File exists: {file_exists}, Size: {existing_size}/{total_size} bytes, Valid: {is_valid}")
 
         # If the file size matches or exceeds expected size, and verify=False or verification passes
-        if file_exists and existing_size == total_size:
-            logger.info(f"File already exists and is complete: {file_path}")
+        if file_exists and existing_size == total_size and is_valid:
+            logger.info(f"File already exists and is valid: {file_path}")
             return file_path
 
         # Set up for resumable download if requested and possible
@@ -375,10 +419,19 @@ def download_file(
         logger.info(f"Download completed: {file_path}")
 
         # Verify download integrity if hash provided
-        if expected_hash and not verify_download_integrity(
-            file_path, expected_hash, hash_type
-        ):
-            logger.error(f"Downloaded file failed integrity check: {file_path}")
+        if expected_crc32 and not check_existing_download(file_path, expected_crc32)[2]:
+            logger.error(f"Downloaded file failed CRC32 verification: {file_path}")
+            if not force_delete:
+                response = input(f"Downloaded file {file_path} failed CRC32 verification. Delete? [y/N] ").lower()
+                if response != 'y':
+                    logger.info("Keeping corrupted file")
+                    return None
+            
+            try:
+                os.remove(file_path)
+                logger.info(f"Deleted corrupted file: {file_path}")
+            except OSError as e:
+                logger.error(f"Failed to remove corrupted file: {e}")
             return None
 
         return file_path

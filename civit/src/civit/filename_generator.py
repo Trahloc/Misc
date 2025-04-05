@@ -116,30 +116,40 @@ def should_use_custom_filename(args, model_data=None) -> bool:
 
 
 @test_aware
-def generate_custom_filename(model_data, filename_pattern=None) -> str:
-    """Generate a custom filename based on model data and pattern.
-
-    Args:
-        model_data: The model metadata
-        filename_pattern: Optional filename pattern
-
-    Returns:
-        Custom filename
+def generate_custom_filename(model_data: Dict) -> str:
     """
-    # Extract and sanitize individual components
-    model_type = model_data.get("model", {}).get("type", "unknown")
-    base_model = model_data.get("baseModel", "unknown")
-    model_id = model_data.get("model", {}).get("id", "unknown")
-    model_version = model_data.get("id", "unknown")  # Version ID
-    subversion_name = model_data.get("name", "unknown")  # Subversion name
-    model_name = sanitize_filename(model_data.get("model", {}).get("name", "unknown"))
+    Generate a custom filename based on model metadata.
     
-    # Get file information from the first file in the files array
-    file_info = model_data.get("files", [{}])[0]
-    file_size = int(float(file_info.get("sizeKB", 0)) * 1024)  # Convert KB to bytes
-    crc32 = file_info.get("hashes", {}).get("CRC32", "unknown")
-    original_filename = file_info.get("name", "unknown")
-    
-    # Format the filename according to the specified pattern
-    # Note: We don't sanitize the final filename to preserve hyphens as separators
-    return f"{model_type}-{base_model}-{model_id}-{model_version}-{subversion_name}-{crc32}-{file_size}-{original_filename}"
+    Format: LORA-Flux_1_D-{model_name}-{model_id}-{crc32}-{file_size}-{original_filename}
+    """
+    try:
+        # Extract fields from model data
+        model_type = model_data.get('type', 'LORA')
+        model_name = model_data.get('name', 'unknown')
+        model_id = model_data.get('modelId', 'unknown')
+        version_id = model_data.get('id', 'unknown')
+        
+        # Get file info
+        files = model_data.get('files', [])
+        if not files:
+            logger.error("No file information in model data")
+            return None
+            
+        file_info = files[0]  # Use first file
+        crc32 = file_info.get('hashes', {}).get('CRC32', 'unknown')
+        file_size = file_info.get('sizeKB', 0) * 1024  # Convert KB to bytes
+        original_filename = file_info.get('name', 'unknown')
+        
+        # Sanitize model name (only replace problematic characters, keep hyphens)
+        model_name = re.sub(r'[<>:"/\\|?*]', '_', model_name)
+        
+        # Format the filename
+        filename = f"{model_type}-Flux_1_D-{model_name}-{model_id}-{crc32}-{file_size}-{original_filename}"
+        
+        # Ensure the filename is valid for all operating systems
+        filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+        
+        return filename
+    except Exception as e:
+        logger.error(f"Failed to generate custom filename: {e}")
+        return None
