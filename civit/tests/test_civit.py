@@ -1,6 +1,6 @@
 """Tests for the main civit.py module"""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 import pytest
 import requests
 import logging
@@ -8,6 +8,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from civit.download_handler import download_file
 
 
 @pytest.fixture(autouse=True)
@@ -39,9 +40,6 @@ def temp_directory():
 @patch("src.civit.download_handler.requests.get")
 def test_successful_download(mock_get, mock_head, setup_test_dir):
     """Test successful file download"""
-    # Import function after patching
-    from src.civit.download_handler import download_file
-
     # Mock the HEAD response
     mock_head_response = MagicMock()
     mock_head_response.headers = {
@@ -73,16 +71,13 @@ def test_successful_download(mock_get, mock_head, setup_test_dir):
 
 @patch("src.civit.download_handler.requests.head")
 @patch("src.civit.download_handler.requests.get")
-def test_failed_download(mock_get, mock_head):
+def test_failed_download(mock_get, mock_head, tmp_path):
     """Test that download_file returns None when download fails."""
     # Set up the mock to raise an exception
     mock_head.side_effect = Exception("Mock download failure")
 
-    # Import the function after patching
-    from src.civit.download_handler import download_file
-
     # Call the function
-    result = download_file("https://example.com/file.zip", "output_dir")
+    result = download_file("https://example.com/file.zip", str(tmp_path))
 
     # Assert that None is returned on failure
     assert result is None
@@ -92,9 +87,6 @@ def test_failed_download(mock_get, mock_head):
 @patch("src.civit.download_handler.requests.get")
 def test_resume_interrupted_download(mock_get, mock_head, setup_test_dir):
     """Test resuming interrupted download"""
-    # Import after patching
-    from src.civit.download_handler import download_file
-
     # Create a partial file to simulate an interrupted download
     partial_file = setup_test_dir / "test.zip"
     partial_data = b"x" * 100  # 100 bytes of initial data

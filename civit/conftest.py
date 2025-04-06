@@ -16,9 +16,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Add project root and src directories to Python path
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
+# Remove manual sys.path manipulation, rely on pyproject.toml for pytest
+# sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 
 def pytest_configure(config):

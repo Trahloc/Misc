@@ -25,14 +25,16 @@ import pytest
 import re
 from urllib.parse import urlparse
 
-# Import from the correct module path
-from src.civit.url_validator import (
+# Import from src layout
+from civit.url_validator import (
     validate_url,
     normalize_url,
     is_valid_civitai_url,
     is_valid_image_url,
+    is_valid_api_url,
     get_url_validation_error_message,
 )
+from civit.exceptions import InvalidResponseError
 
 
 class TestUrlValidator(unittest.TestCase):
@@ -46,11 +48,11 @@ class TestUrlValidator(unittest.TestCase):
         logging.disable(logging.CRITICAL)
 
         # Create patches for external dependencies to prevent actual network calls
-        self.requests_patcher = patch("src.civit.url_validator.requests")
+        self.requests_patcher = patch("civit.url_validator.requests")
         self.mock_requests = self.requests_patcher.start()
 
         # Mock logging to properly test error messages
-        self.logging_patcher = patch("src.civit.url_validator.logger")
+        self.logging_patcher = patch("civit.url_validator.logger")
         self.mock_logger = self.logging_patcher.start()
 
         # Setup mock responses for HTTP requests
@@ -69,8 +71,8 @@ class TestUrlValidator(unittest.TestCase):
         """Test validation of correctly formatted civitai.com URLs using mock URLs"""
         # Temporarily patch the validate_url function to avoid real validation logic
         with patch(
-            "src.civit.url_validator.is_valid_civitai_url", return_value=True
-        ), patch("src.civit.url_validator.is_valid_image_url", return_value=True):
+            "civit.url_validator.is_valid_civitai_url", return_value=True
+        ), patch("civit.url_validator.is_valid_image_url", return_value=True):
 
             valid_urls = [
                 "https://civitai.com/models/1234",
@@ -118,8 +120,8 @@ class TestUrlValidator(unittest.TestCase):
         def mock_validate_url(url):
             raise ValueError("Invalid domain")
 
-        with patch("src.civit.url_validator.validate_url", mock_validate_url):
-            from src.civit.url_validator import validate_url
+        with patch("civit.url_validator.validate_url", mock_validate_url):
+            from civit.url_validator import validate_url
 
             with self.assertRaises(ValueError) as context:
                 validate_url("https://example.com")
@@ -127,7 +129,7 @@ class TestUrlValidator(unittest.TestCase):
 
     def test_edge_case_urls(self):
         """Test edge cases for URL validation using mocked functions"""
-        with patch("src.civit.url_validator.is_valid_civitai_url", return_value=True):
+        with patch("civit.url_validator.is_valid_civitai_url", return_value=True):
             edge_case_urls = [
                 "https://civitai.com/models/1234?query=param",  # URL with query parameters
                 "https://civitai.com/models/1234#fragment",  # URL with fragment
@@ -182,7 +184,7 @@ class TestUrlValidator(unittest.TestCase):
     def test_mock_url_validation_errors(self):
         """Test URL validation with mocked responses to test error handling."""
         # Create a special mock just for this test to ensure it raises the right exceptions
-        with patch("src.civit.url_validator.requests.head") as mock_head:
+        with patch("civit.url_validator.requests.head") as mock_head:
             # Mock a 404 response
             mock_response = MagicMock()
             mock_response.status_code = 404
@@ -193,8 +195,8 @@ class TestUrlValidator(unittest.TestCase):
 
             # Override normal validation to ensure we get to the check_existence part
             with patch(
-                "src.civit.url_validator.is_valid_civitai_url", return_value=True
-            ), patch("src.civit.url_validator.urlparse") as mock_urlparse:
+                "civit.url_validator.is_valid_civitai_url", return_value=True
+            ), patch("civit.url_validator.urlparse") as mock_urlparse:
 
                 # Setup mock parsed URL
                 mock_parsed = MagicMock()
@@ -213,8 +215,8 @@ class TestUrlValidator(unittest.TestCase):
             )
 
             with patch(
-                "src.civit.url_validator.is_valid_civitai_url", return_value=True
-            ), patch("src.civit.url_validator.urlparse") as mock_urlparse:
+                "civit.url_validator.is_valid_civitai_url", return_value=True
+            ), patch("civit.url_validator.urlparse") as mock_urlparse:
 
                 mock_urlparse.return_value = mock_parsed
                 with self.assertRaises(ConnectionError):
@@ -224,8 +226,8 @@ class TestUrlValidator(unittest.TestCase):
             mock_head.side_effect = requests.exceptions.Timeout("Connection timed out")
 
             with patch(
-                "src.civit.url_validator.is_valid_civitai_url", return_value=True
-            ), patch("src.civit.url_validator.urlparse") as mock_urlparse:
+                "civit.url_validator.is_valid_civitai_url", return_value=True
+            ), patch("civit.url_validator.urlparse") as mock_urlparse:
 
                 mock_urlparse.return_value = mock_parsed
                 with self.assertRaises(TimeoutError):
@@ -242,11 +244,11 @@ class TestUrlNormalizer(unittest.TestCase):
         """Disable logging during tests and set up common mocks"""
         logging.disable(logging.CRITICAL)
         # Create a patch for any request functions to prevent actual network calls
-        self.requests_patcher = patch("src.civit.url_validator.requests")
+        self.requests_patcher = patch("civit.url_validator.requests")
         self.mock_requests = self.requests_patcher.start()
 
         # Also patch validate_url to control its behavior
-        self.validate_patcher = patch("src.civit.url_validator.validate_url")
+        self.validate_patcher = patch("civit.url_validator.validate_url")
         self.mock_validate = self.validate_patcher.start()
         self.mock_validate.return_value = True
 
@@ -281,7 +283,7 @@ class TestUrlNormalizer(unittest.TestCase):
 
     def test_edge_case_normalization(self):
         """Test normalization of edge case URLs"""
-        with patch("src.civit.url_validator.validate_url", return_value=True):
+        with patch("civit.url_validator.validate_url", return_value=True):
             edge_case_urls = [
                 (
                     "https://civitai.com/models/1234?query=param",

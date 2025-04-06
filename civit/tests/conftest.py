@@ -54,6 +54,7 @@ logger.info(f"Python path: {sys.path}")
 - Simplified testing approach to use only standard Python and pytest
 - Removed all dependencies on external packages that cause import issues
 - Added network guards to prevent real network calls during tests
+- Added support for No-Go tests where a failure is the expected outcome
 
 ## FUTURE TODOs:
 - Consider adding fixture factories for common test cases.
@@ -149,6 +150,47 @@ def no_network_access():
     disable_network()
     yield
     enable_network()
+
+
+# Set cache directory programmatically using a user-specific temporary directory
+def pytest_configure(config):
+    """Register markers for the pytest session and configure cache directory."""
+    import tempfile
+    
+    # Create a unique cache directory for this user in the system temp directory
+    # This avoids permission issues with /run/user/$UID
+    cache_dir = str(Path(tempfile.gettempdir()) / f"pytest-cache-{os.getuid()}")
+    
+    # Set the cache directory
+    # First, create the directory if it doesn't exist
+    if not Path(cache_dir).exists():
+        Path(cache_dir).mkdir(parents=True, exist_ok=True)
+    
+    # Now override the cachedir option
+    config.inicfg['cache_dir'] = cache_dir
+    config.option.cachedir = cache_dir
+    
+    # Register markers
+    config.addinivalue_line(
+        "markers", 
+        "nogo: marks tests that are expected to verify proper failure behavior"
+    )
+    config.addinivalue_line(
+        "markers", 
+        "expected_failure: marks tests that are expected to fail"
+    )
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Report on No-Go tests in the terminal summary."""
+    nogo_passed = 0
+    for report in terminalreporter.getreports(""):
+        if hasattr(report, "keywords") and "nogo" in report.keywords:
+            if report.outcome == "passed":
+                nogo_passed += 1
+    
+    if nogo_passed > 0:
+        terminalreporter.write_sep("=", f"Passed {nogo_passed} No-Go tests that verified correct failure behavior")
 
 
 # The mock_requests fixture is already imported from network_guard.py

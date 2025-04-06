@@ -1,30 +1,27 @@
-"""
-# PURPOSE: Tests for filename pattern functionality.
+"""Tests for filename pattern functionality.
 
-## DEPENDENCIES:
+DEPENDENCIES:
     - pytest: Test framework
-    - src.civit.filename_pattern: Module under test
-    - src.civit.exceptions: Custom exceptions
-    - pytest_plugins.custom_parametrize: Custom test utilities
+    - civit.filename_pattern: Module under test
+    - civit.exceptions: Custom exceptions
 """
 
 import pytest
+import os
+import re
+from unittest.mock import patch, MagicMock
+from typing import Dict, Any
+import logging
 import random
 import string
-from pytest_plugins.custom_parametrize import (
-    parametrize,
-    property_test,
-    generate_random_string,
-)
-from src.civit.filename_pattern import (
+from civit.filename_pattern import (
     process_filename_pattern,
     prepare_metadata,
+    sanitize_filename,
 )
-from src.civit.exceptions import InvalidPatternError, MetadataError
-from src.civit.filename_generator import sanitize_filename
+from civit.exceptions import InvalidPatternError, MetadataError
 hypothesis = pytest.importorskip("hypothesis", reason="Hypothesis library not found, skipping property-based tests")
 from hypothesis import given, strategies as st, settings
-import re
 
 
 def test_basic_pattern_processing():
@@ -83,16 +80,32 @@ def test_missing_metadata():
         process_filename_pattern(pattern, {}, "test.zip")
 
 
-# Custom property tests
+# Helper functions for property tests
+def generate_random_string(length: int = 10, min_length: int = None, max_length: int = None) -> str:
+    """Generate a random string of fixed or variable length.
+    
+    Args:
+        length: Fixed length (used if min_length and max_length are None)
+        min_length: Minimum length if variable length is desired
+        max_length: Maximum length if variable length is desired
+        
+    Returns:
+        A random string of appropriate length
+    """
+    if min_length is not None and max_length is not None:
+        length = random.randint(min_length, max_length)
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
 def generate_safe_pattern():
     """Generate a safe filename pattern for testing."""
     prefix = "".join(random.choices(string.ascii_lowercase, k=random.randint(3, 10)))
     return f"{{model_id}}_{prefix}.{{ext}}"
 
 
-# Fixed property tests
-@property_test()
-def test_pattern_processing_properties():
+# Property tests using pytest.mark.parametrize
+@pytest.mark.parametrize("test_case", range(10))  # Run 10 random test cases
+def test_pattern_processing_properties(test_case):
     """Test pattern processing with randomly generated inputs."""
     # Generate test inputs
     pattern = random.choice([None, generate_safe_pattern()])
@@ -114,8 +127,8 @@ def test_pattern_processing_properties():
             pass
 
 
-@property_test()
-def test_sanitize_filename_properties():
+@pytest.mark.parametrize("test_case", range(10))  # Run 10 random test cases
+def test_sanitize_filename_properties(test_case):
     """Test filename sanitization with generated data."""
     # Generate a filename with invalid characters
     filename = generate_random_string(min_length=5, max_length=20)
@@ -133,8 +146,8 @@ def test_sanitize_filename_properties():
     assert result  # Result is not empty
 
 
-@property_test()
-def test_prepare_metadata_properties():
+@pytest.mark.parametrize("test_case", range(10))  # Run 10 random test cases
+def test_prepare_metadata_properties(test_case):
     """Test metadata preparation with generated data."""
     # Generate random metadata
     metadata = {
@@ -153,13 +166,3 @@ def test_prepare_metadata_properties():
     assert result["original_filename"] == original_filename
     assert len(result["crc32"]) == 8
     assert all(metadata[k] == result[k] for k in metadata)
-
-
-"""
-## KNOWN ERRORS: None
-## IMPROVEMENTS:
-- Implemented custom property-based testing utilities
-- Improved test randomization and coverage
-## FUTURE TODOs:
-- Extend property tests to cover more edge cases
-"""

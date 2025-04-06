@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock, call
 from io import StringIO
 
 # Import from src layout
-from src.civit.cli import main as cli_main, setup_logging, parse_args
+from civit.cli import main as cli_main, setup_logging, parse_args
 
 
 def test_help_command():

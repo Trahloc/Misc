@@ -26,7 +26,7 @@ def extract_model_components(url: str) -> dict:
     """
     components = {}
 
-    if not url:
+    if not url or "civitai.com" not in url:
         return components
 
     # Extract model ID and name from URL
@@ -119,37 +119,16 @@ def should_use_custom_filename(args, model_data=None) -> bool:
 def generate_custom_filename(model_data: Dict) -> Optional[str]:
     """Generate a custom filename from model metadata."""
     try:
-        # Extract fields from model data
-        model_type = model_data.get('model', {}).get('type', '')
-        model_name = model_data.get('model', {}).get('name', '')
-        model_id = model_data.get('modelId', '')
-        version_id = model_data.get('id', '')
+        # Extract fields directly from Civitai's metadata structure
+        model_name = str(model_data.get('model', {}).get('name', ''))
+        version_id = str(model_data.get('id', ''))
         
-        # Get file information
-        files = model_data.get('files', [])
-        if not files:
-            logger.error("No file information in model data")
-            return None
-            
-        file_info = files[0]  # Use first file
-        file_size = file_info.get('sizeKB', 0) * 1024  # Convert KB to bytes
-        crc32 = file_info.get('hashes', {}).get('CRC32', '')
-        original_filename = file_info.get('name', '')
+        # Sanitize the components
+        sanitized_name = sanitize_filename(model_name)
+        sanitized_version = sanitize_filename(str(version_id))
         
-        # Sanitize model name - replace problematic characters with underscores
-        # Keep hyphens but replace other special characters
-        sanitized_name = re.sub(r'[^\w\-]', '_', model_name)
-        # Replace multiple consecutive underscores with a single one
-        sanitized_name = re.sub(r'_+', '_', sanitized_name)
-        # Remove leading/trailing underscores
-        sanitized_name = sanitized_name.strip('_')
-        
-        # Generate filename
-        filename = f"LORA-Flux_1_D-{sanitized_name}-{model_id}-{crc32}-{file_size}-{original_filename}"
-        
-        # Ensure filename is valid across operating systems
-        filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
-        filename = filename.strip()
+        # Generate filename using the expected format
+        filename = f"{sanitized_name}-v{sanitized_version}"
         
         return filename
     except Exception as e:

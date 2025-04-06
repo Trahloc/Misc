@@ -10,7 +10,8 @@
 import pytest
 import logging
 import json
-from src.civit.logging_setup import setup_logging, JsonFormatter
+from unittest.mock import patch, MagicMock
+from civit.logging_setup import setup_logging, JsonFormatter
 
 
 def test_json_formatter():
@@ -42,6 +43,14 @@ def test_component_logging():
 def test_setup_logging():
     """Test setup logging functionality."""
     logger = setup_logging(level=logging.INFO, json_format=True)
+    assert isinstance(logger, logging.Logger)
+    assert len(logger.handlers) == 1
+    assert isinstance(logger.handlers[0].formatter, JsonFormatter)
+
+
+def test_setup_logging_default_level():
+    """Test setup logging functionality with default level."""
+    logger = setup_logging(json_format=True)
     assert isinstance(logger, logging.Logger)
     assert len(logger.handlers) == 1
     assert isinstance(logger.handlers[0].formatter, JsonFormatter)

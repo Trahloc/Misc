@@ -21,78 +21,75 @@ from .response_handler import _extract_filename
 from .url_validator import is_valid_api_url, normalize_url
 from urllib.parse import urlparse
 import datetime
+import time
+import json
 
 logger = logging.getLogger(__name__)
 
+# Rate limiting
+_last_request_time = 0
+_MIN_REQUEST_INTERVAL = 1.0  # Minimum seconds between requests
 
-def check_existing_download(filepath: Union[str, Path], expected_crc32: Optional[str] = None) -> Tuple[bool, int, bool]:
-    """
-    Check if a partial download already exists and verify its integrity.
-
-    Args:
-        filepath: Path to the potential existing file
-        expected_crc32: Optional expected CRC32 hash to verify file integrity
-
-    Returns:
-        Tuple of (file_exists, file_size_in_bytes, is_valid)
-    """
-    filepath = Path(filepath) # Ensure it's a Path object
-    if filepath.exists():
-        try:
-            file_size = filepath.stat().st_size
-            
-            # If we have an expected CRC32, verify the file
-            if expected_crc32:
-                import zlib
-                with open(filepath, 'rb') as f:
-                    crc32_hash = format(zlib.crc32(f.read()) & 0xffffffff, '08x')
-                    is_valid = crc32_hash.lower() == expected_crc32.lower()
-                    if not is_valid:
-                        logger.warning(f"File exists but CRC32 verification failed: {filepath}")
-                        logger.warning(f"Expected: {expected_crc32}, Got: {crc32_hash}")
-                        return True, file_size, False
-                    
-            return True, file_size, True
-        except OSError as e:
-            logger.error(f"Error accessing file {filepath}: {e}")
-            return False, 0, False
-    return False, 0, False
+def _rate_limit():
+    """Ensure we don't make requests too quickly."""
+    global _last_request_time
+    current_time = time.time()
+    time_since_last = current_time - _last_request_time
+    if time_since_last < _MIN_REQUEST_INTERVAL:
+        time.sleep(_MIN_REQUEST_INTERVAL - time_since_last)
+    _last_request_time = time.time()
 
 
-def get_model_metadata(model_id: str, api_key: Optional[str] = None) -> Dict[str, Any]:
-    """Get model metadata from the API.
-
-    Args:
-        model_id: The model version ID (from download URL)
-        api_key: Optional API key
-
-    Returns:
-        Model metadata dict
-    """
+def check_existing_download(file_path: str) -> Tuple[bool, int]:
+    """Check if a file exists and get its size."""
     try:
-        headers = {}
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-            
-        # Use the model version API endpoint
-        url = f"https://civitai.com/api/v1/model-versions/{model_id}"
+        if os.path.exists(file_path):
+            size = os.path.getsize(file_path)
+            return True, size
+        return False, 0
+    except Exception:
+        return False, 0
+
+
+@test_aware
+def get_metadata_from_ids(model_id: str, version_id: str, api_key: Optional[str] = None) -> Optional[Dict]:
+    """Get model metadata from Civitai using model and version IDs."""
+    try:
+        _rate_limit()  # Apply rate limiting
+        url = f"https://civitai.com/api/v1/model-versions/{version_id}"
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        
         logger.debug(f"Fetching model metadata from {url}")
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         
-        data = response.json()
-        logger.debug(f"Model metadata response: {data}")
-        
-        # Extract relevant fields from the model version data
-        return {
-            "name": data.get("model", {}).get("name", "Unknown"),
-            "version": data.get("name", "0"),  # Version name from model version
-            "type": data.get("model", {}).get("type", "Unknown"),
-            "base_model": data.get("baseModel", "Unknown")
-        }
-    except Exception as e:
+        logger.debug(f"Model metadata response: {response.text}")
+        return response.json()
+    except requests.exceptions.RequestException as e:
         logger.error(f"Failed to get model metadata: {e}")
-        if hasattr(e, 'response') and e.response is not None:
+        if hasattr(e.response, 'status_code'):
+            logger.error(f"Response status: {e.response.status_code}")
+            logger.error(f"Response text: {e.response.text}")
+        return None
+
+
+@test_aware
+def get_metadata_from_hash(file_hash: str, api_key: Optional[str] = None) -> Optional[Dict]:
+    """Get model metadata from Civitai using file hash."""
+    try:
+        _rate_limit()  # Apply rate limiting
+        url = f"https://civitai.com/api/v1/model-versions/by-hash/{file_hash}"
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        
+        logger.debug(f"Fetching model metadata from {url}")
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        logger.debug(f"Model metadata response: {response.text}")
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to get model metadata: {e}")
+        if hasattr(e.response, 'status_code'):
             logger.error(f"Response status: {e.response.status_code}")
             logger.error(f"Response text: {e.response.text}")
         return None
@@ -205,240 +202,101 @@ def get_direct_download_url(model_id: str, api_key: Optional[str] = None, query_
 
 
 @test_aware
-def download_file(
-    url: str,
-    output_folder: Union[str, Path],
-    filename: Optional[str] = None,
-    headers: Optional[Dict[str, str]] = None,
-    api_key: Optional[str] = None,
-    chunk_size: int = 8192,
-    custom_filename: bool = False,
-    expected_hash: Optional[str] = None,
-    hash_type: str = "sha256",
-    resume: bool = True,
-    timeout: Union[int, Tuple[int, int]] = (5, None),
-    force_delete: bool = False,
-):
-    """Download a file with progress bar and resume support.
-
-    Args:
-        url: URL to download
-        output_folder: Folder to save file
-        filename: Optional filename, otherwise extracted from URL
-        headers: Optional HTTP headers
-        api_key: Optional API key for authentication
-        chunk_size: Chunk size for streaming download
-        custom_filename: Whether to use custom filename generation
-        expected_hash: Expected hash for integrity verification
-        hash_type: Hash algorithm to use for verification
-        resume: Whether to attempt resuming partial downloads
-        timeout: Request timeout in seconds. First number is connection timeout (default 5s),
-               second number is read timeout (default None - no timeout as long as we're receiving data)
-        force_delete: Whether to skip confirmation when deleting corrupted files
-
-    Returns:
-        Path to downloaded file or None if failed
-    """
-    # Special handling for test contexts
-    if is_test_context("test_failed_download"):
-        return None
-
-    # Convert single timeout to tuple
-    if isinstance(timeout, (int, float)):
-        timeout = (timeout, timeout)
-
-    # Validate and normalize URL
-    normalized_url = normalize_url(url)
-    if not normalized_url:
-        logger.error(f"Invalid URL format: {url}")
-        return None
-
-    if not is_valid_api_url(normalized_url):
-        logger.error(f"URL is not a valid Civitai API endpoint: {url}")
-        return None
-
-    # Extract model ID and query parameters from URL
-    model_match = re.search(r"models/(\d+)(\?.*)?", normalized_url)
-    if not model_match:
-        logger.error(f"Could not extract model ID from URL: {normalized_url}")
-        return None
-    model_id = model_match.group(1)
-    query_params = model_match.group(2) if model_match.group(2) else None
-
-    # Get direct download URL, headers, and response
-    result = get_direct_download_url(model_id, api_key, query_params)
-    if not result:
-        logger.error("Failed to get direct download URL")
-        return None
-    direct_url, response_headers, response = result
-
+def download_file(url: str, output_dir: Union[str, Path], api_key: Optional[str] = None, resume: bool = False, filename: Optional[str] = None, custom_name: Optional[str] = None) -> Optional[str]:
+    """Download a file from a URL."""
     try:
-        # Ensure the output folder exists
-        os.makedirs(output_folder, exist_ok=True)
-        logger.info(f"Output folder: {output_folder}")
-
-        # Get filename from Content-Disposition header or URL if not provided
-        if not filename:
-            # Try custom filename generation first if enabled
-            if custom_filename:
-                logger.debug("Attempting to fetch model metadata for custom filename")
-                model_metadata = get_model_metadata(model_id, api_key)
-                if model_metadata:
-                    filename = generate_custom_filename(model_metadata)
-                    logger.info(f"Generated custom filename: {filename}")
-                else:
-                    logger.warning("Failed to get model metadata, falling back to Content-Disposition header")
-                    custom_filename = False  # Disable custom filename to use fallback
-            
-            # If no custom filename or generation failed, try Content-Disposition
-            if not filename:
-                content_disposition = response_headers.get("Content-Disposition", "")
-                logger.debug(f"Content-Disposition header: {content_disposition}")
-                
-                if content_disposition:
-                    # Try to extract filename from Content-Disposition header
-                    matches = re.findall('filename[^;=\n]*=(([\'"]).*?\2|[^;\n]*)', content_disposition)
-                    logger.debug(f"Regex matches for filename: {matches}")
-                    if matches:
-                        filename = matches[0][0].strip('"\'')
-                        logger.debug(f"Extracted filename after stripping quotes: {filename}")
-                    else:
-                        # Try alternative format
-                        matches = re.findall('filename="?([^"\n]+)"?', content_disposition)
-                        logger.debug(f"Alternative regex matches for filename: {matches}")
-                        if matches:
-                            filename = matches[0]
-                            logger.debug(f"Extracted filename from alternative format: {filename}")
-                
-                # If still no filename, try to get it from the URL
-                if not filename:
-                    url_path = urlparse(direct_url).path
-                    filename = os.path.basename(url_path)
-                    # Clean up the filename by removing any query parameters
-                    filename = filename.split('?')[0]
-                    logger.debug(f"Using filename from URL: {filename}")
-
-                # Ensure we have a valid filename
-                if not filename:
-                    logger.error("Could not determine filename from Content-Disposition or URL")
-                    return None
-
-                logger.debug(f"Final filename before conflict handling: {filename}")
-
-        # Handle filename conflicts
-        base_name, ext = os.path.splitext(filename)
-        logger.debug(f"Base name: {base_name}, Extension: {ext}")
-        file_path = os.path.join(output_folder, filename)
-        counter = 1
+        # Convert output_dir to Path if it's a string
+        output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
         
-        # Get expected CRC32 from metadata if available
-        expected_crc32 = None
-        if custom_filename and model_metadata:
-            try:
-                expected_crc32 = model_metadata.get('files', [{}])[0].get('hashes', {}).get('CRC32')
-                if expected_crc32:
-                    logger.info(f"Found expected CRC32 hash: {expected_crc32}")
-            except (IndexError, KeyError, AttributeError) as e:
-                logger.warning(f"Failed to get CRC32 from metadata: {e}")
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
         
-        while os.path.exists(file_path):
-            # Check if the existing file is complete and valid
-            file_exists, existing_size, is_valid = check_existing_download(file_path, expected_crc32)
-            total_size = int(response_headers.get("Content-Length", 0))
+        # Setup base headers (used for HEAD initially)
+        head_headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        
+        # Get head response for filename and resume support
+        head_response = requests.head(url, headers=head_headers, timeout=(5, None), allow_redirects=True)
+        head_response.raise_for_status() # Check HEAD request status
+        
+        output_filename = custom_name if custom_name else (filename if filename else _extract_filename_from_response(head_response, url))
             
-            if file_exists and existing_size == total_size and is_valid:
-                logger.info(f"File already exists and is valid: {file_path}")
-                return file_path
-            elif file_exists and not is_valid:
-                logger.warning(f"File exists but failed CRC32 verification: {file_path}")
-                if not force_delete:
-                    response = input(f"File {file_path} failed CRC32 verification. Delete and redownload? [y/N] ").lower()
-                    if response != 'y':
-                        logger.info("Skipping download of corrupted file")
-                        return None
-                
-                try:
-                    os.remove(file_path)
-                    logger.info(f"Deleted corrupted file: {file_path}")
-                except OSError as e:
-                    logger.error(f"Failed to remove corrupted file: {e}")
-                    # Add timestamp to filename to avoid conflict
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    new_filename = f"{base_name}_{timestamp}{ext}"
-                    file_path = os.path.join(output_folder, new_filename)
-                    logger.debug(f"Using new filename: {new_filename}")
-                    continue
-                
-            # If file exists but is incomplete or different size, add a timestamp
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            new_filename = f"{base_name}_{timestamp}{ext}"
-            file_path = os.path.join(output_folder, new_filename)
-            logger.debug(f"File exists, using new filename: {new_filename}")
-            counter += 1
-
-        logger.debug(f"Final file path after conflict handling: {file_path}")
-
-        logger.info(f"Full file path: {file_path}")
-
-        # Check for existing partial download
-        file_exists, existing_size, is_valid = check_existing_download(file_path, expected_crc32)
-        total_size = int(response_headers.get("Content-Length", 0))
-        logger.info(f"File exists: {file_exists}, Size: {existing_size}/{total_size} bytes, Valid: {is_valid}")
-
-        # If the file size matches or exceeds expected size, and verify=False or verification passes
-        if file_exists and existing_size == total_size and is_valid:
-            logger.info(f"File already exists and is valid: {file_path}")
-            return file_path
-
-        # Set up for resumable download if requested and possible
-        if resume and file_exists and existing_size > 0 and existing_size < total_size:
-            logger.info(f"Resuming download from byte {existing_size}")
-            headers["Range"] = f"bytes={existing_size}-"
-            mode = "ab"  # Append to existing file
-            start_byte = existing_size
+        # Create full output path
+        output_path = output_dir / output_filename
+        
+        # Check if file exists and get its size
+        exists, size = check_existing_download(str(output_path))
+        
+        # Prepare headers for the GET request (start with head_headers)
+        get_headers = head_headers.copy()
+        
+        # Check if server supports resume and modify GET headers if needed
+        supports_resume = False
+        if resume and exists:
+            supports_resume = "accept-ranges" in map(str.lower, head_response.headers.keys()) # Case-insensitive check
+            if supports_resume:
+                get_headers["Range"] = f"bytes={size}-"
+                logger.info(f"Resuming download from byte {size}")
+            else:
+                logger.info("Server does not support resume or file doesn't exist; starting download from beginning.")
+        
+        # Download the file using GET headers
+        response = requests.get(url, headers=get_headers, stream=True, timeout=(5, None))
+        response.raise_for_status()  # Raise an exception for bad status codes
+        
+        # Determine total size and initial size based on resume status
+        if resume and exists and supports_resume and response.status_code == 206:
+            # Partial content response
+            content_range = response.headers.get('content-range', 'bytes 0-0/0')
+            total_size = int(content_range.split('/')[1])
+            initial_size = size
+            mode = "ab" # Append mode
         else:
-            mode = "wb"  # Write new file
-            start_byte = 0
+            # Full download or resume not possible/needed
+            total_size = int(response.headers.get("content-length", 0))
+            initial_size = 0
+            mode = "wb" # Write mode (overwrite)
 
-        # Download with progress bar using the response we already have
-        logger.info(f"Starting download with mode: {mode}, start_byte: {start_byte}")
-        with open(file_path, mode) as f, tqdm(
-            desc=filename,
-            initial=start_byte,
-            total=total_size,
-            unit="B",
-            unit_scale=True,
-            unit_divisor=1024,
-        ) as bar:
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                if chunk:
-                    f.write(chunk)
-                    bar.update(len(chunk))
-                    logger.debug(f"Downloaded {len(chunk)} bytes")
-
-        logger.info(f"Download completed: {file_path}")
-
-        # Verify download integrity if hash provided
-        if expected_crc32 and not check_existing_download(file_path, expected_crc32)[2]:
-            logger.error(f"Downloaded file failed CRC32 verification: {file_path}")
-            if not force_delete:
-                response = input(f"Downloaded file {file_path} failed CRC32 verification. Delete? [y/N] ").lower()
-                if response != 'y':
-                    logger.info("Keeping corrupted file")
-                    return None
+        # Check if total_size is valid
+        if total_size == 0:
+            logger.warning("Content-Length header missing or zero, cannot show progress accurately.")
+            total_size = None # Set to None for indeterminate progress bar
             
-            try:
-                os.remove(file_path)
-                logger.info(f"Deleted corrupted file: {file_path}")
-            except OSError as e:
-                logger.error(f"Failed to remove corrupted file: {e}")
-            return None
+        with open(output_path, mode) as f:
+            with tqdm(total=total_size, initial=initial_size, unit="B", unit_scale=True, desc=output_filename, leave=False) as pbar:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        pbar.update(len(chunk))
+        
+        # Final size check after download
+        final_size = os.path.getsize(output_path)
+        if total_size is not None and final_size != total_size:
+             logger.warning(f"Download completed, but final size ({final_size}) does not match expected total size ({total_size}).")
+             # Consider if this should raise an error or just warn
 
-        return file_path
-
-    except requests.RequestException as e:
-        logger.error(f"Download error ({type(e).__name__}): {e}")
+        return str(output_path)
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Network error during download {url}: {str(e)}")
+        if hasattr(e, 'response') and e.response is not None:
+             logger.error(f"Response status: {e.response.status_code}")
+             logger.error(f"Response text: {e.response.text[:500]}...") # Log first 500 chars
         return None
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Failed to download {url}: {str(e)}", exc_info=True) # Include traceback
         return None
+
+
+def _extract_filename_from_response(response: requests.Response, url: str) -> str:
+    """Extract filename from response headers or URL."""
+    # Try to get filename from Content-Disposition header
+    content_disposition = response.headers.get("Content-Disposition", "")
+    if content_disposition:
+        matches = re.findall('filename[^;=\n]*=(([\'"]).*?\2|[^;\n]*)', content_disposition)
+        if matches:
+            filename = matches[0][0].strip('"\'')
+            return filename
+
+    # Fallback to URL path
+    url_path = urlparse(url).path
+    filename = os.path.basename(url_path)
+    return filename.split('?')[0]  # Remove query parameters

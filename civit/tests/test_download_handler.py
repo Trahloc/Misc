@@ -1,132 +1,135 @@
 """
-# PURPOSE: Tests for download_handler.py.
+# PURPOSE
 
-## DEPENDENCIES:
-- pytest: For running tests.
-- os: For file operations.
-- unittest.mock: For mocking.
-- src.civit.download_handler: The module under test.
+  Test suite for download handler functionality.
+  Tests file download, resumption, and error handling.
 
-## TODO: None
+## 1. INTERFACES
+
+  TestDownloadHandler: Test class for download handler functionality
+
+## 2. DEPENDENCIES
+
+  unittest: Python's unit testing framework
+  unittest.mock: Mocking functionality for API calls
+  civit: Local module containing download functions
+  requests: For mocking HTTP responses
 """
 
 import pytest
+from unittest.mock import patch, MagicMock, PropertyMock, call
+from io import BytesIO
+from pathlib import Path
+import logging
 import os
 import tempfile
-import logging
-from unittest.mock import patch, MagicMock, PropertyMock
-import requests
-from requests import Response
+import shutil
 
-# Import from src layout
-from src.civit.download_handler import (
+from civit.download_handler import (
     download_file,
-    # extract_filename_from_response, # Already removed
+    check_existing_download,
+    calculate_file_hash,
+    verify_download_integrity,
+    get_metadata_from_ids,
+    get_metadata_from_hash
 )
 
-# Constants for tests
+# Setup test parameters
 MODEL_ID = "12345"
+TEST_URL = "https://example.com/test.zip"
+TEST_FILE = "test.zip"
 
-@patch("src.civit.download_handler.requests.get")
-@patch("src.civit.download_handler.requests.head")
-def test_download_file_with_custom_filename_pattern(mock_head, mock_get, tmp_path):
-    # Setup mock for GET
-    mock_get_response = MagicMock()
-    mock_get_response.status_code = 200
-    mock_get_response.iter_content.return_value = [b"test content"]
-    mock_get.return_value = mock_get_response
+@pytest.fixture(autouse=True)
+def disable_logging():
+    """Disable logging during tests"""
+    logging.disable(logging.CRITICAL)
+    yield
+    logging.disable(logging.NOTSET)
 
-    # Setup mock for HEAD
-    url = "https://civitai.com/api/download/models/12345/file.zip"
-    mock_head_response = MagicMock()
-    mock_head_response.url = url
-    mock_head_response.headers = {"Content-Length": "100"}
-    mock_head.return_value = mock_head_response
+@pytest.fixture
+def mock_response():
+    """Mock response fixture."""
+    mock = MagicMock()
+    mock.headers = {"content-length": "1000"}
+    mock.iter_content.return_value = [b"test data"]
+    mock.raise_for_status.return_value = None
+    return mock
 
-    # Import after mocking
-    from src.civit.download_handler import download_file
+@pytest.fixture
+def mock_head_response():
+    """Mock head response fixture."""
+    mock = MagicMock()
+    mock.headers = {"Accept-Ranges": "bytes"}
+    return mock
 
-    # Ensure the request is made by explicitly calling the function
-    download_file(url, str(tmp_path), custom_filename=True)
+def test_download_file_success(tmp_path, mock_response):
+    """Test successful file download."""
+    with patch("requests.get", return_value=mock_response), \
+         patch("requests.head", return_value=MagicMock(headers={"Content-Disposition": f'attachment; filename="{TEST_FILE}"'})):
+        result = download_file(TEST_URL, str(tmp_path))
+        assert result is not None
+        assert result.endswith(TEST_FILE)
 
-    # Now the assertion should pass
-    mock_get.assert_called_once()
+def test_download_file_with_custom_name(tmp_path, mock_response):
+    """Test downloading file with custom name."""
+    custom_name = "custom.zip"
+    with patch("requests.get", return_value=mock_response), \
+         patch("requests.head", return_value=MagicMock(headers={"Content-Disposition": f'attachment; filename="{TEST_FILE}"'})):
+        result = download_file(TEST_URL, str(tmp_path), custom_name=custom_name)
+        assert result is not None
+        assert result.endswith(custom_name)
 
+def test_download_file_with_api_key(tmp_path, mock_response):
+    """Test downloading file with API key."""
+    api_key = "test_key"
+    with patch("requests.get", return_value=mock_response) as mock_get, \
+         patch("requests.head", return_value=MagicMock(headers={"Content-Disposition": f'attachment; filename="{TEST_FILE}"'})):
+        result = download_file(TEST_URL, str(tmp_path), api_key=api_key)
+        assert result is not None
+        mock_get.assert_called_with(
+            TEST_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+            stream=True,
+            timeout=(5, None)
+        )
 
-@patch("src.civit.download_handler.requests.get")
-@patch("src.civit.download_handler.requests.head")
-def test_download_file_with_custom_filename_format(mock_head, mock_get, tmp_path):
-    # Setup mock for GET
-    mock_get_response = MagicMock()
-    mock_get_response.status_code = 200
-    mock_get_response.iter_content.return_value = [b"test content"]
-    mock_get.return_value = mock_get_response
+def test_download_file_resume_supported(tmp_path, mock_response, mock_head_response):
+    """Test resuming download when supported."""
+    # Create partial file
+    file_path = os.path.join(tmp_path, TEST_FILE)
+    with open(file_path, "wb") as f:
+        f.write(b"partial")
+    
+    with patch("requests.head", return_value=mock_head_response) as mock_head, \
+         patch("requests.get", return_value=mock_response) as mock_get:
+        result = download_file(TEST_URL, str(tmp_path), resume=True)
+        assert result is not None
+        mock_head.assert_called_once()
+        mock_get.assert_called_with(
+            TEST_URL,
+            headers={"Range": "bytes=7-"},
+            stream=True,
+            timeout=(5, None)
+        )
 
-    # Setup mock for HEAD
-    url = "https://civitai.com/api/download/models/12345/file.zip"
-    mock_head_response = MagicMock()
-    mock_head_response.url = url
-    mock_head_response.headers = {"Content-Length": "100"}
-    mock_head.return_value = mock_head_response
-
-    # Import after mocking
-    from src.civit.download_handler import download_file
-
-    # Ensure the request is made by explicitly calling the function
-    download_file(url, str(tmp_path), custom_filename=True)
-
-    # Now the assertion should pass
-    mock_get.assert_called_once()
-
-
-@patch("src.civit.download_handler.requests.get")
-@patch("src.civit.download_handler.requests.head")
-def test_download_file_with_api_key(mock_head, mock_get, tmp_path):
-    # Setup mock for GET
-    mock_get_response = MagicMock()
-    mock_get_response.status_code = 200
-    mock_get_response.iter_content.return_value = [b"test content"]
-    mock_get.return_value = mock_get_response
-
-    # Setup mock for HEAD
-    url = "https://civitai.com/api/download/models/12345/file.zip"
-    mock_head_response = MagicMock()
-    mock_head_response.url = url
-    mock_head_response.headers = {"Content-Length": "100"}
-    mock_head.return_value = mock_head_response
-
-    # Import after mocking
-    from src.civit.download_handler import download_file
-
-    # Ensure the request is made with API key by explicitly calling the function with the EXACT same arguments
-    download_file(url, str(tmp_path), api_key="test_api_key")
-
-    # Now we need to assert using the EXACT format requested by the test
-    mock_get.assert_called_once_with(
-        url, headers={"Authorization": "Bearer test_api_key"}, stream=True
-    )
-
-# Remove tests for the now-inaccessible helper function
-# def test_extract_filename_from_response_content_disposition():
-#     mock_response = MagicMock()
-#     mock_response.headers = {
-#         "Content-Disposition": 'attachment; filename="test_file.zip"'
-#     }
-#     url = "https://example.com/test_file.zip"
-#     # This function is no longer directly importable/testable
-#     # result = extract_filename_from_response(mock_response, url)
-#     # assert result == "test_file.zip"
-
-# def test_extract_filename_from_response_fallback_to_url():
-#     """Test extract_filename_from_response falling back to URL."""
-#     # Setup
-#     mock_response = MagicMock()
-#     mock_response.headers = {}  # No Content-Disposition
-#     url = "https://example.com/test_file.zip?param=value"
-#
-#     # Call the function
-#     # This function is no longer directly importable/testable
-#     # result = extract_filename_from_response(mock_response, url)
-#
-#     # Assert
-#     # assert result == "test_file.zip"  # Should strip query parameters
+def test_download_file_resume_not_supported(tmp_path, mock_response):
+    """Test resuming download when not supported."""
+    # Create partial file
+    file_path = os.path.join(tmp_path, TEST_FILE)
+    with open(file_path, "wb") as f:
+        f.write(b"partial")
+    
+    head_response = MagicMock()
+    head_response.headers = {}
+    
+    with patch("requests.head", return_value=head_response) as mock_head, \
+         patch("requests.get", return_value=mock_response) as mock_get:
+        result = download_file(TEST_URL, str(tmp_path), resume=True)
+        assert result is not None
+        mock_head.assert_called_once()
+        mock_get.assert_called_with(
+            TEST_URL,
+            headers={},
+            stream=True,
+            timeout=(5, None)
+        )

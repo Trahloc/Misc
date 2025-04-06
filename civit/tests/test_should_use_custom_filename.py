@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 # Import from src layout
-from src.civit.custom_filename import should_use_custom_filename
+from civit.custom_filename import should_use_custom_filename
 
 
 def test_should_use_custom_filename_valid_url():

@@ -28,8 +28,8 @@ def test_import_modules():
     """Test that we can import our modules."""
     try:
         # Try to import modules from src.civit
-        from src.civit.test_utils import get_current_test_name
-        from src.civit.filename_generator import sanitize_filename
+        from civit.test_utils import get_current_test_name
+        from civit.filename_generator import sanitize_filename
 
         # If we get here, the imports worked
         assert callable(

@@ -20,26 +20,24 @@
 """
 
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock, PropertyMock, call
+from unittest.mock import patch, MagicMock, PropertyMock, call
 from io import BytesIO
 from pathlib import Path
 import logging
 import os
-import sys
 import tempfile
-import asyncio
+import shutil
 
-# Import from src layout
-from src.civit.download_handler import ( # type: ignore
-    download_file, # type: ignore
-    check_existing_download, # type: ignore
-    calculate_file_hash, # type: ignore
-    verify_download_integrity, # type: ignore
-    get_model_metadata # type: ignore
-) # type: ignore
-# Import other necessary modules from src
-from src.civit.url_extraction import extract_model_id, extract_download_url
-from src.civit.model_info import get_model_info
+from civit.download_handler import (
+    download_file,
+    check_existing_download,
+    calculate_file_hash,
+    verify_download_integrity,
+    get_metadata_from_ids,
+    get_metadata_from_hash
+)
+from civit.url_extraction import extract_model_id, extract_download_url
+from civit.model_info import get_model_info
 
 # Setup test parameters
 MODEL_ID = "12345"
@@ -106,7 +104,7 @@ def test_failed_model_info_fetch(mock_get):
 
 
 # Download URL tests
-@patch("src.civit.url_extraction.get_model_info")
+@patch("civit.url_extraction.get_model_info")
 def test_successful_url_extraction(mock_get_info):
     """Test successful download URL extraction"""
     mock_get_info.return_value = {
@@ -116,7 +114,7 @@ def test_successful_url_extraction(mock_get_info):
     assert url == "https://download.url"
 
 
-@patch("src.civit.url_extraction.get_model_info")
+@patch("civit.url_extraction.get_model_info")
 def test_failed_url_extraction(mock_get_info):
     """Test failed download URL extraction"""
     mock_get_info.return_value = None
@@ -125,66 +123,95 @@ def test_failed_url_extraction(mock_get_info):
 
 
 # File download tests
-import tempfile
-import os
-import shutil
-from unittest.mock import patch, MagicMock
-from src.civit.download_handler import download_file
-
-
 class TestFileDownload:
     """Test class for file download functionality"""
 
     @pytest.fixture(autouse=True)
-    def setup_method(self):
+    def setup_method(self, tmp_path):
         """Setup test environment"""
-        self.test_url = "https://example.com/test.zip"
-        self.test_dir = "/tmp/test_download"
+        self.test_url = "https://civitai.com/api/download/models/12345"
+        self.test_dir = str(tmp_path / "test_download")
         self.test_file = "test.zip"
 
-    @patch("src.civit.download_handler.requests.head")
-    @patch("src.civit.download_handler.requests.get")
-    def test_successful_download(self, mock_get, mock_head):
+    @patch("civit.download_handler.requests.head")
+    @patch("civit.download_handler.requests.get")
+    @patch("civit.download_handler.is_valid_api_url")
+    @patch("civit.download_handler.normalize_url")
+    def test_successful_download(self, mock_normalize, mock_valid_api, mock_get, mock_head):
         """Test successful file download"""
+        # Setup URL validation mocks
+        mock_normalize.return_value = self.test_url
+        mock_valid_api.return_value = True
+
         # Setup mock responses
         mock_head.return_value.headers = {
             "Content-Length": "1000",
             "Content-Disposition": 'attachment; filename="test.zip"',
         }
         mock_get.return_value.iter_content.return_value = [b"test data"]
-        mock_get.return_value.headers = {"Content-Length": "1000"}
+        mock_get.return_value.headers = {
+            "Content-Length": "1000",
+            "Content-Disposition": 'attachment; filename="test.zip"'
+        }
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.url = self.test_url
 
         # Test download
         result = download_file(self.test_url, self.test_dir)
         assert result is not None
         assert result.endswith(self.test_file)
 
-    @patch("src.civit.download_handler.requests.head")
-    @patch("src.civit.download_handler.requests.get")
-    def test_resume_interrupted_download(self, mock_get, mock_head):
+    @patch("civit.download_handler.requests.head")
+    @patch("civit.download_handler.requests.get")
+    @patch("civit.download_handler.is_valid_api_url")
+    @patch("civit.download_handler.normalize_url")
+    def test_resume_interrupted_download(self, mock_normalize, mock_valid_api, mock_get, mock_head):
         """Test resuming an interrupted download"""
+        # Setup URL validation mocks
+        mock_normalize.return_value = self.test_url
+        mock_valid_api.return_value = True
+
         # Setup mock responses
         mock_head.return_value.headers = {
             "Content-Length": "1000",
             "Content-Disposition": 'attachment; filename="test.zip"',
         }
         mock_get.return_value.iter_content.return_value = [b"test data"]
-        mock_get.return_value.headers = {"Content-Length": "1000"}
+        mock_get.return_value.headers = {
+            "Content-Length": "1000",
+            "Content-Disposition": 'attachment; filename="test.zip"'
+        }
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.url = self.test_url
 
         # Test download with resume
         result = download_file(self.test_url, self.test_dir, resume=True)
         assert result is not None
         assert result.endswith(self.test_file)
 
-    @patch("src.civit.download_handler.requests.head")
-    @patch("src.civit.download_handler.requests.get")
+    @patch("civit.download_handler.requests.head")
+    @patch("civit.download_handler.requests.get")
+    @patch("civit.download_handler.is_valid_api_url")
+    @patch("civit.download_handler.normalize_url")
     @patch("os.makedirs")
-    def test_download_with_invalid_output_dir(self, mock_makedirs, mock_get, mock_head):
+    def test_download_with_invalid_output_dir(self, mock_makedirs, mock_normalize, mock_valid_api, mock_get, mock_head):
         """Test download with invalid output directory"""
+        # Setup URL validation mocks
+        mock_normalize.return_value = self.test_url
+        mock_valid_api.return_value = True
+
         # Setup mock responses
-        mock_head.return_value.headers = {"Content-Length": "1000"}
+        mock_head.return_value.headers = {
+            "Content-Length": "1000",
+            "Content-Disposition": 'attachment; filename="test.zip"',
+        }
         mock_get.return_value.iter_content.return_value = [b"test data"]
-        mock_get.return_value.headers = {"Content-Length": "1000"}
+        mock_get.return_value.headers = {
+            "Content-Length": "1000",
+            "Content-Disposition": 'attachment; filename="test.zip"'
+        }
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.url = self.test_url
 
         # Configure makedirs to raise OSError
         mock_makedirs.side_effect = OSError("Permission denied")
@@ -193,8 +220,8 @@ class TestFileDownload:
         result = download_file(self.test_url, "/invalid/path")
         assert result is None
 
-        # Verify makedirs was called
-        mock_makedirs.assert_called_once_with("/invalid/path", exist_ok=True)
+        # Verify makedirs was called with the correct arguments
+        mock_makedirs.assert_called_once_with(Path("/invalid/path"), exist_ok=True)
 
 
 """

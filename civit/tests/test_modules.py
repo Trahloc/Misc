@@ -2,12 +2,13 @@ import unittest
 from unittest.mock import patch, MagicMock
 import logging
 import os
-from src.civit.signal_handler import signal_handler
-from src.civit.logging_setup import setup_logging, JsonFormatter
-from src.civit.api_key import get_api_key
-from src.civit.model_info import get_model_info
-from src.civit.url_extraction import extract_model_id, extract_download_url
+from civit.signal_handler import signal_handler
+from civit.logging_setup import setup_logging, JsonFormatter
+from civit.api_key import get_api_key
+from civit.model_info import get_model_info
+from civit.url_extraction import extract_model_id, extract_download_url
 import pytest
+from tests.test_utils import silent_errors
 
 
 class TestSignalHandler(unittest.TestCase):
@@ -73,22 +74,29 @@ class TestModelInfo(unittest.TestCase):
     Test suite for model information retrieval functionality.
     """
 
+    @silent_errors(logger_names=["civit.model_info"])
     @patch("requests.get")
     def test_get_model_info(self, mock_get):
         """Test successful model information retrieval"""
+        # Setup mock success
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "name": "Test Model",
-            "modelVersions": [{"downloadUrl": "https://download.url"}],
-        }
-        mock_response.raise_for_status.return_value = None
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"modelVersions": [{"id": 1234}]}
         mock_get.return_value = mock_response
 
+        # Test successful API call
         result = get_model_info("1234")
-        self.assertEqual(result["name"], "Test Model")
+        self.assertEqual(result, {"modelVersions": [{"id": 1234}]})
 
-        mock_get.side_effect = Exception("API Error")
-        self.assertIsNone(get_model_info("1234"))
+        # Setup mock failure
+        mock_response_error = MagicMock()
+        mock_response_error.status_code = 404
+        mock_response_error.json.side_effect = ValueError("Invalid JSON")
+        mock_get.return_value = mock_response_error
+
+        # Test API error handling
+        result = get_model_info("1234")
+        self.assertIsNone(result)
 
 
 class TestUrlExtraction(unittest.TestCase):
@@ -96,12 +104,14 @@ class TestUrlExtraction(unittest.TestCase):
     Test suite for URL extraction functionality.
     """
 
+    @silent_errors(logger_names=["root"])
     def test_extract_model_id(self):
         """Test model ID extraction from URL"""
         self.assertEqual(extract_model_id("https://civitai.com/models/1234"), "1234")
         self.assertIsNone(extract_model_id("https://civitai.com/images/1234"))
 
-    @patch("src.civit.url_extraction.get_model_info")
+    @silent_errors(logger_names=["root"])
+    @patch("civit.url_extraction.get_model_info")
     def test_extract_download_url(self, mock_get_model_info):
         """Test download URL extraction from model info"""
         mock_get_model_info.return_value = {
