@@ -1,41 +1,46 @@
-# FILE_LOCATION: template_zeroth_law/src/template_zeroth_law/__init__.py
+# FILE: template_zeroth_law/src/template_zeroth_law/__init__.py
 """
-# PURPOSE: Exposes the public API for the template_zeroth_law module.
+# PURPOSE: Main package initialization and version definition.
 
 ## INTERFACES:
-# - config: Configuration management
-# - cli: Command-line interface
-# - commands: CLI commands
-# - logging: Logging utilities
-# - types: Type definitions
-# - utils: Utility functions
+ - __version__: Version string for the template_zeroth_law package
+ - ZerothLawError: Base exception class
+ - ConfigError: Configuration error class
+ - ValidationError: Validation error class
+ - FileError: File operation error class
+ - Config: Configuration management class
+ - get_config: Get config singleton
+ - load_config: Load configuration from file
 
-## DEPENDENCIES: None (only internal modules)
+## DEPENDENCIES: None
+## TODO: Customize exports based on your project's needs
 """
-from . import config
-from . import cli
-from . import commands
-from . import logging
-from . import types
-from . import utils
 
+__version__ = "0.1.0"
+
+# Import and expose key functionality
+from template_zeroth_law.exceptions import (
+    ZerothLawError,
+    ConfigError,
+    ValidationError,
+    FileError,
+)
+from template_zeroth_law.config import Config, get_config, load_config
+
+# Explicitly define what's available when using 'from template_zeroth_law import *'
 __all__ = [
-    "config",
-    "cli",
-    "commands",
-    "logging",
-    "types",
-    "utils",
+    "ZerothLawError",
+    "ConfigError",
+    "ValidationError",
+    "FileError",
+    "Config",
+    "get_config",
+    "load_config",
+    "__version__",
 ]
 
 """
 ## KNOWN ERRORS: None
-## IMPROVEMENTS:
-- Added proper documentation structure
-- Organized imports consistently
-- Added explicit __all__ definition
-## FUTURE TODOs:
-- Consider adding version information
-- Consider adding module-level type hints
-- Add automated __all__ generation using autoinit
+## IMPROVEMENTS: Simplified exports to essential components
+## FUTURE TODOs: Implement automatic version management
 """

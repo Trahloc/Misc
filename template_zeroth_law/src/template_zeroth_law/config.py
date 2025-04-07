@@ -1,198 +1,201 @@
 """
-# PURPOSE: Configuration management for Zeroth Law Framework.
+# PURPOSE: Configuration management for the Zeroth Law template.
 
 ## INTERFACES:
  - Config: Configuration class
- - get_config: Get application configuration
- - load_config: Load configuration from file
- - ConfigSection: Base class for config sections
+ - get_config: Get the current configuration singleton
+ - load_config: Load configuration from a file
 
 ## DEPENDENCIES:
- - os: Environment variables
- - pathlib: Path handling
- - typing: Type hints
- - template_zeroth_law.exceptions: Custom exceptions
+ - json, toml, yaml: Configuration file format parsers (yaml optional)
+ - os, pathlib: File system operations
+
+## TODO: Customize configuration handling based on project needs
 """
+
+import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
-from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, Union
 
-from .exceptions import ConfigError
-from .types import LogLevel
+from template_zeroth_law.exceptions import ConfigError, FileError
 
-# Define default configuration values that tests can reference
-DEFAULT_CONFIG: Dict[str, Any] = {
-    "app": {
-        "name": "template_zeroth_law",
-        "version": "1.0.0",
-        "description": "Zeroth Law Framework",
-        "debug": False,
-    },
-    "logging": {
-        "level": "INFO",
-        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        "date_format": "%Y-%m-%d %H:%M:%S",
-    },
-    "paths": {
-        "data_dir": "data",
-        "output_dir": "output",
-        "cache_dir": ".cache"
-    }
-}
-
-@dataclass
-class ConfigSection:
-    """Base class for configuration sections."""
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert section to dictionary."""
-        return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+# Global configuration instance (singleton)
+_config_instance: Optional["Config"] = None
 
 
-@dataclass
-class AppConfig(ConfigSection):
-    """Application configuration section."""
-    name: str = "template_zeroth_law"
-    version: str = "1.0.0"
-    description: str = "Zeroth Law Framework"
-    debug: bool = False
-
-
-@dataclass
-class LoggingConfig(ConfigSection):
-    """Logging configuration section."""
-    level: LogLevel = "INFO"
-    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    date_format: str = "%Y-%m-%d %H:%M:%S"
-
-
-@dataclass
-class PathsConfig(ConfigSection):
-    """Path configuration section."""
-    data_dir: str = "data"
-    output_dir: str = "output"
-    cache_dir: str = ".cache"
-
-
-@dataclass
 class Config:
-    """Main configuration class."""
-    app: AppConfig = field(default_factory=AppConfig)
-    logging: LoggingConfig = field(default_factory=LoggingConfig)
-    paths: PathsConfig = field(default_factory=PathsConfig)
+    """
+    PURPOSE: Configuration management for the Zeroth Law template.
+    CONTEXT: Central configuration store for application settings
+    PRE-CONDITIONS & ASSUMPTIONS: None
+    PARAMS: None
+    POST-CONDITIONS & GUARANTEES: Configuration initialized
+    RETURNS: N/A
+    EXCEPTIONS: N/A
+    USAGE EXAMPLES:
+        >>> config = Config({"app": {"name": "my_app"}})
+        >>> config.get("app.name")
+        'my_app'
+    """
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert configuration to dictionary."""
-        return {
-            'app': self.app.to_dict(),
-            'logging': self.logging.to_dict(),
-            'paths': self.paths.to_dict(),
-        }
+    def __init__(self, config_data: Optional[Dict[str, Any]] = None):
+        """
+        PURPOSE: Initialize the configuration object.
+        CONTEXT: Constructor for the Config class
+        PRE-CONDITIONS & ASSUMPTIONS: None
+        PARAMS:
+            config_data (Optional[Dict[str, Any]]): Initial configuration data
+        POST-CONDITIONS & GUARANTEES: Configuration object is initialized
+        RETURNS: None
+        EXCEPTIONS: None
+        """
+        self.data = config_data or {}
+
+    def get(self, key_path: str, default: Any = None) -> Any:
+        """
+        PURPOSE: Get a configuration value by key path.
+        CONTEXT: Configuration value retrieval
+        PRE-CONDITIONS & ASSUMPTIONS: None
+        PARAMS:
+            key_path (str): Dot-separated path to the configuration value
+            default (Any): Default value if key doesn't exist
+        POST-CONDITIONS & GUARANTEES: None
+        RETURNS:
+            Any: Configuration value or default
+        EXCEPTIONS:
+            None: Returns default instead of raising exception
+        USAGE EXAMPLES:
+            >>> config = Config({"app": {"debug": True}})
+            >>> config.get("app.debug")
+            True
+            >>> config.get("app.name", "default_name")
+            'default_name'
+        """
+        parts = key_path.split(".")
+        value = self.data
+
+        for part in parts:
+            if not isinstance(value, dict) or part not in value:
+                return default
+            value = value[part]
+
+        return value
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Config':
-        """Create configuration from dictionary."""
-        app_data = data.get('app', {})
-        logging_data = data.get('logging', {})
-        paths_data = data.get('paths', {})
+    def from_file(cls, file_path: Union[str, Path]) -> "Config":
+        """
+        PURPOSE: Create a Config instance from a configuration file.
+        CONTEXT: Factory method for creating config from file
+        PRE-CONDITIONS & ASSUMPTIONS: File exists and is in a supported format
+        PARAMS:
+            file_path (Union[str, Path]): Path to configuration file
+        POST-CONDITIONS & GUARANTEES: Config loaded with file contents
+        RETURNS:
+            Config: New configuration instance
+        EXCEPTIONS:
+            FileError: If file doesn't exist or can't be read
+            ConfigError: If file format is not supported or content is invalid
+        USAGE EXAMPLES:
+            >>> config = Config.from_file("config.json")  # doctest: +SKIP
+        """
+        file_path = Path(file_path)
 
-        return cls(
-            app=AppConfig(**app_data),
-            logging=LoggingConfig(**logging_data),
-            paths=PathsConfig(**paths_data)
-        )
+        if not file_path.exists():
+            raise FileError(
+                f"Configuration file not found: {file_path}", path=str(file_path)
+            )
 
-    def update_from_env(self) -> None:
-        """Update configuration from environment variables."""
-        # App section
-        if 'APP_NAME' in os.environ:
-            self.app.name = os.environ['APP_NAME']
-        if 'APP_VERSION' in os.environ:
-            self.app.version = os.environ['APP_VERSION']
-        if 'APP_DEBUG' in os.environ:
-            self.app.debug = os.environ['APP_DEBUG'].lower() == 'true'
+        suffix = file_path.suffix.lower()
 
-        # Logging section
-        if 'APP_LOGGING_LEVEL' in os.environ:
-            level = os.environ['APP_LOGGING_LEVEL'].upper()
-            if level in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
-                self.logging.level = level
-            else:
-                raise ConfigError(f"Invalid logging level: {level}")
+        try:
+            with open(file_path, "r") as f:
+                if suffix == ".json":
+                    data = json.load(f)
+                elif suffix == ".toml":
+                    try:
+                        import toml
 
-        # Paths section
-        if 'APP_PATHS_DATA_DIR' in os.environ:
-            self.paths.data_dir = os.environ['APP_PATHS_DATA_DIR']
-        if 'APP_PATHS_OUTPUT_DIR' in os.environ:
-            self.paths.output_dir = os.environ['APP_PATHS_OUTPUT_DIR']
-        if 'APP_PATHS_CACHE_DIR' in os.environ:
-            self.paths.cache_dir = os.environ['APP_PATHS_CACHE_DIR']
+                        data = toml.load(f)
+                    except ImportError:
+                        raise ConfigError(
+                            "TOML support requires 'toml' package", format="toml"
+                        )
+                elif suffix in (".yaml", ".yml"):
+                    try:
+                        import yaml
+
+                        data = yaml.safe_load(f)
+                    except ImportError:
+                        raise ConfigError(
+                            "YAML support requires 'pyyaml' package", format="yaml"
+                        )
+                else:
+                    raise ConfigError(
+                        f"Unsupported config format: {suffix}", format=suffix
+                    )
+
+            return cls(data)
+
+        except (json.JSONDecodeError, ValueError) as e:
+            raise ConfigError(f"Invalid configuration format: {e}", path=str(file_path))
 
 
-_config_instance: Optional[Config] = None
-
-
-def get_config(config_path: Optional[Path] = None) -> Config:
-    """Get the application configuration singleton.
-
-    Args:
-        config_path: Optional path to config file
-
-    Returns:
-        Config instance
+def get_config() -> Config:
+    """
+    PURPOSE: Get the current configuration singleton.
+    CONTEXT: Global configuration access
+    PRE-CONDITIONS & ASSUMPTIONS: Configuration has been initialized
+    PARAMS: None
+    POST-CONDITIONS & GUARANTEES: None
+    RETURNS:
+        Config: Current configuration instance
+    EXCEPTIONS:
+        ConfigError: If configuration hasn't been initialized
+    USAGE EXAMPLES:
+        >>> # First initialize config
+        >>> _ = load_config({"app": {"name": "example"}})
+        >>> # Then retrieve it
+        >>> config = get_config()
+        >>> config.get("app.name")
+        'example'
     """
     global _config_instance
-    if _config_instance is None or config_path is not None:
-        _config_instance = load_config(config_path)
+    if _config_instance is None:
+        _config_instance = Config()
     return _config_instance
 
 
-def load_config(config_path: Optional[Path] = None) -> Config:
+def load_config(config_data: Union[Dict[str, Any], str, Path]) -> Config:
     """
-    Load configuration from file and environment.
-
+    PURPOSE: Load configuration and set as singleton.
+    CONTEXT: Global configuration initialization
+    PRE-CONDITIONS & ASSUMPTIONS: None
     PARAMS:
-        config_path: Optional path to config file
-
+        config_data (Union[Dict[str, Any], str, Path]): Configuration data or file path
+    POST-CONDITIONS & GUARANTEES: Global configuration is set
     RETURNS:
-        Config instance
-
-    RAISES:
-        ConfigError: If configuration is invalid
+        Config: The loaded configuration instance
+    EXCEPTIONS:
+        FileError: If file doesn't exist or can't be read
+        ConfigError: If file format is not supported or content is invalid
+    USAGE EXAMPLES:
+        >>> config = load_config({"app": {"name": "my_app"}})
+        >>> config.get("app.name")
+        'my_app'
     """
-    config = Config()
+    global _config_instance
 
-    if config_path and config_path.exists():
-        # Load from file if it exists
-        try:
-            import toml
-            data = toml.load(config_path)
-            config = Config.from_dict(data)
-        except Exception as e:
-            raise ConfigError(f"Failed to load config from {config_path}: {e}")
+    if isinstance(config_data, (str, Path)):
+        _config_instance = Config.from_file(config_data)
+    else:
+        _config_instance = Config(config_data)
 
-    # Update with environment variables
-    try:
-        config.update_from_env()
-    except Exception as e:
-        raise ConfigError(f"Failed to update config from environment: {e}")
-
-    return config
+    return _config_instance
 
 
 """
 ## KNOWN ERRORS: None
-
-## IMPROVEMENTS:
- - Added proper environment variable handling
- - Added config validation
- - Added config sections as dataclasses
- - Added proper error handling
- - Added type hints and documentation
-
-## FUTURE TODOs:
- - Add config schema validation
- - Add config file watching
- - Add secure config handling
- - Add config versioning
+## IMPROVEMENTS: Simplified configuration handling while maintaining flexibility
+## FUTURE TODOs: Add environment variable support, add schema validation
 """
