@@ -11,29 +11,12 @@ from pathlib import Path
 from civit.download_handler import download_file
 
 
-@pytest.fixture(autouse=True)
-def disable_logging():
-    """Disable logging during tests"""
-    logging.disable(logging.CRITICAL)
-    yield
-    logging.disable(logging.NOTSET)  # Fixed the missing closing parenthesis
-
-
 @pytest.fixture
 def setup_test_dir(tmp_path):
     """Create a temporary directory for test downloads"""
     test_dir = tmp_path / "test_downloads"
     test_dir.mkdir()
     return test_dir
-
-
-@pytest.fixture
-def temp_directory():
-    """Create a temporary directory for testing."""
-    temp_dir = tempfile.mkdtemp()
-    yield temp_dir
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
 
 
 @patch("src.civit.download_handler.requests.head")
@@ -66,21 +49,61 @@ def test_successful_download(mock_get, mock_head, setup_test_dir):
     # Assert it would create the file
     assert mock_head.called
     assert mock_get.called
-    assert result is not None
+    assert isinstance(result, str)  # Success returns a string (file path)
 
 
 @patch("src.civit.download_handler.requests.head")
 @patch("src.civit.download_handler.requests.get")
 def test_failed_download(mock_get, mock_head, tmp_path):
-    """Test that download_file returns None when download fails."""
+    """Test that download_file returns error info when download fails."""
     # Set up the mock to raise an exception
     mock_head.side_effect = Exception("Mock download failure")
 
     # Call the function
     result = download_file("https://example.com/file.zip", str(tmp_path))
 
-    # Assert that None is returned on failure
-    assert result is None
+    # Assert that we get an error dictionary on failure
+    assert isinstance(result, dict)
+    assert 'error' in result
+    assert 'message' in result
+    assert 'status_code' in result
+    assert 'unexpected_error' == result['error']
+
+
+@patch("src.civit.download_handler.requests.head")
+@patch("src.civit.download_handler.requests.get")
+def test_connection_timeout(mock_get, mock_head, tmp_path):
+    """Test handling of connection timeout."""
+    # Set up the mock to raise a timeout exception
+    mock_head.side_effect = requests.exceptions.ConnectTimeout("Connection timed out")
+
+    # Call the function
+    result = download_file("https://example.com/file.zip", str(tmp_path))
+
+    # Assert that we get the correct error information
+    assert isinstance(result, dict)
+    assert result['error'] == 'connection_timeout'
+    assert 'timed out' in result['message'].lower()
+
+
+@patch("src.civit.download_handler.requests.head")
+@patch("src.civit.download_handler.requests.get")
+def test_http_error(mock_get, mock_head, tmp_path):
+    """Test handling of HTTP errors."""
+    # Create a response with error status
+    error_response = MagicMock()
+    error_response.status_code = 404
+    
+    # Create HTTPError with the response
+    mock_head.side_effect = requests.exceptions.HTTPError("404 Client Error", response=error_response)
+
+    # Call the function
+    result = download_file("https://example.com/file.zip", str(tmp_path))
+
+    # Assert that we get the correct error information
+    assert isinstance(result, dict)
+    assert result['error'] == 'http_error'
+    assert result['status_code'] == 404
 
 
 @patch("src.civit.download_handler.requests.head")
@@ -126,7 +149,7 @@ def test_resume_interrupted_download(mock_get, mock_head, setup_test_dir):
     mock_get.assert_called_once()
 
     # Verify function returned something
-    assert result is not None
+    assert isinstance(result, str)  # Success returns a string (file path)
 
     # Verify filename is correct
     assert os.path.basename(result) == "test.zip"

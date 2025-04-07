@@ -66,6 +66,21 @@ MOCK_MODEL_DATA = {
 }
 
 
+@pytest.fixture(autouse=True)
+def disable_logging():
+    """
+    Disable logging during tests.
+    
+    This fixture is automatically applied to all tests to prevent log output
+    from cluttering test results, making them easier to read.
+    
+    The logging is re-enabled after the test completes.
+    """
+    logging.disable(logging.CRITICAL)
+    yield
+    logging.disable(logging.NOTSET)
+
+
 @pytest.fixture
 def mock_civitai_data() -> Dict[str, Any]:
     """

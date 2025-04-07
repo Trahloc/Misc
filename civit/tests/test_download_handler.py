@@ -39,13 +39,6 @@ MODEL_ID = "12345"
 TEST_URL = "https://example.com/test.zip"
 TEST_FILE = "test.zip"
 
-@pytest.fixture(autouse=True)
-def disable_logging():
-    """Disable logging during tests"""
-    logging.disable(logging.CRITICAL)
-    yield
-    logging.disable(logging.NOTSET)
-
 @pytest.fixture
 def mock_response():
     """Mock response fixture."""
@@ -67,7 +60,7 @@ def test_download_file_success(tmp_path, mock_response):
     with patch("requests.get", return_value=mock_response), \
          patch("requests.head", return_value=MagicMock(headers={"Content-Disposition": f'attachment; filename="{TEST_FILE}"'})):
         result = download_file(TEST_URL, str(tmp_path))
-        assert result is not None
+        assert isinstance(result, str)  # Success returns a string (file path)
         assert result.endswith(TEST_FILE)
 
 def test_download_file_with_custom_name(tmp_path, mock_response):
@@ -76,7 +69,7 @@ def test_download_file_with_custom_name(tmp_path, mock_response):
     with patch("requests.get", return_value=mock_response), \
          patch("requests.head", return_value=MagicMock(headers={"Content-Disposition": f'attachment; filename="{TEST_FILE}"'})):
         result = download_file(TEST_URL, str(tmp_path), custom_name=custom_name)
-        assert result is not None
+        assert isinstance(result, str)  # Success returns a string (file path)
         assert result.endswith(custom_name)
 
 def test_download_file_with_api_key(tmp_path, mock_response):
@@ -85,12 +78,12 @@ def test_download_file_with_api_key(tmp_path, mock_response):
     with patch("requests.get", return_value=mock_response) as mock_get, \
          patch("requests.head", return_value=MagicMock(headers={"Content-Disposition": f'attachment; filename="{TEST_FILE}"'})):
         result = download_file(TEST_URL, str(tmp_path), api_key=api_key)
-        assert result is not None
+        assert isinstance(result, str)  # Success returns a string (file path)
         mock_get.assert_called_with(
             TEST_URL,
             headers={"Authorization": f"Bearer {api_key}"},
             stream=True,
-            timeout=(5, None)
+            timeout=(5, 30)
         )
 
 def test_download_file_resume_supported(tmp_path, mock_response, mock_head_response):
@@ -103,13 +96,13 @@ def test_download_file_resume_supported(tmp_path, mock_response, mock_head_respo
     with patch("requests.head", return_value=mock_head_response) as mock_head, \
          patch("requests.get", return_value=mock_response) as mock_get:
         result = download_file(TEST_URL, str(tmp_path), resume=True)
-        assert result is not None
+        assert isinstance(result, str)  # Success returns a string (file path)
         mock_head.assert_called_once()
         mock_get.assert_called_with(
             TEST_URL,
             headers={"Range": "bytes=7-"},
             stream=True,
-            timeout=(5, None)
+            timeout=(5, 30)
         )
 
 def test_download_file_resume_not_supported(tmp_path, mock_response):
@@ -125,11 +118,22 @@ def test_download_file_resume_not_supported(tmp_path, mock_response):
     with patch("requests.head", return_value=head_response) as mock_head, \
          patch("requests.get", return_value=mock_response) as mock_get:
         result = download_file(TEST_URL, str(tmp_path), resume=True)
-        assert result is not None
+        assert isinstance(result, str)  # Success returns a string (file path)
         mock_head.assert_called_once()
         mock_get.assert_called_with(
             TEST_URL,
             headers={},
             stream=True,
-            timeout=(5, None)
+            timeout=(5, 30)
         )
+
+def test_download_file_failure(tmp_path):
+    """Test download failure with connection error."""
+    # Mock the HEAD request to raise an exception
+    with patch("requests.head", side_effect=Exception("Mock connection failure")):
+        result = download_file(TEST_URL, str(tmp_path))
+        # Check that we get an error dictionary on failure
+        assert isinstance(result, dict)
+        assert 'error' in result
+        assert 'message' in result
+        assert 'status_code' in result

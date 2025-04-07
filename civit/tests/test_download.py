@@ -71,13 +71,6 @@ def test_invalid_model_urls(url):
 
 
 # Model info tests
-@pytest.fixture(autouse=True)
-def disable_logging():
-    """Disable logging during tests"""
-    logging.disable(logging.CRITICAL)
-    yield
-    logging.disable(logging.NOTSET)
-
 
 @patch("requests.get")
 def test_successful_model_info_fetch(mock_get):
@@ -158,7 +151,7 @@ class TestFileDownload:
 
         # Test download
         result = download_file(self.test_url, self.test_dir)
-        assert result is not None
+        assert isinstance(result, str)  # Success returns a string (file path)
         assert result.endswith(self.test_file)
 
     @patch("civit.download_handler.requests.head")
@@ -186,7 +179,7 @@ class TestFileDownload:
 
         # Test download with resume
         result = download_file(self.test_url, self.test_dir, resume=True)
-        assert result is not None
+        assert isinstance(result, str)  # Success returns a string (file path)
         assert result.endswith(self.test_file)
 
     @patch("civit.download_handler.requests.head")
@@ -218,7 +211,13 @@ class TestFileDownload:
 
         # Test download with invalid directory
         result = download_file(self.test_url, "/invalid/path")
-        assert result is None
+        
+        # Check that we got an error dictionary instead of None
+        assert isinstance(result, dict)
+        assert 'error' in result
+        assert 'message' in result
+        assert 'status_code' in result
+        assert 'unexpected_error' == result['error']
 
         # Verify makedirs was called with the correct arguments
         mock_makedirs.assert_called_once_with(Path("/invalid/path"), exist_ok=True)

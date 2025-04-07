@@ -6,6 +6,7 @@
 
 [∞] [High] After completing any task:
     • Mark the task as done in todo.md
+    • When a feature is modified make sure pytest tests are updated as well
     • Add notes if anything unexpected happened
 
 [∞] [Medium] When adding or changing a feature:
@@ -17,29 +18,19 @@
     • If missing, create a TODO: "[Test] Write pytest for [feature_name]"
 
 ## Current Tasks
+- [ ] Add a progress bar for downloads
+- [ ] Add better error handling for network issues
+- [ ] Implement rate limiting for API requests
 
 ## Blocked Tasks
 
 ## Completed Tasks
-[x] [Fix] Improve download timeout handling
-    • Separated connection and read timeouts
-    • HEAD request: 30s connection, 30s read timeout
-    • GET request: 30s connection, 60s read timeout between chunks
-    • Total download time now unlimited as long as data keeps flowing
-    Notes: This prevents timeouts during large downloads while ensuring responsiveness
 
-[x] [Critical] Fix package installation and import issues
-    • Fixed import paths in download_handler.py to use relative imports
-    • Removed unused extract_filename_from_response from __init__.py
-    • Simplified __init__.py to avoid silent failures
-    • Package now installs and runs correctly
-    Notes: The package can now be installed and run from any directory
+## Rejected Tasks
+- [!] Add parallel download support
 
-[x] [Critical] Verify and fix tests making real network calls
-[x] [Critical] Fix test failures from recent pytest run
-[x] [Improvement] Add support for resumable downloads
-[x] [Improvement] Add CLI tests and fix test_resumable_download.py
-[x] [Fix] Fix remaining failing tests in pytest run
-[x] [Fix] Fix second round of test failures
-[x] [Fix] Fix third round of test failures
-[x] [Fix] Implement verbosity counting and fix CLI tests
+## Future TODOs
+- [ ] Extract error handling into a separate module
+- [ ] Consider using property-based testing for more robust validation
+- [ ] Support batch downloads with a queue system
+- [ ] Improve the retry mechanism with exponential but reasonable maximum backoff

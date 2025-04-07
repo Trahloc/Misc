@@ -29,7 +29,7 @@ def download_file(
     retries: int = 3,
     delay: int = 5,
     timeout: Union[int, Tuple[int, int]] = (30, 60),
-) -> bool:
+) -> Union[str, dict]:
     """
     Coordinate the download process for a file from civitai.com.
 
@@ -43,13 +43,22 @@ def download_file(
                timeouts, or a tuple of (connect_timeout, read_timeout)
 
     RETURNS:
-        bool: True if download successful, False otherwise
+        Union[str, dict]: 
+            - On success: String containing the path to the downloaded file
+            - On failure: Dictionary with error details:
+                * 'error': Error type identifier (e.g., 'http_error', 'timeout')
+                * 'message': Human-readable description of the error
+                * 'status_code': HTTP status code if applicable, otherwise None
     """
     try:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
     except (PermissionError, OSError) as e:
         logging.error("Failed to create output directory %s: %s", output_dir, str(e))
-        return False
+        return {
+            'error': 'file_system_error',
+            'message': f"Failed to create output directory {output_dir}: {str(e)}",
+            'status_code': None
+        }
 
     # Always try to get API key from environment if not provided
     if not api_key:
@@ -65,11 +74,19 @@ def download_file(
         try:
             if not validate_url(url):
                 logging.error("URL validation failed for: %s", url)
-                return False
+                return {
+                    'error': 'invalid_url',
+                    'message': f"URL validation failed for: {url}",
+                    'status_code': None
+                }
 
             normalized_url = normalize_url(url)
             if not normalized_url:
-                return False
+                return {
+                    'error': 'url_normalization_failed',
+                    'message': f"Could not normalize URL: {url}",
+                    'status_code': None
+                }
 
             # Log the state of authorization before each request
             if api_key:
@@ -81,7 +98,11 @@ def download_file(
             download_url = extract_download_url(normalized_url, api_key=api_key)
             if not download_url:
                 logging.error("Could not extract download URL")
-                return False
+                return {
+                    'error': 'extract_url_failed',
+                    'message': f"Could not extract download URL from: {normalized_url}",
+                    'status_code': None
+                }
 
             # Set up headers with API key for the actual download
             headers = {}
@@ -114,7 +135,11 @@ def download_file(
             if response.status_code == 401:
                 logging.error("Authentication failed - please verify your API key is valid")
                 logging.error("Response from server: %s", response.text)
-                return False
+                return {
+                    'error': 'authentication_failed',
+                    'message': "Authentication failed - please verify your API key is valid",
+                    'status_code': 401
+                }
 
             response.raise_for_status()
 
@@ -134,46 +159,84 @@ def download_file(
 
             if success:
                 logging.info(f"Download completed successfully: {filepath}")
-                return True
+                return str(filepath)
             else:
                 logging.error("Download failed or was incomplete")
                 if attempt < retries - 1:  # Not the last attempt
                     continue
-                return False
+                return {
+                    'error': 'download_incomplete',
+                    'message': "Download failed or was incomplete",
+                    'status_code': None
+                }
 
         except requests.exceptions.HTTPError as e:
+            status_code = None
             if e.response is not None:
+                status_code = e.response.status_code
                 logging.error(f"Response from server: {e.response.text}")
                 if e.response.status_code == 401:
                     logging.error("Unauthorized - Invalid or missing API key")
                     logging.error("Please check that your API key is set correctly in the CIVITAPI environment variable")
-                    return False  # Don't retry on auth errors
+                    return {
+                        'error': 'unauthorized',
+                        'message': "Unauthorized - Invalid or missing API key",
+                        'status_code': 401
+                    }  # Don't retry on auth errors
                 elif e.response.status_code == 403:
                     logging.error("Access forbidden - API key required")
-                    return False  # Don't retry on auth errors
+                    return {
+                        'error': 'forbidden',
+                        'message': "Access forbidden - API key required",
+                        'status_code': 403
+                    }  # Don't retry on auth errors
                 elif e.response.status_code == 429:  # Rate limit exceeded
                     if attempt < retries - 1:  # Not the last attempt
                         logging.warning(f"Rate limit exceeded. Waiting {delay} seconds before retry...")
                         time.sleep(delay)
                         continue
             logging.error("HTTP error during download: %s", str(e))
-            return False
+            return {
+                'error': 'http_error',
+                'message': f"HTTP error during download: {str(e)}",
+                'status_code': status_code
+            }
         except requests.exceptions.Timeout:
             logging.error(f"Request timed out after {timeout} seconds")
             if attempt < retries - 1:  # Not the last attempt
                 continue
-            return False
+            return {
+                'error': 'timeout',
+                'message': f"Request timed out after {timeout} seconds",
+                'status_code': None
+            }
         except requests.exceptions.RequestException as e:
             logging.error("Request error during download: %s", str(e))
-            return False
+            return {
+                'error': 'request_error',
+                'message': f"Request error during download: {str(e)}",
+                'status_code': None
+            }
         except (OSError, IOError) as e:
             logging.error("System error during download: %s", str(e))
-            return False
+            return {
+                'error': 'system_error',
+                'message': f"System error during download: {str(e)}",
+                'status_code': None
+            }
         except Exception as e:
             logging.error(f"Unexpected error during download: {str(e)}")
-            return False
+            return {
+                'error': 'unexpected_error',
+                'message': f"Unexpected error during download: {str(e)}",
+                'status_code': None
+            }
 
-    return False
+    return {
+        'error': 'max_retries_exceeded',
+        'message': f"Maximum retry count ({retries}) exceeded",
+        'status_code': None
+    }
 
 
 def download_files(
@@ -202,9 +265,18 @@ def download_files(
     for url in urls:
         try:
             result = download_file(url, output_dir, api_key, timeout=timeout)
-            if not result:
+            if isinstance(result, dict):  # Error occurred
                 success = False
-                logging.error(f"Failed to download: {url}")
+                error_msg = result.get('message', 'Unknown error')
+                error_type = result.get('error', 'unknown_error')
+                status_code = result.get('status_code')
+                
+                if status_code:
+                    logging.error(f"Failed to download {url}: {error_type} (Status: {status_code}) - {error_msg}")
+                else:
+                    logging.error(f"Failed to download {url}: {error_type} - {error_msg}")
+            else:
+                logging.info(f"Successfully downloaded to: {result}")
         except Exception as e:
             logging.error(f"Error downloading {url}: {str(e)}")
             success = False

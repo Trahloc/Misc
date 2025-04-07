@@ -202,8 +202,68 @@ def get_direct_download_url(model_id: str, api_key: Optional[str] = None, query_
 
 
 @test_aware
-def download_file(url: str, output_dir: Union[str, Path], api_key: Optional[str] = None, resume: bool = False, filename: Optional[str] = None, custom_name: Optional[str] = None) -> Optional[str]:
-    """Download a file from a URL."""
+def download_file(url: str, output_dir: Union[str, Path], api_key: Optional[str] = None, resume: bool = False, filename: Optional[str] = None, custom_name: Optional[str] = None, timeout: Tuple[int, Optional[int]] = (5, 30)) -> Union[str, Dict[str, Any]]:
+    """
+    Download a file from a URL to the specified directory.
+    
+    This function handles the entire download process including:
+    - Validating and preparing the download URL
+    - Getting file details with a HEAD request
+    - Determining the appropriate filename
+    - Setting up resume capabilities if supported
+    - Downloading the file with progress tracking
+    - Validating the download completion
+    
+    The function implements error handling for various network and server issues:
+    - Connection timeouts
+    - Read timeouts
+    - HTTP errors (404, 403, etc.)
+    - Connection errors
+    - General request errors
+    
+    Args:
+        url (str): The URL to download the file from. Should be a valid HTTP/HTTPS URL.
+        output_dir (Union[str, Path]): Directory where the file will be saved. Will be created if it doesn't exist.
+        api_key (Optional[str], optional): API key for authentication with Civitai API. Defaults to None.
+        resume (bool, optional): Whether to attempt to resume interrupted downloads. Defaults to False.
+        filename (Optional[str], optional): Override the filename from the URL/headers. Defaults to None.
+        custom_name (Optional[str], optional): Custom filename that takes precedence over all other naming methods. Defaults to None.
+        timeout (Tuple[int, Optional[int]], optional): Connection and read timeout in seconds (connect_timeout, read_timeout). Defaults to (5, 30).
+    
+    Returns:
+        Union[str, Dict[str, Any]]:
+            - On success: The full path to the downloaded file (str)
+            - On failure: A dictionary with error details with the following keys:
+                * 'error': Error type identifier (e.g., 'connection_timeout', 'http_error')
+                * 'message': Human-readable description of the error
+                * 'status_code': HTTP status code if applicable, otherwise None
+            
+            Possible error types include:
+                * 'invalid_api_key': The API key format is invalid
+                * 'connection_timeout': Connection to the server timed out
+                * 'read_timeout': The server took too long to respond or send data
+                * 'http_error': HTTP error occurred (e.g., 404, 403)
+                * 'connection_error': Failed to establish connection to the server
+                * 'request_error': General request error
+                * 'unexpected_error': Any other unexpected error during download
+    
+    Examples:
+        # Basic download
+        result = download_file("https://example.com/file.zip", "/downloads")
+        if isinstance(result, str):
+            print(f"Download successful: {result}")
+        else:
+            print(f"Download failed: {result['message']}")
+            
+        # Download with resume and custom name
+        result = download_file(
+            "https://civitai.com/api/download/models/12345",
+            "/downloads",
+            api_key="your_api_key",
+            resume=True,
+            custom_name="my_custom_filename.zip"
+        )
+    """
     try:
         # Convert output_dir to Path if it's a string
         output_dir = Path(output_dir) if isinstance(output_dir, str) else output_dir
@@ -214,9 +274,48 @@ def download_file(url: str, output_dir: Union[str, Path], api_key: Optional[str]
         # Setup base headers (used for HEAD initially)
         head_headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
         
-        # Get head response for filename and resume support
-        head_response = requests.head(url, headers=head_headers, timeout=(5, None), allow_redirects=True)
-        head_response.raise_for_status() # Check HEAD request status
+        # Validate API key format if provided
+        if api_key and not isinstance(api_key, str):
+            return {
+                'error': 'invalid_api_key',
+                'message': 'API key must be a string',
+                'status_code': None
+            }
+        
+        try:
+            # Get head response for filename and resume support
+            head_response = requests.head(url, headers=head_headers, timeout=timeout, allow_redirects=True)
+            head_response.raise_for_status() # Check HEAD request status
+        except requests.exceptions.ConnectTimeout:
+            return {
+                'error': 'connection_timeout',
+                'message': f'Connection timed out when attempting to connect to {url}',
+                'status_code': None
+            }
+        except requests.exceptions.ReadTimeout:
+            return {
+                'error': 'read_timeout',
+                'message': f'Server took too long to respond from {url}',
+                'status_code': None
+            }
+        except requests.exceptions.HTTPError as e:
+            return {
+                'error': 'http_error',
+                'message': f'HTTP error occurred: {str(e)}',
+                'status_code': e.response.status_code if hasattr(e, 'response') else None
+            }
+        except requests.exceptions.ConnectionError:
+            return {
+                'error': 'connection_error',
+                'message': f'Failed to connect to {url}. Check your internet connection.',
+                'status_code': None
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                'error': 'request_error',
+                'message': f'Request error: {str(e)}',
+                'status_code': getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None
+            }
         
         output_filename = custom_name if custom_name else (filename if filename else _extract_filename_from_response(head_response, url))
             
@@ -239,10 +338,41 @@ def download_file(url: str, output_dir: Union[str, Path], api_key: Optional[str]
             else:
                 logger.info("Server does not support resume or file doesn't exist; starting download from beginning.")
         
-        # Download the file using GET headers
-        response = requests.get(url, headers=get_headers, stream=True, timeout=(5, None))
-        response.raise_for_status()  # Raise an exception for bad status codes
-        
+        try:
+            # Download the file using GET headers
+            response = requests.get(url, headers=get_headers, stream=True, timeout=timeout)
+            response.raise_for_status()  # Raise an exception for bad status codes
+        except requests.exceptions.ConnectTimeout:
+            return {
+                'error': 'connection_timeout',
+                'message': f'Connection timed out when attempting to download from {url}',
+                'status_code': None
+            }
+        except requests.exceptions.ReadTimeout:
+            return {
+                'error': 'read_timeout',
+                'message': f'Download timed out. Server took too long to send data from {url}',
+                'status_code': None
+            }
+        except requests.exceptions.HTTPError as e:
+            return {
+                'error': 'http_error',
+                'message': f'HTTP error occurred during download: {str(e)}',
+                'status_code': e.response.status_code if hasattr(e, 'response') else None
+            }
+        except requests.exceptions.ConnectionError:
+            return {
+                'error': 'connection_error',
+                'message': f'Connection lost while downloading from {url}',
+                'status_code': None
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                'error': 'request_error',
+                'message': f'Error during download: {str(e)}',
+                'status_code': getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None
+            }
+            
         # Determine total size and initial size based on resume status
         if resume and exists and supports_resume and response.status_code == 206:
             # Partial content response
@@ -275,15 +405,13 @@ def download_file(url: str, output_dir: Union[str, Path], api_key: Optional[str]
              # Consider if this should raise an error or just warn
 
         return str(output_path)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Network error during download {url}: {str(e)}")
-        if hasattr(e, 'response') and e.response is not None:
-             logger.error(f"Response status: {e.response.status_code}")
-             logger.error(f"Response text: {e.response.text[:500]}...") # Log first 500 chars
-        return None
     except Exception as e:
-        logger.error(f"Failed to download {url}: {str(e)}", exc_info=True) # Include traceback
-        return None
+        logger.error(f"Unexpected error during download: {str(e)}")
+        return {
+            'error': 'unexpected_error',
+            'message': f'An unexpected error occurred during download: {str(e)}',
+            'status_code': None
+        }
 
 
 def _extract_filename_from_response(response: requests.Response, url: str) -> str:
