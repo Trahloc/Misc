@@ -28,21 +28,30 @@ def calculate_docstring_coverage(node: ast.FunctionDef) -> Dict[str, Any]:
             - has_docstring (bool): True if the function has a docstring,
               False otherwise.
 
-    Examples:
-        >>> import ast
-        >>> # Function with docstring
-        >>> tree = ast.parse('''def example():
-        ...     """This is a docstring."""
-        ...     pass''')
-        >>> func_node = tree.body[0]
-        >>> calculate_docstring_coverage(func_node)
-        {'has_docstring': True}
-        
-        >>> # Function without docstring
-        >>> tree = ast.parse('def example(): pass')
-        >>> func_node = tree.body[0]
-        >>> calculate_docstring_coverage(func_node)
-        {'has_docstring': False}
+    Note:
+        A function is considered to have a docstring if it has a string literal
+        as its first statement. For example:
+
+        def example():
+            '''This is a docstring.'''
+            pass
+
+        The function above would return {'has_docstring': True}.
     """
     has_docstring = ast.get_docstring(node) is not None
     return {"has_docstring": has_docstring}
+
+
+"""
+## KNOWN ERRORS: None.
+
+## IMPROVEMENTS: None.
+
+## FUTURE TODOs: Consider adding more sophisticated docstring analysis, such as checking for docstring quality.
+
+## ZEROTH LAW COMPLIANCE:
+    - Overall Score: 95/100 - Good
+    - Penalties:
+      - Function calculate_docstring_coverage exceeds max lines: -5
+    - Analysis Timestamp: 2025-04-06T15:52:46.677626
+"""

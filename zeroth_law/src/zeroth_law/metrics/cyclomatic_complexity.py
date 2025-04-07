@@ -7,9 +7,11 @@
 
 ## DEPENDENCIES:
  - ast
+ - zeroth_law.utils.config
 """
 import ast
 from typing import Dict, Any
+from zeroth_law.utils import config
 
 
 class CyclomaticComplexityVisitor(ast.NodeVisitor):
@@ -125,14 +127,44 @@ def calculate_cyclomatic_complexity(node: ast.FunctionDef) -> Dict[str, Any]:
             - cyclomatic_complexity (int): The calculated complexity value.
                 1 is the base complexity for a linear function.
                 Higher values indicate more complex control flow.
+            - exceeds_max_complexity (bool): Whether the complexity exceeds
+                the configured maximum.
+            - max_complexity (int): The configured maximum complexity allowed.
 
     Examples:
         >>> import ast
         >>> tree = ast.parse("def example(): if x: return 1 else: return 2")
         >>> func_node = tree.body[0]
         >>> calculate_cyclomatic_complexity(func_node)
-        {'cyclomatic_complexity': 2}  # Base 1 + 1 for the if statement
+        {
+            'cyclomatic_complexity': 2,  # Base 1 + 1 for the if statement
+            'exceeds_max_complexity': False,
+            'max_complexity': 10
+        }
     """
     visitor = CyclomaticComplexityVisitor()
     visitor.visit(node)
-    return {"cyclomatic_complexity": visitor.complexity}
+
+    max_complexity = config.get("max_cyclomatic_complexity", 10)
+
+    return {
+        "cyclomatic_complexity": visitor.complexity,
+        "exceeds_max_complexity": visitor.complexity > max_complexity,
+        "max_complexity": max_complexity,
+    }
+
+
+"""
+## KNOWN ERRORS: None.
+
+## IMPROVEMENTS: None.
+
+## FUTURE TODOs: Consider adding more sophisticated cyclomatic complexity analysis, such as checking for complexity thresholds.
+
+## ZEROTH LAW COMPLIANCE:
+    - Overall Score: 90/100 - Good
+    - Penalties:
+      - Function calculate_cyclomatic_complexity exceeds max lines: -5
+      - Function visit_BoolOp exceeds max lines: -5
+    - Analysis Timestamp: 2025-04-06T15:52:47.085837
+"""

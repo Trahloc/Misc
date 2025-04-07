@@ -12,10 +12,14 @@
   - zeroth_law.analyzer: Core analysis logic.
   - zeroth_law.skeleton: creates project directories
   - zeroth_law.test_coverage: verifies and enforces test coverage
+  - zeroth_law.reporting: reporting and formatting utilities
+  - zeroth_law.utils: utility functions
 """
 from zeroth_law.analyzer import analyze_file, analyze_directory
 from zeroth_law.skeleton import create_skeleton
 from zeroth_law.test_coverage import verify_test_coverage, create_test_stub
+from zeroth_law.reporting.formatter import format_compliance_report
+from zeroth_law.utils.config import load_config
 
 __all__ = [
     "analyze_file",
@@ -23,4 +27,6 @@ __all__ = [
     "create_skeleton",
     "verify_test_coverage",
     "create_test_stub",
+    "format_compliance_report",
+    "load_config",
 ]

@@ -78,9 +78,7 @@ def _process_file(src: Path, dest: Path, project_name: str) -> None:
     # Ensure all parent directories are created with proper naming
     for parent in dest.parents:
         if str(parent).endswith(project_name):
-            new_parent = Path(
-                str(parent).replace(project_name, "{{cookiecutter.project_name}}")
-            )
+            new_parent = Path(str(parent).replace(project_name, "{{cookiecutter.project_name}}"))
             if not new_parent.exists():
                 new_parent.mkdir(parents=True, exist_ok=True)
         elif not parent.exists():
@@ -104,9 +102,7 @@ def _process_file(src: Path, dest: Path, project_name: str) -> None:
                     return
                 current = current.parent
 
-            logger.warning(
-                "Main ZerothLawAIFramework.py.md not found in any parent directory with docs/, falling back to file copy"
-            )
+            logger.warning("Main ZerothLawAIFramework.py.md not found in any parent directory with docs/, falling back to file copy")
         except (OSError, RuntimeError) as e:
             logger.warning(
                 "Failed to create symlink for ZerothLawAIFramework.py.md: %s, falling back to file copy",
@@ -124,9 +120,7 @@ def _process_file(src: Path, dest: Path, project_name: str) -> None:
         shutil.copy2(src, dest)
 
 
-def convert_to_template(
-    source_dir: str, template_name: str = "test_zeroth_law", overwrite: bool = False
-) -> None:
+def convert_to_template(source_dir: str, template_name: str = "test_zeroth_law", overwrite: bool = False) -> None:
     """
     Convert an existing project into a cookiecutter template.
 
@@ -183,10 +177,7 @@ def convert_to_template(
                 dest_path = template_project_dir / rel_path
                 processed_dest = Path(_replace_paths(str(dest_path), project_name))
                 # Skip files that would end up in unwanted directories
-                if not any(
-                    p.name == project_name and p.parent.name == "src"
-                    for p in processed_dest.parents
-                ):
+                if not any(p.name == project_name and p.parent.name == "src" for p in processed_dest.parents):
                     source_files.append((src_path, processed_dest))
                     logger.debug(
                         "  Found source file: %s -> %s",

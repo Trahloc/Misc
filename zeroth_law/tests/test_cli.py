@@ -22,7 +22,34 @@ import logging
 def temp_python_file():
     """Creates a temporary Python file for testing."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write('"""Test file."""\ndef test():\n    pass')
+        f.write(
+            '''"""
+# PURPOSE: Test file for CLI testing.
+
+## INTERFACES:
+ - test(): A test function
+
+## DEPENDENCIES:
+ - None
+"""
+
+def test():
+    """A simple test function."""
+    pass
+
+"""
+## KNOWN ERRORS: None.
+
+## IMPROVEMENTS: None.
+
+## FUTURE TODOs: None.
+
+## ZEROTH LAW COMPLIANCE:
+    - Overall Score: 100/100 - Excellent
+    - Penalties: None
+    - Analysis Timestamp: 2024-03-21T12:00:00Z
+"""'''
+        )
     yield f.name
     os.unlink(f.name)
 
@@ -31,9 +58,7 @@ def test_summary_with_verbose(temp_python_file, caplog):
     """Test that summary reports are shown when verbose mode is enabled."""
     runner = CliRunner()
     with caplog.at_level(logging.INFO):
-        result = runner.invoke(
-            main, ["-vv", "-r", "-s", os.path.dirname(temp_python_file)]
-        )
+        result = runner.invoke(main, ["-vv", "-r", "-s", os.path.dirname(temp_python_file)])
 
     # Check that we got both logging output and summary report
     assert "Analyzing directory:" in caplog.text  # Changed to match actual log format

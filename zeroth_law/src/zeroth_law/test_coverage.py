@@ -43,6 +43,28 @@ def _is_python_file(file_path: str) -> bool:
     return file_path.endswith(".py") and not file_path.endswith(".pyc")
 
 
+def _get_default_ignore_patterns() -> List[str]:
+    """Get default patterns to ignore when searching for Python files."""
+    return [
+        r"__pycache__",
+        r"\.git",
+        r"\.venv",
+        r"\.env",
+        r"\.old",
+        r"\.egg-info",
+        r"build",
+        r"dist",
+        r"\.pytest_cache",
+        r"cookiecutter-template",  # Ignore cookiecutter template files
+        r"{{.*}}",  # Ignore files with Jinja2 template syntax
+    ]
+
+
+def _should_ignore_path(path: str, patterns: List[re.Pattern]) -> bool:
+    """Check if a path should be ignored based on patterns."""
+    return any(pattern.search(path) for pattern in patterns)
+
+
 def _find_python_files(directory: str, ignore_patterns: List[str] = None) -> Set[str]:
     """
     Find all Python files in a directory recursively.
@@ -55,39 +77,47 @@ def _find_python_files(directory: str, ignore_patterns: List[str] = None) -> Set
         Set of Python file paths
     """
     if ignore_patterns is None:
-        # Default patterns to ignore
-        ignore_patterns = [
-            r"__pycache__",
-            r"\.git",
-            r"\.venv",
-            r"\.env",
-            r"\.old",
-            r"\.egg-info",
-            r"build",
-            r"dist",
-            r"\.pytest_cache",
-            r"cookiecutter-template",  # Ignore cookiecutter template files
-            r"{{.*}}",  # Ignore files with Jinja2 template syntax
-        ]
+        ignore_patterns = _get_default_ignore_patterns()
 
     compiled_patterns = [re.compile(pattern) for pattern in ignore_patterns]
-
     python_files = set()
+
     for root, dirs, files in os.walk(directory):
         # Skip directories that match ignore patterns
-        dirs[:] = [
-            d
-            for d in dirs
-            if not any(pattern.search(d) for pattern in compiled_patterns)
-        ]
+        dirs[:] = [d for d in dirs if not _should_ignore_path(d, compiled_patterns)]
 
         for file in files:
             if _is_python_file(file):
                 file_path = os.path.join(root, file)
-                if not any(pattern.search(file_path) for pattern in compiled_patterns):
+                if not _should_ignore_path(file_path, compiled_patterns):
                     python_files.add(file_path)
 
     return python_files
+
+
+def _read_project_name_from_pyproject(pyproject_path: str) -> str:
+    """
+    Read project name from pyproject.toml.
+
+    Args:
+        pyproject_path: Path to pyproject.toml file
+
+    Returns:
+        Project name or empty string if not found
+    """
+    if not os.path.exists(pyproject_path) or tomllib is None:
+        return ""
+
+    try:
+        with open(pyproject_path, "rb") as f:
+            pyproject_data = tomllib.load(f)
+            project_name = pyproject_data.get("project", {}).get("name", "")
+            if project_name:
+                logger.debug("Found project name in pyproject.toml: %s", project_name)
+            return project_name
+    except Exception as e:
+        logger.warning("Error reading pyproject.toml: %s", str(e))
+        return ""
 
 
 def get_project_name(project_path: str) -> str:
@@ -102,24 +132,55 @@ def get_project_name(project_path: str) -> str:
     """
     # Try to read pyproject.toml
     pyproject_path = os.path.join(project_path, "pyproject.toml")
+    project_name = _read_project_name_from_pyproject(pyproject_path)
 
-    if os.path.exists(pyproject_path) and tomllib is not None:
-        try:
-            with open(pyproject_path, "rb") as f:
-                pyproject_data = tomllib.load(f)
-                project_name = pyproject_data.get("project", {}).get("name", "")
-                if project_name:
-                    logger.debug(
-                        "Found project name in pyproject.toml: %s", project_name
-                    )
-                    return project_name
-        except Exception as e:
-            logger.warning("Error reading pyproject.toml: %s", str(e))
+    if not project_name:
+        # Fall back to directory name
+        project_name = os.path.basename(project_path)
+        logger.debug("Using directory name as project name: %s", project_name)
 
-    # Fall back to directory name
-    dir_name = os.path.basename(project_path)
-    logger.debug("Using directory name as project name: %s", dir_name)
-    return dir_name
+    return project_name
+
+
+def _get_test_base_dir(project_root: str) -> str:
+    """
+    Get the base directory for test files.
+
+    Args:
+        project_root: Path to the project root
+
+    Returns:
+        Base directory for test files
+    """
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime_dir:
+        test_base = os.path.join(runtime_dir, "pytest-tests")
+    else:
+        test_base = os.path.join(project_root, "tests")
+    return test_base
+
+
+def _transform_src_path_to_test_path(rel_path: str, test_base: str) -> str:
+    """
+    Transform a source path to a test path.
+
+    Args:
+        rel_path: Relative path from project root
+        test_base: Base directory for test files
+
+    Returns:
+        Test file path
+    """
+    parts = rel_path.split(os.path.sep)
+    src_index = parts.index("src")
+    module_path = os.path.sep.join(parts[src_index + 1 :])
+    filename = os.path.basename(module_path)
+    dirname = os.path.dirname(module_path)
+
+    test_filename = f"test_{filename}"
+    if dirname:
+        return os.path.join(test_base, dirname, test_filename)
+    return os.path.join(test_base, test_filename)
 
 
 def _get_test_path(source_file: str, project_root: str) -> str:
@@ -133,51 +194,31 @@ def _get_test_path(source_file: str, project_root: str) -> str:
     Returns:
         Expected path to the test file
     """
-    # Use XDG_RUNTIME_DIR if available
-    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
-    if runtime_dir:
-        test_base = os.path.join(runtime_dir, "pytest-tests")
-    else:
-        test_base = os.path.join(project_root, "tests")
-
-    # Get relative path from project root
+    test_base = _get_test_base_dir(project_root)
     rel_path = os.path.relpath(source_file, project_root)
 
     # Transform source path to test path
     if "src" in rel_path.split(os.path.sep):
         # Handle src directory structure
-        parts = rel_path.split(os.path.sep)
-        src_index = parts.index("src")
-        module_path = os.path.sep.join(parts[src_index + 1 :])
-        filename = os.path.basename(module_path)
-        dirname = os.path.dirname(module_path)
-
-        # Create test file path
-        test_filename = f"test_{filename}"
-        if dirname:
-            test_path = os.path.join(test_base, dirname, test_filename)
-        else:
-            test_path = os.path.join(test_base, test_filename)
+        return _transform_src_path_to_test_path(rel_path, test_base)
     else:
         # Simple case - just put test file in tests directory with test_ prefix
         filename = os.path.basename(rel_path)
-        test_path = os.path.join(test_base, f"test_{filename}")
-
-    return test_path
+        return os.path.join(test_base, f"test_{filename}")
 
 
-def _get_source_dirs(project_path: str) -> List[str]:
+def _check_package_structure(project_path: str, project_name: str) -> List[str]:
     """
-    Find source directories in the project.
+    Check for different package directory structures.
 
     Args:
         project_path: Path to the project root
+        project_name: Name of the project
 
     Returns:
-        List of source directories
+        List of found source directories
     """
     src_dirs = []
-    project_name = get_project_name(project_path)
 
     # Check for src/project_name structure
     src_package_path = os.path.join(project_path, "src", project_name)
@@ -191,7 +232,23 @@ def _get_source_dirs(project_path: str) -> List[str]:
         logger.debug("Found direct %s package structure", project_name)
         src_dirs.append(direct_package_path)
 
-    # If neither of the above structures were found, look for src directory
+    return src_dirs
+
+
+def _get_source_dirs(project_path: str) -> List[str]:
+    """
+    Find source directories in the project.
+
+    Args:
+        project_path: Path to the project root
+
+    Returns:
+        List of source directories
+    """
+    project_name = get_project_name(project_path)
+    src_dirs = _check_package_structure(project_path, project_name)
+
+    # If no package structure found, check for src directory
     if not src_dirs:
         src_path = os.path.join(project_path, "src")
         if os.path.isdir(src_path):
@@ -206,24 +263,16 @@ def _get_source_dirs(project_path: str) -> List[str]:
     return src_dirs
 
 
-def create_test_stub(source_file: str, test_file: str) -> None:
+def _get_module_name(source_file: str) -> str:
     """
-    Create a test stub file for a given source file.
+    Get the module name from a source file path.
 
     Args:
         source_file: Path to the source file
-        test_file: Path to create the test file
 
-    Raises:
-        FileExistsError: If the test file already exists
+    Returns:
+        Module name for imports
     """
-    if os.path.exists(test_file):
-        raise FileExistsError(f"Test file already exists: {test_file}")
-
-    # Create directory if it doesn't exist
-    os.makedirs(os.path.dirname(test_file), exist_ok=True)
-
-    # Get module name and function name for imports
     module_name = os.path.basename(source_file).replace(".py", "")
     if "src" in source_file.split(os.path.sep):
         # Extract the full module path
@@ -231,14 +280,22 @@ def create_test_stub(source_file: str, test_file: str) -> None:
         src_index = parts.index("src")
         module_parts = parts[src_index + 1 : -1]  # Get parts between src and filename
         if module_parts:
-            full_module = ".".join(module_parts + [module_name])
-        else:
-            full_module = module_name
-    else:
-        full_module = module_name
+            return ".".join(module_parts + [module_name])
+    return module_name
 
-    # Create test stub content
-    content = f'''"""
+
+def _generate_test_stub_content(module_name: str, full_module: str) -> str:
+    """
+    Generate content for a test stub file.
+
+    Args:
+        module_name: Base name of the module
+        full_module: Full module path for imports
+
+    Returns:
+        Test stub file content
+    """
+    return f'''"""
 # PURPOSE: Tests for {full_module}.
 
 ## INTERFACES:
@@ -268,11 +325,144 @@ def test_{module_name}_exists():
     assert True, "Replace this with actual tests for the {module_name} module"
 '''
 
+
+def create_test_stub(source_file: str, test_file: str) -> None:
+    """
+    Create a test stub file for a given source file.
+
+    Args:
+        source_file: Path to the source file
+        test_file: Path to create the test file
+
+    Raises:
+        FileExistsError: If the test file already exists
+    """
+    if os.path.exists(test_file):
+        raise FileExistsError(f"Test file already exists: {test_file}")
+
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(test_file), exist_ok=True)
+
+    # Get module name and generate content
+    full_module = _get_module_name(source_file)
+    module_name = os.path.basename(source_file).replace(".py", "")
+    content = _generate_test_stub_content(module_name, full_module)
+
     # Write the test stub file
     with open(test_file, "w", encoding="utf-8") as f:
         f.write(content)
 
     logger.info("Created test stub: %s", test_file)
+
+
+def _setup_test_environment(project_path: str, create_stubs: bool = False) -> str:
+    """
+    Set up the test environment and return the test directory.
+
+    Args:
+        project_path: Path to the project root
+        create_stubs: Whether to create test stubs
+
+    Returns:
+        Path to the test directory
+    """
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime_dir:
+        tests_dir = os.path.join(runtime_dir, "pytest-tests")
+        os.makedirs(tests_dir, exist_ok=True)
+        os.chmod(tests_dir, 0o700)  # Secure permissions
+    else:
+        tests_dir = os.path.join(project_path, "tests")
+        if create_stubs:
+            os.makedirs(tests_dir, exist_ok=True)
+    return tests_dir
+
+
+def _find_source_and_test_files(project_path: str, tests_dir: str) -> tuple[set, set]:
+    """
+    Find source and test files in the project.
+
+    Args:
+        project_path: Path to the project root
+        tests_dir: Path to the test directory
+
+    Returns:
+        Tuple of (source_files, test_files)
+    """
+    # Find source files
+    src_dirs = _get_source_dirs(project_path)
+    source_files = set()
+    for src_dir in src_dirs:
+        source_files.update(_find_python_files(src_dir))
+
+    # Filter out __init__.py files from source files
+    source_files = {f for f in source_files if os.path.basename(f) != "__init__.py"}
+
+    # Find test files
+    test_files = set()
+    if os.path.exists(tests_dir):
+        for root, _, files in os.walk(tests_dir):
+            for file in files:
+                if file.startswith("test_") and file.endswith(".py"):
+                    test_path = os.path.join(root, file)
+                    # Only include test files that match our project structure
+                    if "test_project" in test_path:  # Use the actual project directory name
+                        test_files.add(test_path)
+
+    logger.debug("Looking for test files in runtime directory: %s", tests_dir)
+    logger.debug("Found test files: %s", test_files)
+
+    return source_files, test_files
+
+
+def _check_test_coverage(source_files: set, test_files: set, project_path: str, create_stubs: bool = False) -> tuple[list, list, set]:
+    """
+    Check test coverage and create stubs if requested.
+
+    Args:
+        source_files: Set of source files
+        test_files: Set of test files
+        project_path: Path to the project root
+        create_stubs: Whether to create test stubs
+
+    Returns:
+        Tuple of (missing_tests, orphaned_tests, found_tests)
+    """
+    missing_tests = []
+    found_tests = set()
+
+    for source_file in source_files:
+        # Skip test files that are in source files
+        if source_file in test_files:
+            continue
+
+        # Get expected test file path
+        test_file = _get_test_path(source_file, project_path)
+
+        # Check if test file exists
+        if os.path.exists(test_file):
+            found_tests.add(test_file)
+        else:
+            missing_tests.append((source_file, test_file))
+
+    # Create test stubs if requested
+    if create_stubs and missing_tests:
+        logger.info("Creating test stubs for %d files", len(missing_tests))
+        for source_file, test_file in missing_tests:
+            try:
+                create_test_stub(source_file, test_file)
+            except (OSError, FileExistsError) as e:
+                logger.error("Failed to create test stub for %s: %s", source_file, e)
+        missing_tests = []
+
+    # Find orphaned tests
+    orphaned_tests = []
+    for test_file in test_files:
+        if test_file not in found_tests and os.path.basename(test_file) != "__init__.py":
+            rel_path = os.path.relpath(test_file, project_path)
+            orphaned_tests.append(rel_path)
+
+    return missing_tests, orphaned_tests, found_tests
 
 
 def verify_test_coverage(project_path: str, create_stubs: bool = False) -> Dict:
@@ -299,105 +489,47 @@ def verify_test_coverage(project_path: str, create_stubs: bool = False) -> Dict:
     project_path = os.path.abspath(project_path)
     logger.debug("Verifying test coverage for %s", project_path)
 
-    # Get project name from pyproject.toml or directory name
+    # Get project name and set up test environment
     project_name = get_project_name(project_path)
+    tests_dir = _setup_test_environment(project_path, create_stubs)
 
-    # Set up test directory in XDG_RUNTIME_DIR if available
-    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
-    if runtime_dir:
-        tests_dir = os.path.join(runtime_dir, "pytest-tests")
-        os.makedirs(tests_dir, exist_ok=True)
-        os.chmod(tests_dir, 0o700)  # Secure permissions
-    else:
-        tests_dir = os.path.join(project_path, "tests")
-        if create_stubs:
-            os.makedirs(tests_dir, exist_ok=True)
-
-    # Find source files
-    src_dirs = _get_source_dirs(project_path)
+    # Find source and test files
+    source_files, test_files = _find_source_and_test_files(project_path, tests_dir)
 
     # Determine structure type
     structure_type = "unknown"
-    if any("src" in d and project_name in d for d in src_dirs):
+    if any("src" in d and project_name in d for d in _get_source_dirs(project_path)):
         structure_type = f"src/{project_name}"
-    elif any(project_name in d and "src" not in d for d in src_dirs):
+    elif any(project_name in d and "src" not in d for d in _get_source_dirs(project_path)):
         structure_type = project_name
-    elif any("src" in d for d in src_dirs):
+    elif any("src" in d for d in _get_source_dirs(project_path)):
         structure_type = "src"
     else:
         structure_type = "flat"
 
-    # Collect all Python files
-    source_files = set()
-    for src_dir in src_dirs:
-        source_files.update(_find_python_files(src_dir))
-
-    # Find test files
-    if os.path.exists(tests_dir):
-        test_files = _find_python_files(tests_dir)
-    else:
-        test_files = set()
-        if create_stubs:
-            # Create tests directory if it doesn't exist
-            os.makedirs(tests_dir, exist_ok=True)
-
     # Check test coverage
-    missing_tests = []
-    found_tests = set()  # Track which test files correspond to source files
+    missing_tests, orphaned_tests, found_tests = _check_test_coverage(source_files, test_files, project_path, create_stubs)
 
-    for source_file in source_files:
-        # Skip __init__.py files and test files
-        if os.path.basename(source_file) == "__init__.py" or source_file in test_files:
-            continue
+    # Calculate coverage percentage
+    files_with_tests = len(source_files) - len(missing_tests)
+    coverage_percentage = (files_with_tests / len(source_files) * 100) if source_files else 0
 
-        # Get expected test file path
-        test_file = _get_test_path(source_file, project_path)
-
-        # Check if test file exists
-        if os.path.exists(test_file):
-            found_tests.add(test_file)
-        else:
-            missing_tests.append((source_file, test_file))
-
-    # Find orphaned tests (test files without corresponding source files)
-    orphaned_tests = []
-    for test_file in test_files:
-        if (
-            test_file not in found_tests
-            and os.path.basename(test_file) != "__init__.py"
-        ):
-            # Get the expected source file path
-            source_module = test_file.replace(tests_dir, "").lstrip(os.path.sep)
-            if source_module.startswith("test_"):
-                source_module = source_module[5:]  # Remove 'test_' prefix
-            for src_dir in src_dirs:
-                potential_source = os.path.join(src_dir, source_module)
-                if not os.path.exists(potential_source):
-                    rel_path = os.path.relpath(test_file, project_path)
-                    orphaned_tests.append(rel_path)
-
-    # Create test stubs if requested
-    if create_stubs and missing_tests:
-        logger.info("Creating test stubs for %d files", len(missing_tests))
-        for source_file, test_file in missing_tests:
-            try:
-                create_test_stub(source_file, test_file)
-            except (OSError, FileExistsError) as e:
-                logger.error("Failed to create test stub for %s: %s", source_file, e)
+    logger.debug("Coverage calculation:")
+    logger.debug("  Total source files: %d", len(source_files))
+    logger.debug("  Missing tests: %d", len(missing_tests))
+    logger.debug("  Files with tests: %d", files_with_tests)
+    logger.debug("  Coverage percentage: %.2f%%", coverage_percentage)
+    logger.debug("  Source files: %s", source_files)
+    logger.debug("  Missing tests: %s", missing_tests)
+    logger.debug("  Test files: %s", test_files)
 
     # Compile metrics
     metrics = {
         "total_source_files": len(source_files),
         "total_test_files": len(test_files),
-        "missing_tests": [
-            os.path.relpath(source, project_path) for source, _ in missing_tests
-        ],
+        "missing_tests": [os.path.relpath(source, project_path) for source, _ in missing_tests],
         "orphaned_tests": orphaned_tests,
-        "coverage_percentage": (
-            (len(source_files) - len(missing_tests)) / len(source_files) * 100
-            if source_files
-            else 0
-        ),
+        "coverage_percentage": coverage_percentage,
         "project_name": project_name,
         "structure_type": structure_type,
     }

@@ -15,6 +15,7 @@ import pytest
 import os
 import shutil
 from pathlib import Path
+import tempfile
 
 from zeroth_law.test_coverage import (
     verify_test_coverage,
@@ -50,9 +51,7 @@ def setup_test_files():
 
     # Create one test file
     with open(os.path.join(TEST_TESTS_DIR, "test_file1.py"), "w") as f:
-        f.write(
-            '"""Test for file1."""\nimport pytest\nfrom test_module.file1 import function1\n\ndef test_function1():\n    assert True\n'
-        )
+        f.write('"""Test for file1."""\nimport pytest\nfrom test_module.file1 import function1\n\ndef test_function1():\n    assert True\n')
 
     yield
 
@@ -99,9 +98,7 @@ def test_get_test_path():
     test_path = _get_test_path(source_file, TEST_DIR)
 
     # Test path should be in XDG_RUNTIME_DIR/pytest-tests/module/test_file.py
-    expected_path = os.path.join(
-        runtime_dir, "pytest-tests", "test_module", "test_file1.py"
-    )
+    expected_path = os.path.join(runtime_dir, "pytest-tests", "test_module", "test_file1.py")
     assert test_path == expected_path
 
     # Cleanup
@@ -142,9 +139,50 @@ def test_create_test_stub():
 
 
 def test_verify_test_coverage():
-    """
-    Test the verify_test_coverage function.
-    This is a simplified test that skips complex mocking.
-    """
-    # Skip this test for now until we can properly isolate it
-    pytest.skip("Skipping test_verify_test_coverage until we can isolate it properly")
+    """Test the verify_test_coverage function with proper isolation."""
+    # Create a temporary test environment
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Set up test project structure
+        src_dir = os.path.join(temp_dir, "src", "test_project")
+        os.makedirs(src_dir)
+
+        # Create source files
+        source_files = {
+            "file1.py": '"""Test file 1."""\ndef function1():\n    pass\n',
+            "file2.py": '"""Test file 2."""\ndef function2():\n    pass\n',
+            "__init__.py": '"""Init file."""\n',
+        }
+
+        for filename, content in source_files.items():
+            with open(os.path.join(src_dir, filename), "w") as f:
+                f.write(content)
+
+        # Set up XDG_RUNTIME_DIR for test file location
+        runtime_dir = "/run/user/1000"
+        os.environ["XDG_RUNTIME_DIR"] = runtime_dir
+        runtime_tests_dir = os.path.join(runtime_dir, "pytest-tests", "test_project")
+
+        # Clean up any existing test files from previous runs
+        if os.path.exists(runtime_tests_dir):
+            shutil.rmtree(runtime_tests_dir)
+        os.makedirs(runtime_tests_dir)
+
+        # Create one test file in the runtime directory
+        with open(os.path.join(runtime_tests_dir, "test_file1.py"), "w") as f:
+            f.write(
+                '"""Test for file1."""\nimport pytest\nfrom test_project.file1 import function1\n\ndef test_function1():\n    assert True\n'
+            )
+
+        # Run verify_test_coverage
+        metrics = verify_test_coverage(temp_dir)
+
+        # Verify metrics
+        assert metrics["total_source_files"] == 2  # file1.py, file2.py (excluding __init__.py)
+        assert metrics["total_test_files"] == 1  # test_file1.py
+        assert len(metrics["missing_tests"]) == 1  # file2.py
+        assert len(metrics["orphaned_tests"]) == 0
+        assert metrics["coverage_percentage"] == 50.0  # 1 out of 2 files has tests
+
+        # Clean up
+        if os.path.exists(runtime_tests_dir):
+            shutil.rmtree(runtime_tests_dir)

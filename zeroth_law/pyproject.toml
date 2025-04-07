@@ -29,6 +29,25 @@ zeroth_law = "zeroth_law.__main__:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.black]
+# Black configuration for Zeroth Law compliance
+line-length = 140  # Standard Black line length
+target-version = ['py38']  # Minimum Python version
+include = '\.pyi?$'  # Include both .py and .pyi files
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
 [tool.pytest]
 testpaths = ["tests"]
 python_files = "test_*.py"

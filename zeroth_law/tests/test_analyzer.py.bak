@@ -15,9 +15,9 @@ import os
 from zeroth_law.analyzer import (
     analyze_file,
     analyze_directory,
+    generate_footer,
     should_ignore,
 )
-from zeroth_law.reporting import generate_footer
 from zeroth_law.exceptions import FileNotFoundError, NotPythonFileError, AnalysisError
 
 # Create a temporary directory for test files
@@ -76,11 +76,15 @@ def test_should_ignore_dot_directory():
 
     # Test .old directory
     file_path = os.path.join(TEST_DIR, ".old", "old_file.py")
-    assert should_ignore(file_path, base_path, patterns), "Should ignore files in .old directory"
+    assert should_ignore(
+        file_path, base_path, patterns
+    ), "Should ignore files in .old directory"
 
     # Test non-dot directory
     file_path = os.path.join(TEST_DIR, "src", "file.py")
-    assert not should_ignore(file_path, base_path, patterns), "Should not ignore files in normal directories"
+    assert not should_ignore(
+        file_path, base_path, patterns
+    ), "Should not ignore files in normal directories"
 
 
 def test_should_ignore_cached_files():
@@ -90,7 +94,9 @@ def test_should_ignore_cached_files():
 
     # Test __pycache__ directory
     file_path = os.path.join(TEST_DIR, "__pycache__", "cached.pyc")
-    assert should_ignore(file_path, base_path, patterns), "Should ignore files in __pycache__ directory"
+    assert should_ignore(
+        file_path, base_path, patterns
+    ), "Should ignore files in __pycache__ directory"
 
     # Test .pyc file in regular directory
     file_path = os.path.join(TEST_DIR, "module.pyc")
@@ -104,10 +110,16 @@ def test_should_ignore_with_multiple_patterns():
 
     # Test various paths against multiple patterns
     assert should_ignore(os.path.join(TEST_DIR, ".old", "file.py"), base_path, patterns)
-    assert should_ignore(os.path.join(TEST_DIR, "__pycache__", "file.pyc"), base_path, patterns)
+    assert should_ignore(
+        os.path.join(TEST_DIR, "__pycache__", "file.pyc"), base_path, patterns
+    )
     assert should_ignore(os.path.join(TEST_DIR, "module.pyc"), base_path, patterns)
-    assert should_ignore(os.path.join(TEST_DIR, ".git", "objects", "file"), base_path, patterns)
-    assert not should_ignore(os.path.join(TEST_DIR, "src", "file.py"), base_path, patterns)
+    assert should_ignore(
+        os.path.join(TEST_DIR, ".git", "objects", "file"), base_path, patterns
+    )
+    assert not should_ignore(
+        os.path.join(TEST_DIR, "src", "file.py"), base_path, patterns
+    )
 
 
 def test_should_ignore_relative_paths():

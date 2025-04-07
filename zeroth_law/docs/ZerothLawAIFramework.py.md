@@ -1,7 +1,7 @@
 # Zeroth Law: AI-Driven Python Code Quality Framework
 
 **Co-Author**: Trahloc colDhart
-**Version**: 2025-03-23
+**Version**: 2025-03-31
 
 ---
 
@@ -180,6 +180,7 @@ Integrate these tools into continuous integration (CI) so any violations produce
 ```md
 project_head/
 ├── pyproject.toml
+├── .pre-commit-config.yaml
 ├── src/
 │   └── project_module/
 └── tests/
@@ -216,6 +217,8 @@ dependencies = [
 dev = [
   "pytest>=7.0",
   "black>=23.0",
+  "pydocstyle",
+  "interrogate",
 ]
 
 [project.scripts]
@@ -223,6 +226,30 @@ example_zeroth = "example_zeroth.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.interrogate]
+ignore-init-module = true
+ignore-init-method = true
+ignore-magic = false
+ignore-property = false
+length-limit = true
+line-length = 88
+fail-under = 100
+exclude = ["setup.py", "docs", "build", "dist", "**/__pycache__/**"]
+verbose = false
+quiet = false
+whitelist-regex = []
+color = true
 ```
 
 Use this centralized configuration for building, testing, and packaging. Combine it with `pre-commit` hooks that run `flake8`, `black`, `mypy`, and `pytest` to guarantee every commit meets or exceeds the Zeroth Law standards.
+
+---
+
+## 7. FIXING PYTEST IMPORT ERRORS
+
+When encountering “attempted relative import with no known parent package,” ensure:
+1. Each directory with Python modules has an `__init__.py`.
+2. Your tests run from the project root so Python recognizes the package structure.
+3. Use absolute imports if relative ones fail.
+4. Verify your virtual environment and installed dependencies match the project’s requirements.

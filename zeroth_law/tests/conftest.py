@@ -90,9 +90,7 @@ def pytest_sessionfinish(session, exitstatus):
     """
     try:
         # Get list of temporary pytest packages
-        result = subprocess.run(
-            ["pip", "list"], capture_output=True, text=True, check=True
-        )
+        result = subprocess.run(["pip", "list"], capture_output=True, text=True, check=True)
 
         # Find and uninstall temporary pytest packages
         temp_dir = str(session.config.option.basetemp)

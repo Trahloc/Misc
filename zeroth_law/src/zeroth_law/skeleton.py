@@ -1,8 +1,8 @@
 """
-# PURPOSE: Create a project skeleton following the Zeroth Law.
+# PURPOSE: Create project skeleton with default configuration.
 
 ## INTERFACES:
- - create_skeleton(directory: str, template_name: str = None): Creates project directories and files
+ - create_skeleton(project_name: str) -> None: Create project skeleton
  - list_templates(): Lists available templates
 
 ## DEPENDENCIES:
@@ -10,9 +10,10 @@
  - logging
  - importlib.metadata
  - cookiecutter.main
- - zeroth_law.config
+ - zeroth_law.utils.config
  - datetime
  - shutil
+ - typing
 """
 
 import os
@@ -24,7 +25,8 @@ from datetime import datetime
 from pathlib import Path
 from importlib import metadata
 from cookiecutter.main import cookiecutter
-from zeroth_law.config import DEFAULT_CONFIG
+from zeroth_law.utils.config import load_config
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +51,7 @@ def user_confirms_overwrite(package_name: str) -> bool:
     if _is_test_environment():
         return True
 
-    response = input(
-        f"\nWARNING: A package named '{package_name}' is already installed.\nDo you want to proceed anyway? (y/N): "
-    )
+    response = input(f"\nWARNING: A package named '{package_name}' is already installed.\nDo you want to proceed anyway? (y/N): ")
     return response.lower() == "y"
 
 
@@ -69,16 +69,64 @@ def list_templates() -> list[str]:
     return [d.name for d in templates_dir.iterdir() if d.is_dir()]
 
 
-def create_skeleton(directory: str, template_name: str = None):
-    """
-    Creates a skeleton directory structure following Zeroth Law using cookiecutter.
+def create_skeleton(project_name: str) -> None:
+    """Create project skeleton with default configuration.
 
     Args:
-        directory: The target directory to create the project in
-        template_name: Optional name of the template to use. If None, uses the default template.
+        project_name (str): Name of the project
     """
+    config = load_config()
+
+    # Create project directory
+    os.makedirs(project_name, exist_ok=True)
+
+    # Create .zeroth_law.toml with default configuration
+    with open(os.path.join(project_name, ".zeroth_law.toml"), "w") as f:
+        f.write(
+            """# Zeroth Law Configuration
+max_line_length = 100
+max_function_lines = 30
+max_cyclomatic_complexity = 10
+max_parameters = 5
+max_locals = 10
+
+# Penalty values
+missing_header_penalty = 10
+missing_footer_penalty = 5
+missing_docstring_penalty = 8
+
+# Ignore patterns
+ignore_patterns = [
+    "__pycache__",
+    ".git",
+    ".venv",
+    ".env",
+    ".idea",
+    ".vscode",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "*.so",
+    "*.egg",
+    "*.egg-info",
+    "dist",
+    "build",
+    "eggs",
+    "parts",
+    "bin",
+    "var",
+    "sdist",
+    "develop-eggs",
+    ".installed.cfg",
+    "lib",
+    "lib64",
+    "node_modules"
+]
+"""
+        )
+
     # Get package name before any file system operations
-    package_name = os.path.basename(directory)
+    package_name = os.path.basename(project_name)
 
     # Check for package conflicts before making any file system changes
     if check_package_exists(package_name):
@@ -87,11 +135,11 @@ def create_skeleton(directory: str, template_name: str = None):
             sys.exit(0)
 
     # Handle existing directory by backing it up with timestamp
-    if os.path.exists(directory):
+    if os.path.exists(project_name):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_path = f"{directory}.{timestamp}"
+        backup_path = f"{project_name}.{timestamp}"
         logger.info("Backing up existing directory to: %s", backup_path)
-        shutil.move(directory, backup_path)
+        shutil.move(project_name, backup_path)
 
     # Get the path to the cookiecutter template directory
     templates_dir = Path(__file__).parent / "templates"
@@ -102,19 +150,14 @@ def create_skeleton(directory: str, template_name: str = None):
         if old_template.exists():
             old_template.rename(templates_dir / "default")
 
-    if template_name is None:
-        template_name = "default"
+    template_name = "default"
 
     template_dir = templates_dir / template_name
     if not template_dir.exists():
         available = list_templates()
         if not available:
-            raise FileNotFoundError(
-                "No templates found. Use --template-from to create one first."
-            )
-        raise FileNotFoundError(
-            f"Template '{template_name}' not found. Available templates: {', '.join(available)}"
-        )
+            raise FileNotFoundError("No templates found. Use --template-from to create one first.")
+        raise FileNotFoundError(f"Template '{template_name}' not found. Available templates: {', '.join(available)}")
 
     # Create context with variables for the template
     context = {
@@ -122,26 +165,26 @@ def create_skeleton(directory: str, template_name: str = None):
         "project_short_description": "A Python project using the Zeroth Law framework",
         "author_name": "Zeroth Law Developer",
         "author_email": "developer@example.com",
-        "default_config": DEFAULT_CONFIG,
+        "default_config": config,
     }
 
     # Use cookiecutter to create project from template
-    logger.info("Creating Zeroth Law skeleton in: %s", directory)
+    logger.info("Creating Zeroth Law skeleton in: %s", project_name)
     cookiecutter(
         str(template_dir),
         extra_context=context,
         no_input=True,
-        output_dir=os.path.dirname(os.path.abspath(directory)),
+        output_dir=os.path.dirname(os.path.abspath(project_name)),
     )
 
-    logger.info("Created Zeroth Law skeleton in: %s", directory)
+    logger.info("Created Zeroth Law skeleton in: %s", project_name)
 
     # Install the package in development mode
     logger.info("Installing package in development mode...")
     try:
         subprocess.run(
             ["pip", "install", "-e", "."],
-            cwd=directory,
+            cwd=project_name,
             check=True,
             capture_output=True,
             text=True,

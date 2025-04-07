@@ -1,58 +1,25 @@
-max_executable_lines = 300
-max_function_lines = 30
-max_cyclomatic_complexity = 8
-max_parameters = 4
-missing_header_penalty = 20
-missing_footer_penalty = 10
-missing_docstring_penalty = 2
+# Core configuration values
+max_executable_lines = 300      # Maximum number of executable lines allowed in a single file
+max_function_lines = 30         # Maximum number of lines allowed in a single function
+max_cyclomatic_complexity = 8   # Maximum cyclomatic complexity (number of independent paths) allowed in a function
+max_parameters = 4              # Maximum number of parameters allowed in a function
+max_line_length = 140           # Maximum number of characters allowed in a single line
+max_locals = 15                 # Maximum number of local variables allowed in a function
 
+# Penalty values
+missing_header_penalty = 20     # Points deducted when a file is missing its header documentation
+missing_footer_penalty = 10     # Points deducted when a file is missing its footer documentation
+missing_docstring_penalty = 2   # Points deducted when a function is missing its docstring
+
+# Ignore patterns - files and directories that should be excluded from analysis
 ignore_patterns = [
-    "**/*.log", # ignore log files
-    "**/*.tmp", # ignore temp files
-    "**/.DS_Store", # ignore macOS store file
-    "**/.backup/**", # ignore backups
-    "**/.cache/**", # ignore caches
-    "**/.coverage", # ignore coverage file
-    "**/.egg-info/**", # ignore Python egg info
-    "**/.eggs/**", # ignore Python egg folders
-    "**/.env", # ignore environment file
-    "**/.env.*", # ignore environment files
-    "**/.env.development", # ignore environment config
-    "**/.env.example", # ignore example environment
-    "**/.env.local", # ignore local environment
-    "**/.env.production", # ignore production environment
-    "**/.env.sample", # ignore sample environment
-    "**/.env.test", # ignore test environment
-    "**/.envrc", # ignore environment config
-    "**/.envrc.development", # ignore dev environment config
-    "**/.envrc.example", # ignore example environment config
-    "**/.envrc.local", # ignore local environment config
-    "**/.envrc.production", # ignore production environment config
-    "**/.envrc.sample", # ignore sample environment config
-    "**/.envrc.test", # ignore test environment config
-    "**/.git/**", # ignore Git repository data
-    "**/.gitignore", # ignore Git ignore file
-    "**/.gitlab-ci.yml", # ignore GitLab CI config
-    "**/.idea/**", # ignore IDE config
-    "**/.idea/**", # ignore IDE config (duplicate)
-    "**/.ipynb_checkpoints/**", # ignore Jupyter checkpoints
-    "**/.mypy_cache/**", # ignore mypy cache
-    "**/.old/**", # ignore old files
-    "**/.pytest_cache/**", # ignore pytest cache
-    "**/.tox/**", # ignore tox environment
-    "**/.venv/**", # ignore Python venv
-    "**/.vscode/**", # ignore VSCode config
-    "**/__pycache__/**", # ignore Python caches
-    "**/build/**", # ignore build outputs
-    "**/dist/**", # ignore distribution outputs
-    "**/docs/_build/**", # ignore docs build
-    "**/htmlcov/**", # ignore coverage HTML
-    "**/node_modules/**", # ignore Node modules
-    "**/out/**", # ignore output folder
-    "**/public/**", # ignore public folder
-    "**/target/**", # ignore build target
-    "**/venv/**", # ignore Python virtualenv
-    "**/*.pyc", # ignore Python bytecode
-    "**/templates/**/*.py",  # Add this to ignore template files
-    "**/{{cookiecutter.*}}/**"  # Add this to ignore cookiecutter template paths
+    "**/__pycache__/**",        # Python bytecode cache directories
+    "**/.git/**",               # Git version control directories
+    "**/.venv/**",              # Python virtual environment directories
+    "**/venv/**",               # Alternative virtual environment directories
+    "**/*.pyc",                 # Python compiled bytecode files
+    "**/.pytest_cache/**",      # Pytest cache directories
+    "**/.coverage",             # Coverage.py data files
+    "**/htmlcov/**",            # Coverage HTML report directories
+    ".*\\.egg-info.*"           # Python package metadata directories
 ]
