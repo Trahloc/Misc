@@ -66,26 +66,50 @@ class ComplexityVisitor(ast.NodeVisitor):
         """Initialize complexity counter for the function being visited."""
         self.complexity = 1  # Start with a base complexity of 1 for the function entry
 
-    def visit_If(self: typing.Self, node: ast.If | ast.AsyncFor | ast.For | ast.While | ast.ExceptHandler | ast.With) -> None:  # noqa: N802
-        """Increment complexity for control flow branching statements."""
+    def visit_FunctionDef(self: typing.Self, node: ast.FunctionDef) -> None:  # noqa: N802
+        """Visit FunctionDef node."""
+        self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self: typing.Self, node: ast.AsyncFunctionDef) -> None:  # noqa: N802
+        """Visit AsyncFunctionDef node."""
+        self.generic_visit(node)
+
+    # Separate methods for different control flow/branching nodes
+    def visit_If(self: typing.Self, node: ast.If) -> None:  # noqa: N802
+        """Visit If node."""
         self.complexity += 1
-        # Also visit children to catch nested complexity
+        self.generic_visit(node)
+
+    def visit_For(self: typing.Self, node: ast.For | ast.AsyncFor) -> None:  # noqa: N802
+        """Visit For or AsyncFor node."""
+        self.complexity += 1
+        self.generic_visit(node)
+
+    def visit_While(self: typing.Self, node: ast.While) -> None:  # noqa: N802
+        """Visit While node."""
+        self.complexity += 1
+        self.generic_visit(node)
+
+    def visit_ExceptHandler(self: typing.Self, node: ast.ExceptHandler) -> None:  # noqa: N802
+        """Visit ExceptHandler node."""
+        self.generic_visit(node)
+
+    def visit_With(self: typing.Self, node: ast.With | ast.AsyncWith) -> None:  # noqa: N802
+        """Visit With or AsyncWith node."""
         self.generic_visit(node)
 
     def visit_Assert(self: typing.Self, node: ast.Assert) -> None:  # noqa: N802
-        """Increment complexity for assert statements."""
+        """Visit Assert node."""
         self.complexity += 1
         self.generic_visit(node)
 
     def visit_Try(self: typing.Self, node: ast.Try) -> None:  # noqa: N802
-        """Increment complexity for each `except` block."""
-        # The try block itself doesn't add complexity, but each handler does
+        """Visit Try node."""
         self.complexity += len(node.handlers)
-        self.generic_visit(node)
+        self.generic_visit(node)  # Also visit children
 
     def visit_BoolOp(self: typing.Self, node: ast.BoolOp) -> None:  # noqa: N802
-        """Increment complexity for each 'and'/'or' operator."""
-        # Each operator (and/or) after the first one adds a path
+        """Visit BoolOp node."""
         if isinstance(node.op, ast.And | ast.Or):
             self.complexity += len(node.values) - 1
         self.generic_visit(node)
