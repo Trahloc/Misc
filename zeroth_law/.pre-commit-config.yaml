@@ -1,1 +1,55 @@
-/home/trahloc/code/.pre-commit-config.yaml
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      # Optional: Hook to ensure requirements*.txt stay synced with pyproject.toml/poetry.lock
+      # Requires a script/Makefile target `make generate-reqs-check` or similar
+      # that generates & diffs, fails on diff.
+      # - id: run-make-generate-reqs-check # Custom hook name
+      #   name: Check requirements*.txt sync
+      #   entry: make generate-reqs-check
+      #   language: system
+      #   files: ^pyproject.toml$|^poetry.lock$ # Trigger on relevant changes
+      #   pass_filenames: false
+      #   stages: [commit] # Run on commit, not push
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.4.10
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      # Run the formatter.
+      - id: ruff-format
+        args: []
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0 # Use the same version as in pyproject.toml
+    hooks:
+      - id: mypy
+        args: [--strict]
+        additional_dependencies: [
+          types-setuptools, # Example from pyproject.toml
+          ]
+
+# Pylint - Exclusively for Similarity Checks (R0801)
+-   repo: https://github.com/pycqa/pylint
+    rev: v3.1.0 # Pin to match project version
+    hooks:
+      - id: pylint
+        name: pylint (similarities only)
+        files: ^(src|tests)/.*\.py$
+        language: python
+
+# Optional: Add commitlint if you set it up
+# -   repo: https://github.com/conventional-changelog/commitlint
+#     rev: v18.6.0 # Check for latest version
+#     hooks:
+#       - id: commitlint
+#         stages: [commit-msg]
+#         additional_dependencies: ['@commitlint/config-conventional']

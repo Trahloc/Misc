@@ -1,0 +1,11 @@
+# /home/trahloc/code/Misc/.pre-commit-config.yaml
+# Minimal root configuration to prevent project-specific configs from running repo-wide.
+
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0 # Use a recent, stable version
+    hooks:
+      - id: check-yaml         # Checks yaml files for parseable syntax.
+      - id: check-toml         # Checks toml files for parseable syntax.
+      - id: end-of-file-fixer  # Ensures files end in a newline.
+      - id: trailing-whitespace # Trims trailing whitespace.
