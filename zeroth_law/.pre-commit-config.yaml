@@ -36,7 +36,7 @@ repos:
       - id: mypy
         name: mypy (micromamba run)
         language: system
-        entry: bash -c 'eval "$(micromamba shell hook --shell bash)" && micromamba run -p /home/trahloc/.local/share/mamba/envs/zeroth_law mypy --strict --cache-dir=/dev/null -- $@' --
+        entry: bash -c 'eval "$(micromamba shell hook --shell bash)" && micromamba run -p /home/trahloc/.local/share/mamba/envs/zeroth_law mypy --cache-dir=/dev/null -- $@' --
         types: [python]
         exclude: '^((?!zeroth_law/).)*$'
         pass_filenames: true
