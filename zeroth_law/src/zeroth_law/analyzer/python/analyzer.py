@@ -543,42 +543,88 @@ def _count_executable_lines(content: str) -> int:
     return count
 
 
-def analyze_line_counts(file_path: str | Path, max_executable_lines_threshold: int) -> list[LineCountViolation]:
-    """Analyzes a Python file for excessive executable lines.
+def analyze_line_counts(file_path: str | Path, max_exec_lines: int) -> list[LineCountViolation]:
+    """Analyzes a Python file for total executable line count.
 
     PURPOSE:
-      Counts the number of executable lines in a file (excluding comments,
-      blank lines, and docstrings) and returns a violation if it exceeds
-      the specified threshold.
+      Counts executable lines (excluding blank lines, comments, and docstrings)
+      and checks if the total exceeds the threshold.
 
     PARAMS:
       file_path (str | Path): Path to the Python file to analyze.
-      max_executable_lines_threshold (int): The maximum allowed number of executable lines.
+      max_exec_lines (int): The maximum allowed number of executable lines.
 
     Returns
     -------
-      list[LineCountViolation]: A list containing at most one tuple:
-                                ("max_executable_lines", 1, count) if threshold is exceeded.
-
-    EXCEPTIONS:
-      FileNotFoundError: If file_path does not exist.
+      list[LineCountViolation]: List containing violation if threshold exceeded.
+                                 e.g., [("max_executable_lines", 1, count)]
 
     """
     violations: list[LineCountViolation] = []
-    path = Path(file_path)
+    executable_line_count = 0
+    in_docstring_fallback = False
+    docstring_quotes_fallback = None
+
     try:
+        path = Path(file_path)
         content = path.read_text(encoding="utf-8")
-    except FileNotFoundError as err:
-        msg = f"File not found for analysis: {file_path}"
-        raise FileNotFoundError(msg) from err
-    # Don't parse AST here, rely on line-based analysis for now
+        lines = content.splitlines()
+        # Get line numbers occupied by docstrings recognized by AST
+        ast_docstring_lines = _get_ast_docstring_lines(content)
 
-    executable_lines = _count_executable_lines(content)
+        for i, line in enumerate(lines):
+            line_num = i + 1
+            stripped_line = line.strip()
 
-    if executable_lines > max_executable_lines_threshold:
-        violations.append(("max_executable_lines", 1, executable_lines))
+            # Skip blank lines
+            if not stripped_line:
+                continue
+
+            # Skip full-line comments
+            if stripped_line.startswith("#"):
+                continue
+
+            # Skip lines identified as AST docstrings
+            if line_num in ast_docstring_lines:
+                continue
+
+            # Fallback for triple-quoted strings not caught by AST (e.g., SyntaxError)
+            # NOTE: This fallback is complex and might be imperfect.
+            # Re-evaluate if this complexity is truly needed or if relying
+            # solely on AST check + simple comment check is sufficient.
+            (
+                in_docstring_fallback,
+                docstring_quotes_fallback,
+                should_count_line,
+            ) = _handle_triple_quotes_fallback(
+                line_num,
+                stripped_line,
+                (in_docstring_fallback, docstring_quotes_fallback),
+                ast_docstring_lines,
+            )
+
+            if should_count_line:
+                executable_line_count += 1
+            # Handle case where AST parsing failed but we detect start/end
+            # elif not ast_docstring_lines and not should_count_line:
+            # If AST failed, and fallback says don't count (because it thinks
+            # it's a docstring start/end line), then we skip.
+            #     pass
+
+        if executable_line_count > max_exec_lines:
+            violations.append(("max_executable_lines", 1, executable_line_count))
+
+    except FileNotFoundError:
+        violations.append(("FILE_NOT_FOUND", 1, 0))
+    except OSError as e:
+        violations.append((f"LINE_COUNT_OS_ERROR: {e}", 1, 0))
+    # Ignore SyntaxError for line counting, try to count what we can
 
     return violations
+
+
+# --- Main Analyzer Orchestration (Placeholder) ---
+# TODO: Create a main function/class that takes config and runs all checks.
 
 
 # ----------------------------------------------------------------------------

@@ -6,6 +6,7 @@ from pathlib import Path
 # Updated import for new structure
 from src.zeroth_law.analyzer.python.analyzer import (
     analyze_complexity,
+    analyze_line_counts,
     analyze_parameters,
     analyze_statements,
     check_footer_compliance,
@@ -173,3 +174,40 @@ def test_too_many_statements(tmp_path: Path) -> None:
 # TODO: Add statement test for nested functions (should only count outer).
 # TODO: Add statement test for function with only a docstring (count should be 0).
 # TODO: Add statement test for function with pass (count should be 1).
+
+
+def test_too_many_executable_lines(tmp_path: Path) -> None:
+    """Verify detection of a file with too many executable lines."""
+    # Arrange
+    # Executable lines: import, x=1, y=2, print(x), return y = 5 lines
+    code = (
+        "# FILE: exec_lines.py\n"
+        '"""Module docstring."""\n'
+        "# A comment\n"
+        "import os             # Executable 1\n"
+        "\n"
+        "def func():\n"
+        "    # Another comment\n"
+        "    x = 1             # Executable 2\n"
+        "    y = 2             # Executable 3\n"
+        "\n"
+        "    print(x)          # Executable 4\n"
+        "    return y          # Executable 5\n"
+        "\n"
+        "# Final comment\n"
+        # No footer to avoid parsing issues
+    )
+    py_file = tmp_path / "exec_lines.py"
+    py_file.write_text(code, encoding="utf-8")
+
+    # Act
+    threshold = 4  # Max allowed executable lines
+    violations = analyze_line_counts(py_file, threshold)
+
+    # Assert
+    expected = [("max_executable_lines", 1, 6)]  # type, line (file level=1), count (def counts)
+    assert violations == expected
+    # pytest.fail("Test not implemented yet, analyze_line_counts needs to be called.")
+
+
+# TODO: Add executable line test for files with different comment/blank line densities.
