@@ -24,7 +24,7 @@ repos:
       # Run the linter.
       - id: ruff
         exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [--fix]
       # Run the formatter.
       - id: ruff-format
         exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
