@@ -6,6 +6,7 @@ from pathlib import Path
 # Updated import for new structure
 from src.zeroth_law.analyzer.python.analyzer import (
     analyze_complexity,
+    analyze_parameters,
     check_footer_compliance,
     check_header_compliance,
 )
@@ -100,3 +101,35 @@ def test_high_cyclomatic_complexity(tmp_path: Path) -> None:
 # TODO: Add complexity test for function just at the threshold.
 # TODO: Add complexity test for async function.
 # TODO: Add complexity test for file with multiple functions, some complex, some not.
+
+
+def test_too_many_parameters(tmp_path: Path) -> None:
+    """Verify detection of too many parameters."""
+    # Arrange
+    code = (
+        "# FILE: params.py\n"
+        '"""Module docstring."""\n'
+        "def func_many_params(p1, p2, p3, p4, p5, p6):\n"
+        "    pass\n"
+        "\n"
+        "def func_ok_params(p1, p2, p3):\n"
+        "    pass\n"
+        # Remove footer section entirely
+        # "\n"
+        # "## ZEROTH LAW COMPLIANCE:\n"
+        # '"""\n\n' # Minimal valid footer
+    )
+    py_file = tmp_path / "params.py"
+    py_file.write_text(code, encoding="utf-8")
+
+    # Act
+    threshold = 5  # Max allowed parameters
+    violations = analyze_parameters(py_file, threshold)
+
+    # Assert
+    expected = [("func_many_params", 3, 6)]
+    assert violations == expected
+    # pytest.fail("Test not implemented yet, analyze_parameters needs to be called.")
+
+
+# TODO: Add parameter test for methods (ignoring self/cls).
