@@ -129,6 +129,7 @@ line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.13"
+mypy_path = "src" # Tell mypy where to find source modules
 strict = true
 warn_unused_configs = true
 exclude = ["venv", ".venv", "build", "dist", "docs", "environment.yml"]
