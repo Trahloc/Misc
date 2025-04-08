@@ -40,6 +40,7 @@ repos:
         # to place cache according to XDG standard (Principle #12)
         additional_dependencies: [
           types-setuptools, # Example from pyproject.toml
+          pytest, # Add pytest itself
           ]
 
 # Pylint - Exclusively for Similarity Checks (R0801)

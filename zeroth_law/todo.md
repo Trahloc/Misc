@@ -25,11 +25,21 @@
 - [x] 9. Write Failing Test (Red)
 - [x] 10. Implement Minimal Code (Green)
 - [x] 11. Refactor
-- [ ] 12. Commit (using Conventional Commits)
+- [x] 12. Commit (using Conventional Commits)
 
 ## Phase 3: Iterative Development & Refinement
 
 - [ ] 13. Repeat TDD Cycle for subsequent features
+  - [x] 8a. Identify Next Feature (Informed by Legacy) - Find Python files to analyze.
+  - [x] 9a. Write Failing Test (Red)
+  - [x] 10a. Implement Minimal Code (Green)
+  - [x] 11a. Refactor
+  - [x] 12a. Commit (using Conventional Commits)
+  - [x] 8b. Identify Next Feature - Analyze AST for missing public function docstrings (D103).
+  - [x] 9b. Write Failing Test (Red)
+  - [x] 10b. Implement Minimal Code (Green)
+  - [x] 11b. Refactor
+  - [ ] 12b. Commit
 - [ ] 14. Continuously Integrate Tooling (`ruff`, `mypy`, `pylint`, `pytest --cov`)
 - [ ] 15. Set up CI (`.github/workflows/ci.yml`)
 - [ ] 16. Final Documentation & Review:
