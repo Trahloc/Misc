@@ -43,6 +43,10 @@ echo "" >> "${OUTPUT_FILE}"
 # Use --no-config and --ignore-case=false for consistent results if needed
 "${RG_PATH}" --no-heading --line-number --glob '*.py' '# TODO:' "${SEARCH_DIRS[@]}" > "${TMP_RG_OUT}" || echo "Warning: rg found no TODOs or failed. Exit code: $?"
 
+# Step 1.5: Sort the temporary file alphabetically by path:line
+# echo "DEBUG: Sorting ${TMP_RG_OUT}"
+sort "${TMP_RG_OUT}" -o "${TMP_RG_OUT}"
+
 # Step 2: Process temp file with awk for formatted table and append to final output
 # echo "DEBUG: Running awk on ${TMP_RG_OUT}, appending formatted table to ${OUTPUT_FILE}"
 if [ -s "${TMP_RG_OUT}" ]; then # Check if temp file is not empty
