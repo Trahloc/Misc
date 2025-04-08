@@ -3,9 +3,7 @@
 from pathlib import Path
 
 import pytest
-
-from zeroth_law.analyzer import analyze_docstrings
-
+from zeroth_law.analyzer import analyze_docstrings, analyze_header_footer
 
 # from zeroth_law.analyzer import analyze_docstrings # To be created
 
@@ -56,6 +54,22 @@ def test_find_missing_public_function_docstrings(tmp_path: Path, sample_python_c
 
     # Assert
     assert sorted(actual_missing) == sorted(expected_missing)
+
+
+def test_missing_header(tmp_path: Path) -> None:
+    """Verify detection of a missing header (module docstring)."""
+    # Arrange
+    code_without_header = "import os\n\ndef func():\n    pass\n"
+    file_path = tmp_path / "no_header.py"
+    file_path.write_text(code_without_header, encoding="utf-8")
+
+    expected_issues = [("missing_header", 1)]  # Issue type and line number
+
+    # Act
+    actual_issues = analyze_header_footer(file_path)
+
+    # Assert
+    assert actual_issues == expected_issues
 
 
 # Next steps: Add tests for empty files, syntax errors, nested functions/classes
