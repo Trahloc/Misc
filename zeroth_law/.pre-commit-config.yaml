@@ -64,3 +64,16 @@ repos:
 #       - id: commitlint
 #         stages: [commit-msg]
 #         additional_dependencies: ['@commitlint/config-conventional']
+
+# Local hook to generate the CODE_TODOS.md dashboard
+-   repo: local
+    hooks:
+      - id: generate-todos
+        name: Generate CODE_TODOS.md
+        entry: zeroth_law/scripts/generate_code_todos.sh # Clean relative path from Git root
+        language: system # Use system to inherit user PATH more reliably
+        pass_filenames: false
+        always_run: true # Run even if no Python files were staged (ensures dashboard is current)
+        verbose: true # Show output if the script prints anything (e.g., errors)
+        # Note: This hook won't fail the commit even if the script exits non-zero
+        # because we don't need the dashboard generation to block commits.
