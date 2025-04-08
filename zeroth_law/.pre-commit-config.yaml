@@ -31,16 +31,15 @@ repos:
         args: []
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0 # Use the same version as in pyproject.toml
+    rev: v1.9.0
     hooks:
       - id: mypy
-        name: mypy (conda run)
-        language: system # Tell pre-commit not to create an env
-        entry: conda run -n zeroth_law mypy --strict --cache-dir=/dev/null
-        types: [python] # Explicitly specify file types
-        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
-        pass_filenames: true # Ensure filenames are passed correctly
-        # additional_dependencies: [...] # Not needed with language: system
+        name: mypy (micromamba run)
+        language: system
+        entry: bash -c 'eval "$(micromamba shell hook --shell bash)" && micromamba run -p /home/trahloc/micromamba/envs/zeroth_law mypy --strict --cache-dir=/dev/null -- $@' --
+        types: [python]
+        exclude: '^((?!zeroth_law/).)*$'
+        pass_filenames: true
 
 # Pylint - Exclusively for Similarity Checks (R0801)
 -   repo: https://github.com/pycqa/pylint
