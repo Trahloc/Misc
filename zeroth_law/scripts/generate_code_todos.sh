@@ -47,11 +47,12 @@ echo "-------|------|--------------" >> "${OUTPUT_FILE}"
 # Step 2: Process temp file with awk and append to final output
 # echo "DEBUG: Running awk on ${TMP_RG_OUT}, appending to ${OUTPUT_FILE}"
 if [ -s "${TMP_RG_OUT}" ]; then # Check if temp file is not empty
-    # Use awk to extract comment text and remove project subdir prefix from path
-    awk -F':' -v proj_subdir="${PROJECT_SUBDIR}/" \
+    # Pass GIT_ROOT and PROJECT_SUBDIR to awk to remove the correct prefix
+    awk -F':' -v git_root="${GIT_ROOT}/" -v proj_subdir="${PROJECT_SUBDIR}/" \
     '{
         path = $1;
-        sub(proj_subdir, "", path); # Remove project subdir prefix
+        prefix_to_remove = git_root proj_subdir; # Construct full prefix
+        sub(prefix_to_remove, "", path); # Remove the full prefix
         comment = substr($0, index($0, "# TODO:") + length("# TODO:"));
         sub(/^[ \t]+/, "", comment); # Remove leading space from comment
         printf "| %s | %s | %s |\n", path, $2, comment
