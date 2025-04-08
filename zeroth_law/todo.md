@@ -59,8 +59,23 @@
   - [ ] 8e. Identify Next Feature - Check Cyclomatic Complexity
   - [ ] 9e. Write Failing Test (Red)
   - [ ] 10e. Implement Minimal Code (Green)
-  - [ ] 11e. Refactor
-  - [ ] 12e. Commit
+  - [x] 11e. Refactor
+  - [x] 12e. Commit
+  - [ ] 8f. Identify Next Feature - Check Max Parameters per Function
+  - [ ] 9f. Write Failing Test (Red)
+  - [ ] 10f. Implement Minimal Code (Green)
+  - [x] 11f. Refactor
+  - [x] 12f. Commit
+  - [ ] 8g. Identify Next Feature - Check Max Statements per Function
+  - [ ] 9g. Write Failing Test (Red)
+  - [ ] 10g. Implement Minimal Code (Green)
+  - [x] 11g. Refactor
+  - [x] 12g. Commit
+  - [ ] 8h. Identify Next Feature - Check Max Executable Lines per File
+  - [ ] 9h. Write Failing Test (Red)
+  - [ ] 10h. Implement Minimal Code (Green)
+  - [ ] 11h. Refactor
+  - [ ] 12h. Commit
 - [ ] 14. Continuously Integrate Tooling (`ruff`, `mypy`, `pylint`, `pytest --cov`)
 - [ ] 15. Set up CI (`.github/workflows/ci.yml`)
 - [ ] 16. Final Documentation & Review:

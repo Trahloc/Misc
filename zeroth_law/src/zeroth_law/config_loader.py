@@ -10,9 +10,8 @@ Notes
 
 """
 
-from pathlib import Path
 import tomllib  # Use built-in tomllib (available in Python 3.11+)
-
+from pathlib import Path
 
 # ----------------------------------------------------------------------------
 # IMPLEMENTATION
