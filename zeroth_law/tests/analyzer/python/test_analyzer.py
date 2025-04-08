@@ -7,6 +7,7 @@ from pathlib import Path
 from src.zeroth_law.analyzer.python.analyzer import (
     analyze_complexity,
     analyze_parameters,
+    analyze_statements,
     check_footer_compliance,
     check_header_compliance,
 )
@@ -133,3 +134,42 @@ def test_too_many_parameters(tmp_path: Path) -> None:
 
 
 # TODO: Add parameter test for methods (ignoring self/cls).
+
+# TODO: Add parameter test for functions with pos-only and kw-only args.
+
+
+def test_too_many_statements(tmp_path: Path) -> None:
+    """Verify detection of a function with too many statements."""
+    # Arrange
+    code = (
+        "# FILE: statements.py\n"
+        '"""Module docstring."""\n'
+        "def func_many_statements():\n"
+        "    x = 1 # stmt 1\n"
+        "    y = 2 # stmt 2\n"
+        "    z = 3 # stmt 3\n"
+        "    a = 4 # stmt 4\n"
+        "    b = 5 # stmt 5\n"
+        "    print(x+y+z+a+b) # stmt 6\n"
+        "\n"
+        "def func_ok_statements():\n"
+        "    x = 1\n"
+        "    print(x)\n"
+        # No footer to avoid parsing issues
+    )
+    py_file = tmp_path / "statements.py"
+    py_file.write_text(code, encoding="utf-8")
+
+    # Act
+    threshold = 5  # Max allowed statements
+    violations = analyze_statements(py_file, threshold)
+
+    # Assert
+    expected = [("func_many_statements", 3, 6)]  # name, line, count
+    assert violations == expected
+    # pytest.fail("Test not implemented yet, analyze_statements needs to be called.")
+
+
+# TODO: Add statement test for nested functions (should only count outer).
+# TODO: Add statement test for function with only a docstring (count should be 0).
+# TODO: Add statement test for function with pass (count should be 1).
