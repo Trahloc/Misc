@@ -47,7 +47,7 @@ echo "DEBUG: Running rg, searching ${SEARCH_DIRS[*]}, outputting to ${TMP_RG_OUT
 # Step 2: Process temp file with awk and append to final output
 echo "DEBUG: Running awk on ${TMP_RG_OUT}, appending to ${OUTPUT_FILE}"
 if [ -s "${TMP_RG_OUT}" ]; then # Check if temp file is not empty
-    awk -F':' '{gsub(/^[ \t]+|# TODO:[ \t]*/, "", $3); printf "| %s | %s | %s |\n", $1, $2, $3}' "${TMP_RG_OUT}" >> "${OUTPUT_FILE}" || echo "awk command failed! Exit code: $?"
+    awk -F':' '{ comment = substr($0, index($0, "# TODO:") + length("# TODO:")); sub(/^[ \t]+/, "", comment); printf "| %s | %s | %s |\\n", $1, $2, comment }' "${TMP_RG_OUT}" >> "${OUTPUT_FILE}" || echo "awk command failed! Exit code: $?"
 else
     echo "DEBUG: Temp file ${TMP_RG_OUT} is empty or non-existent, skipping awk."
 fi
