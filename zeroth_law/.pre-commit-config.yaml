@@ -36,7 +36,7 @@ repos:
       - id: mypy
         name: mypy (micromamba run)
         language: system
-        entry: bash -c 'eval "$(micromamba shell hook --shell bash)" && micromamba run -p /home/trahloc/.local/share/mamba/envs/zeroth_law mypy --cache-dir=/dev/null $@' --
+        entry: bash -c 'eval "$(micromamba shell hook --shell bash)" && micromamba run -n zeroth_law mypy --cache-dir=/dev/null $@' --
         types: [python]
         exclude: '^((?!zeroth_law/).)*$'
         pass_filenames: true
@@ -70,8 +70,9 @@ repos:
     hooks:
       - id: generate-todos
         name: Generate CODE_TODOS.md
-        entry: zeroth_law/scripts/generate_code_todos.sh # Clean relative path from Git root
-        language: system # Use system to inherit user PATH more reliably
+        # Script is now CWD-aware, revert entry to simple path
+        entry: zeroth_law/scripts/generate_code_todos.sh
+        language: system
         pass_filenames: false
         always_run: true # Run even if no Python files were staged (ensures dashboard is current)
         verbose: true # Show output if the script prints anything (e.g., errors)
