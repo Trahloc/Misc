@@ -36,13 +36,14 @@ repos:
       - id: mypy
         exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
         args: [--strict]
-        # Relies on MYPY_CACHE_DIR environment variable being set correctly
-        # to place cache according to XDG standard (Principle #12)
+        # Explicitly tell mypy where the source root is via MYPYPATH
+        # This often works better with src-layouts in pre-commit isolation
         additional_dependencies: [
+        # Removed "." and "poetry-core" for now - Adding back
           ".", # Install the local package
           "poetry-core>=1.0.0", # Ensure build backend is available
-          types-setuptools, # Example from pyproject.toml
-          pytest, # Add pytest itself
+          types-setuptools,
+          pytest,
           ]
 
 # Pylint - Exclusively for Similarity Checks (R0801)
