@@ -244,3 +244,47 @@ def test_missing_test_file_fails(tmp_path: Path) -> None:
 
 # TODO: Add test case where source file exists AND test file exists.
 # TODO: Add test case for source files that should be ignored (e.g., __init__.py).
+
+
+def test_existing_test_file_passes(tmp_path: Path) -> None:
+    """Verify no violation when a test file exists for a source file."""
+    # Arrange
+    # Create a dummy source file structure
+    src_dir = tmp_path / "src" / "zeroth_law" / "module"
+    src_dir.mkdir(parents=True)
+    src_file = src_dir / "existing_source.py"
+    src_file.write_text('# FILE: existing_source.py\n""Docstring."""\ndef func(): pass\n', encoding="utf-8")
+
+    # Create the corresponding test file
+    test_dir = tmp_path / "tests" / "module"
+    test_dir.mkdir(parents=True)
+    test_file = test_dir / "test_existing_source.py"
+    test_file.write_text("# Test file content\n", encoding="utf-8")
+
+    # Act
+    violations = check_test_file_existence(tmp_path / "src", tmp_path / "tests")
+
+    # Assert
+    assert not violations  # Expect an empty list for no violations
+
+
+def test_ignores_init_py(tmp_path: Path) -> None:
+    """Verify that __init__.py files are ignored and don't cause violations."""
+    # Arrange
+    # Create a dummy source __init__.py
+    src_dir = tmp_path / "src" / "zeroth_law" / "module_with_init"
+    src_dir.mkdir(parents=True)
+    init_file = src_dir / "__init__.py"
+    init_file.write_text("# I am __init__.py\n", encoding="utf-8")
+
+    # Ensure the corresponding test directory exists, but no test__init__.py
+    test_dir = tmp_path / "tests" / "module_with_init"
+    test_dir.mkdir(parents=True)
+    # We explicitly DO NOT expect a tests/module_with_init/test___init__.py
+
+    # Act
+    violations = check_test_file_existence(tmp_path / "src", tmp_path / "tests")
+
+    # Assert
+    # We expect no violations because the only source file is __init__.py, which should be ignored.
+    assert not violations
