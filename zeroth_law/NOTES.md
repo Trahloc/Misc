@@ -27,4 +27,4 @@
     *   Commit proceeds smoothly unless other hooks (like `ruff check --fix` finding unfixable errors, or `mypy`) fail.
     *   The pre-commit hook acts as a crucial *safety net* for cases where Format-on-Save might have been missed, but it's no longer the primary source of formatting *friction*.
 
-**Conclusion:** This approach respects the Zeroth Law constraint of guaranteed formatting (via the pre-commit hook) while significantly improving the developer workflow smoothness by leveraging IDE automation. 
+**Conclusion:** This approach respects the Zeroth Law constraint of guaranteed formatting (via the pre-commit hook) while significantly improving the developer workflow smoothness by leveraging IDE automation.
