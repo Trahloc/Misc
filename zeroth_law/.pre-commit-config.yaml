@@ -34,17 +34,10 @@ repos:
     rev: v1.9.0 # Use the same version as in pyproject.toml
     hooks:
       - id: mypy
+        language: system # Use the existing conda environment
         exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
         args: [--strict]
-        # Explicitly tell mypy where the source root is via MYPYPATH
-        # This often works better with src-layouts in pre-commit isolation
-        additional_dependencies: [
-        # Removed "." and "poetry-core" for now - Adding back
-          ".", # Install the local package
-          "poetry-core>=1.0.0", # Ensure build backend is available
-          types-setuptools,
-          pytest,
-          ]
+        # additional_dependencies: [...] # Not needed with language: system
 
 # Pylint - Exclusively for Similarity Checks (R0801)
 -   repo: https://github.com/pycqa/pylint
