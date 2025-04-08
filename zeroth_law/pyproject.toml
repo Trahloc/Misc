@@ -49,8 +49,6 @@ fix = true
 # Display violations that are fixable even if `fix` is disabled.
 show-fixes = true
 # Select all rules by default.
-select = ["ALL"]
-# Always autofix, but exclude temporarily disabling styles fixes (`Q`).
 # fixable = ["ALL"]
 # Explicitly configure deviates from the defaults.
 # extend-fixable = ["B", "RUF100"]
@@ -94,22 +92,30 @@ exclude = [
 ]
 
 [tool.ruff.lint]
+# Select all rules by default.
+select = ["ALL"]
+
 # Allow unused variables in test files (Example, add more specific ignores below)
 # TODO: Add test directory once it exists
 # per-file-ignores."tests/*" = ["F841"]
 
 # Ignore specific rules globally
-ignore = ["ERA001"] # Ignore commented-out code rule (needed for # FILE: comments)
+ignore = [
+    "ERA001", # Ignore commented-out code rule (needed for # FILE: comments)
+    # Style conflicts / warnings from output:
+    "D203",   # Incompatible with D211 (no-blank-line-before-class)
+    "D213",   # Incompatible with D212 (multi-line-summary-first-line)
+    "COM812", # Conflicts with formatter (Missing trailing comma)
+    "ISC001", # Conflicts with formatter (Implicit string concatenation)
+    "TD002",  # Missing author in TODO
+    "TD003",  # Missing issue link in TODO
+    "FIX002", # TODO comment detected
+]
 
 # Ignore specific rules per file/directory
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"] # Ignore assert statements in test files
 "src/zeroth_law/analyzer.py" = ["N802", "SLF001"] # Ignore visitor method names and private access
-
-[tool.ruff.lint.isort]
-force-sort-within-sections = true
-known-first-party = ["zeroth_law"]
-lines-after-imports = 2
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
