@@ -72,4 +72,23 @@ def test_missing_header(tmp_path: Path) -> None:
     assert actual_issues == expected_issues
 
 
+def test_missing_footer(tmp_path: Path) -> None:
+    """Verify detection of a missing Zeroth Law footer comment."""
+    # Arrange - File HAS a header, but NO footer
+    code_with_header_no_footer = '"""Module docstring (Header)."""\nimport os\ndef func():\n    pass\n'
+    file_path = tmp_path / "no_footer.py"
+    file_path.write_text(code_with_header_no_footer, encoding="utf-8")
+
+    # Expected issue: missing footer. Line number might be EOF or last line of code.
+    # Let's target the end-of-file for now, represented by line number of last line + 1
+    last_line_num = len(code_with_header_no_footer.splitlines())
+    expected_issues = [("missing_footer", last_line_num + 1)]
+
+    # Act
+    actual_issues = analyze_header_footer(file_path)
+
+    # Assert
+    assert actual_issues == expected_issues
+
+
 # Next steps: Add tests for empty files, syntax errors, nested functions/classes
