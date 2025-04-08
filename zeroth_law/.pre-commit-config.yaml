@@ -4,8 +4,8 @@ repos:
     hooks:
       - id: check-yaml
       - id: check-toml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
+      # - id: end-of-file-fixer  # Removed, handled by ruff format
+      # - id: trailing-whitespace # Removed, handled by ruff format
       # Optional: Hook to ensure requirements*.txt stay synced with pyproject.toml/poetry.lock
       # Requires a script/Makefile target `make generate-reqs-check` or similar
       # that generates & diffs, fails on diff.
