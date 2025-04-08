@@ -20,21 +20,24 @@ StructureViolation = tuple[str, int]  # (issue_type, line_number)
 # ----------------------------------------------------------------------------
 
 
-def _parse_file_to_ast(file_path: str | Path) -> ast.Module:
-    """Read and parse a Python file into an AST module.
+def _parse_file_to_ast(file_path: str | Path) -> tuple[ast.Module, str]:
+    """Read and parse a Python file, returning the AST module and content.
 
     Handle FileNotFoundError and SyntaxError.
     """
     path = Path(file_path)
     try:
         content = path.read_text(encoding="utf-8")
-        return ast.parse(content, filename=str(path))  # Directly return parsed tree
+        tree = ast.parse(content, filename=str(path))
     except FileNotFoundError as err:
         msg = f"File not found for analysis: {file_path}"
         raise FileNotFoundError(msg) from err
     except SyntaxError:
         # Re-raising SyntaxError directly is often best (TRY201)
         raise
+    else:
+        # Return only if try block succeeded without exceptions
+        return tree, content
 
 
 def _add_parent_pointers(tree: ast.AST) -> None:
@@ -133,7 +136,7 @@ def analyze_docstrings(file_path: str | Path) -> list[DocstringViolation]:
       [('func_bad', 5)]
 
     """
-    tree = _parse_file_to_ast(file_path)
+    tree, _ = _parse_file_to_ast(file_path)  # Unpack tuple, only need tree
     _add_parent_pointers(tree)  # Visitor requires parent info
 
     visitor = DocstringVisitor()
@@ -143,20 +146,21 @@ def analyze_docstrings(file_path: str | Path) -> list[DocstringViolation]:
 
 # --- Header/Footer Analysis ---
 def analyze_header_footer(file_path: str | Path) -> list[StructureViolation]:
-    """Analyzes a Python file for missing header comment (module docstring).
+    """Analyzes a Python file for missing header and footer comments.
 
     PURPOSE:
-      Checks if the file starts with a module-level docstring as required
-      by Principle #11 (Header/Footer).
-      Currently only checks for header presence.
+      Checks if the file starts with a module-level docstring (header) and
+      ends with a specific Zeroth Law compliance comment block (footer),
+      as required by Principle #11.
 
     PARAMS:
       file_path (str | Path): Path to the Python file to analyze.
 
     Returns
     -------
-      list[StructureViolation]: A list of tuples indicating structural issues.
-                                 Currently only ("missing_header", 1) if header is missing.
+      list[StructureViolation]: A list of tuples indicating structural issues,
+                                such as ("missing_header", 1) or
+                                ("missing_footer", line_num).
 
     EXCEPTIONS:
       FileNotFoundError: If file_path does not exist.
@@ -164,7 +168,8 @@ def analyze_header_footer(file_path: str | Path) -> list[StructureViolation]:
 
     """
     violations: list[StructureViolation] = []
-    tree = _parse_file_to_ast(file_path)
+    # Get both tree and content from the helper
+    tree, content = _parse_file_to_ast(file_path)
 
     # Check for module-level docstring (header)
     has_header = (
@@ -173,14 +178,17 @@ def analyze_header_footer(file_path: str | Path) -> list[StructureViolation]:
         and isinstance(tree.body[0].value, ast.Constant)
         and isinstance(tree.body[0].value.value, str)
     )
-
     if not has_header:
         violations.append(("missing_header", 1))
 
-    # TODO: Implement footer check (Principle #11)
-    # Footer requires checking the *last* potential docstring in the file
-    # and verifying specific content ("## ZEROTH LAW COMPLIANCE:").
-    # This is more complex than the header check.
+    # Check for Zeroth Law footer
+    # A simple string search is sufficient and avoids AST complexity for trailing comments/docstrings
+    # The required marker is "## ZEROTH LAW COMPLIANCE:"
+    required_footer_marker = "## ZEROTH LAW COMPLIANCE:"
+    if required_footer_marker not in content:
+        # Report the violation at the end of the file
+        last_line_num = len(content.splitlines())
+        violations.append(("missing_footer", last_line_num + 1))
 
     return violations
 
