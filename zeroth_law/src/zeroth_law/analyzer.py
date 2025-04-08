@@ -4,15 +4,46 @@
 CONTEXT:
   Developed via TDD. Initial focus is checking for missing docstrings
   in public functions (Rule D103).
+  Extended to check for header/footer presence (Principle #11).
 """
 
 import ast
-from pathlib import Path
 import typing
+from pathlib import Path
 
-
-# Define a type alias for the results for clarity
+# Define type aliases for the results for clarity
 DocstringViolation = tuple[str, int]  # (function_name, line_number)
+StructureViolation = tuple[str, int]  # (issue_type, line_number)
+
+# ----------------------------------------------------------------------------
+# Helper Functions
+# ----------------------------------------------------------------------------
+
+
+def _parse_file_to_ast(file_path: str | Path) -> ast.Module:
+    """Read and parse a Python file into an AST module.
+
+    Handle FileNotFoundError and SyntaxError.
+    """
+    path = Path(file_path)
+    try:
+        content = path.read_text(encoding="utf-8")
+        return ast.parse(content, filename=str(path))  # Directly return parsed tree
+    except FileNotFoundError as err:
+        msg = f"File not found for analysis: {file_path}"
+        raise FileNotFoundError(msg) from err
+    except SyntaxError:
+        # Re-raising SyntaxError directly is often best (TRY201)
+        raise
+
+
+def _add_parent_pointers(tree: ast.AST) -> None:
+    """Add a `_parents` attribute to each node in the AST tree."""
+    for node_ in ast.walk(tree):
+        for child in ast.iter_child_nodes(node_):
+            child._parents = [*getattr(child, "_parents", []), node_]  # type: ignore[attr-defined]
+            # Using type: ignore because _parents is dynamically added
+
 
 # ----------------------------------------------------------------------------
 # IMPLEMENTATION
@@ -102,26 +133,56 @@ def analyze_docstrings(file_path: str | Path) -> list[DocstringViolation]:
       [('func_bad', 5)]
 
     """
-    path = Path(file_path)
-    try:
-        content = path.read_text(encoding="utf-8")
-        tree = ast.parse(content, filename=str(path))
-    except FileNotFoundError as err:
-        msg = f"File not found for analysis: {file_path}"
-        raise FileNotFoundError(msg) from err
-    except SyntaxError:
-        # Re-raising SyntaxError directly is often best (TRY201)
-        raise
-
-    # Add parent pointers for easier context checking in visitor (RUF005)
-    for node_ in ast.walk(tree):
-        for child in ast.iter_child_nodes(node_):
-            child._parents = [*getattr(child, "_parents", []), node_]  # type: ignore[attr-defined]
-            # Using type: ignore because _parents is dynamically added
+    tree = _parse_file_to_ast(file_path)
+    _add_parent_pointers(tree)  # Visitor requires parent info
 
     visitor = DocstringVisitor()
     visitor.visit(tree)
     return visitor.violations
+
+
+# --- Header/Footer Analysis ---
+def analyze_header_footer(file_path: str | Path) -> list[StructureViolation]:
+    """Analyzes a Python file for missing header comment (module docstring).
+
+    PURPOSE:
+      Checks if the file starts with a module-level docstring as required
+      by Principle #11 (Header/Footer).
+      Currently only checks for header presence.
+
+    PARAMS:
+      file_path (str | Path): Path to the Python file to analyze.
+
+    Returns
+    -------
+      list[StructureViolation]: A list of tuples indicating structural issues.
+                                 Currently only ("missing_header", 1) if header is missing.
+
+    EXCEPTIONS:
+      FileNotFoundError: If file_path does not exist.
+      SyntaxError: If the file contains invalid Python syntax.
+
+    """
+    violations: list[StructureViolation] = []
+    tree = _parse_file_to_ast(file_path)
+
+    # Check for module-level docstring (header)
+    has_header = (
+        tree.body
+        and isinstance(tree.body[0], ast.Expr)
+        and isinstance(tree.body[0].value, ast.Constant)
+        and isinstance(tree.body[0].value.value, str)
+    )
+
+    if not has_header:
+        violations.append(("missing_header", 1))
+
+    # TODO: Implement footer check (Principle #11)
+    # Footer requires checking the *last* potential docstring in the file
+    # and verifying specific content ("## ZEROTH LAW COMPLIANCE:").
+    # This is more complex than the header check.
+
+    return violations
 
 
 # ----------------------------------------------------------------------------
