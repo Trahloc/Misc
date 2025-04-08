@@ -39,6 +39,7 @@ repos:
         # Relies on MYPY_CACHE_DIR environment variable being set correctly
         # to place cache according to XDG standard (Principle #12)
         additional_dependencies: [
+          ".", # Install the local package
           types-setuptools, # Example from pyproject.toml
           pytest, # Add pytest itself
           ]
