@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+Strictly adhere to the Zeroth Law and definitions as outlined in [ZerothLawAIFramework.py313.md](mdc:frameworks/python/ZerothLawAIFramework.py313.md)

@@ -1,63 +1,176 @@
-# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/pyproject.toml
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "zeroth_law"  # Package name (for importing)
-version = "1742388893" # using epoch since this is a vibe project and not done by a real coder
-authors = [
-    { name = "Trahloc colDhart", email = "github@trahloc.com" },
-]
-description = "A Python code analyzer to enforce the Zeroth Law of AI-Driven Development."
+[tool.poetry]
+name = "zeroth_law"
+version = "2025.4.8"  # Epoch/Date based versioning
+description = "Enforcer for the Zeroth Law AI Framework"
+authors = ["Trahloc colDhart <github@trahloc.com>"] # Placeholder - Please update
+license = "CC0" # Placeholder - Choose appropriate license
 readme = "README.md"
-requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+packages = [{include = "zeroth_law", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.13,<4.0"
+structlog = "^24.1.0"
+pydantic = "^2.7.1"
+xdg = "^6.0.0" # For XDG Base Directory Specification adherence
+
+[tool.poetry.group.dev.dependencies]
+# Testing
+pytest = "^8.1.1"
+pytest-cov = "^5.0.0" # For test coverage
+
+# Type Checking
+mypy = "^1.9.0" # Ensure version supports Python 3.13 robustly
+
+# Linting, Formatting, Doc Checks, Import Sorting
+ruff = "^0.4.10" # Use a specific recent version
+
+# Duplication Check (Targeted Use)
+pylint = "^3.1.0" # Ensure version supports Python 3.13 robustly
+
+# Environment Generation Tool
+poetry-plugin-export = "^1.8.0" # Check for the latest compatible version
+
+# Git Hooks Manager
+pre-commit = "^3.6.0"
+
+# Optional Tools
+autoinit = "^0.3.0" # If used for __init__.py management
+
+# Build/Publishing Tools (Optional)
+# build = "^1.0.0"
+# twine = "^5.0.0"
+
+# Types (Ensure these match versions used)
+types-setuptools = "^70.3.0" # Align with installed version
+
+[tool.ruff]
+# Allow fixing errors automatically.
+fix = true
+# Display violations that are fixable even if `fix` is disabled.
+show-fixes = true
+# Select all rules by default.
+select = ["ALL"]
+# Always autofix, but exclude temporarily disabling styles fixes (`Q`).
+# fixable = ["ALL"]
+# Explicitly configure deviates from the defaults.
+# extend-fixable = ["B", "RUF100"]
+
+# Same as Black.
+line-length = 140
+
+# Assume Python 3.13
+target-version = "py313"
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".legacy",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "*.egg-info",
+    "environment.yml",
 ]
-dependencies = [
-    "click",  # Assuming you have other dependencies
-    "cookiecutter>=2.1.1",  # Adding cookiecutter dependency
-    # ...other existing dependencies...
+
+[tool.ruff.lint]
+# Allow unused variables in test files (Example, add more specific ignores below)
+# TODO: Add test directory once it exists
+# per-file-ignores."tests/*" = ["F841"]
+
+# Ignore specific rules per file/directory
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"] # Ignore assert statements in test files
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["zeroth_law"]
+lines-after-imports = 2
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unused_configs = true
+exclude = ["venv", ".venv", "build", "dist", "docs", "environment.yml"]
+
+[[tool.mypy.overrides]]
+# Ignore missing imports for libraries that don't have type hints readily available
+# Add more as needed during development
+module = [
+    "xdg.*",
 ]
+ignore_missing_imports = true
 
-[project.scripts]
-zeroth_law = "zeroth_law.__main__:main"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.black]
-# Black configuration for Zeroth Law compliance
-line-length = 140  # Standard Black line length
-target-version = ['py38']  # Minimum Python version
-include = '\.pyi?$'  # Include both .py and .pyi files
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-[tool.pytest]
-testpaths = ["tests"]
-python_files = "test_*.py"
-# Explicitly ignore cookiecutter template directories and files with cookiecutter variables
-norecursedirs = ["src/zeroth_law/cookiecutter-template", "tests/zeroth_law/cookiecutter-template", "*cookiecutter*", "*{{*}}*"]
-# Add a custom marker for tests that involve cookiecutter templates if needed
-markers = [
-    "cookiecutter: marks tests that involve cookiecutter templates (deselect with '-m \"not cookiecutter\"')"
-]
+[tool.pylint.'MAIN']
+# Use all default checkers.
+disable = """
+    all
+"""
+enable = ["R0801"] # similar lines in modules checker
+ignore = ["CVS", ".git", ".hg", ".svn", "tests/", "venv", ".venv"]
+persistent = "yes"
+jobs = 0 # Use all available CPUs
 
 [tool.pytest.ini_options]
-cache_dir = "$HOME/.config/python/pytest-cache"
-# verbose = true  # Removed as it's causing a warning
+minversion = "6.0"
+addopts = "-ra -q --cov=src/zeroth_law --cov-report=term-missing"
+testpaths = [
+    "tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/zeroth_law"]
+omit = [
+    "src/zeroth_law/__main__.py", # If a CLI entry point is added
+]
+
+[tool.coverage.report]
+#fail_under = 90 # Uncomment and adjust threshold later
+show_missing = true
+skip_covered = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# Add poetry-plugin-conda configuration if needed, usually defaults are fine
+# [tool.poetry-plugin-conda]
+# ...
+
+[tool.poetry2conda]
+name = "zeroth_law" # Name for the generated conda environment
+
+# Optional: Add dependencies section here later if specific conda mappings are needed
+# [tool.poetry2conda.dependencies]
+# some-pypi-pkg = { channel = "conda-forge", name = "some-conda-pkg" }

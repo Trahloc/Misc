@@ -23,16 +23,21 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff
+        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
         args: [--fix, --exit-non-zero-on-fix]
       # Run the formatter.
       - id: ruff-format
+        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
         args: []
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.9.0 # Use the same version as in pyproject.toml
     hooks:
       - id: mypy
+        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
         args: [--strict]
+        # Relies on MYPY_CACHE_DIR environment variable being set correctly
+        # to place cache according to XDG standard (Principle #12)
         additional_dependencies: [
           types-setuptools, # Example from pyproject.toml
           ]
@@ -43,7 +48,14 @@ repos:
     hooks:
       - id: pylint
         name: pylint (similarities only)
+        # Apply only to relevant python files within this project
         files: ^(src|tests)/.*\.py$
+        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
+        # Configuration comes from pyproject.toml [tool.pylint.*] sections.
+        # Execution must happen within the activated micromamba environment
+        # where pylint and project dependencies are installed.
+        # Using `language: python` assumes pre-commit can find the active conda env python.
+        # If imports fail, switch to `language: system`.
         language: python
 
 # Optional: Add commitlint if you set it up
