@@ -232,6 +232,36 @@ def check_header_compliance(file_path: str | Path) -> list[str]:  # Renamed from
 
 
 # TODO: Re-implement footer check (analyze_header_footer previously did both)
+def check_footer_compliance(file_path: str | Path) -> list[str]:
+    """Check if a file contains the required Zeroth Law footer marker.
+
+    Args:
+    ----
+        file_path: The path to the Python file.
+
+    Returns:
+    -------
+        A list containing 'FOOTER_MISSING' if the marker is not found,
+        otherwise an empty list. Possible error codes: FOOTER_MISSING,
+        FILE_NOT_FOUND, FOOTER_CHECK_OS_ERROR.
+
+    """
+    errors: list[str] = []
+    required_footer_marker = "## ZEROTH LAW COMPLIANCE:"
+    try:
+        path = Path(file_path)
+        content = path.read_text(encoding="utf-8")
+        if required_footer_marker not in content:
+            errors.append("FOOTER_MISSING")
+    except FileNotFoundError:
+        errors.append("FILE_NOT_FOUND")
+    except OSError as e:
+        errors.append(f"FOOTER_CHECK_OS_ERROR: {e}")
+    # Not catching broad Exception here
+
+    return errors
+
+
 # TODO: Create main compliance checking function that calls individual checks like header, footer, etc.
 
 
