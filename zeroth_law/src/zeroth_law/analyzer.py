@@ -14,6 +14,7 @@ from pathlib import Path
 # Define type aliases for the results for clarity
 DocstringViolation = tuple[str, int]  # (function_name, line_number)
 StructureViolation = tuple[str, int]  # (issue_type, line_number)
+ComplexityViolation = tuple[str, int, int]  # (function_name, line_number, complexity_score)
 
 # ----------------------------------------------------------------------------
 # Helper Functions
@@ -51,6 +52,41 @@ def _add_parent_pointers(tree: ast.AST) -> None:
 # ----------------------------------------------------------------------------
 # IMPLEMENTATION
 # ----------------------------------------------------------------------------
+
+
+class ComplexityVisitor(ast.NodeVisitor):
+    """Calculates cyclomatic complexity for a visited function node."""
+
+    def __init__(self: typing.Self) -> None:
+        """Initialize complexity counter for the function being visited."""
+        self.complexity = 1  # Start with a base complexity of 1 for the function entry
+
+    def visit_If(self: typing.Self, node: ast.If | ast.AsyncFor | ast.For | ast.While | ast.ExceptHandler | ast.With) -> None:
+        """Increment complexity for control flow branching statements."""
+        self.complexity += 1
+        # Also visit children to catch nested complexity
+        self.generic_visit(node)
+
+    def visit_Assert(self: typing.Self, node: ast.Assert) -> None:
+        """Increment complexity for assert statements."""
+        self.complexity += 1
+        self.generic_visit(node)
+
+    def visit_Try(self: typing.Self, node: ast.Try) -> None:
+        """Increment complexity for each `except` block."""
+        # The try block itself doesn't add complexity, but each handler does
+        self.complexity += len(node.handlers)
+        self.generic_visit(node)
+
+    def visit_BoolOp(self: typing.Self, node: ast.BoolOp) -> None:
+        """Increment complexity for each 'and'/'or' operator."""
+        # Each operator (and/or) after the first one adds a path
+        if isinstance(node.op, ast.And | ast.Or):
+            self.complexity += len(node.values) - 1
+        self.generic_visit(node)
+
+    # Other node types like Break, Continue, Raise could also arguably add complexity
+    # depending on the exact definition used, but we'll stick to common ones for now.
 
 
 class DocstringVisitor(ast.NodeVisitor):
@@ -189,6 +225,51 @@ def analyze_header_footer(file_path: str | Path) -> list[StructureViolation]:
         # Report the violation at the end of the file
         last_line_num = len(content.splitlines())
         violations.append(("missing_footer", last_line_num + 1))
+
+    return violations
+
+
+# --- Complexity Analysis ---
+def analyze_complexity(file_path: str | Path, threshold: int) -> list[ComplexityViolation]:
+    """Analyzes functions in a Python file for high cyclomatic complexity.
+
+    PURPOSE:
+      Calculates cyclomatic complexity for each function/async function
+      and returns those exceeding the specified threshold.
+
+    PARAMS:
+      file_path (str | Path): Path to the Python file to analyze.
+      threshold (int): The maximum allowed cyclomatic complexity.
+
+    Returns
+    -------
+      list[ComplexityViolation]: A list of tuples, where each tuple contains the
+                                 name, line number, and complexity score of a function
+                                 exceeding the threshold.
+
+    EXCEPTIONS:
+      FileNotFoundError: If file_path does not exist.
+      SyntaxError: If the file contains invalid Python syntax.
+
+    """
+    violations: list[ComplexityViolation] = []
+    tree, _ = _parse_file_to_ast(file_path)
+    _add_parent_pointers(tree)  # Add parent pointers needed for is_method check
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            # Don't analyze methods for now, similar to docstring check
+            is_method = any(isinstance(parent, ast.ClassDef) for parent in getattr(node, "_parents", []))
+            if is_method:
+                continue
+
+            visitor = ComplexityVisitor()
+            # Visit only the current function node and its children
+            visitor.visit(node)
+            complexity = visitor.complexity
+
+            if complexity > threshold:
+                violations.append((node.name, node.lineno, complexity))
 
     return violations
 

@@ -19,6 +19,12 @@
   - [x] Run `conda run -n zeroth_law pre-commit install`
   - [x] Run `conda run -n zeroth_law pip install -e .` (Install project editable)
 
+## Phase 1.5: Legacy System Analysis
+
+- [x] Analyze `.legacy` variant code and identify core functionalities.
+- [x] Document the purpose of each major component/function in the legacy system. (See [docs/legacy/analysis_summary.md](docs/legacy/analysis_summary.md))
+- [x] List specific features/checks performed by the legacy system to guide refactoring. (See [docs/legacy/analysis_summary.md](docs/legacy/analysis_summary.md))
+
 ## Phase 2: Core Logic & TDD
 
 - [x] 8. Identify First Feature (based on `ZerothLawAIFramework.py313.md`) - Load `pyproject.toml` and extract Python version.
@@ -39,7 +45,22 @@
   - [x] 9b. Write Failing Test (Red)
   - [x] 10b. Implement Minimal Code (Green)
   - [x] 11b. Refactor
-  - [ ] 12b. Commit
+  - [x] 12b. Commit
+  - [ ] 8c. Identify Next Feature - Check for Header Comment Presence (Principle #11)
+  - [ ] 9c. Write Failing Test (Red)
+  - [ ] 10c. Implement Minimal Code (Green)
+  - [x] 11c. Refactor
+  - [x] 12c. Commit
+  - [ ] 8d. Identify Next Feature - Check for Footer Comment Presence (Principle #11)
+  - [ ] 9d. Write Failing Test (Red)
+  - [ ] 10d. Implement Minimal Code (Green)
+  - [x] 11d. Refactor
+  - [x] 12d. Commit
+  - [ ] 8e. Identify Next Feature - Check Cyclomatic Complexity
+  - [ ] 9e. Write Failing Test (Red)
+  - [ ] 10e. Implement Minimal Code (Green)
+  - [ ] 11e. Refactor
+  - [ ] 12e. Commit
 - [ ] 14. Continuously Integrate Tooling (`ruff`, `mypy`, `pylint`, `pytest --cov`)
 - [ ] 15. Set up CI (`.github/workflows/ci.yml`)
 - [ ] 16. Final Documentation & Review:
