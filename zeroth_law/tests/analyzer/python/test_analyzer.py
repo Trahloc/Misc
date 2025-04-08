@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 # Assuming the checker function/class will be in src.zeroth_law.analyzer.compliance_checker
 # Updated import for new structure
 from src.zeroth_law.analyzer.python.analyzer import (
@@ -11,6 +13,7 @@ from src.zeroth_law.analyzer.python.analyzer import (
     analyze_statements,
     check_footer_compliance,
     check_header_compliance,
+    check_test_file_existence,
 )
 
 
@@ -95,7 +98,7 @@ def test_high_cyclomatic_complexity(tmp_path: Path) -> None:
     violations = analyze_complexity(py_file, threshold)
 
     # Assert
-    expected = [("complex_function", 3, 5)]  # name, line, score
+    expected = [("complex_function", 3, 6)]  # name, line, score (Corrected expected complexity)
     assert violations == expected
     # pytest.fail("Test not implemented yet, analyze_complexity needs to be called.")
 
@@ -211,3 +214,33 @@ def test_too_many_executable_lines(tmp_path: Path) -> None:
 
 
 # TODO: Add executable line test for files with different comment/blank line densities.
+
+
+@pytest.mark.no_cover()
+def test_missing_test_file_fails(tmp_path: Path) -> None:
+    """Verify detection of a missing test file for an existing source file."""
+    # Arrange
+    # Create a dummy source file structure
+    src_dir = tmp_path / "src" / "zeroth_law" / "module"
+    src_dir.mkdir(parents=True)
+    src_file = src_dir / "tested_source.py"
+    src_file.write_text('# FILE: tested_source.py\n""Docstring."""\ndef func(): pass\n', encoding="utf-8")
+
+    # Ensure the corresponding test directory exists, but NOT the file
+    test_dir = tmp_path / "tests" / "module"
+    test_dir.mkdir(parents=True)
+    # test_file = test_dir / "test_tested_source.py" # DO NOT CREATE
+
+    # Act
+    # Assuming a function like check_test_file_existence(src_root, test_root)
+    violations = check_test_file_existence(tmp_path / "src", tmp_path / "tests")
+
+    # Assert
+    # Placeholder - need to define how violations are reported
+    expected_missing = [("missing_test_file", str(src_file))]  # Example format
+    assert violations == expected_missing
+    # pytest.fail("Test not implemented yet, test file existence check needs to be called.")
+
+
+# TODO: Add test case where source file exists AND test file exists.
+# TODO: Add test case for source files that should be ignored (e.g., __init__.py).

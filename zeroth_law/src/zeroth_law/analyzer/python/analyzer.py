@@ -623,6 +623,55 @@ def analyze_line_counts(file_path: str | Path, max_exec_lines: int) -> list[Line
     return violations
 
 
+# --- Test File Existence Analysis ---
+# Define a type alias for the violation format expected by the test
+TestExistenceViolation = tuple[str, str]  # ("missing_test_file", <path_to_source_file>)
+
+
+def check_test_file_existence(src_root: Path, test_root: Path) -> list[TestExistenceViolation]:
+    """Check if corresponding test files exist for source files.
+
+    PURPOSE:
+      Walks the source directory, identifies Python source files (excluding __init__.py),
+      calculates the expected test file path, and checks for its existence.
+
+    PARAMS:
+      src_root (Path): The root directory of the source code.
+      test_root (Path): The root directory of the test code.
+
+    Returns
+    -------
+      list[TestExistenceViolation]: A list of violations, where each violation
+                                    indicates a source file missing its test file.
+
+    """
+    violations: list[TestExistenceViolation] = []
+    src_package_dir = src_root / "zeroth_law"  # Assuming structure like src/zeroth_law
+
+    if not src_package_dir.is_dir():
+        # Handle case where expected src structure doesn't exist
+        # Maybe log a warning or return an empty list?
+        # For now, let's assume the structure is generally correct.
+        return violations
+
+    for src_file in src_package_dir.rglob("*.py"):
+        if src_file.name == "__init__.py":
+            continue
+
+        # Calculate expected test file path
+        relative_path = src_file.relative_to(src_package_dir)
+        # Example: module/tested_source.py
+        test_sub_path = relative_path.parent / f"test_{src_file.stem}{src_file.suffix}"
+        # Example: module/test_tested_source.py
+        expected_test_file = test_root / test_sub_path
+        # Example: <tmp>/tests/module/test_tested_source.py
+
+        if not expected_test_file.exists():
+            violations.append(("missing_test_file", str(src_file)))
+
+    return violations
+
+
 # --- Main Analyzer Orchestration (Placeholder) ---
 # TODO: Create a main function/class that takes config and runs all checks.
 
