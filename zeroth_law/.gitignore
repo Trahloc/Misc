@@ -141,3 +141,6 @@ environment.yml
 # Generated requirements files
 requirements.txt
 requirements-dev.txt
+
+# Generated TODO dashboard
+CODE_TODOS.md

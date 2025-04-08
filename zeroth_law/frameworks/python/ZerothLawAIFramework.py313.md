@@ -645,6 +645,9 @@ jobs:
       # - name: Upload coverage reports ...
 ```
 
+### 6.7 AI Assistant Responsibilities
+> **AI Assistant Context Management:** AI assistants **must** proactively utilize file reading (`read_file`), history inspection (`git log`), and search tools (`grep_search`, `codebase_search`) to establish or re-establish context before proceeding with tasks, especially when resuming work or encountering ambiguity. Reliance solely on potentially incomplete or lost conversational history is prohibited. Adherence to this principle is part of Zeroth Law compliance for AI-driven development within this framework.
+
 ---
 
 ## 7. FIXING PYTEST IMPORT ERRORS (with Micromamba)
