@@ -18,10 +18,19 @@
 
 import os
 import sys
-import codecs
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Union, Any, Callable, TypeVar, Optional, Protocol, cast, runtime_checkable, Type
+from typing import (
+    Dict,
+    List,
+    Union,
+    Any,
+    Callable,
+    TypeVar,
+    Protocol,
+    runtime_checkable,
+    Type,
+)
 
 # Define type variables
 T = TypeVar("T")
@@ -76,7 +85,9 @@ def create_click_compatible_mock(mock_class: Type[Any]) -> Any:
     try:
         from unittest.mock import PropertyMock
     except ImportError:
-        raise ImportError("unittest.mock is required for creating Click-compatible mocks")
+        raise ImportError(
+            "unittest.mock is required for creating Click-compatible mocks"
+        )
 
     mock = mock_class()
 
@@ -93,6 +104,7 @@ def create_click_compatible_mock(mock_class: Type[Any]) -> Any:
 @runtime_checkable
 class Closeable(Protocol):
     """Protocol for objects that can be closed."""
+
     def close(self) -> None:
         """Close the object."""
         ...
@@ -101,6 +113,7 @@ class Closeable(Protocol):
 @runtime_checkable
 class Disposable(Protocol):
     """Protocol for objects that can be disposed."""
+
     def dispose(self) -> None:
         """Dispose of the object."""
         ...
@@ -109,6 +122,7 @@ class Disposable(Protocol):
 @runtime_checkable
 class HasName(Protocol):
     """Protocol for objects that have a name property."""
+
     @property
     def name(self) -> str:
         """Get the object's name."""

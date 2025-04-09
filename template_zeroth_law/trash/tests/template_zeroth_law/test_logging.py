@@ -12,8 +12,8 @@
  - pytest: Testing framework
  - template_zeroth_law.logging: Module under test
 """
+
 import logging
-import os
 import pytest
 from pathlib import Path
 from typing import Generator
@@ -21,7 +21,6 @@ from typing import Generator
 from template_zeroth_law.logging import (
     configure_logging,
     get_logger,
-    DEFAULT_FORMAT,
     DEBUG_FORMAT,
     LOG_LEVELS,
 )

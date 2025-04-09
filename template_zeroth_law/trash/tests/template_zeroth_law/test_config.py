@@ -12,15 +12,12 @@
  - pytest: Testing framework
  - template_zeroth_law.config: Configuration module
 """
-import os
+
 import pytest
 from pathlib import Path
 from typing import Dict, Any
 
-from template_zeroth_law.config import (
-    Config, AppConfig, LoggingConfig, PathsConfig,
-    get_config, load_config
-)
+from template_zeroth_law.config import Config, get_config, load_config
 from template_zeroth_law.exceptions import ConfigError
 
 
@@ -32,17 +29,10 @@ def mock_config() -> Dict[str, Any]:
             "name": "test_app",
             "version": "1.0.0",
             "description": "Test application",
-            "debug": False
+            "debug": False,
         },
-        "logging": {
-            "level": "INFO",
-            "format": "%(message)s"
-        },
-        "paths": {
-            "data_dir": "data",
-            "output_dir": "output",
-            "cache_dir": ".cache"
-        }
+        "logging": {"level": "INFO", "format": "%(message)s"},
+        "paths": {"data_dir": "data", "output_dir": "output", "cache_dir": ".cache"},
     }
 
 

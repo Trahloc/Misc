@@ -9,8 +9,6 @@
  - template_zeroth_law.__init__
 """
 
-import pytest
-
 # Import the module to test
 from template_zeroth_law import __version__, ZerothLawError
 

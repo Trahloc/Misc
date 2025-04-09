@@ -13,14 +13,10 @@
  - pathlib: Path manipulation
  - template_zeroth_law.utils: Utility functions
 """
-import os
-import sys
-import json
+
 from pathlib import Path
 import pytest
-from typing import Dict, Any, List
-
-from template_zeroth_law.utils import get_project_root
+from typing import Dict, List
 
 
 @pytest.fixture
@@ -63,7 +59,7 @@ def project_structure(project_root: Path) -> Dict[str, List[str]]:
             "requirements.txt",
             ".pre-commit-config.yaml",
             ".gitignore",
-        ]
+        ],
     }
 
 
@@ -110,7 +106,7 @@ def test_pyproject_toml_content(project_root: Path):
     project_root.mkdir(parents=True, exist_ok=True)
 
     pyproject = project_root / "pyproject.toml"
-    content = '''
+    content = """
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -124,7 +120,7 @@ authors = [
 description = "A Python project using the Zeroth Law framework"
 readme = "README.md"
 requires-python = ">=3.8"
-'''
+"""
     pyproject.write_text(content)
 
     # Verify file exists and has content
@@ -139,12 +135,12 @@ def test_requirements_txt_content(project_root: Path):
     project_root.mkdir(parents=True, exist_ok=True)
 
     requirements = project_root / "requirements.txt"
-    content = '''
+    content = """
 pytest>=7.0
 black>=23.0
 flake8>=6.0
 mypy>=1.0
-'''
+"""
     requirements.write_text(content)
 
     # Verify dependencies
@@ -160,13 +156,13 @@ def test_pytest_ini_content(project_root: Path):
     project_root.mkdir(parents=True, exist_ok=True)
 
     pytest_ini = project_root / "pytest.ini"
-    content = '''
+    content = """
 [pytest]
 testpaths = tests
 python_files = test_*.py
 python_classes = Test*
 python_functions = test_*
-'''
+"""
     pytest_ini.write_text(content)
 
     # Verify pytest configuration
@@ -181,7 +177,7 @@ def test_pre_commit_config(project_root: Path):
     project_root.mkdir(parents=True, exist_ok=True)
 
     pre_commit = project_root / ".pre-commit-config.yaml"
-    content = '''
+    content = """
 repos:
   - repo: https://github.com/psf/black
     rev: 23.1.0
@@ -191,7 +187,7 @@ repos:
     rev: 6.0.0
     hooks:
       - id: flake8
-'''
+"""
     pre_commit.write_text(content)
 
     # Verify pre-commit hooks
@@ -206,14 +202,14 @@ def test_gitignore_content(project_root: Path):
     project_root.mkdir(parents=True, exist_ok=True)
 
     gitignore = project_root / ".gitignore"
-    content = '''
+    content = """
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
 .coverage
 htmlcov/
-'''
+"""
     gitignore.write_text(content)
 
     # Verify ignore patterns
@@ -223,7 +219,9 @@ htmlcov/
     assert "*.py[cod]" in patterns
 
 
-def test_project_validation(project_root: Path, project_structure: Dict[str, List[str]]):
+def test_project_validation(
+    project_root: Path, project_structure: Dict[str, List[str]]
+):
     """Test project validation checks."""
     # Create basic structure
     create_project_files(project_root, project_structure)

@@ -9,11 +9,10 @@
  - importlib
 """
 
-import os
 import tempfile
 import importlib
 from pathlib import Path
-from typing import Generator, Iterator, Optional
+from typing import Iterator
 
 import pytest
 

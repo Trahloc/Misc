@@ -10,7 +10,6 @@
 import os
 import shutil
 from pathlib import Path
-import sys
 
 # Root of the project
 PROJECT_ROOT = Path(__file__).parent

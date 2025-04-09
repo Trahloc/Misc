@@ -18,7 +18,6 @@ import sys
 import platform
 import click
 from pathlib import Path
-from typing import Dict, List, Optional, Any
 
 from template_zeroth_law.utils import get_project_root
 

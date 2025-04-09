@@ -14,16 +14,12 @@
  - template_zeroth_law.commands.info: Info command
 """
 
-import json
-from datetime import datetime
 import pytest
 from click.testing import CliRunner
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 from typing import Dict, Any
 
 from template_zeroth_law.commands.info import command
-from template_zeroth_law.types import create_click_compatible_mock
 
 
 @pytest.fixture

@@ -10,7 +10,6 @@ DEPENDENCIES:
 
 import os
 import re
-from typing import Optional
 
 
 def sanitize_filename(filename: str, replacement: str = "_") -> str:

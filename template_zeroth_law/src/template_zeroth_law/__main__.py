@@ -16,11 +16,9 @@
 ## TODO: Add project-specific CLI commands
 """
 
-import os
 import sys
-import shutil
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional
 
 import click
 
@@ -106,7 +104,7 @@ def init(project_name: Optional[str] = None) -> None:
     (project_dir / "tests" / "__init__.py").touch()
 
     click.echo(f"Created project: {project_name}")
-    click.echo(f"Next steps:")
+    click.echo("Next steps:")
     click.echo(f"  cd {project_name}")
     click.echo("  pip install -e .[dev]")
     click.echo("  pre-commit install")

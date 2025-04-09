@@ -11,10 +11,9 @@
  - template_zeroth_law.commands.check: Module under test
 """
 
-import os
 from pathlib import Path
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from click.testing import CliRunner
 
 from template_zeroth_law.commands.check import (
@@ -62,7 +61,6 @@ def test_check_command_basic(cli_runner: CliRunner):
     ) as mock_env, patch(
         "template_zeroth_law.commands.check.check_paths"
     ) as mock_paths:
-
         # Run command
         result = cli_runner.invoke(command)
 
@@ -84,7 +82,6 @@ def test_check_command_with_options(cli_runner: CliRunner, option: str):
     ) as mock_env, patch(
         "template_zeroth_law.commands.check.check_paths"
     ) as mock_paths:
-
         # Run command with option
         result = cli_runner.invoke(command, [option])
 

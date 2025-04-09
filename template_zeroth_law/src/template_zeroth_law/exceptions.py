@@ -11,7 +11,8 @@
 ## DEPENDENCIES: None
 ## TODO: Customize exception types based on your project's needs
 """
-from typing import Any, Dict, Optional
+
+from typing import Any, Dict
 
 
 class ZerothLawError(Exception):

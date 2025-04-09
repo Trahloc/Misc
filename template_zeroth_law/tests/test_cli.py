@@ -15,11 +15,12 @@
  - pytest: Testing framework
  - template_zeroth_law.cli: CLI module under test
 """
+
 import logging
 import pytest
 from click.testing import CliRunner
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 from template_zeroth_law.cli import main
 
@@ -42,7 +43,7 @@ def config_file(tmp_path: Path) -> Path:
     RETURNS: Path to the temporary config file
     """
     config = tmp_path / "config.json"
-    config.write_text('''
+    config.write_text("""
     {
         "app": {
             "name": "test_app",
@@ -54,7 +55,7 @@ def config_file(tmp_path: Path) -> Path:
             "format": "%(message)s"
         }
     }
-    ''')
+    """)
     return config
 
 
@@ -134,13 +135,13 @@ def test_cli_info_command(cli_runner: CliRunner):
 
 def test_cli_error_handling(cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch):
     """Test CLI error handling when commands fail."""
+
     def mock_check_environment(*args: Any, **kwargs: Any) -> None:
         raise ValueError("Test error")
 
     # Patch the check environment function
     monkeypatch.setattr(
-        "template_zeroth_law.commands.check.check_environment",
-        mock_check_environment
+        "template_zeroth_law.commands.check.check_environment", mock_check_environment
     )
 
     # Test that error is properly handled
@@ -151,10 +152,12 @@ def test_cli_error_handling(cli_runner: CliRunner, monkeypatch: pytest.MonkeyPat
 
 def test_cli_context_initialization(cli_runner: CliRunner):
     """Test that CLI context is properly initialized."""
+
     @main.command()
     def test_context():
         """Test command to verify context."""
         import click
+
         ctx = click.get_current_context()
         assert "logger" in ctx.obj
         assert "config" in ctx.obj

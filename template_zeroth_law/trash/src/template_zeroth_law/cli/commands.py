@@ -9,8 +9,6 @@
 ## TODO: Add more CLI commands as needed
 """
 
-import re
-from pathlib import Path
 from typing import Optional
 
 import click

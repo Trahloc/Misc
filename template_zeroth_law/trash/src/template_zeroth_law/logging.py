@@ -10,18 +10,26 @@
  - typing: Type annotations
  - os.path: File path operations
 """
+
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Optional, Dict, Literal, Union
 
 # Define log formats and levels as constants
 DEFAULT_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-DEBUG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d): %(message)s"
+DEBUG_FORMAT = (
+    "%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d): %(message)s"
+)
 SIMPLE_FORMAT = "[%(levelname)s] %(message)s"
 
-LogLevel = Union[Literal["DEBUG"], Literal["INFO"], Literal["WARNING"], Literal["ERROR"], Literal["CRITICAL"]]
+LogLevel = Union[
+    Literal["DEBUG"],
+    Literal["INFO"],
+    Literal["WARNING"],
+    Literal["ERROR"],
+    Literal["CRITICAL"],
+]
 LOG_LEVELS: Dict[LogLevel, int] = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,
@@ -29,6 +37,7 @@ LOG_LEVELS: Dict[LogLevel, int] = {
     "ERROR": logging.ERROR,
     "CRITICAL": logging.CRITICAL,
 }
+
 
 def configure_logging(
     level: Union[int, LogLevel] = logging.INFO,
@@ -68,7 +77,9 @@ def configure_logging(
         if level not in LOG_LEVELS:
             raise ValueError(f"Invalid log level: {level}")
         level = LOG_LEVELS[level]
-    assert isinstance(level, int), f"Level must be int or valid level name, got {type(level)}"
+    assert isinstance(
+        level, int
+    ), f"Level must be int or valid level name, got {type(level)}"
 
     # Use more detailed format if debug level is enabled
     if level == logging.DEBUG:
@@ -101,6 +112,7 @@ def configure_logging(
 
     return root_logger
 
+
 def get_logger(name: str) -> logging.Logger:
     """
     PURPOSE: Get a logger with the given name.
@@ -123,8 +135,11 @@ def get_logger(name: str) -> logging.Logger:
         logger = get_logger(__name__)
         logger.info("Application started")
     """
-    assert name and isinstance(name, str), f"Logger name must be non-empty string, got {name!r}"
+    assert name and isinstance(
+        name, str
+    ), f"Logger name must be non-empty string, got {name!r}"
     return logging.getLogger(name)
+
 
 """
 ## KNOWN ERRORS: None

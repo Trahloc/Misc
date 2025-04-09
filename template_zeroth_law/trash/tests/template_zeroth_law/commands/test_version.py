@@ -13,15 +13,15 @@
  - click.testing: CLI testing
  - template_zeroth_law.commands.version: Version command
 """
+
 import json
-import sys
 import pytest
 from click.testing import CliRunner
 from unittest.mock import patch, MagicMock
 from typing import Dict, Any, Tuple
 
 from template_zeroth_law.commands.version import command, get_package_version
-from template_zeroth_law.types import create_click_compatible_mock
+
 
 @pytest.fixture
 def mock_config() -> Dict[str, Any]:
@@ -33,9 +33,10 @@ def mock_config() -> Dict[str, Any]:
         "app": {
             "name": "test_app",
             "version": "1.0.0",
-            "description": "Test application"
+            "description": "Test application",
         }
     }
+
 
 @pytest.fixture
 def cli_runner() -> CliRunner:
@@ -44,6 +45,7 @@ def cli_runner() -> CliRunner:
     RETURNS: CliRunner instance
     """
     return CliRunner()
+
 
 def test_version_command_basic(cli_runner: CliRunner, mock_config: Dict[str, Any]):
     """
@@ -62,6 +64,7 @@ def test_version_command_basic(cli_runner: CliRunner, mock_config: Dict[str, Any
             assert result.exit_code == 0
             assert "test_app v1.0.0" in result.output
 
+
 def test_version_verbose(cli_runner: CliRunner, mock_config: Dict[str, Any]):
     """
     Test verbose version command output.
@@ -70,7 +73,9 @@ def test_version_verbose(cli_runner: CliRunner, mock_config: Dict[str, Any]):
         mock_get_config.return_value = mock_config
 
         # Mock package version detection
-        with patch("template_zeroth_law.commands.version.get_package_version") as mock_get_version:
+        with patch(
+            "template_zeroth_law.commands.version.get_package_version"
+        ) as mock_get_version:
             mock_get_version.return_value = "1.0.0"
 
             # Mock logger
@@ -85,6 +90,7 @@ def test_version_verbose(cli_runner: CliRunner, mock_config: Dict[str, Any]):
                 assert "Python:" in result.output
                 assert "Platform:" in result.output
                 assert "Dependencies:" in result.output
+
 
 def test_version_json(cli_runner: CliRunner, mock_config: Dict[str, Any]):
     """
@@ -107,10 +113,14 @@ def test_version_json(cli_runner: CliRunner, mock_config: Dict[str, Any]):
             assert data["version"] == "1.0.0"
             assert data["description"] == "Test application"
 
-@pytest.mark.parametrize("py_version,expected_func", [
-    ((3, 8), "pkg_resources.get_distribution"),
-    ((3, 11), "importlib.metadata.version"),
-])
+
+@pytest.mark.parametrize(
+    "py_version,expected_func",
+    [
+        ((3, 8), "pkg_resources.get_distribution"),
+        ((3, 11), "importlib.metadata.version"),
+    ],
+)
 def test_package_version_detection(py_version: Tuple[int, ...], expected_func: str):
     """
     Test package version detection with different Python versions.
@@ -126,6 +136,7 @@ def test_package_version_detection(py_version: Tuple[int, ...], expected_func: s
                 mock_dist.return_value = MagicMock(version="1.0.0")
                 assert get_package_version("test_package") == "1.0.0"
                 mock_dist.assert_called_once_with("test_package")
+
 
 def test_version_error_handling(cli_runner: CliRunner):
     """
@@ -143,6 +154,7 @@ def test_version_error_handling(cli_runner: CliRunner):
         assert result.exit_code == 1
         assert "Error" in result.output
 
+
 def test_version_package_not_found(cli_runner: CliRunner, mock_config: Dict[str, Any]):
     """
     Test handling of missing package version information.
@@ -150,7 +162,9 @@ def test_version_package_not_found(cli_runner: CliRunner, mock_config: Dict[str,
     with patch("template_zeroth_law.commands.version.get_config") as mock_get_config:
         mock_get_config.return_value = mock_config
 
-        with patch("template_zeroth_law.commands.version.get_package_version") as mock_get_version:
+        with patch(
+            "template_zeroth_law.commands.version.get_package_version"
+        ) as mock_get_version:
             mock_get_version.return_value = "unknown"
 
             # Mock logger
@@ -162,6 +176,7 @@ def test_version_package_not_found(cli_runner: CliRunner, mock_config: Dict[str,
 
                 assert result.exit_code == 0
                 assert "unknown" in result.output
+
 
 """
 ## KNOWN ERRORS: None

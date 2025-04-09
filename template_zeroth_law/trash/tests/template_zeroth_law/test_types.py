@@ -13,16 +13,24 @@
  - template_zeroth_law.types: Type definitions
  - typing: Type hints and testing
 """
+
 import os
 from pathlib import Path
-import pytest
-from typing import Any, Dict, List, Protocol
+from typing import Any, List
 from datetime import datetime
 
 from template_zeroth_law.types import (
-    PathLike, JsonDict, JsonValue, CallbackFunc,
-    ResultCallback, LogLevel, DateLike, Closeable,
-    Disposable, HasName, ConfigDict
+    PathLike,
+    JsonDict,
+    JsonValue,
+    CallbackFunc,
+    ResultCallback,
+    LogLevel,
+    DateLike,
+    Closeable,
+    Disposable,
+    HasName,
+    ConfigDict,
 )
 
 
@@ -59,7 +67,7 @@ def test_json_types():
         3.14,
         "test",
         [1, 2, 3],
-        {"key": "value"}
+        {"key": "value"},
     ]
 
     # Test JsonDict with nested structures
@@ -70,7 +78,7 @@ def test_json_types():
         "float": 3.14,
         "str": "test",
         "list": [1, 2, 3],
-        "dict": {"nested": "value"}
+        "dict": {"nested": "value"},
     }
 
     # Verify type safety
@@ -82,6 +90,7 @@ def test_callback_types():
     """
     Test callback function type definitions.
     """
+
     def simple_callback(data: Any) -> None:
         pass
 
@@ -101,13 +110,7 @@ def test_log_level_types():
     """
     Test log level literal types.
     """
-    valid_levels: List[LogLevel] = [
-        "DEBUG",
-        "INFO",
-        "WARNING",
-        "ERROR",
-        "CRITICAL"
-    ]
+    valid_levels: List[LogLevel] = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
     # Verify each level is valid
     for level in valid_levels:
@@ -134,16 +137,21 @@ def test_date_like_types():
 
 class MockCloseable:
     """Mock class implementing Closeable protocol."""
+
     def close(self) -> None:
         pass
 
+
 class MockDisposable:
     """Mock class implementing Disposable protocol."""
+
     def dispose(self) -> None:
         pass
 
+
 class MockNamed:
     """Mock class implementing HasName protocol."""
+
     @property
     def name(self) -> str:
         return "test"
@@ -175,7 +183,7 @@ def test_config_dict():
         "app_name": "test_app",
         "version": "1.0.0",
         "debug": True,
-        "log_level": "DEBUG"
+        "log_level": "DEBUG",
     }
 
     # Verify required fields

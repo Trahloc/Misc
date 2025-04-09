@@ -12,11 +12,9 @@
  - template_zeroth_law.utils: Module under test
 """
 
-import os
 import pytest
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
 
 from template_zeroth_law.utils import (
     get_project_root,

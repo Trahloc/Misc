@@ -12,6 +12,7 @@
  - pytest: Testing framework
  - template_zeroth_law.exceptions: Custom exceptions
 """
+
 from typing import Type, Any
 import pytest
 
@@ -45,16 +46,21 @@ def test_exception_hierarchy():
     ]
 
     for exc in custom_exceptions:
-        assert issubclass(exc, ZerothLawError), f"{exc.__name__} must inherit from ZerothLawError"
+        assert issubclass(
+            exc, ZerothLawError
+        ), f"{exc.__name__} must inherit from ZerothLawError"
 
 
-@pytest.mark.parametrize("exc_class", [
-    FileNotFoundError,
-    NotPythonFileError,
-    NotADirectoryError,
-    AnalysisError,
-    ConfigError,
-])
+@pytest.mark.parametrize(
+    "exc_class",
+    [
+        FileNotFoundError,
+        NotPythonFileError,
+        NotADirectoryError,
+        AnalysisError,
+        ConfigError,
+    ],
+)
 def test_exception_creation(exc_class: Type[ZerothLawError]):
     """
     PURPOSE: Test exception instantiation and message handling.
@@ -103,14 +109,19 @@ def test_exception_with_cause():
         assert str(e.__cause__) == "Original error"
 
 
-@pytest.mark.parametrize("exc_class,attribute_dict", [
-    (FileNotFoundError, {"path": "/test/file.py"}),
-    (NotPythonFileError, {"file": "test.txt"}),
-    (NotADirectoryError, {"path": "/test"}),
-    (AnalysisError, {"module": "test_module", "line": 42}),
-    (ConfigError, {"config_file": "config.json", "key": "missing_key"}),
-])
-def test_exception_attributes(exc_class: Type[ZerothLawError], attribute_dict: dict[str, Any]):
+@pytest.mark.parametrize(
+    "exc_class,attribute_dict",
+    [
+        (FileNotFoundError, {"path": "/test/file.py"}),
+        (NotPythonFileError, {"file": "test.txt"}),
+        (NotADirectoryError, {"path": "/test"}),
+        (AnalysisError, {"module": "test_module", "line": 42}),
+        (ConfigError, {"config_file": "config.json", "key": "missing_key"}),
+    ],
+)
+def test_exception_attributes(
+    exc_class: Type[ZerothLawError], attribute_dict: dict[str, Any]
+):
     """
     PURPOSE: Test custom attributes on exception instances.
 

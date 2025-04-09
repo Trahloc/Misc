@@ -9,7 +9,6 @@
 #   pytest
 #   template_zeroth_law.cli
 """
-import pytest
 
 
 def test_cli_exists():

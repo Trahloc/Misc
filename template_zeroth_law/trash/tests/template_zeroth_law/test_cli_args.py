@@ -14,12 +14,13 @@
  - logging: Python logging facilities
  - template_zeroth_law.cli_args: CLI argument module
 """
+
 import logging
 import pytest
 import click
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
-from typing import List, Any
+from unittest.mock import patch
+from typing import List
 
 from template_zeroth_law.cli_args import add_args, configure_logging
 
@@ -31,10 +32,12 @@ def mock_command() -> click.Command:
 
     RETURNS: Mock Click command
     """
+
     @click.command()
     def test_command():
         """Test command."""
         pass
+
     return test_command
 
 
@@ -44,21 +47,21 @@ def test_add_args_adds_verbose(mock_command: click.Command):
     add_args(mock_command)
 
     # Verify verbose option added
-    verbose_param = next(
-        (p for p in mock_command.params if p.name == "verbose"),
-        None
-    )
+    verbose_param = next((p for p in mock_command.params if p.name == "verbose"), None)
     assert verbose_param is not None
     assert isinstance(verbose_param, click.Option)
     assert verbose_param.count
 
 
-@pytest.mark.parametrize("verbosity,expected_level", [
-    (0, logging.WARNING),
-    (1, logging.INFO),
-    (2, logging.DEBUG),
-    (3, logging.DEBUG),  # More than 2 should still be DEBUG
-])
+@pytest.mark.parametrize(
+    "verbosity,expected_level",
+    [
+        (0, logging.WARNING),
+        (1, logging.INFO),
+        (2, logging.DEBUG),
+        (3, logging.DEBUG),  # More than 2 should still be DEBUG
+    ],
+)
 def test_configure_logging_levels(verbosity: int, expected_level: int):
     """
     Test logging configuration with different verbosity levels.
@@ -67,6 +70,7 @@ def test_configure_logging_levels(verbosity: int, expected_level: int):
         verbosity: CLI verbosity level
         expected_level: Expected logging level
     """
+
     @click.command()
     @click.option("--verbose", "-v", count=True)
     @click.pass_context
@@ -86,6 +90,7 @@ def test_configure_logging_levels(verbosity: int, expected_level: int):
 
 def test_configure_logging_format():
     """Test logging format configuration."""
+
     @click.command()
     @click.pass_context
     def cmd(ctx):
@@ -107,8 +112,9 @@ def test_configure_logging_format():
 
 def test_cli_integration():
     """Test CLI argument integration with Click."""
+
     @click.command()
-    @click.option('-v', '--verbose', count=True, default=0)
+    @click.option("-v", "--verbose", count=True, default=0)
     @click.pass_context
     def test_cmd(ctx, verbose):
         ctx.ensure_object(dict)
@@ -124,6 +130,7 @@ def test_cli_integration():
 
 def test_logging_handler_cleanup():
     """Test that old logging handlers are properly cleaned up."""
+
     @click.command()
     @click.pass_context
     def cmd(ctx):
@@ -150,6 +157,7 @@ def test_logging_handler_cleanup():
 
 def test_invalid_verbosity():
     """Test handling of invalid verbosity values."""
+
     @click.command()
     @click.pass_context
     def cmd(ctx):
@@ -166,12 +174,15 @@ def test_invalid_verbosity():
         assert call_args["level"] == logging.WARNING
 
 
-@pytest.mark.parametrize("option_args", [
-    ["-v"],
-    ["--verbose"],
-    ["-vv"],
-    ["-vvv"],
-])
+@pytest.mark.parametrize(
+    "option_args",
+    [
+        ["-v"],
+        ["--verbose"],
+        ["-vv"],
+        ["-vvv"],
+    ],
+)
 def test_verbose_option_forms(option_args: List[str]):
     """
     Test different forms of verbose option.
@@ -179,8 +190,9 @@ def test_verbose_option_forms(option_args: List[str]):
     PARAMS:
         option_args: List of verbose option variations
     """
+
     @click.command()
-    @click.option('-v', '--verbose', count=True, default=0)
+    @click.option("-v", "--verbose", count=True, default=0)
     @click.pass_context
     def test_cmd(ctx, verbose):
         ctx.ensure_object(dict)
@@ -193,8 +205,9 @@ def test_verbose_option_forms(option_args: List[str]):
 
 def test_context_logger_setup():
     """Test that logger is properly set up in context."""
+
     @click.command()
-    @click.option('-v', '--verbose', count=True, default=0)
+    @click.option("-v", "--verbose", count=True, default=0)
     @click.pass_context
     def test_cmd(ctx, verbose):
         ctx.ensure_object(dict)

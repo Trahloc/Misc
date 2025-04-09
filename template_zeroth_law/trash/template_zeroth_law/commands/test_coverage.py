@@ -1,6 +1,5 @@
-from typing import List, Dict, Any
+from typing import Dict, Any
 from pathlib import Path
-import os
 
 
 def get_project_name(project_root: Path) -> str:

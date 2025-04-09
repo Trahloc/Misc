@@ -13,11 +13,10 @@
  - click.testing: CLI testing
  - template_zeroth_law.__main__: Main module
 """
+
 import pytest
 from pathlib import Path
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
-from typing import Dict, Any
 
 from template_zeroth_law.cli import main
 
@@ -76,14 +75,14 @@ def test_config_file_option(cli_runner: CliRunner, tmp_path: Path):
     """Test loading configuration from file."""
     # Create a test config file
     config_file = tmp_path / "test_config.json"
-    config_file.write_text('''
+    config_file.write_text("""
     {
         "app": {
             "name": "test_app",
             "version": "1.0.0"
         }
     }
-    ''')
+    """)
 
     result = cli_runner.invoke(main, ["--config", str(config_file), "version"])
     assert result.exit_code == 0
@@ -91,10 +90,12 @@ def test_config_file_option(cli_runner: CliRunner, tmp_path: Path):
 
 def test_logger_initialization(cli_runner: CliRunner):
     """Test logger setup in context object."""
+
     @main.command()
     def test_logger():
         """Test command to verify logger."""
         import click
+
         ctx = click.get_current_context()
         assert "logger" in ctx.obj
         assert ctx.obj["logger"] is not None
@@ -118,11 +119,7 @@ def test_error_handling(cli_runner: CliRunner):
 
 def test_command_chaining(cli_runner: CliRunner):
     """Test running multiple commands in sequence."""
-    commands = [
-        ["version"],
-        ["check", "--env"],
-        ["info", "--json"]
-    ]
+    commands = [["version"], ["check", "--env"], ["info", "--json"]]
 
     for command in commands:
         result = cli_runner.invoke(main, command)
@@ -131,10 +128,12 @@ def test_command_chaining(cli_runner: CliRunner):
 
 def test_context_preservation(cli_runner: CliRunner):
     """Test that context is preserved across command calls."""
+
     @main.command()
     def test_context():
         """Test command to verify context."""
         import click
+
         ctx = click.get_current_context()
         assert all(key in ctx.obj for key in ["logger", "config", "verbose"])
 

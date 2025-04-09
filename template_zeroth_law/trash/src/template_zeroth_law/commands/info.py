@@ -11,7 +11,6 @@
  - template_zeroth_law.utils: Utility functions
 """
 
-import os
 import sys
 import click
 import platform
@@ -126,7 +125,7 @@ def command(ctx, config: Optional[str] = None, details: bool = False) -> None:
 
     # App info
     app_info = config_data.get("app", {})
-    click.echo(f"\n📦 Application:")
+    click.echo("\n📦 Application:")
     click.echo(f"  Name: {app_info.get('name', 'Unknown')}")
     click.echo(f"  Version: {app_info.get('version', 'Unknown')}")
     click.echo(f"  Description: {app_info.get('description', 'No description')}")
@@ -137,18 +136,18 @@ def command(ctx, config: Optional[str] = None, details: bool = False) -> None:
 
     # Project info
     project_info = config_data.get("project", {})
-    click.echo(f"\n🧩 Project Details:")
+    click.echo("\n🧩 Project Details:")
     click.echo(f"  Author: {project_info.get('author', 'Unknown')}")
     click.echo(f"  Repository: {project_info.get('repository', 'Not specified')}")
 
     # Paths
     paths_info = config_data.get("paths", {})
-    click.echo(f"\n📁 Paths:")
+    click.echo("\n📁 Paths:")
     for key, value in paths_info.items():
         click.echo(f"  {key}: {value}")
 
     # System info
-    click.echo(f"\n💻 System:")
+    click.echo("\n💻 System:")
     click.echo(f"  Python: {platform.python_version()}")
     click.echo(f"  Platform: {platform.system()} {platform.release()}")
 
@@ -160,7 +159,7 @@ def command(ctx, config: Optional[str] = None, details: bool = False) -> None:
 
         # Logging settings
         logging_info = config_data.get("logging", {})
-        click.echo(f"\n📝 Logging:")
+        click.echo("\n📝 Logging:")
         click.echo(f"  Level: {logging_info.get('level', 'INFO')}")
         click.echo(f"  Format: {logging_info.get('format', 'Default format')}")
         click.echo(f"  Log file: {logging_info.get('log_file', 'None (console only)')}")

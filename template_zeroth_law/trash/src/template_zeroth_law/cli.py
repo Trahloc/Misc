@@ -10,6 +10,7 @@
  - template_zeroth_law.commands: Command implementations
  - template_zeroth_law.config: Configuration management
 """
+
 import logging
 import sys
 from typing import Optional  # Only import what's needed for the type annotation
@@ -32,25 +33,27 @@ from template_zeroth_law.config import get_config
 def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> None:
     """Command-line interface for the template_zeroth_law package."""
     # Input validation
-    assert isinstance(verbose, int) and verbose >= 0, f"Verbosity must be non-negative integer, got {verbose}"
-    assert config is None or isinstance(config, str), f"Config must be string or None, got {type(config)}"
+    assert (
+        isinstance(verbose, int) and verbose >= 0
+    ), f"Verbosity must be non-negative integer, got {verbose}"
+    assert config is None or isinstance(
+        config, str
+    ), f"Config must be string or None, got {type(config)}"
 
     # Initialize context object to store shared data
     ctx.ensure_object(dict)
 
     # Load configuration
     app_config = get_config(config)
-    assert hasattr(app_config, 'logging'), "Configuration must contain logging settings"
+    assert hasattr(app_config, "logging"), "Configuration must contain logging settings"
 
     # Use config version or fallback to default
     version_str = getattr(app_config.app, "version", "0.1.0")
 
     # Set up logging based on verbosity
-    log_level = {
-        0: logging.WARNING,
-        1: logging.INFO,
-        2: logging.DEBUG
-    }.get(verbose, logging.DEBUG)  # Default to DEBUG for verbose > 2
+    log_level = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}.get(
+        verbose, logging.DEBUG
+    )  # Default to DEBUG for verbose > 2
 
     logging.basicConfig(
         level=log_level,
@@ -67,8 +70,9 @@ def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> 
     ctx.obj["verbose"] = verbose
 
     # Validate context setup
-    assert all(key in ctx.obj for key in ["logger", "config", "verbose"]), \
-        "Context missing required keys"
+    assert all(
+        key in ctx.obj for key in ["logger", "config", "verbose"]
+    ), "Context missing required keys"
 
 
 # Register commands

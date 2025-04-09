@@ -13,12 +13,11 @@
 import json
 import os
 import tempfile
-from pathlib import Path
 
 import pytest
 
 from template_zeroth_law.config import Config, get_config, load_config
-from template_zeroth_law.exceptions import ConfigError, FileError
+from template_zeroth_law.exceptions import FileError
 
 
 def test_config_init():

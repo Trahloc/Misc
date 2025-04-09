@@ -19,7 +19,7 @@
 import os
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple, Any
+from typing import Dict, Any
 import pytest
 from click.testing import CliRunner
 from unittest.mock import patch, MagicMock

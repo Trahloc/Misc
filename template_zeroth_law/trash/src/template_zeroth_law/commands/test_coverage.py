@@ -20,12 +20,11 @@
 import os
 import click
 from pathlib import Path
-from typing import Dict, List, Tuple, Set, Any, Optional
+from typing import Dict, List, Tuple, Any, Optional
 import sys
 import subprocess
 
 from template_zeroth_law.utils import get_project_root
-from template_zeroth_law.exceptions import ZerothLawError
 
 # Import tomllib or tomli for TOML parsing
 if sys.version_info >= (3, 11):

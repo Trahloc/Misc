@@ -9,7 +9,6 @@
 ## TODO: Add more test cases as needed
 """
 
-import pytest
 from template_zeroth_law.exceptions import (
     ZerothLawError,
     ConfigError,
