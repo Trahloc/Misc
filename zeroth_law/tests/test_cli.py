@@ -69,7 +69,7 @@ def test_cli_default_output(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").touch()
 
     # Act
-    result = run_cli(["src"], cwd=tmp_path)
+    result = run_cli(["audit", "src"], cwd=tmp_path)
 
     # Assert
     assert result.returncode == 0
@@ -104,7 +104,7 @@ authors = [""]
     (tmp_path / "pyproject.toml").write_text(pyproject_content)
 
     # Act
-    result = run_cli(["-q", "src"], cwd=tmp_path)
+    result = run_cli(["audit", "-q", "src"], cwd=tmp_path)
 
     # Assert
     assert result.returncode == 1
@@ -133,7 +133,7 @@ def test_cli_debug_output(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").touch()
 
     # Act
-    result = run_cli(["-vv", "src"], cwd=tmp_path)
+    result = run_cli(["audit", "-vv", "src"], cwd=tmp_path)
 
     # Assert
     assert result.returncode == 0
