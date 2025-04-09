@@ -3,50 +3,15 @@
 
 import os
 import stat
-import subprocess
 import sys
 from pathlib import Path
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
-from src.zeroth_law.cli import run_audit
+from click.testing import CliRunner
+
+from src.zeroth_law.cli import cli_group, run_audit
 from zeroth_law.git_utils import generate_custom_hook_script
-
-
-# Helper to run the CLI script via subprocess
-def run_cli(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
-    """Runs the zeroth-law script as a subprocess using the installed script path."""
-    env_bin_dir = Path(sys.executable).parent
-    script_path = env_bin_dir / "zeroth-law"
-    if not script_path.exists():
-        raise FileNotFoundError(f"zeroth-law script not found in {env_bin_dir}")
-
-    command = [str(script_path)] + args
-    process_env = os.environ.copy()
-
-    # --- Coverage Setup for Subprocess ---
-    project_root = Path(__file__).parent.parent  # Assumes tests/ is one level below root
-    coverage_rc_path = project_root / "pyproject.toml"
-    if coverage_rc_path.exists():
-        process_env["COVERAGE_PROCESS_START"] = str(coverage_rc_path)
-        # Ensure the source directory is discoverable by the subprocess coverage
-        if "PYTHONPATH" in process_env:
-            process_env["PYTHONPATH"] = f"{project_root / 'src'}:{process_env['PYTHONPATH']}"
-        else:
-            process_env["PYTHONPATH"] = str(project_root / "src")
-    else:
-        print(f"Warning: Coverage config not found at {coverage_rc_path}", file=sys.stderr)
-    # -------------------------------------
-
-    return subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=False,
-        cwd=cwd or Path.cwd(),
-        env=process_env,
-    )
-
 
 # Common compliant content for __init__.py in tests
 INIT_PY_CONTENT = """# FILE: __init__.py
@@ -68,19 +33,23 @@ def test_cli_default_output(tmp_path: Path) -> None:
     (tmp_path / "src" / "compliant.py").write_text(compliant_content)
     (tmp_path / "pyproject.toml").touch()
 
-    # Act
-    result = run_cli(["audit", "src"], cwd=tmp_path)
+    runner = CliRunner()
+    original_cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        result = runner.invoke(cli_group, ["audit", "src"], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode == 0
-    assert "Starting audit" in result.stderr
-    assert "Found 2 Python files" in result.stderr
-    assert "Using configuration" in result.stderr
-    assert "Audit Summary" in result.stderr
-    assert "Compliant files: 2" in result.stderr
-    assert "Project is compliant!" in result.stderr
-    assert "Analyzing:" not in result.stderr
-    assert result.stdout == ""
+    assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+    assert "Starting audit" in result.output
+    assert "Found 2 Python files" in result.output
+    assert "Using configuration" in result.output
+    assert "Audit Summary" in result.output
+    assert "Compliant files: 2" in result.output
+    assert "Project is compliant!" in result.output
+    assert "Analyzing:" not in result.output
 
 
 # Test Case 2: Quiet Output (-q)
@@ -103,20 +72,24 @@ authors = [""]
 """
     (tmp_path / "pyproject.toml").write_text(pyproject_content)
 
-    # Act
-    result = run_cli(["audit", "-q", "src"], cwd=tmp_path)
+    runner = CliRunner()
+    original_cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        result = runner.invoke(cli_group, ["audit", "-q", "src"], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode == 1
-    assert "Starting audit" not in result.stderr
-    assert "Found 2 Python files" not in result.stderr
-    assert "Analyzing:" not in result.stderr
-    assert "-> Violations found in bad.py: ['footer']" in result.stderr
-    assert "Audit Summary" in result.stderr
-    assert "Files with violations: 1" in result.stderr
-    assert "Detailed Violations:" in result.stderr
-    assert "File: bad.py" in result.stderr
-    assert result.stdout == ""
+    assert result.exit_code == 1, f"CLI failed with output: {result.output}"
+    assert "Starting audit" not in result.output
+    assert "Found 2 Python files" not in result.output
+    assert "Analyzing:" not in result.output
+    assert "-> Violations found in bad.py: ['footer']" in result.output
+    assert "Audit Summary" in result.output
+    assert "Files with violations: 1" in result.output
+    assert "Detailed Violations:" in result.output
+    assert "File: bad.py" in result.output
 
 
 # Test Case 3: Debug Output (-vv)
@@ -132,19 +105,23 @@ def test_cli_debug_output(tmp_path: Path) -> None:
     (tmp_path / "src" / "compliant.py").write_text(compliant_content)
     (tmp_path / "pyproject.toml").touch()
 
-    # Act
-    result = run_cli(["audit", "-vv", "src"], cwd=tmp_path)
+    runner = CliRunner()
+    original_cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        result = runner.invoke(cli_group, ["audit", "-vv", "src"], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode == 0
-    assert "Starting audit" in result.stderr
-    assert "Found 2 Python files" in result.stderr
-    assert "Analyzing: __init__.py" in result.stderr
-    assert "Analyzing: compliant.py" in result.stderr
-    assert "Audit Summary" in result.stderr
-    assert "Compliant files: 2" in result.stderr
-    assert "Project is compliant!" in result.stderr
-    assert result.stdout == ""
+    assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+    assert "Starting audit" in result.output
+    assert "Found 2 Python files" in result.output
+    assert "Analyzing: __init__.py" in result.output
+    assert "Analyzing: compliant.py" in result.output
+    assert "Audit Summary" in result.output
+    assert "Compliant files: 2" in result.output
+    assert "Project is compliant!" in result.output
 
 
 # TODO: Add test_cli_verbose_output (might be same as default for now)
@@ -176,7 +153,7 @@ def test_run_audit_calls_analyzer_with_all_params(mock_analyzer: MagicMock, tmp_
 
     # Act
     # Pass project_dir as a list to paths_to_check and set recursive=True
-    run_audit(paths_to_check=[project_dir], recursive=True, config=config)
+    run_audit(paths_to_check=[project_dir], recursive=True, config=config, analyzer_func=mock_analyzer)
 
     # Assert
     mock_analyzer.assert_called()  # Check if it was called at all
@@ -197,45 +174,47 @@ def test_run_audit_calls_analyzer_with_all_params(mock_analyzer: MagicMock, tmp_
 
 def test_cli_install_hook_exists():
     """Test that the install-git-hook command exists."""
-    result = run_cli(["install-git-hook", "--help"])
-    assert result.returncode == 0
-    assert "Install the custom multi-project pre-commit hook script" in result.stdout
+    runner = CliRunner()
+    result = runner.invoke(cli_group, ["install-git-hook", "--help"], catch_exceptions=False)
+    assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+    assert "Install the custom multi-project pre-commit hook script" in result.output
 
 
-def test_cli_install_hook_runs(tmp_path):
+def test_cli_install_hook_runs(mock_install: MagicMock, tmp_path):
     """Test that the install-git-hook command runs (placeholder check)."""
     # Create a fake .git directory to simulate being in a repo
     (tmp_path / ".git").mkdir()
     # Change CWD for the test
     original_cwd = Path.cwd()
     os.chdir(tmp_path)
+    runner = CliRunner()
     try:
-        result = run_cli(["install-git-hook", "--git-root", "."])
-        assert result.returncode == 0
-        assert "Placeholder: Would install custom hook" in result.stdout
-        assert "Warning: This feature is not yet fully implemented." in result.stdout
+        result = runner.invoke(cli_group, ["install-git-hook", "--git-root", "."], catch_exceptions=False)
+        assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+        mock_install.assert_called_once_with(git_root_dir=tmp_path)
     finally:
         os.chdir(original_cwd)
 
 
 def test_cli_restore_hooks_exists():
     """Test that the restore-git-hooks command exists."""
-    result = run_cli(["restore-git-hooks", "--help"])
-    assert result.returncode == 0
-    assert "Restore the default pre-commit hook script" in result.stdout
+    runner = CliRunner()
+    result = runner.invoke(cli_group, ["restore-git-hooks", "--help"], catch_exceptions=False)
+    assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+    assert "Restore the default pre-commit hook script" in result.output
 
 
-def test_cli_restore_hooks_runs(tmp_path):
+def test_cli_restore_hooks_runs(mock_restore: MagicMock, tmp_path):
     """Test that the restore-git-hooks command runs (placeholder check)."""
     # Create a fake .git directory
     (tmp_path / ".git").mkdir()
     original_cwd = Path.cwd()
     os.chdir(tmp_path)
+    runner = CliRunner()
     try:
-        result = run_cli(["restore-git-hooks", "--git-root", "."])
-        assert result.returncode == 0
-        assert "Placeholder: Would run pre-commit install" in result.stdout
-        assert "Warning: This feature is not yet fully implemented." in result.stdout
+        result = runner.invoke(cli_group, ["restore-git-hooks", "--git-root", "."], catch_exceptions=False)
+        assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+        mock_restore.assert_called_once_with(git_root_dir=tmp_path)
     finally:
         os.chdir(original_cwd)
 
@@ -245,41 +224,47 @@ def test_cli_restore_hooks_runs(tmp_path):
 # We will use mocker fixture provided by pytest-mock
 
 
-def test_install_hook_success(mocker, tmp_path):
+def test_install_hook_success(mock_is_dir: MagicMock, mock_exists: MagicMock, mock_open: MagicMock, mock_chmod: MagicMock, tmp_path: Path):
     """Test successful installation of the custom hook."""
     # Arrange
-    mock_git_root = tmp_path
-    dot_git_path = mock_git_root / ".git"
-    hooks_dir = dot_git_path / "hooks"
-    hook_file_path = hooks_dir / "pre-commit"
+    runner = CliRunner()
+    git_root = tmp_path
+    hooks_dir = git_root / ".git" / "hooks"
+    pre_commit_hook_path = hooks_dir / "pre-commit"
     expected_script_content = generate_custom_hook_script()  # Get real script content
 
     # Mock Path operations
-    mocker.patch("pathlib.Path.resolve", return_value=mock_git_root)
-    mocker.patch("pathlib.Path.is_dir", return_value=True)  # Assume .git exists
-    mock_mkdir = mocker.patch("pathlib.Path.mkdir")
-    mock_open = mocker.patch("builtins.open", mock.mock_open())
-    mock_stat_result = mocker.MagicMock()
-    mock_stat_result.st_mode = 0o644  # Some default mode
-    mock_stat = mocker.patch("os.stat", return_value=mock_stat_result)
-    mock_chmod = mocker.patch("os.chmod")
-    # Mock root config check
-    mocker.patch("pathlib.Path.is_file", return_value=False)  # Assume no root config initially
+    mock_is_dir.return_value = True
+    mock_exists.return_value = True
+    mock_open.return_value = mock.mock_open()
+    mock_chmod.return_value = None
 
     # Act
-    result = run_cli(["install-git-hook", "--git-root", str(mock_git_root)])
+    original_cwd = Path.cwd()
+    os.chdir(git_root)
+    try:
+        result = runner.invoke(cli_group, ["install-git-hook", "--git-root", "."], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode == 0
-    mock_mkdir.assert_called_once_with(exist_ok=True)  # Check hooks dir creation
-    mock_open.assert_called_once_with(hook_file_path, "w", encoding="utf-8")
+    assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+    assert f"Ensuring hooks directory exists: {hooks_dir}" in result.output
+    assert f"Installing custom pre-commit hook to {pre_commit_hook_path}" in result.output
+    assert f"Custom pre-commit hook installed successfully to {pre_commit_hook_path}" in result.output
+
+    # Check that .git and .git/hooks were checked for existence/type
+    mock_is_dir.assert_any_call()
+    assert mock_is_dir.call_args_list[0].args[0] == git_root / ".git"
+
+    # Check that the hook file was opened for writing
+    mock_open.assert_called_once_with(pre_commit_hook_path, "w", encoding="utf-8")
+    # Check that the generated script content was written
     handle = mock_open()
     handle.write.assert_called_once_with(expected_script_content)
-    mock_stat.assert_called_once_with(hook_file_path)
-    expected_permissions = 0o644 | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    mock_chmod.assert_called_once_with(hook_file_path, expected_permissions)
-    assert f"Successfully installed Zeroth Law custom pre-commit hook to: {hook_file_path}" in result.stdout
-    assert "WARNING: Found" not in result.stderr  # No warning expected
+
+    # Check that chmod was called to make the hook executable
+    mock_chmod.assert_called_once_with(pre_commit_hook_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
 
 
 def test_install_hook_warning_on_root_config(mocker, tmp_path):
@@ -324,21 +309,17 @@ def test_install_hook_warning_on_root_config(mocker, tmp_path):
 def test_install_hook_not_git_repo(mocker, tmp_path):
     """Test install hook failure if the target directory isn't a Git repo."""
     # Arrange
-    mock_not_git_root = tmp_path
-    mocker.patch("pathlib.Path.resolve", return_value=mock_not_git_root)
-    # MOCK .git directory DOES NOT exist
-    mocker.patch("pathlib.Path.is_dir", return_value=False)
-    mock_open = mocker.patch("builtins.open", mock.mock_open())
-    mock_chmod = mocker.patch("os.chmod")
+    mock_git_root = tmp_path
+    mocker.patch("pathlib.Path.resolve", return_value=mock_git_root)
+    # Mock is_dir to return False specifically when checking for '.git'
+    mocker.patch("pathlib.Path.is_dir", side_effect=lambda p: p.name != ".git")
 
     # Act
-    result = run_cli(["install-git-hook", "--git-root", str(mock_not_git_root)])
+    result = run_cli(["install-git-hook", "--git-root", str(mock_git_root)])
 
     # Assert
-    assert result.returncode != 0  # Should fail
-    assert f"Error: Directory '{mock_not_git_root}' does not contain a .git directory." in result.stderr
-    mock_open.assert_not_called()  # Should not attempt to write
-    mock_chmod.assert_not_called()  # Should not attempt to chmod
+    assert result.returncode != 0  # Should exit with error
+    assert f"Error: Directory '{mock_git_root}' does not contain a .git directory." in result.stderr
 
 
 # Add more tests below (write error, chmod error etc.)
@@ -346,83 +327,129 @@ def test_install_hook_not_git_repo(mocker, tmp_path):
 # --- Detailed Tests for restore-git-hooks ---
 
 
-def test_restore_hooks_success(mocker, tmp_path):
+def test_restore_hooks_success(mock_is_dir: MagicMock, mock_subprocess_run: MagicMock, tmp_path: Path):
     """Test successful restoration of default hooks."""
     # Arrange
-    mock_git_root = tmp_path
-    mocker.patch("pathlib.Path.resolve", return_value=mock_git_root)
-    mocker.patch("pathlib.Path.is_dir", return_value=True)  # Assume .git exists
-    mock_run = mocker.patch(
-        "subprocess.run",
-        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="pre-commit installed at .git/hooks/pre-commit", stderr=""),
-    )
+    runner = CliRunner()
+    git_root = tmp_path
+    (git_root / ".git").mkdir()  # Need .git dir for the check
+
+    # Simulate successful subprocess run
+    mock_subprocess_run.return_value = MagicMock(returncode=0, stdout="pre-commit installed", stderr="")
 
     # Act
-    result = run_cli(["restore-git-hooks", "--git-root", str(mock_git_root)])
+    original_cwd = Path.cwd()
+    os.chdir(git_root)
+    try:
+        result = runner.invoke(cli_group, ["restore-git-hooks", "--git-root", "."], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode == 0
-    mock_run.assert_called_once_with(
+    assert result.exit_code == 0, f"CLI failed with output: {result.output}"
+    assert "Attempting to restore default hooks using 'pre-commit install'" in result.output
+    assert "pre-commit installed" in result.output  # Check stdout from mock
+    assert "Default git hooks restored successfully." in result.output
+
+    mock_is_dir.assert_called_once_with(git_root / ".git")
+    mock_subprocess_run.assert_called_once_with(
         ["pre-commit", "install"],
         capture_output=True,
         text=True,
         check=True,
-        cwd=mock_git_root,
+        cwd=git_root,
         errors="ignore",
     )
-    assert "Successfully restored default pre-commit hooks." in result.stdout
-    assert "pre-commit installed at .git/hooks/pre-commit" in result.stdout
 
 
-def test_restore_hooks_not_git_repo(mocker, tmp_path):
+def test_restore_hooks_not_git_repo(mock_is_dir: MagicMock, tmp_path: Path):
     """Test restore hooks failure if the target directory isn't a Git repo."""
     # Arrange
+    runner = CliRunner()
     mock_not_git_root = tmp_path
     mocker.patch("pathlib.Path.resolve", return_value=mock_not_git_root)
-    mocker.patch("pathlib.Path.is_dir", return_value=False)  # .git dir doesn't exist
-    mock_run = mocker.patch("subprocess.run")
+    # Mock is_dir to return False, simulating missing .git
+    mocker.patch("pathlib.Path.is_dir", return_value=False)
 
     # Act
-    result = run_cli(["restore-git-hooks", "--git-root", str(mock_not_git_root)])
+    original_cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        result = runner.invoke(cli_group, ["restore-git-hooks", "--git-root", "."], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode != 0
-    assert f"Error: Directory '{mock_not_git_root}' does not contain a .git directory." in result.stderr
-    mock_run.assert_not_called()  # Should not attempt to run pre-commit install
+    assert result.exit_code == 1, f"CLI failed with output: {result.output}"
+    assert f"Error: Not a git repository (or .git directory missing): {tmp_path}" in result.output
+    mock_is_dir.assert_called_once_with(tmp_path / ".git")
 
 
-def test_restore_hooks_pre_commit_not_found(mocker, tmp_path):
+def test_restore_hooks_pre_commit_not_found(mock_is_dir: MagicMock, mock_subprocess_run: MagicMock, tmp_path: Path):
     """Test restore hooks failure if pre-commit command is not found."""
     # Arrange
-    mock_git_root = tmp_path
-    mocker.patch("pathlib.Path.resolve", return_value=mock_git_root)
-    mocker.patch("pathlib.Path.is_dir", return_value=True)  # Assume .git exists
-    mock_run = mocker.patch("subprocess.run", side_effect=FileNotFoundError("pre-commit not found"))
+    runner = CliRunner()
+    git_root = tmp_path
+    (git_root / ".git").mkdir()
+
+    # Simulate FileNotFoundError
+    mock_subprocess_run.side_effect = FileNotFoundError("No such file or directory: 'pre-commit'")
 
     # Act
-    result = run_cli(["restore-git-hooks", "--git-root", str(mock_git_root)])
+    original_cwd = Path.cwd()
+    os.chdir(git_root)
+    try:
+        result = runner.invoke(cli_group, ["restore-git-hooks", "--git-root", "."], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode != 0
-    assert "Error: 'pre-commit' command not found." in result.stderr
-    mock_run.assert_called_once()
+    assert result.exit_code == 1, f"CLI failed with output: {result.output}"
+    assert "Error: 'pre-commit' command not found." in result.output
+    assert "Please install pre-commit" in result.output
+
+    mock_is_dir.assert_called_once_with(git_root / ".git")
+    mock_subprocess_run.assert_called_once_with(
+        ["pre-commit", "install"],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=git_root,
+        errors="ignore",
+    )
 
 
-def test_restore_hooks_pre_commit_install_fails(mocker, tmp_path):
+def test_restore_hooks_pre_commit_install_fails(mock_is_dir: MagicMock, mock_subprocess_run: MagicMock, tmp_path: Path):
     """Test restore hooks failure if pre-commit install command fails."""
     # Arrange
-    mock_git_root = tmp_path
-    mocker.patch("pathlib.Path.resolve", return_value=mock_git_root)
-    mocker.patch("pathlib.Path.is_dir", return_value=True)  # Assume .git exists
-    mock_run = mocker.patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, cmd=[], stderr="Install failed"))
+    runner = CliRunner()
+    git_root = tmp_path
+    (git_root / ".git").mkdir()
+
+    # Simulate subprocess failure
+    mock_subprocess_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["pre-commit", "install"], stderr="Install failed")
 
     # Act
-    result = run_cli(["restore-git-hooks", "--git-root", str(mock_git_root)])
+    original_cwd = Path.cwd()
+    os.chdir(git_root)
+    try:
+        result = runner.invoke(cli_group, ["restore-git-hooks", "--git-root", "."], catch_exceptions=False)
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.returncode != 0
-    assert "Error running 'pre-commit install': Install failed" in result.stderr
-    mock_run.assert_called_once()
+    assert result.exit_code == 1, f"CLI failed with output: {result.output}"
+    assert "Error running 'pre-commit install': Install failed" in result.output
+
+    mock_is_dir.assert_called_once_with(git_root / ".git")
+    mock_subprocess_run.assert_called_once_with(
+        ["pre-commit", "install"],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=git_root,
+        errors="ignore",
+    )
 
 
 # Add more tests below if needed

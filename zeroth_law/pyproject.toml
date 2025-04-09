@@ -47,7 +47,7 @@ types-setuptools = "^78.1.0" # Align with installed version
 
 # Add scripts entry point
 [tool.poetry.scripts]
-zeroth-law = "zeroth_law.cli:cli"
+zeroth-law = "zeroth_law.cli:cli_group"
 
 # --- Add Zeroth Law Tool Configuration --- #
 [tool.zeroth-law]

@@ -6,6 +6,7 @@ import logging
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -71,23 +72,47 @@ log: BoundLogger = structlog.get_logger()
 # --- Audit Logic (Moved from main cli group) ---
 
 
-def run_audit(paths_to_check: list[Path], recursive: bool, config: dict[str, Any]) -> tuple[dict[Path, dict[str, list[str]]], bool]:
+def run_audit(
+    paths_to_check: list[Path],
+    recursive: bool,
+    config: dict[str, Any],
+    analyzer_func: Callable | None = None,  # Added analyzer_func argument
+) -> tuple[dict[Path, dict[str, list[str]]], bool]:
     """Run the audit on specified paths and log results using the loaded configuration."""
-    # Re-import necessary components here to ensure path adjustments work
-    # This is slightly less ideal but necessary given the direct run vs install challenges
+    # Import analyzer only if not provided
+    if analyzer_func is None:
+        try:
+            from .analyzer.python.analyzer import analyze_file_compliance as default_analyzer
+
+            analyzer_func = default_analyzer
+        except ImportError:
+            project_root = Path(__file__).resolve().parent.parent.parent
+            if str(project_root) not in sys.path:
+                sys.path.insert(0, str(project_root))
+            try:
+                from src.zeroth_law.analyzer.python.analyzer import analyze_file_compliance as default_analyzer_alt
+
+                analyzer_func = default_analyzer_alt
+            except ImportError as e:
+                log.critical("Failed to import default analyzer in run_audit", error=e)
+                raise
+
+    # Ensure analyzer_func is callable before proceeding
+    if not callable(analyzer_func):
+        raise TypeError("Analyzer function provided or loaded is not callable.")
+
+    # Import file_finder (still needed)
     try:
-        from .analyzer.python.analyzer import analyze_file_compliance
         from .file_finder import find_python_files
     except ImportError:
         project_root = Path(__file__).resolve().parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
         try:
-            from src.zeroth_law.analyzer.python.analyzer import analyze_file_compliance
             from src.zeroth_law.file_finder import find_python_files
         except ImportError as e:
-            log.critical("Failed to import analyzer/finder in run_audit", error=e)
-            raise  # Re-raise to signal critical failure
+            log.critical("Failed to import file_finder in run_audit", error=e)
+            raise
 
     log.info("Starting audit on paths: %s (Recursive: %s)", [p.name for p in paths_to_check], recursive)
     log.info("Using configuration: %s", config)
@@ -168,10 +193,8 @@ def run_audit(paths_to_check: list[Path], recursive: bool, config: dict[str, Any
 
         log.debug("Analyzing: %s", relative_path)
         try:
-            if not callable(analyze_file_compliance):
-                raise TypeError("analyze_file_compliance function not loaded correctly.")
-
-            violations = analyze_file_compliance(
+            # Use the provided/loaded analyzer_func
+            violations = analyzer_func(
                 file_path,
                 max_complexity=config.get("max_complexity", 10),
                 max_lines=config.get("max_lines", 100),
@@ -310,6 +333,7 @@ def audit_command(ctx: click.Context, paths: tuple[Path, ...], recursive: bool) 
         log.exception("Unexpected error loading configuration: %s", e)
         ctx.exit(2)
 
+    # Pass arguments to run_audit (analyzer_func will use its default)
     results, violations_found = run_audit(paths_to_check=paths_list, recursive=recursive, config=config)
 
     if violations_found:
