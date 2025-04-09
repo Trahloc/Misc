@@ -22,6 +22,7 @@ import logging
 import shutil
 from pathlib import Path
 
+
 def ensure_tmux_server_is_running(debug_level: int = 0) -> bool:
     """
     PURPOSE: Ensures the tmux server is running using progressively more forceful methods.
@@ -49,7 +50,9 @@ def ensure_tmux_server_is_running(debug_level: int = 0) -> bool:
     socket_path = Path(f"/tmp/tmux-{os.getuid()}/default")
     if socket_path.exists():
         if debug_level >= 1:
-            logger.debug(f"Socket exists at {socket_path} but server not responding, removing stale socket")
+            logger.debug(
+                f"Socket exists at {socket_path} but server not responding, removing stale socket"
+            )
         try:
             socket_path.unlink()
         except OSError as e:
@@ -78,6 +81,7 @@ def ensure_tmux_server_is_running(debug_level: int = 0) -> bool:
     logger.error("Failed to start tmux server by any method")
     return False
 
+
 def _is_tmux_server_running() -> bool:
     """
     PURPOSE: Checks if the tmux server is currently running.
@@ -90,11 +94,12 @@ def _is_tmux_server_running() -> bool:
             ["tmux", "list-sessions"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
         return True
     except:
         return False
+
 
 def _is_systemd_service_available(service_name: str) -> bool:
     """
@@ -111,11 +116,12 @@ def _is_systemd_service_available(service_name: str) -> bool:
             ["systemctl", "--user", "list-unit-files", service_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
         return result.returncode == 0
     except:
         return False
+
 
 def _start_tmux_via_systemd() -> bool:
     """
@@ -132,7 +138,7 @@ def _start_tmux_via_systemd() -> bool:
             ["systemctl", "--user", "start", "tmux.service"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=True
+            check=True,
         )
 
         # Give systemd time to start the service
@@ -143,6 +149,7 @@ def _start_tmux_via_systemd() -> bool:
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to start tmux via systemd: {e}")
         return False
+
 
 def _start_tmux_directly() -> bool:
     """
@@ -159,7 +166,7 @@ def _start_tmux_directly() -> bool:
             ["tmux", "start-server"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
 
         # Give server time to initialize
@@ -170,6 +177,7 @@ def _start_tmux_directly() -> bool:
     except Exception as e:
         logger.error(f"Failed to start tmux server directly: {e}")
         return False
+
 
 def _start_with_temporary_session() -> bool:
     """
@@ -186,7 +194,7 @@ def _start_with_temporary_session() -> bool:
             ["tmux", "new-session", "-d", "-s", "temp_session"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
 
         # Give server time to initialize
@@ -197,7 +205,7 @@ def _start_with_temporary_session() -> bool:
             ["tmux", "has-session", "-t", "temp_session"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
 
         if result.returncode == 0:
@@ -206,7 +214,7 @@ def _start_with_temporary_session() -> bool:
                 ["tmux", "kill-session", "-t", "temp_session"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                check=False
+                check=False,
             )
 
             logger.info("Tmux server started successfully with temporary session")
@@ -215,6 +223,7 @@ def _start_with_temporary_session() -> bool:
         logger.error(f"Failed to start tmux with temporary session: {e}")
 
     return False
+
 
 """
 ## KNOWN ERRORS:

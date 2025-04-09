@@ -20,7 +20,8 @@
 import subprocess
 import logging
 import re
-from typing import Dict, Optional
+from typing import Dict
+
 
 def get_service_status(service_name: str) -> Dict[str, str]:
     """
@@ -40,7 +41,7 @@ def get_service_status(service_name: str) -> Dict[str, str]:
         "main_pid": "",
         "loaded": False,
         "enabled": False,
-        "unit_file_state": ""
+        "unit_file_state": "",
     }
 
     # Check if service is active
@@ -49,10 +50,10 @@ def get_service_status(service_name: str) -> Dict[str, str]:
             ["systemctl", "--user", "is-active", service_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
 
-        status_info["active_state"] = result.stdout.decode('utf-8').strip()
+        status_info["active_state"] = result.stdout.decode("utf-8").strip()
         status_info["status"] = "RUNNING" if result.returncode == 0 else "STOPPED"
 
         # Get detailed status
@@ -61,13 +62,13 @@ def get_service_status(service_name: str) -> Dict[str, str]:
                 ["systemctl", "--user", "status", service_name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                check=False
+                check=False,
             )
 
-            output = detailed_status.stdout.decode('utf-8')
+            output = detailed_status.stdout.decode("utf-8")
 
             # Extract main PID
-            pid_match = re.search(r'Main PID: (\d+)', output)
+            pid_match = re.search(r"Main PID: (\d+)", output)
             if pid_match:
                 status_info["main_pid"] = pid_match.group(1)
 
@@ -76,10 +77,10 @@ def get_service_status(service_name: str) -> Dict[str, str]:
             ["systemctl", "--user", "is-enabled", service_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
 
-        status_info["unit_file_state"] = is_enabled.stdout.decode('utf-8').strip()
+        status_info["unit_file_state"] = is_enabled.stdout.decode("utf-8").strip()
         status_info["enabled"] = is_enabled.returncode == 0
 
         # Check if service is loaded
@@ -87,15 +88,16 @@ def get_service_status(service_name: str) -> Dict[str, str]:
             ["systemctl", "--user", "list-units", service_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
 
-        status_info["loaded"] = service_name in list_units.stdout.decode('utf-8')
+        status_info["loaded"] = service_name in list_units.stdout.decode("utf-8")
 
     except Exception as e:
         logger.error(f"Error getting service status: {e}")
 
     return status_info
+
 
 def restart_tmux_service(service_name: str) -> bool:
     """
@@ -120,7 +122,7 @@ def restart_tmux_service(service_name: str) -> bool:
             ["systemctl", "--user", "restart", service_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=True
+            check=True,
         )
 
         # Verify service is now active
@@ -134,6 +136,7 @@ def restart_tmux_service(service_name: str) -> bool:
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to restart service {service_name}: {e}")
         return False
+
 
 def is_service_active(service_name: str) -> bool:
     """
@@ -150,11 +153,12 @@ def is_service_active(service_name: str) -> bool:
             ["systemctl", "--user", "is-active", service_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
         return result.returncode == 0
     except:
         return False
+
 
 def is_service_available(service_name: str) -> bool:
     """
@@ -171,11 +175,12 @@ def is_service_available(service_name: str) -> bool:
             ["systemctl", "--user", "list-unit-files", service_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
-        return result.returncode == 0 and service_name in result.stdout.decode('utf-8')
+        return result.returncode == 0 and service_name in result.stdout.decode("utf-8")
     except:
         return False
+
 
 def get_timer_status(timer_name: str) -> Dict[str, str]:
     """
@@ -191,7 +196,7 @@ def get_timer_status(timer_name: str) -> Dict[str, str]:
         "status": "UNKNOWN",
         "active": False,
         "last_trigger": "",
-        "next_trigger": ""
+        "next_trigger": "",
     }
 
     try:
@@ -200,7 +205,7 @@ def get_timer_status(timer_name: str) -> Dict[str, str]:
             ["systemctl", "--user", "is-active", timer_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
 
         status_info["active"] = is_active.returncode == 0
@@ -212,17 +217,17 @@ def get_timer_status(timer_name: str) -> Dict[str, str]:
                 ["systemctl", "--user", "status", timer_name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                check=False
+                check=False,
             )
 
-            output = detailed_status.stdout.decode('utf-8')
+            output = detailed_status.stdout.decode("utf-8")
 
             # Extract trigger times
-            last_trigger = re.search(r'Triggered: (.*)', output)
+            last_trigger = re.search(r"Triggered: (.*)", output)
             if last_trigger:
                 status_info["last_trigger"] = last_trigger.group(1).strip()
 
-            next_trigger = re.search(r'Trigger: (.*)', output)
+            next_trigger = re.search(r"Trigger: (.*)", output)
             if next_trigger:
                 status_info["next_trigger"] = next_trigger.group(1).strip()
 
@@ -230,6 +235,7 @@ def get_timer_status(timer_name: str) -> Dict[str, str]:
         pass
 
     return status_info
+
 
 """
 ## KNOWN ERRORS:

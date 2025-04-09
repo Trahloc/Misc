@@ -25,16 +25,17 @@ import shutil
 import platform
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional
-import logging
 
 # Local imports
 from . import systemd_integration
 from . import session_management
 
-def get_service_status_report(tmux_service_name: str = "tmux.service",
-                            autosave_timer_name: str = "tmuxp_autosave.timer",
-                            session_name: str = "autosaved_session") -> str:
+
+def get_service_status_report(
+    tmux_service_name: str = "tmux.service",
+    autosave_timer_name: str = "tmuxp_autosave.timer",
+    session_name: str = "autosaved_session",
+) -> str:
     """
     PURPOSE: Generates a human-readable status report of tmux service and sessions.
 
@@ -101,6 +102,7 @@ def get_service_status_report(tmux_service_name: str = "tmux.service",
 
     return "\n".join(report)
 
+
 def get_diagnostics_report() -> str:
     """
     PURPOSE: Generates a comprehensive diagnostic report for troubleshooting.
@@ -113,7 +115,7 @@ def get_diagnostics_report() -> str:
 
     # User and system information
     uid = os.getuid()
-    username = os.environ.get('USER', 'unknown')
+    username = os.environ.get("USER", "unknown")
     report.append(f"User: {username} (UID: {uid})")
 
     # Socket information
@@ -128,9 +130,11 @@ def get_diagnostics_report() -> str:
                 ["ls", "-la", socket_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                check=False
+                check=False,
             )
-            report.append(f"Socket Permissions: {socket_perms.stdout.decode('utf-8').strip()}")
+            report.append(
+                f"Socket Permissions: {socket_perms.stdout.decode('utf-8').strip()}"
+            )
         except:
             report.append("Socket Permissions: Unable to determine")
 
@@ -144,9 +148,11 @@ def get_diagnostics_report() -> str:
                 ["tmux", "-V"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                check=False
+                check=False,
             )
-            report.append(f"Tmux Version: {tmux_version.stdout.decode('utf-8').strip()}")
+            report.append(
+                f"Tmux Version: {tmux_version.stdout.decode('utf-8').strip()}"
+            )
         except:
             report.append("Tmux Version: Unable to determine")
 
@@ -156,11 +162,11 @@ def get_diagnostics_report() -> str:
             ["systemctl", "--user", "cat", "tmux.service"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
         if service_file.returncode == 0:
             report.append("Systemd Service:")
-            for line in service_file.stdout.decode('utf-8').strip().split('\n'):
+            for line in service_file.stdout.decode("utf-8").strip().split("\n"):
                 report.append(f"  {line}")
         else:
             report.append("Systemd Service: No service file found")
@@ -169,7 +175,9 @@ def get_diagnostics_report() -> str:
 
     # Tmuxp information
     tmuxp_path = shutil.which("tmuxp")
-    report.append(f"Tmuxp Installation: {tmuxp_path if tmuxp_path else 'Not installed'}")
+    report.append(
+        f"Tmuxp Installation: {tmuxp_path if tmuxp_path else 'Not installed'}"
+    )
 
     config_dir = _get_tmuxp_config_dir()
     report.append(f"Tmuxp Config Path: {config_dir}")
@@ -206,7 +214,7 @@ def get_diagnostics_report() -> str:
             ["tmux", "start-server"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
         if start_result.returncode == 0:
             report.append("  Success")
@@ -222,10 +230,10 @@ def get_diagnostics_report() -> str:
             ["tmux", "list-sessions"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
         if list_result.returncode == 0:
-            sessions = list_result.stdout.decode('utf-8').strip()
+            sessions = list_result.stdout.decode("utf-8").strip()
             if sessions:
                 report.append(f"  {sessions}")
             else:

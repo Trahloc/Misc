@@ -36,6 +36,7 @@ from . import session_management
 from . import status_reporting
 from . import systemd_integration
 
+
 def parse_args(args: List[str]) -> argparse.Namespace:
     """
     PURPOSE: Parses command-line arguments.
@@ -49,40 +50,57 @@ def parse_args(args: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="tmux_manager",
         description="Manages tmux service lifecycle including server, sessions, and systemd integration.",
-        epilog="When run without options, ensures tmux is running and attaches to the default session."
+        epilog="When run without options, ensures tmux is running and attaches to the default session.",
     )
 
     # Debug options
-    parser.add_argument("-v", "--verbose", action="count", default=0,
-                      help="Increase verbosity (can be used multiple times)")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity (can be used multiple times)",
+    )
 
     # Main operation modes
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument("--status", action="store_true",
-                     help="Show status of tmux service and sessions")
+    group.add_argument(
+        "--status", action="store_true", help="Show status of tmux service and sessions"
+    )
 
-    group.add_argument("--diagnostics", action="store_true",
-                      help="Show comprehensive diagnostics information")
+    group.add_argument(
+        "--diagnostics",
+        action="store_true",
+        help="Show comprehensive diagnostics information",
+    )
 
-    group.add_argument("--restart", action="store_true",
-                      help="Restart tmux service")
+    group.add_argument("--restart", action="store_true", help="Restart tmux service")
 
-    group.add_argument("--save", action="store_true",
-                      help="Save current session using tmuxp")
+    group.add_argument(
+        "--save", action="store_true", help="Save current session using tmuxp"
+    )
 
-    group.add_argument("--ensure", action="store_true",
-                      help="Ensure tmux server and session exist")
+    group.add_argument(
+        "--ensure", action="store_true", help="Ensure tmux server and session exist"
+    )
 
     # Session name override
-    parser.add_argument("--session", metavar="NAME",
-                      help="Use specified session name instead of default")
+    parser.add_argument(
+        "--session",
+        metavar="NAME",
+        help="Use specified session name instead of default",
+    )
 
     # Passthrough arguments
-    parser.add_argument("tmux_args", nargs="*",
-                      help="Arguments to pass to tmux (if no operation mode specified)")
+    parser.add_argument(
+        "tmux_args",
+        nargs="*",
+        help="Arguments to pass to tmux (if no operation mode specified)",
+    )
 
     return parser.parse_args(args)
+
 
 def setup_logging(verbosity: int) -> None:
     """
@@ -101,8 +119,9 @@ def setup_logging(verbosity: int) -> None:
     logging.basicConfig(
         level=log_level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
+
 
 def main(args: Optional[List[str]] = None) -> int:
     """
@@ -140,11 +159,13 @@ def main(args: Optional[List[str]] = None) -> int:
     try:
         # Status reporting
         if parsed_args.status:
-            print(status_reporting.get_service_status_report(
-                tmux_service_name=config.tmux_service_name,
-                autosave_timer_name=config.autosave_timer_name,
-                session_name=session_name
-            ))
+            print(
+                status_reporting.get_service_status_report(
+                    tmux_service_name=config.tmux_service_name,
+                    autosave_timer_name=config.autosave_timer_name,
+                    session_name=session_name,
+                )
+            )
             return 0
 
         # Diagnostics
@@ -205,7 +226,11 @@ def main(args: Optional[List[str]] = None) -> int:
             return 0
 
         # Pass through to tmux if arguments start with '-'
-        elif parsed_args.tmux_args and parsed_args.tmux_args[0].startswith('-') and not parsed_args.tmux_args[0].startswith('--'):
+        elif (
+            parsed_args.tmux_args
+            and parsed_args.tmux_args[0].startswith("-")
+            and not parsed_args.tmux_args[0].startswith("--")
+        ):
             logger.debug(f"Passing through to tmux: {parsed_args.tmux_args}")
             return subprocess.run(["tmux"] + parsed_args.tmux_args).returncode
 
@@ -214,7 +239,9 @@ def main(args: Optional[List[str]] = None) -> int:
             logger.debug("Default behavior: ensure server and connect to session")
 
             if not server_management.ensure_tmux_server_is_running(config.debug_level):
-                print("Error: Failed to start tmux server. Please check your tmux installation.")
+                print(
+                    "Error: Failed to start tmux server. Please check your tmux installation."
+                )
                 return 1
 
             # Check if we're already in a tmux session
@@ -245,6 +272,7 @@ def main(args: Optional[List[str]] = None) -> int:
         return 1
 
     return 0
+
 
 # Entry point for the CLI when run directly
 if __name__ == "__main__":

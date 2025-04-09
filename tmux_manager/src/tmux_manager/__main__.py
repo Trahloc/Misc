@@ -12,6 +12,7 @@
 import sys
 from . import cli
 
+
 def main() -> int:
     """
     PURPOSE: Main entry point when the package is executed directly.
@@ -20,6 +21,7 @@ def main() -> int:
     int: Exit code
     """
     return cli.main()
+
 
 if __name__ == "__main__":
     sys.exit(main())

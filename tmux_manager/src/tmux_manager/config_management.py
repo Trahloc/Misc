@@ -24,11 +24,13 @@ import yaml
 import logging
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Optional, Any
+from typing import Dict, Optional, Any
+
 
 @dataclass
 class Config:
     """Configuration settings for tmux manager."""
+
     # Default session name
     default_session_name: str = "autosaved_session"
 
@@ -54,6 +56,7 @@ class Config:
     # Custom settings
     custom_settings: Dict[str, Any] = field(default_factory=dict)
 
+
 def get_config() -> Config:
     """
     PURPOSE: Returns the current configuration (loads it if not already loaded).
@@ -67,6 +70,7 @@ def get_config() -> Config:
         _config = load_config()
 
     return _config
+
 
 def load_config(config_path: Optional[Path] = None) -> Config:
     """
@@ -90,7 +94,7 @@ def load_config(config_path: Optional[Path] = None) -> Config:
     # Try to load from file
     if config_path.exists():
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 loaded_config = yaml.safe_load(f)
 
                 if loaded_config is None:
@@ -113,6 +117,7 @@ def load_config(config_path: Optional[Path] = None) -> Config:
         logger.info(f"Configuration file {config_path} not found, using defaults")
 
     return config
+
 
 def save_config(config: Config, config_path: Optional[Path] = None) -> bool:
     """
@@ -143,7 +148,7 @@ def save_config(config: Config, config_path: Optional[Path] = None) -> bool:
             _create_backup(config_path, config.max_backups)
 
         # Save configuration
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             yaml.safe_dump(config_dict, f, default_flow_style=False)
 
         logger.info(f"Saved configuration to {config_path}")
@@ -153,6 +158,7 @@ def save_config(config: Config, config_path: Optional[Path] = None) -> bool:
         logger.error(f"Error saving configuration to {config_path}: {e}")
         return False
 
+
 def _get_default_config_path() -> Path:
     """
     PURPOSE: Gets the default path for the configuration file.
@@ -160,13 +166,14 @@ def _get_default_config_path() -> Path:
     RETURNS:
     Path: Default configuration file path
     """
-    xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     if xdg_config_home:
         config_dir = Path(xdg_config_home) / "tmux_manager"
     else:
         config_dir = Path.home() / ".config" / "tmux_manager"
 
     return config_dir / "config.yaml"
+
 
 def _create_backup(file_path: Path, max_backups: int) -> None:
     """
@@ -196,6 +203,7 @@ def _create_backup(file_path: Path, max_backups: int) -> None:
         if len(backups) > max_backups:
             for old_backup in backups[:-max_backups]:
                 old_backup.unlink()
+
 
 # Global configuration instance
 _config = None

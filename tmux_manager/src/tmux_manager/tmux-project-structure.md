@@ -18,7 +18,7 @@ Each file will focus on a single responsibility, and `__init__.py` will orchestr
 ## Implementation Plan
 
 1. First create the core functions in each module
-2. Implement the CLI interface 
+2. Implement the CLI interface
 3. Define the public API in `__init__.py`
 4. Add error handling and logging
 5. Implement configuration management

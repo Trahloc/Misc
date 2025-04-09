@@ -21,9 +21,9 @@ import subprocess
 import os
 import logging
 import shutil
-import time
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import List
+
 
 def ensure_session_exists(session_name: str) -> bool:
     """
@@ -53,10 +53,12 @@ def ensure_session_exists(session_name: str) -> bool:
         if config_path.exists():
             success = _restore_session_from_tmuxp(session_name)
             if success:
-                logger.info(f"Successfully restored session '{session_name}' from tmuxp config")
+                logger.info(
+                    f"Successfully restored session '{session_name}' from tmuxp config"
+                )
                 return True
             else:
-                logger.warning(f"Failed to load session from tmuxp config")
+                logger.warning("Failed to load session from tmuxp config")
         else:
             logger.info(f"No saved config found at {config_path}")
     else:
@@ -72,6 +74,7 @@ def ensure_session_exists(session_name: str) -> bool:
         logger.error(f"Failed to create session '{session_name}'")
 
     return success
+
 
 def save_session(session_name: str, timeout: int = 60) -> bool:
     """
@@ -99,7 +102,7 @@ def save_session(session_name: str, timeout: int = 60) -> bool:
     logger.info(f"Saving session '{session_name}'...")
 
     # Get the config directory path
-    xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     if xdg_config_home:
         config_dir = Path(xdg_config_home) / "tmuxp"
     else:
@@ -114,11 +117,18 @@ def save_session(session_name: str, timeout: int = 60) -> bool:
     try:
         # Use the official tmuxp freeze command, but with -yes to avoid prompts
         # Uses a temporary file approach to avoid the interactive prompts
-        temp_config_path = config_path.with_suffix('.tmp.yaml')
+        temp_config_path = config_path.with_suffix(".tmp.yaml")
 
         # First, capture the session using --yes to auto-accept, and -o to specify output file
         # This prevents the interactive prompts that cause hanging
-        command = ["tmuxp", "freeze", session_name, "-o", str(temp_config_path), "--yes"]
+        command = [
+            "tmuxp",
+            "freeze",
+            session_name,
+            "-o",
+            str(temp_config_path),
+            "--yes",
+        ]
         logger.debug(f"Executing command: {' '.join(command)}")
 
         result = subprocess.run(
@@ -126,7 +136,7 @@ def save_session(session_name: str, timeout: int = 60) -> bool:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,
-            check=False
+            check=False,
         )
 
         # Check if the file was created
@@ -138,9 +148,11 @@ def save_session(session_name: str, timeout: int = 60) -> bool:
             logger.info(f"Successfully saved session '{session_name}' to {config_path}")
             return True
         else:
-            stderr = result.stderr.decode('utf-8') if result.stderr else ""
-            stdout = result.stdout.decode('utf-8') if result.stdout else ""
-            logger.error(f"tmuxp freeze failed to create config file. Exit code: {result.returncode}")
+            stderr = result.stderr.decode("utf-8") if result.stderr else ""
+            stdout = result.stdout.decode("utf-8") if result.stdout else ""
+            logger.error(
+                f"tmuxp freeze failed to create config file. Exit code: {result.returncode}"
+            )
             logger.debug(f"tmuxp stdout: {stdout}")
             logger.debug(f"tmuxp stderr: {stderr}")
             return False
@@ -151,6 +163,7 @@ def save_session(session_name: str, timeout: int = 60) -> bool:
     except Exception as e:
         logger.error(f"Unexpected error saving session '{session_name}': {e}")
         return False
+
 
 def get_active_sessions() -> List[str]:
     """
@@ -164,13 +177,14 @@ def get_active_sessions() -> List[str]:
             ["tmux", "list-sessions", "-F", "#{session_name}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=True
+            check=True,
         )
 
-        sessions = result.stdout.decode('utf-8').strip().split('\n')
+        sessions = result.stdout.decode("utf-8").strip().split("\n")
         return [s for s in sessions if s]  # Filter out empty strings
     except subprocess.CalledProcessError:
         return []
+
 
 def _does_session_exist(session_name: str) -> bool:
     """
@@ -187,11 +201,12 @@ def _does_session_exist(session_name: str) -> bool:
             ["tmux", "has-session", "-t", session_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False
+            check=False,
         )
         return result.returncode == 0
     except:
         return False
+
 
 def _get_tmuxp_config_path(session_name: str) -> Path:
     """
@@ -203,13 +218,14 @@ def _get_tmuxp_config_path(session_name: str) -> Path:
     RETURNS:
     Path: Path to the tmuxp configuration file
     """
-    xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     if xdg_config_home:
         config_dir = Path(xdg_config_home) / "tmuxp"
     else:
         config_dir = Path.home() / ".config" / "tmuxp"
 
     return config_dir / f"{session_name}.yaml"
+
 
 def _restore_session_from_tmuxp(session_name: str) -> bool:
     """
@@ -234,7 +250,7 @@ def _restore_session_from_tmuxp(session_name: str) -> bool:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
-            check=False
+            check=False,
         )
 
         # Verify session was created
@@ -242,6 +258,7 @@ def _restore_session_from_tmuxp(session_name: str) -> bool:
     except Exception as e:
         logger.error(f"Error restoring session from tmuxp: {e}")
         return False
+
 
 def _create_new_session(session_name: str) -> bool:
     """
@@ -258,11 +275,12 @@ def _create_new_session(session_name: str) -> bool:
             ["tmux", "new-session", "-d", "-s", session_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=True
+            check=True,
         )
         return True
     except subprocess.CalledProcessError:
         return False
+
 
 """
 ## KNOWN ERRORS:

@@ -43,51 +43,55 @@ __version__ = "0.1.0"
 __author__ = "Tmux Manager Authors"
 __license__ = "MIT"
 
+
 # Public API functions
 def ensure_tmux_running() -> bool:
     """
     PURPOSE: Ensures the tmux server is running.
-    
+
     RETURNS:
     bool: True if server is running or was started successfully, False otherwise
     """
     config = config_management.get_config()
     return server_management.ensure_tmux_server_is_running(config.debug_level)
 
+
 def ensure_session_exists(session_name: Optional[str] = None) -> bool:
     """
     PURPOSE: Ensures the specified session exists, creating or restoring if needed.
-    
+
     PARAMS:
     session_name: Optional[str] - Name of the session, or None to use default
-    
+
     RETURNS:
     bool: True if session exists or was created successfully, False otherwise
     """
     if session_name is None:
         session_name = config_management.get_config().default_session_name
-    
+
     return session_management.ensure_session_exists(session_name)
+
 
 def save_session(session_name: Optional[str] = None) -> bool:
     """
     PURPOSE: Saves the specified session using tmuxp.
-    
+
     PARAMS:
     session_name: Optional[str] - Name of the session, or None to use default
-    
+
     RETURNS:
     bool: True if session was saved successfully, False otherwise
     """
     if session_name is None:
         session_name = config_management.get_config().default_session_name
-    
+
     return session_management.save_session(session_name)
+
 
 def get_service_status() -> str:
     """
     PURPOSE: Returns a formatted status report of tmux service and sessions.
-    
+
     RETURNS:
     str: Formatted status report
     """
@@ -95,50 +99,55 @@ def get_service_status() -> str:
     return status_reporting.get_service_status_report(
         tmux_service_name=config.tmux_service_name,
         autosave_timer_name=config.autosave_timer_name,
-        session_name=config.default_session_name
+        session_name=config.default_session_name,
     )
+
 
 def get_diagnostics() -> str:
     """
     PURPOSE: Returns a comprehensive diagnostic report for troubleshooting.
-    
+
     RETURNS:
     str: Formatted diagnostics report
     """
     return status_reporting.get_diagnostics_report()
 
+
 def restart_tmux_service() -> bool:
     """
     PURPOSE: Restarts the tmux service.
-    
+
     RETURNS:
     bool: True if service was restarted successfully, False otherwise
     """
     config = config_management.get_config()
-    
+
     if systemd_integration.is_service_available(config.tmux_service_name):
         return systemd_integration.restart_tmux_service(config.tmux_service_name)
     else:
         # Manual restart
         try:
             import subprocess
+
             subprocess.run(["tmux", "kill-server"], check=False)
         except Exception:
             pass
-        
+
         return server_management.ensure_tmux_server_is_running(config.debug_level)
+
 
 def main(args: Optional[List[str]] = None) -> int:
     """
     PURPOSE: Main entry point for the CLI.
-    
+
     PARAMS:
     args: Optional[List[str]] - Command-line arguments, or None to use sys.argv
-    
+
     RETURNS:
     int: Exit code
     """
     return cli.main(args)
+
 
 """
 ## KNOWN ERRORS:
