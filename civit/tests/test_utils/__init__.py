@@ -11,9 +11,9 @@ from tests.test_utils.expected_failures import (
 )
 
 __all__ = [
-    'expect_exception',
-    'nogo_test',
-    'assert_raises',
-    'expect_log_error',
-    'silent_errors',
-] 
+    "expect_exception",
+    "nogo_test",
+    "assert_raises",
+    "expect_log_error",
+    "silent_errors",
+]

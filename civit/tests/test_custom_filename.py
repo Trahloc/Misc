@@ -1,12 +1,10 @@
-import pytest
 from unittest.mock import MagicMock, patch
 
 # Import from src layout
-from civit.custom_filename import extract_model_components, should_use_custom_filename
+from civit.custom_filename import extract_model_components
 
 # Mock the filename generator
 from civit.filename_generator import generate_custom_filename, sanitize_filename
-from .test_utils.mock_data_loader import load_mock_version_metadata
 
 # Test cases for model URLs
 TEST_URLS = [
@@ -27,6 +25,7 @@ SAMPLE_METADATA = {
 
 MODEL_ID = "12345"
 
+
 def test_extract_model_components(mock_version_1447126):
     """Test extracting model components using actual mock data"""
     # Use the real model data instead of relying on test detection
@@ -44,10 +43,10 @@ def test_generate_custom_filename(mock_version_1447126):
     """Test generating a custom filename using actual mock data"""
     # Pass data in the structure expected by generate_custom_filename
     model_data = {
-        "model": { # Nested model dictionary
+        "model": {  # Nested model dictionary
             "name": mock_version_1447126["model"]["name"]
         },
-        "id": mock_version_1447126["id"] # Use 'id' key for version
+        "id": mock_version_1447126["id"],  # Use 'id' key for version
     }
 
     # Calculate the expected filename based on the *actual* logic

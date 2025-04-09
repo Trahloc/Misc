@@ -5,7 +5,6 @@ Basic tests to verify the test environment is working correctly.
 import pytest
 import sys
 import logging
-import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

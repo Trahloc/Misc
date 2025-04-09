@@ -1,11 +1,8 @@
 """Test the command line interface functionality"""
 
 import pytest
-import subprocess
-import sys
-import os
 import logging
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 from io import StringIO
 
 # Import from src layout
@@ -121,7 +118,7 @@ def test_short_help_command():
             output = fake_stdout.getvalue()
             assert "usage:" in output.lower()
             assert "--help" in output
-            assert "-h," in output # Check for the short flag help text
+            assert "-h," in output  # Check for the short flag help text
         except (AttributeError, TypeError):
             # Skip test if it can't be run this way
             pytest.skip("CLI module not properly structured for this test")
@@ -133,16 +130,19 @@ def test_setup_logging():
     test_cases = [
         # (kwargs, expected_level)
         ({}, logging.WARNING),  # Default
-        ({"verbosity_level": 1}, logging.INFO), # -v
-        ({"verbosity_level": 2}, logging.DEBUG), # -vv
-        ({"verbosity_level": 3}, logging.DEBUG), # -vvv (should also be DEBUG)
-        ({"quiet": True}, logging.ERROR),      # -q
-        ({"debug": True}, logging.DEBUG),      # -d
+        ({"verbosity_level": 1}, logging.INFO),  # -v
+        ({"verbosity_level": 2}, logging.DEBUG),  # -vv
+        ({"verbosity_level": 3}, logging.DEBUG),  # -vvv (should also be DEBUG)
+        ({"quiet": True}, logging.ERROR),  # -q
+        ({"debug": True}, logging.DEBUG),  # -d
         # Precedence tests
-        ({"quiet": True, "verbosity_level": 1}, logging.ERROR), # -q wins over -v
-        ({"quiet": True, "verbosity_level": 2}, logging.ERROR), # -q wins over -vv (now expects ERROR)
-        ({"debug": True, "quiet": True}, logging.DEBUG),      # -d wins over -q
-        ({"debug": True, "verbosity_level": 1}, logging.DEBUG), # -d wins over -v
+        ({"quiet": True, "verbosity_level": 1}, logging.ERROR),  # -q wins over -v
+        (
+            {"quiet": True, "verbosity_level": 2},
+            logging.ERROR,
+        ),  # -q wins over -vv (now expects ERROR)
+        ({"debug": True, "quiet": True}, logging.DEBUG),  # -d wins over -q
+        ({"debug": True, "verbosity_level": 1}, logging.DEBUG),  # -d wins over -v
     ]
 
     for kwargs, expected_level in test_cases:
@@ -203,8 +203,8 @@ def test_urls_arg():
     assert args_multi.urls == [url1, url2]
 
     # Test requires at least one URL
-    with pytest.raises(SystemExit): # argparse exits on error
-         parse_args([]) # No URLs provided
+    with pytest.raises(SystemExit):  # argparse exits on error
+        parse_args([])  # No URLs provided
 
 
 def test_custom_naming_args():

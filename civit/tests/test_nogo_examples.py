@@ -50,15 +50,15 @@ def test_multiple_validations_with_assert_raises():
     """Test that demonstrates using assert_raises within a larger test."""
     # First, test a valid case
     assert function_that_should_raise_value_error(10) == 10
-    
+
     # Then, test an invalid case using assert_raises
     assert_raises(
-        ValueError, 
-        function_that_should_raise_value_error, 
-        -5, 
-        message="Value cannot be negative"
+        ValueError,
+        function_that_should_raise_value_error,
+        -5,
+        message="Value cannot be negative",
     )
-    
+
     # Finally, test another valid case
     assert function_that_should_raise_value_error(0) == 0
 
@@ -75,4 +75,4 @@ def test_with_nogo_marker():
 def test_valid_cases():
     """Test that demonstrates normal passing tests."""
     assert function_that_should_raise_value_error(10) == 10
-    assert function_that_should_raise_type_error(5) == 5 
+    assert function_that_should_raise_type_error(5) == 5

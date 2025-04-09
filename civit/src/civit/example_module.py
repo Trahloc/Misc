@@ -8,6 +8,7 @@
     # - [module_path]: [What's needed.]
 """
 
+
 def example_function() -> None:
     """
     PURPOSE: [Single responsibility.]

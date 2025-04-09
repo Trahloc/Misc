@@ -24,5 +24,7 @@ def get_api_key() -> Optional[str]:
 
     # Log partial key for debugging
     visible_part = api_key[:4] if len(api_key) > 4 else ""
-    logging.debug(f"Retrieved API key from environment (starts with: {visible_part}...)")
+    logging.debug(
+        f"Retrieved API key from environment (starts with: {visible_part}...)"
+    )
     return api_key

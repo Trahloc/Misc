@@ -2,8 +2,7 @@
 Tests for the should_use_custom_filename function in the filename_generator module.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Import from src layout
 from civit.custom_filename import should_use_custom_filename

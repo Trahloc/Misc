@@ -12,7 +12,6 @@
 import sys
 import os
 import pytest
-import json
 import logging
 from pathlib import Path
 from typing import Dict, Any
@@ -70,10 +69,10 @@ MOCK_MODEL_DATA = {
 def disable_logging():
     """
     Disable logging during tests.
-    
+
     This fixture is automatically applied to all tests to prevent log output
     from cluttering test results, making them easier to read.
-    
+
     The logging is re-enabled after the test completes.
     """
     logging.disable(logging.CRITICAL)
@@ -171,28 +170,27 @@ def no_network_access():
 def pytest_configure(config):
     """Register markers for the pytest session and configure cache directory."""
     import tempfile
-    
+
     # Create a unique cache directory for this user in the system temp directory
     # This avoids permission issues with /run/user/$UID
     cache_dir = str(Path(tempfile.gettempdir()) / f"pytest-cache-{os.getuid()}")
-    
+
     # Set the cache directory
     # First, create the directory if it doesn't exist
     if not Path(cache_dir).exists():
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
-    
+
     # Now override the cachedir option
-    config.inicfg['cache_dir'] = cache_dir
+    config.inicfg["cache_dir"] = cache_dir
     config.option.cachedir = cache_dir
-    
+
     # Register markers
     config.addinivalue_line(
-        "markers", 
-        "nogo: marks tests that are expected to verify proper failure behavior"
+        "markers",
+        "nogo: marks tests that are expected to verify proper failure behavior",
     )
     config.addinivalue_line(
-        "markers", 
-        "expected_failure: marks tests that are expected to fail"
+        "markers", "expected_failure: marks tests that are expected to fail"
     )
 
 
@@ -203,9 +201,12 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         if hasattr(report, "keywords") and "nogo" in report.keywords:
             if report.outcome == "passed":
                 nogo_passed += 1
-    
+
     if nogo_passed > 0:
-        terminalreporter.write_sep("=", f"Passed {nogo_passed} No-Go tests that verified correct failure behavior")
+        terminalreporter.write_sep(
+            "=",
+            f"Passed {nogo_passed} No-Go tests that verified correct failure behavior",
+        )
 
 
 # The mock_requests fixture is already imported from network_guard.py

@@ -15,8 +15,7 @@
 
 import re
 import logging
-from pathlib import Path
-from typing import Tuple, Dict, Any
+from typing import Tuple
 from logging import LoggerAdapter
 from datetime import datetime
 from requests import Response

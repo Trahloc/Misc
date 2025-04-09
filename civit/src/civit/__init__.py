@@ -19,7 +19,7 @@ from typing import Dict, Optional
 from .download_handler import download_file
 from .verify import verify_file, verify_directory
 
-__all__ = ['download_file', 'verify_file', 'verify_directory']
+__all__ = ["download_file", "verify_file", "verify_directory"]
 
 # Import public API
 from .exceptions import (

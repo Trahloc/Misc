@@ -20,27 +20,16 @@
 """
 
 import pytest
-from unittest.mock import patch, MagicMock, PropertyMock, call
-from io import BytesIO
+from unittest.mock import patch, MagicMock
 from pathlib import Path
-import logging
-import os
-import tempfile
-import shutil
 
-from civit.download_handler import (
-    download_file,
-    check_existing_download,
-    calculate_file_hash,
-    verify_download_integrity,
-    get_metadata_from_ids,
-    get_metadata_from_hash
-)
+from civit.download_handler import download_file
 from civit.url_extraction import extract_model_id, extract_download_url
 from civit.model_info import get_model_info
 
 # Setup test parameters
 MODEL_ID = "12345"
+
 
 # Model ID extraction tests
 @pytest.mark.parametrize(
@@ -71,6 +60,7 @@ def test_invalid_model_urls(url):
 
 
 # Model info tests
+
 
 @patch("requests.get")
 def test_successful_model_info_fetch(mock_get):
@@ -130,7 +120,9 @@ class TestFileDownload:
     @patch("civit.download_handler.requests.get")
     @patch("civit.download_handler.is_valid_api_url")
     @patch("civit.download_handler.normalize_url")
-    def test_successful_download(self, mock_normalize, mock_valid_api, mock_get, mock_head):
+    def test_successful_download(
+        self, mock_normalize, mock_valid_api, mock_get, mock_head
+    ):
         """Test successful file download"""
         # Setup URL validation mocks
         mock_normalize.return_value = self.test_url
@@ -144,7 +136,7 @@ class TestFileDownload:
         mock_get.return_value.iter_content.return_value = [b"test data"]
         mock_get.return_value.headers = {
             "Content-Length": "1000",
-            "Content-Disposition": 'attachment; filename="test.zip"'
+            "Content-Disposition": 'attachment; filename="test.zip"',
         }
         mock_get.return_value.status_code = 200
         mock_get.return_value.url = self.test_url
@@ -158,7 +150,9 @@ class TestFileDownload:
     @patch("civit.download_handler.requests.get")
     @patch("civit.download_handler.is_valid_api_url")
     @patch("civit.download_handler.normalize_url")
-    def test_resume_interrupted_download(self, mock_normalize, mock_valid_api, mock_get, mock_head):
+    def test_resume_interrupted_download(
+        self, mock_normalize, mock_valid_api, mock_get, mock_head
+    ):
         """Test resuming an interrupted download"""
         # Setup URL validation mocks
         mock_normalize.return_value = self.test_url
@@ -172,7 +166,7 @@ class TestFileDownload:
         mock_get.return_value.iter_content.return_value = [b"test data"]
         mock_get.return_value.headers = {
             "Content-Length": "1000",
-            "Content-Disposition": 'attachment; filename="test.zip"'
+            "Content-Disposition": 'attachment; filename="test.zip"',
         }
         mock_get.return_value.status_code = 200
         mock_get.return_value.url = self.test_url
@@ -187,7 +181,9 @@ class TestFileDownload:
     @patch("civit.download_handler.is_valid_api_url")
     @patch("civit.download_handler.normalize_url")
     @patch("os.makedirs")
-    def test_download_with_invalid_output_dir(self, mock_makedirs, mock_normalize, mock_valid_api, mock_get, mock_head):
+    def test_download_with_invalid_output_dir(
+        self, mock_makedirs, mock_normalize, mock_valid_api, mock_get, mock_head
+    ):
         """Test download with invalid output directory"""
         # Setup URL validation mocks
         mock_normalize.return_value = self.test_url
@@ -201,7 +197,7 @@ class TestFileDownload:
         mock_get.return_value.iter_content.return_value = [b"test data"]
         mock_get.return_value.headers = {
             "Content-Length": "1000",
-            "Content-Disposition": 'attachment; filename="test.zip"'
+            "Content-Disposition": 'attachment; filename="test.zip"',
         }
         mock_get.return_value.status_code = 200
         mock_get.return_value.url = self.test_url
@@ -211,13 +207,13 @@ class TestFileDownload:
 
         # Test download with invalid directory
         result = download_file(self.test_url, "/invalid/path")
-        
+
         # Check that we got an error dictionary instead of None
         assert isinstance(result, dict)
-        assert 'error' in result
-        assert 'message' in result
-        assert 'status_code' in result
-        assert 'unexpected_error' == result['error']
+        assert "error" in result
+        assert "message" in result
+        assert "status_code" in result
+        assert "unexpected_error" == result["error"]
 
         # Verify makedirs was called with the correct arguments
         mock_makedirs.assert_called_once_with(Path("/invalid/path"), exist_ok=True)

@@ -8,7 +8,6 @@
 """
 
 import logging
-import os
 import re
 from pathlib import Path
 from tqdm import tqdm
@@ -17,7 +16,9 @@ import requests
 from requests import Response
 
 
-def make_request_with_auth(url: str, headers: Dict[str, str], stream: bool = False) -> Response:
+def make_request_with_auth(
+    url: str, headers: Dict[str, str], stream: bool = False
+) -> Response:
     """Make an authenticated request with detailed logging"""
     if not url:
         raise ValueError("URL cannot be empty")
@@ -53,7 +54,9 @@ def extract_filename(url: str, headers: Dict[str, str]) -> str:
     return url.split("/")[-1].split("?")[0]
 
 
-def download_file(url: str, destination: str, api_key: Optional[str] = None) -> Optional[str]:
+def download_file(
+    url: str, destination: str, api_key: Optional[str] = None
+) -> Optional[str]:
     """
     Download a file from a URL with support for custom filename patterns.
 
@@ -78,11 +81,11 @@ def download_file(url: str, destination: str, api_key: Optional[str] = None) -> 
 
     # Set up headers with API key if provided
     headers = {
-        'Accept': '*/*',  # Accept any content type
-        'User-Agent': 'civit-cli/1.0'  # Identify our client
+        "Accept": "*/*",  # Accept any content type
+        "User-Agent": "civit-cli/1.0",  # Identify our client
     }
     if api_key:
-        headers['Authorization'] = f'Bearer {api_key}'
+        headers["Authorization"] = f"Bearer {api_key}"
         visible_part = api_key[:4] if len(api_key) > 4 else ""
         logging.debug(f"Using API key for auth (starts with: {visible_part}...)")
 
@@ -97,7 +100,7 @@ def download_file(url: str, destination: str, api_key: Optional[str] = None) -> 
             # Get the direct download URL from the Civitai API
             response = make_request_with_auth(url, headers)
             data = response.json()
-            direct_url = data.get('downloadUrl')
+            direct_url = data.get("downloadUrl")
 
             if not direct_url:
                 logging.error("No download URL found in API response")
@@ -117,12 +120,12 @@ def download_file(url: str, destination: str, api_key: Optional[str] = None) -> 
             return None
 
         filepath = dest_path / filename
-        total_size = int(response.headers.get('content-length', 0))
+        total_size = int(response.headers.get("content-length", 0))
 
-        with open(filepath, 'wb') as f, tqdm(
+        with open(filepath, "wb") as f, tqdm(
             desc=filename,
             total=total_size,
-            unit='iB',
+            unit="iB",
             unit_scale=True,
             unit_divisor=1024,
         ) as pbar:
@@ -130,7 +133,7 @@ def download_file(url: str, destination: str, api_key: Optional[str] = None) -> 
                 size = f.write(data)
                 pbar.update(size)
 
-        logging.info(f'Download completed: {filepath}')
+        logging.info(f"Download completed: {filepath}")
         return str(filepath)
 
     except (requests.RequestException, ValueError, OSError) as e:

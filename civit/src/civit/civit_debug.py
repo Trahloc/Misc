@@ -6,6 +6,7 @@ This provides the new functionality without modifying the installed package.
 Usage:
     python -m src.civit_debug -d URL
 """
+
 import sys
 import logging
 from pathlib import Path

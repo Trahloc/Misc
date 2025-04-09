@@ -7,11 +7,6 @@ DEPENDENCIES:
 """
 
 import pytest
-import os
-import re
-from unittest.mock import patch, MagicMock
-from typing import Dict, Any
-import logging
 import random
 import string
 from civit.filename_pattern import (
@@ -20,8 +15,10 @@ from civit.filename_pattern import (
     sanitize_filename,
 )
 from civit.exceptions import InvalidPatternError, MetadataError
-hypothesis = pytest.importorskip("hypothesis", reason="Hypothesis library not found, skipping property-based tests")
-from hypothesis import given, strategies as st, settings
+
+hypothesis = pytest.importorskip(
+    "hypothesis", reason="Hypothesis library not found, skipping property-based tests"
+)
 
 
 def test_basic_pattern_processing():
@@ -81,20 +78,22 @@ def test_missing_metadata():
 
 
 # Helper functions for property tests
-def generate_random_string(length: int = 10, min_length: int = None, max_length: int = None) -> str:
+def generate_random_string(
+    length: int = 10, min_length: int = None, max_length: int = None
+) -> str:
     """Generate a random string of fixed or variable length.
-    
+
     Args:
         length: Fixed length (used if min_length and max_length are None)
         min_length: Minimum length if variable length is desired
         max_length: Maximum length if variable length is desired
-        
+
     Returns:
         A random string of appropriate length
     """
     if min_length is not None and max_length is not None:
         length = random.randint(min_length, max_length)
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
 def generate_safe_pattern():

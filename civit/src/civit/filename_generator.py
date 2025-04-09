@@ -1,14 +1,11 @@
-import os
 import re
 import logging
-import sys
 import inspect
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from .test_utils import (
     test_aware,
     get_current_test_name,
     get_current_test_file,
-    is_test_context,
 )
 
 logger = logging.getLogger(__name__)
@@ -120,16 +117,16 @@ def generate_custom_filename(model_data: Dict) -> Optional[str]:
     """Generate a custom filename from model metadata."""
     try:
         # Extract fields directly from Civitai's metadata structure
-        model_name = str(model_data.get('model', {}).get('name', ''))
-        version_id = str(model_data.get('id', ''))
-        
+        model_name = str(model_data.get("model", {}).get("name", ""))
+        version_id = str(model_data.get("id", ""))
+
         # Sanitize the components
         sanitized_name = sanitize_filename(model_name)
         sanitized_version = sanitize_filename(str(version_id))
-        
+
         # Generate filename using the expected format
         filename = f"{sanitized_name}-v{sanitized_version}"
-        
+
         return filename
     except Exception as e:
         logger.error(f"Error generating filename: {e}")

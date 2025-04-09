@@ -12,10 +12,7 @@
 
 import logging
 import json
-from typing import Any, Dict
-from datetime import UTC, datetime
 from dataclasses import dataclass
-from logging import LoggerAdapter, Formatter
 
 __all__ = ["JsonFormatter", "setup_logging"]
 

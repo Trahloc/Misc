@@ -20,10 +20,8 @@ import pytest
 import os
 import tempfile
 import shutil
-from unittest.mock import patch, MagicMock, mock_open, call, PropertyMock
-from io import BytesIO
+from unittest.mock import patch, MagicMock
 import logging
-from pathlib import Path
 
 # Import from src layout
 from civit.download_handler import (
@@ -32,7 +30,6 @@ from civit.download_handler import (
     verify_download_integrity,
     download_file,
 )
-from civit.exceptions import NetworkError
 
 # Constants for tests
 CONTENT_LENGTH = 1000
@@ -43,12 +40,14 @@ TEST_FILE = "test.zip"
 TEST_SIZE = 1000
 TEST_HASH = "12345678"
 
+
 @pytest.fixture(autouse=True)
 def disable_logging():
     """Disable logging during tests"""
     logging.disable(logging.CRITICAL)
     yield
     logging.disable(logging.NOTSET)
+
 
 @pytest.fixture
 def temp_dir():
@@ -129,12 +128,12 @@ def test_resume_download_supported(mock_normalize, mock_valid_api, mock_get, moc
     mock_head.return_value.headers = {
         "Content-Length": str(TEST_SIZE),
         "Content-Disposition": f'attachment; filename="{TEST_FILE}"',
-        "Accept-Ranges": "bytes"
+        "Accept-Ranges": "bytes",
     }
     mock_get.return_value.iter_content.return_value = [b"test data"]
     mock_get.return_value.headers = {
         "Content-Length": str(TEST_SIZE),
-        "Content-Disposition": f'attachment; filename="{TEST_FILE}"'
+        "Content-Disposition": f'attachment; filename="{TEST_FILE}"',
     }
     mock_get.return_value.status_code = 200
     mock_get.return_value.url = TEST_URL
@@ -146,10 +145,7 @@ def test_resume_download_supported(mock_normalize, mock_valid_api, mock_get, moc
 
     # Verify head was called with the correct arguments
     mock_head.assert_called_once_with(
-        TEST_URL,
-        headers={},
-        timeout=(5, 30),
-        allow_redirects=True
+        TEST_URL, headers={}, timeout=(5, 30), allow_redirects=True
     )
 
 
@@ -157,7 +153,9 @@ def test_resume_download_supported(mock_normalize, mock_valid_api, mock_get, moc
 @patch("civit.download_handler.requests.get")
 @patch("civit.download_handler.is_valid_api_url")
 @patch("civit.download_handler.normalize_url")
-def test_resume_download_not_supported(mock_normalize, mock_valid_api, mock_get, mock_head):
+def test_resume_download_not_supported(
+    mock_normalize, mock_valid_api, mock_get, mock_head
+):
     """Test resuming a download when the server doesn't support it"""
     # Setup URL validation mocks
     mock_normalize.return_value = TEST_URL
@@ -166,12 +164,12 @@ def test_resume_download_not_supported(mock_normalize, mock_valid_api, mock_get,
     # Setup mock responses
     mock_head.return_value.headers = {
         "Content-Length": str(TEST_SIZE),
-        "Content-Disposition": f'attachment; filename="{TEST_FILE}"'
+        "Content-Disposition": f'attachment; filename="{TEST_FILE}"',
     }
     mock_get.return_value.iter_content.return_value = [b"test data"]
     mock_get.return_value.headers = {
         "Content-Length": str(TEST_SIZE),
-        "Content-Disposition": f'attachment; filename="{TEST_FILE}"'
+        "Content-Disposition": f'attachment; filename="{TEST_FILE}"',
     }
     mock_get.return_value.status_code = 200
     mock_get.return_value.url = TEST_URL
@@ -183,11 +181,9 @@ def test_resume_download_not_supported(mock_normalize, mock_valid_api, mock_get,
 
     # Verify head was called with the correct arguments
     mock_head.assert_called_once_with(
-        TEST_URL,
-        headers={},
-        timeout=(5, 30),
-        allow_redirects=True
+        TEST_URL, headers={}, timeout=(5, 30), allow_redirects=True
     )
+
 
 @patch("civit.download_handler.requests.head")
 def test_download_failure_with_http_error(mock_head):
@@ -195,16 +191,19 @@ def test_download_failure_with_http_error(mock_head):
     # Create a response with error status
     error_response = MagicMock()
     error_response.status_code = 404
-    
+
     # Create HTTPError with the response
     import requests
-    mock_head.side_effect = requests.exceptions.HTTPError("404 Client Error", response=error_response)
+
+    mock_head.side_effect = requests.exceptions.HTTPError(
+        "404 Client Error", response=error_response
+    )
 
     # Test download
     result = download_file(TEST_URL, "/tmp")
-    
+
     # Check that we get an error dictionary
     assert isinstance(result, dict)
-    assert result['error'] == 'http_error'
-    assert result['status_code'] == 404
-    assert "HTTP error occurred" in result['message']
+    assert result["error"] == "http_error"
+    assert result["status_code"] == 404
+    assert "HTTP error occurred" in result["message"]

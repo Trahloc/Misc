@@ -16,25 +16,18 @@
 """
 
 import unittest
-import sys
-import os
 import logging
 import requests
 from unittest.mock import patch, MagicMock
-import pytest
-import re
 from urllib.parse import urlparse
 
 # Import from src layout
 from civit.url_validator import (
     validate_url,
     normalize_url,
-    is_valid_civitai_url,
     is_valid_image_url,
-    is_valid_api_url,
     get_url_validation_error_message,
 )
-from civit.exceptions import InvalidResponseError
 
 
 class TestUrlValidator(unittest.TestCase):
@@ -73,7 +66,6 @@ class TestUrlValidator(unittest.TestCase):
         with patch(
             "civit.url_validator.is_valid_civitai_url", return_value=True
         ), patch("civit.url_validator.is_valid_image_url", return_value=True):
-
             valid_urls = [
                 "https://civitai.com/models/1234",
                 "https://www.civitai.com/models/1234",
@@ -197,7 +189,6 @@ class TestUrlValidator(unittest.TestCase):
             with patch(
                 "civit.url_validator.is_valid_civitai_url", return_value=True
             ), patch("civit.url_validator.urlparse") as mock_urlparse:
-
                 # Setup mock parsed URL
                 mock_parsed = MagicMock()
                 mock_parsed.scheme = "https"
@@ -217,7 +208,6 @@ class TestUrlValidator(unittest.TestCase):
             with patch(
                 "civit.url_validator.is_valid_civitai_url", return_value=True
             ), patch("civit.url_validator.urlparse") as mock_urlparse:
-
                 mock_urlparse.return_value = mock_parsed
                 with self.assertRaises(ConnectionError):
                     validate_url(mock_valid_url, check_existence=True)
@@ -228,7 +218,6 @@ class TestUrlValidator(unittest.TestCase):
             with patch(
                 "civit.url_validator.is_valid_civitai_url", return_value=True
             ), patch("civit.url_validator.urlparse") as mock_urlparse:
-
                 mock_urlparse.return_value = mock_parsed
                 with self.assertRaises(TimeoutError):
                     validate_url(mock_valid_url, check_existence=True)

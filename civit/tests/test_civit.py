@@ -1,13 +1,9 @@
 """Tests for the main civit.py module"""
 
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 import pytest
 import requests
-import logging
 import os
-import shutil
-import tempfile
-from pathlib import Path
 from civit.download_handler import download_file
 
 
@@ -64,10 +60,10 @@ def test_failed_download(mock_get, mock_head, tmp_path):
 
     # Assert that we get an error dictionary on failure
     assert isinstance(result, dict)
-    assert 'error' in result
-    assert 'message' in result
-    assert 'status_code' in result
-    assert 'unexpected_error' == result['error']
+    assert "error" in result
+    assert "message" in result
+    assert "status_code" in result
+    assert "unexpected_error" == result["error"]
 
 
 @patch("src.civit.download_handler.requests.head")
@@ -82,8 +78,8 @@ def test_connection_timeout(mock_get, mock_head, tmp_path):
 
     # Assert that we get the correct error information
     assert isinstance(result, dict)
-    assert result['error'] == 'connection_timeout'
-    assert 'timed out' in result['message'].lower()
+    assert result["error"] == "connection_timeout"
+    assert "timed out" in result["message"].lower()
 
 
 @patch("src.civit.download_handler.requests.head")
@@ -93,17 +89,19 @@ def test_http_error(mock_get, mock_head, tmp_path):
     # Create a response with error status
     error_response = MagicMock()
     error_response.status_code = 404
-    
+
     # Create HTTPError with the response
-    mock_head.side_effect = requests.exceptions.HTTPError("404 Client Error", response=error_response)
+    mock_head.side_effect = requests.exceptions.HTTPError(
+        "404 Client Error", response=error_response
+    )
 
     # Call the function
     result = download_file("https://example.com/file.zip", str(tmp_path))
 
     # Assert that we get the correct error information
     assert isinstance(result, dict)
-    assert result['error'] == 'http_error'
-    assert result['status_code'] == 404
+    assert result["error"] == "http_error"
+    assert result["status_code"] == 404
 
 
 @patch("src.civit.download_handler.requests.head")

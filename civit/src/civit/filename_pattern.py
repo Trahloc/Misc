@@ -13,9 +13,7 @@
     - zlib: For CRC32 hash generation
 """
 
-import re
 import zlib
-import os
 from typing import Dict, Any
 from .filename_generator import sanitize_filename
 from .exceptions import InvalidPatternError, MetadataError

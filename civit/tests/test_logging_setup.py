@@ -7,10 +7,8 @@
     - json: JSON parsing for structured logs
 """
 
-import pytest
 import logging
 import json
-from unittest.mock import patch, MagicMock
 from civit.logging_setup import setup_logging, JsonFormatter
 
 

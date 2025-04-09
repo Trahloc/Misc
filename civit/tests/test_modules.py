@@ -1,13 +1,11 @@
 import unittest
 from unittest.mock import patch, MagicMock
 import logging
-import os
 from civit.signal_handler import signal_handler
 from civit.logging_setup import setup_logging, JsonFormatter
 from civit.api_key import get_api_key
 from civit.model_info import get_model_info
 from civit.url_extraction import extract_model_id, extract_download_url
-import pytest
 from tests.test_utils import silent_errors
 
 

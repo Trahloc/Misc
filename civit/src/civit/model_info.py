@@ -21,7 +21,6 @@ from .exceptions import (
     ModelNotFoundError,
     ModelVersionError,
     ModelAccessError,
-    NetworkError,
 )
 
 # Create structured logger

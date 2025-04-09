@@ -5,7 +5,7 @@ Tests to validate that our network safety measures are working.
 import pytest
 import requests
 import json
-from tests.test_utils.network_guard import RealNetworkAccessError, mock_requests
+from tests.test_utils.network_guard import RealNetworkAccessError
 
 
 def test_direct_network_blocked():

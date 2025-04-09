@@ -12,7 +12,7 @@
 
 import logging
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Dict
 from logging import LoggerAdapter
 from datetime import datetime
 from dataclasses import dataclass

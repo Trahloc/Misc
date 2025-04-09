@@ -43,7 +43,7 @@ def download_file(
                timeouts, or a tuple of (connect_timeout, read_timeout)
 
     RETURNS:
-        Union[str, dict]: 
+        Union[str, dict]:
             - On success: String containing the path to the downloaded file
             - On failure: Dictionary with error details:
                 * 'error': Error type identifier (e.g., 'http_error', 'timeout')
@@ -270,7 +270,7 @@ def download_files(
                 error_msg = result.get('message', 'Unknown error')
                 error_type = result.get('error', 'unknown_error')
                 status_code = result.get('status_code')
-                
+
                 if status_code:
                     logging.error(f"Failed to download {url}: {error_type} (Status: {status_code}) - {error_msg}")
                 else:
