@@ -4,7 +4,6 @@ Pytest configuration.
 This file contains pytest configuration and fixtures.
 """
 
-import os
 import sys
 import logging
 import pytest
