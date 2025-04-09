@@ -1,61 +1,43 @@
+# /home/trahloc/code/Misc/.pre-commit-config.yaml
+# Minimal root configuration for repo-wide checks (if any).
+# The main logic for project-specific checks is handled by the
+# custom .git/hooks/pre-commit script installed by `zeroth_law install-git-hook`.
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: check-yaml
       - id: check-toml
-      # - id: end-of-file-fixer  # Removed, handled by ruff format
-      # - id: trailing-whitespace # Removed, handled by ruff format
-      # Optional: Hook to ensure requirements*.txt stay synced with pyproject.toml/poetry.lock
-      # Requires a script/Makefile target `make generate-reqs-check` or similar
-      # that generates & diffs, fails on diff.
-      # - id: run-make-generate-reqs-check # Custom hook name
-      #   name: Check requirements*.txt sync
-      #   entry: make generate-reqs-check
-      #   language: system
-      #   files: ^pyproject.toml$|^poetry.lock$ # Trigger on relevant changes
-      #   pass_filenames: false
-      #   stages: [commit] # Run on commit, not push
+        # Check root pyproject.toml if it exists and others if needed
+        # Example: only check root pyproject.toml
+        # files: "^pyproject.toml$"
+        # Or exclude specific known non-project TOMLs
+        # exclude: "(some_other_config.toml)"
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
 
--   repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.4.10
-    hooks:
-      # Run the linter.
-      - id: ruff
-        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
-        args: [--fix]
-      # Run the formatter.
-      - id: ruff-format
-        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
-        args: []
+# Add other truly repo-wide checks here (e.g., check-merge-conflict).
+# -   repo: https://github.com/pre-commit/pre-commit-hooks
+#     rev: v4.5.0
+#     hooks:
+#       - id: check-merge-conflict
 
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+# Hook to prevent multi-project commits
+-   repo: local
     hooks:
-      - id: mypy
-        name: mypy (micromamba run)
-        language: system
-        entry: bash -c 'eval "$(micromamba shell hook --shell bash)" && micromamba run -n zeroth_law mypy --cache-dir=/dev/null $@' --
-        types: [python]
-        exclude: '^((?!zeroth_law/).)*$'
-        pass_filenames: true
+      - id: check-multi-project
+        name: Check for multi-project commit
+        entry: zeroth_law/scripts/check_multi_project_commit.py
+        language: script # Use 'script' which just executes the entry
+        types: [file] # Run on all file types
+        pass_filenames: true # The script expects filenames as arguments
+        # Run early to potentially short-circuit other hooks
+        stages: [pre-commit] # Use modern stage name
 
-# Pylint - Exclusively for Similarity Checks (R0801)
--   repo: https://github.com/pycqa/pylint
-    rev: v3.1.0 # Pin to match project version
-    hooks:
-      - id: pylint
-        name: pylint (similarities only)
-        # Apply only to relevant python files within this project
-        files: ^(src|tests)/.*\.py$
-        exclude: '^((?!zeroth_law/).)*$' # Only run on files within zeroth_law/
-        # Configuration comes from pyproject.toml [tool.pylint.*] sections.
-        # Execution must happen within the activated micromamba environment
-        # where pylint and project dependencies are installed.
-        # Using `language: python` assumes pre-commit can find the active conda env python.
-        # If imports fail, switch to `language: system`.
-        language: python
+# Add other repo-wide, non-project-specific hooks here if needed.
+# For project-specific hooks (like ruff, mypy for zeroth_law),
+# use `pre-commit run --config zeroth_law/.pre-commit-config.yaml ...`
 
 # Optional: Add commitlint if you set it up
 # -   repo: https://github.com/conventional-changelog/commitlint
@@ -66,15 +48,14 @@ repos:
 #         additional_dependencies: ['@commitlint/config-conventional']
 
 # Local hook to generate the CODE_TODOS.md dashboard
--   repo: local
-    hooks:
-      - id: generate-todos
-        name: Generate CODE_TODOS.md
-        # Script is now CWD-aware, revert entry to simple path
-        entry: zeroth_law/scripts/generate_code_todos.sh
-        language: system
-        pass_filenames: false
-        always_run: true # Run even if no Python files were staged (ensures dashboard is current)
-        verbose: true # Show output if the script prints anything (e.g., errors)
-        # Note: This hook won't fail the commit even if the script exits non-zero
-        # because we don't need the dashboard generation to block commits.
+# -   repo: local
+#     hooks:
+#       - id: generate-todos
+#         name: Generate CODE_TODOS.md
+#         entry: zeroth_law/scripts/generate_code_todos.sh
+#         language: system
+#         pass_filenames: false
+#         always_run: true # Run even if no Python files were staged (ensures dashboard is current)
+#         verbose: true # Show output if the script prints anything (e.g., errors)
+
+# --- Pylint Hook (Example - Often run separately due to slowness) ---
