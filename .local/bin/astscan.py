@@ -32,11 +32,13 @@ import ast
 import os
 import sys
 
+
 class CodeAnalyzer(ast.NodeVisitor):
     """
     This class traverses the Abstract Syntax Tree (AST) of a Python file
     and extracts information about functions, classes, and variables.
     """
+
     def __init__(self):
         """
         Initializes the CodeAnalyzer with empty lists to store function,
@@ -73,6 +75,7 @@ class CodeAnalyzer(ast.NodeVisitor):
                 self.variables.append(target.id)
         self.generic_visit(node)
 
+
 def analyze_directory(directory: str) -> None:
     """
     Analyzes Python files in a directory.
@@ -102,6 +105,7 @@ def analyze_directory(directory: str) -> None:
                     print(f"SyntaxError in {file_path}: {syntax_error}")
                 except Exception as general_exception:
                     print(f"Error analyzing {file_path}: {general_exception}")
+
 
 if __name__ == "__main__":
     """
