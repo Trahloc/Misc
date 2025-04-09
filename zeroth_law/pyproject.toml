@@ -206,6 +206,7 @@ addopts = "-ra -q --cov=src/zeroth_law --cov-report=term-missing"
 testpaths = [
     "tests",
 ]
+cache_dir = "/run/user/1000/python/pytest"
 
 [tool.coverage.run]
 parallel = true
