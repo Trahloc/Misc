@@ -26,7 +26,10 @@
 - [ ] 4. **Parameter Count Check:** (`analyzer/python/parameters.py`, `ast_utils.py`) Implement `analyze_parameters` (TDD). Integrate.
 - [ ] 5. **Statement Count Check:** (`analyzer/python/statements.py`, `ast_utils.py`) Implement `analyze_statements` (TDD). Integrate.
 - [ ] 6. **Refactor Long/Complex Code:** Address violations flagged for line count, complexity, parameters (e.g., in `cli.py`, `config_loader.py`, `analyzer.py`).
-- [ ] 7. **Fix Remaining Header/Footer Issues:** Debug why edits failed or manually fix remaining header/footer violations in files like `src/__init__.py`, test `__init__.py` files, etc.
+- [ ] 7. **Fix Remaining Header/Footer Issues (ONGOING - Pivoted):** Debug why edits failed or manually fix remaining header/footer violations in files like `src/__init__.py`, test `__init__.py` files, etc.
+    - [ ] 7.1. Create `tq()` helper for triple quotes in `tests/test_utils.py`.
+    - [ ] 7.2. Refactor test strings in `test_file_analyzer.py` to use `tq()`.
+    - [ ] 7.3. Resume debugging `check_header_compliance` logic.
 - [ ] 8. **Configuration Enhancements:**
     - [ ] Support `ignore_codes` in `analyze_file_compliance` filtering.
     - [ ] Add validation for config values (e.g., using Pydantic).

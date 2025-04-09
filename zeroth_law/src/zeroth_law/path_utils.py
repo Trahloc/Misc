@@ -29,3 +29,6 @@ def find_project_root(start_path: Path) -> Path | None:
             log.warning(f"Could not find project root (pyproject.toml) starting from {start_path}")
             return None
         current_path = parent
+
+    # If we get here, we didn't find a project root
+    return None

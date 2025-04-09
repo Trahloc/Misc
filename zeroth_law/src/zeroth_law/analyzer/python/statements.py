@@ -19,39 +19,98 @@ StatementViolation = tuple[str, int, int]  # (function_name, line_number, statem
 
 
 class StatementCounterVisitor(ast.NodeVisitor):
-    """Counts executable statements within a visited function node."""
+    """Counts executable statements within a visited function node.
+    Recursively visits statement nodes within the function, excluding nested functions/classes.
+    """
 
     def __init__(self: typing.Self) -> None:
         """Initialize statement counter."""
         self.count = 0
 
-    def visit_FunctionDef(self: typing.Self, node: ast.FunctionDef) -> None:
-        """Visit FunctionDef to count statements in its body."""
-        self._count_body_statements(node)
+    def _is_statement_node(self, node: ast.AST) -> bool:
+        """Check if a node represents a countable executable statement."""
+        # Basic statements
+        if isinstance(
+            node,
+            (
+                ast.Assign,
+                ast.AugAssign,
+                ast.AnnAssign,  # Count annotated assignments
+                ast.Return,
+                ast.Raise,
+                ast.Assert,
+                ast.Delete,
+                ast.Pass,  # Decide if pass should count (currently yes)
+                ast.Break,
+                ast.Continue,
+                ast.Import,  # Count imports?
+                ast.ImportFrom,
+            ),
+        ):
+            return True
+        # Expression statements (like function calls that don't assign)
+        if isinstance(node, ast.Expr):
+            return True
+        # Control flow structures also count as statements themselves
+        if isinstance(
+            node,
+            (
+                ast.If,  # Count the if itself
+                ast.For,  # Count the for loop itself
+                ast.While,  # Count the while loop itself
+                ast.With,  # Count the with block itself
+                ast.Try,  # Count the try block itself
+            ),
+        ):
+            return True
+        return False
 
-    def visit_AsyncFunctionDef(self: typing.Self, node: ast.AsyncFunctionDef) -> None:
-        """Visit AsyncFunctionDef to count statements in its body."""
-        self._count_body_statements(node)
+    def visit(self, node: ast.AST) -> None:
+        """Visit nodes, count statements, and recurse appropriately."""
+        is_stmt = self._is_statement_node(node)
+        needs_recursion = isinstance(
+            node,
+            (
+                ast.If,
+                ast.For,
+                ast.While,
+                ast.With,
+                ast.Try,
+                # Note: Add AsyncFor, AsyncWith if needed
+            ),
+        )
 
-    def _count_body_statements(self: typing.Self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
-        """Counts statements in the function body, excluding docstrings.
+        if is_stmt:
+            self.count += 1
 
-        Does not recurse into nested functions/classes.
-        """
-        if not node.body:
+        # Prevent recursion into nested functions or classes
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            # As before, assume entry point is visit_FunctionDef/Async
             return
 
-        # Skip docstring if it exists
-        first_stmt = node.body[0]
-        start_index = 0
-        if isinstance(first_stmt, ast.Expr) and isinstance(first_stmt.value, ast.Constant) and isinstance(first_stmt.value.value, str):
-            start_index = 1
+        # Recurse only if it's a compound statement OR not a statement at all (e.g., BoolOp)
+        if needs_recursion or not is_stmt:
+            super().generic_visit(node)
 
-        self.count = len(node.body[start_index:])
-        # Note: This simple count doesn't delve into statement types.
-        # A pass statement counts, an if block counts as one, etc.
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Entry point for counting statements in a function."""
+        # Skip docstring before counting
+        body_to_visit = node.body
+        if body_to_visit and isinstance(body_to_visit[0], ast.Expr) and isinstance(body_to_visit[0].value, ast.Constant):
+            body_to_visit = body_to_visit[1:]
 
-    # Do not define generic_visit to prevent counting statements in nested scopes.
+        for stmt in body_to_visit:
+            self.visit(stmt)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        """Entry point for counting statements in an async function."""
+        # Skip docstring before counting
+        body_to_visit = node.body
+        if body_to_visit and isinstance(body_to_visit[0], ast.Expr) and isinstance(body_to_visit[0].value, ast.Constant):
+            body_to_visit = body_to_visit[1:]
+
+        for stmt in body_to_visit:
+            self.visit(stmt)
 
 
 def analyze_statements(file_path: str | Path, threshold: int) -> list[StatementViolation]:
@@ -82,14 +141,17 @@ def analyze_statements(file_path: str | Path, threshold: int) -> list[StatementV
 
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-                # Don't analyze methods for now
                 is_method = any(isinstance(parent, ast.ClassDef) for parent in getattr(node, "_parents", []))
                 if is_method:
                     continue
 
                 visitor = StatementCounterVisitor()
-                # Visit only the function node; the visitor handles counting its body
-                visitor.visit(node)
+                # Explicitly call visit_FunctionDef/Async which now handles traversal
+                if isinstance(node, ast.FunctionDef):
+                    visitor.visit_FunctionDef(node)
+                else:  # AsyncFunctionDef
+                    visitor.visit_AsyncFunctionDef(node)
+
                 statement_count = visitor.count
 
                 if statement_count > threshold:

@@ -73,6 +73,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "max_complexity": 10,
     "max_parameters": 5,
     "max_statements": 50,
+    "ignore_rules": [],
 }
 
 

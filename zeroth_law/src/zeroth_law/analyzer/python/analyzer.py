@@ -26,47 +26,56 @@ log = logging.getLogger(__name__)
 # DEFAULT_MAX_STATEMENTS = 50
 # DEFAULT_MAX_EXECUTABLE_LINES = 100
 
+EXPECTED_HEADER_LINE_1 = "# <<< ZEROTH LAW HEADER >>>"
+
 # --- Header and Footer Checks ---
 
 
 def check_header_compliance(file_path: str | Path) -> list[str]:
     """Check if a file starts with the required Zeroth Law header.
 
+    Checks for:
+        1. Line 1 matches EXPECTED_HEADER_LINE_1
+        2. Line 2 starts with "# FILE:"
+        3. Line 3 starts with '\"\"\"'
+
     Args:
-    ----
         file_path: The path to the Python file.
 
     Returns:
-    -------
         A list of error codes if non-compliant, empty list otherwise.
-        Possible error codes: HEADER_MISSING_FILE_LINE, HEADER_MISSING_DOCSTRING_START,
-                          FILE_NOT_FOUND, HEADER_CHECK_OS_ERROR, HEADER_CHECK_UNEXPECTED_ERROR.
+        Possible error codes:
+          - HEADER_LINE_1_MISMATCH
+          - HEADER_MISSING_FILE_LINE
+          - HEADER_MISSING_DOCSTRING_START
+          - FILE_NOT_FOUND
+          - HEADER_CHECK_OS_ERROR
+          - HEADER_CHECK_UNEXPECTED_ERROR
 
     """
     errors: list[str] = []
     try:
         path = Path(file_path)
         with path.open("r", encoding="utf-8") as f:
-            # Read line 1, strip whitespace, check existence
+            # Read the first three lines
             line1_raw = f.readline()
-            if not line1_raw:
-                errors.append("HEADER_MISSING_FILE_LINE")
-                errors.append("HEADER_MISSING_DOCSTRING_START")
-                return errors
-
-            line1 = line1_raw.strip()
-            if not line1.startswith("# FILE:"):
-                errors.append("HEADER_MISSING_FILE_LINE")
-
-            # Read line 2, strip whitespace, check existence
             line2_raw = f.readline()
-            if not line2_raw:
-                errors.append("HEADER_MISSING_DOCSTRING_START")
+            line3_raw = f.readline()
+
+            # Check Line 1 for exact header marker
+            if not line1_raw or line1_raw.strip() != EXPECTED_HEADER_LINE_1:
+                errors.append("HEADER_LINE_1_MISMATCH")
                 return errors
 
-            line2 = line2_raw.strip()
-            if not line2.startswith('"""'):
+            # Check Line 2 for # FILE:
+            if not line2_raw or not line2_raw.strip().startswith("# FILE:"):
+                errors.append("HEADER_MISSING_FILE_LINE")
+                return errors
+
+            # Check Line 3 for """
+            if not line3_raw or not line3_raw.strip().startswith('"""'):
                 errors.append("HEADER_MISSING_DOCSTRING_START")
+                return errors
 
     except FileNotFoundError:
         errors.append("FILE_NOT_FOUND")

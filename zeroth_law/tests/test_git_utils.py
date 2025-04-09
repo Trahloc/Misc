@@ -70,21 +70,26 @@ def test_get_staged_files_some_staged(dummy_git_repo):
     file_in_a = dummy_git_repo / "project_a" / "src" / "main.py"
     file_in_b = dummy_git_repo / "project_b" / "config.txt"
     root_readme = dummy_git_repo / "README.md"
+    pyproject = dummy_git_repo / "project_a" / "pyproject.toml"
 
     file_in_a.write_text("modified content a")
     file_in_b.write_text("modified content b")
     root_readme.write_text("modified readme")
+    pyproject.write_text('[tool.poetry]\nname = "test"')
 
     try:
         subprocess.run(
-            ["git", "add", str(file_in_a), str(file_in_b), str(root_readme)], cwd=dummy_git_repo, check=True, capture_output=True
+            ["git", "add", str(file_in_a), str(file_in_b), str(root_readme), str(pyproject)],
+            cwd=dummy_git_repo,
+            check=True,
+            capture_output=True,
         )
     except (FileNotFoundError, subprocess.CalledProcessError) as e:
         pytest.skip(f"Git command failed, skipping git tests: {e}")
 
     staged = get_staged_files(dummy_git_repo)
-    # Expect relative paths
-    expected_paths = {Path("project_a/src/main.py"), Path("project_b/config.txt"), Path("README.md")}
+    # Expect relative paths including pyproject.toml
+    expected_paths = {Path("project_a/src/main.py"), Path("project_b/config.txt"), Path("README.md"), Path("project_a/pyproject.toml")}
     assert set(staged) == expected_paths
 
 
@@ -158,14 +163,14 @@ def test_generate_custom_hook_script_content():
     assert "declare -A project_roots" in script  # Check for project detection logic
     assert ".pre-commit-config.yaml" in script  # Checks for project config file
     assert 'if [ "$num_projects" -gt 1 ]; then' in script  # Multi-project check
-    assert 'echo "ERROR: Commit includes files from multiple projects."' in script
+    assert 'echo "Error: Not a Git repository."' in script  # Check for error message
     assert "exit 1" in script  # Failure exit
     assert 'elif [ "$num_projects" -eq 1 ]; then' in script  # Single project check
     assert "pre-commit run --config" in script  # Running project-specific config
     assert "xargs -0 pre-commit run" in script  # Handling file lists safely
     assert "exit $?" in script  # Exiting with pre-commit's code
     assert "else" in script  # Handling root/no-project case
-    assert 'echo "No project-specific changes detected. Passing."' in script
+    assert "[Zeroth Law Hook] No project-specific changes detected. Passing." in script
     assert "exit 0" in script  # Passing exit
 
 

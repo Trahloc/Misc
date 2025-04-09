@@ -91,6 +91,12 @@ set -e
 
 echo "[Zeroth Law Hook] Running custom multi-project pre-commit hook..."
 
+# Check if we're in a Git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "Error: Not a Git repository."
+    exit 1
+fi
+
 # 1. Get list of staged files (Added, Copied, Modified)
 # Use plumbing command for reliability
 staged_files=$(git diff --cached --name-only --diff-filter=ACM)
@@ -126,7 +132,7 @@ num_projects=${#project_roots[@]}
 # 4. Execute based on number of projects found
 if [ "$num_projects" -gt 1 ]; then
     # Scenario 1: Multi-Project Commit -> FAIL
-    echo "[Zeroth Law Hook] ERROR: Commit includes files from multiple projects." >&2
+    echo "ERROR: Commit includes files from multiple projects." >&2
     echo "Projects detected:" >&2
     for proj in "${!project_roots[@]}"; do
         echo "  - $proj" >&2

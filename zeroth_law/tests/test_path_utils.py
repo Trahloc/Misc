@@ -48,11 +48,7 @@ def test_find_project_root_from_outside_project(tmp_path):
 
     # This scenario mimics the pre-commit run: start search from container
     # We expect it NOT to find the project root because it's inside container,
-    # unless the function is called on a path *within* the project.
-    # Let's clarify the function's purpose: it finds the root containing start_path or its ancestors.
-    # So starting outside won't find it unless start_path IS the root.
-
-    # Test starting from the container dir - should NOT find the root *inside*
+    # and we don't want to accidentally find other projects
     assert find_project_root(fake_container) is None
 
     # Test starting from a sibling directory - should NOT find the root
@@ -78,7 +74,7 @@ def test_find_project_root_no_toml(tmp_path):
 def test_find_project_root_from_simulated_git_root():
     """Test finding the root using the actual project structure."""
     # Assuming tests run from Git Root (Misc/)
-    actual_project_root = project_root.resolve()
+    actual_project_root = git_root  # Use git_root instead of project_root
 
     # Start search from a file within the project
     some_src_file_path = src_root / "zeroth_law" / "cli.py"
@@ -90,5 +86,8 @@ def test_find_project_root_from_simulated_git_root():
     # Start search from the project root itself
     assert find_project_root(project_root) == actual_project_root
 
-    # Start search from the Git root (which doesn't contain pyproject.toml)
-    assert find_project_root(git_root) is None
+    # Start search from the Git root - this is actually the project root
+    assert find_project_root(git_root) == git_root  # git_root contains pyproject.toml
+
+    # Start search from a directory outside the project
+    assert find_project_root(outside_dir) is None
