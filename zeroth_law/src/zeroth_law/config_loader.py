@@ -14,7 +14,6 @@ Notes
 """
 
 import logging
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -24,25 +23,25 @@ import xdg
 
 # Keep track of which loader is available
 _TOML_LOADER: Any = None
-_TOMLLIB_FOUND = False
-_TOMLI_FOUND = False
+_TOMLLIB: Any = None
+_TOMLI: Any = None
 
 try:
     import tomllib
 
     _TOML_LOADER = tomllib
-    _TOMLLIB_FOUND = True
+    _TOMLLIB = tomllib
 except ImportError:
     try:
         import tomli
 
         _TOML_LOADER = tomli
-        _TOMLI_FOUND = True
+        _TOMLI = tomli
     except ImportError:
         pass  # No loader found
 
 
-# Define base exception for type hinting, real exception is caught below
+# Define base exception for type hinting/fallback
 class TomlDecodeError(Exception):
     """Base exception class for TOML decoding errors."""
 
@@ -72,6 +71,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "ignore_codes": [],
     "max_lines": 100,
     "max_complexity": 10,
+    "max_parameters": 5,
+    "max_statements": 50,
 }
 
 
@@ -155,33 +156,26 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
     try:
         with found_path.open("rb") as f:
             data = _TOML_LOADER.load(f)
-    # Catch specific errors if libraries were found
-    except getattr(sys.modules.get("tomllib"), "TOMLDecodeError", TomlDecodeError) as e_toml:
-        if _TOMLLIB_FOUND:
-            err_msg = f"Invalid TOML in config file ({found_path}): {e_toml}"
-            log.exception(err_msg)  # Use log.exception (TRY400)
-            raise TomlDecodeError(err_msg) from e_toml
-        # If tomllib wasn't found, this exception shouldn't be caught here
-        # unless tomli error inherits from base Exception and base TomlDecodeError is Exception
-        # Fall through to potentially catch tomli error or base Exception
-    except getattr(sys.modules.get("tomli"), "TOMLDecodeError", TomlDecodeError) as e_tomli:
-        if _TOMLI_FOUND:
-            err_msg = f"Invalid TOML in config file ({found_path}): {e_tomli}"
-            log.exception(err_msg)  # Use log.exception (TRY400)
-            raise TomlDecodeError(err_msg) from e_tomli
-        # Fall through if tomli wasn't the loaded library
-    except OSError as e:
-        err_msg = f"Could not read config file ({found_path}): {e}"
-        log.exception(err_msg)  # Use log.exception (TRY400)
-        raise OSError(err_msg) from e
-    except ImportError as e:
-        # Raised by _DummyTomlLoader
+    # Catch specific known exceptions first
+    except ImportError as e:  # Raised by _DummyTomlLoader
         log.error(e)
         raise
+    except OSError as e:
+        err_msg = f"Could not read config file ({found_path}): {e}"
+        log.exception(err_msg)
+        raise OSError(err_msg) from e
+    # Catch TOML parsing errors if libs are available
     except Exception as e:
+        is_tomllib_error = _TOMLLIB and isinstance(e, _TOMLLIB.TOMLDecodeError)
+        is_tomli_error = _TOMLI and isinstance(e, _TOMLI.TOMLDecodeError)
+        if is_tomllib_error or is_tomli_error:
+            err_msg = f"Invalid TOML in config file ({found_path}): {e}"
+            log.exception(err_msg)
+            # Raise the base class for consistent handling upstream if needed
+            raise TomlDecodeError(err_msg) from e
         # Catch any other unexpected error during loading/parsing
         err_msg = f"Unexpected error loading/parsing config file {found_path}: {e}"
-        log.exception(err_msg)  # Use log.exception (TRY400)
+        log.exception(err_msg)
         raise RuntimeError(err_msg) from e
 
     tool_data = data.get("tool", {})
@@ -189,7 +183,10 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         log.warning("Unexpected type for [tool] section in %s: %s. Using defaults.", found_path, type(tool_data).__name__)
         return loaded_config
 
-    config_section = tool_data.get(_CONFIG_SECTION, {})
+    # Correctly extract the nested section name
+    section_key = _CONFIG_SECTION.split(".")[-1]  # Should be 'zeroth-law'
+    config_section = tool_data.get(section_key, {})  # Get nested table
+
     if not isinstance(config_section, dict):
         log.warning(
             "Unexpected type for [%s] section in %s: %s. Using defaults.", _CONFIG_SECTION, found_path, type(config_section).__name__
@@ -199,6 +196,13 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
     for key, default_value in DEFAULT_CONFIG.items():
         if key in config_section:
             loaded_value = config_section[key]
+            log.debug(
+                "Merging key '%s': DefaultType=%s, LoadedValue=%s, LoadedType=%s",
+                key,
+                type(default_value).__name__,
+                loaded_value,
+                type(loaded_value).__name__,
+            )
             if isinstance(loaded_value, type(default_value)):
                 loaded_config[key] = loaded_value
             else:
