@@ -1,61 +1,61 @@
-# Zeroth Law Tool
+# Zeroth Law Auditor
 
-Enforcer for the Zeroth Law AI Framework.
-
-## Overview
-
-This tool ensures adherence to the rules and guidelines defined in the Zeroth Law AI Framework (`frameworks/python/ZerothLawAIFramework.py313.md`).
+Enforcer for the [Zeroth Law AI Framework](frameworks/python/ZerothLawAIFramework.py313.md).
 
 ## Setup
 
-This project uses `micromamba` for environment management and `poetry` for dependency management.
+This project uses Python 3.13+ and `poetry` for dependency management.
 
-1.  **Install Micromamba:** Follow the instructions at [https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)
-2.  **Install Poetry:** Follow the instructions at [https://python-poetry.org/docs/#installation](https://python-poetry.org/docs/#installation)
-3.  **Enable Poetry Conda Plugin:** `poetry self add poetry-plugin-conda`
-4.  **Create Conda Environment:**
+1.  **Install Poetry:** Follow the instructions at [https://python-poetry.org/docs/#installation](https://python-poetry.org/docs/#installation)
+2.  **Configure Poetry (Optional):** You might want to configure Poetry to create virtual environments inside the project directory:
     ```bash
-    # Ensure requirements files are up-to-date (if pyproject.toml changed)
-    # ./scripts/generate_requirements.sh
+    poetry config virtualenvs.in-project true
+    ```
+3.  **Install Dependencies:** Navigate to the project root directory (where `pyproject.toml` is located) and run:
+    ```bash
+    poetry install --all-extras # Installs main and development dependencies
+    ```
+    This creates a virtual environment (usually in `.venv/` if configured as above) and installs all necessary packages.
 
-    # Create the environment using the minimal environment.yml
-    micromamba env create -f environment.yml
-    ```
-    *Alternatively, update an existing environment:* `micromamba env update -f environment.yml --prune`
-5.  **Activate Environment:**
-    ```bash
-    micromamba activate zeroth_law # Or the name defined in environment.yml
-    ```
-6.  **Install Development Dependencies:**
-    ```bash
-    # Ensure requirements files are up-to-date first if needed:
-    # ./scripts/generate_requirements.sh
+4.  **Activate Virtual Environment:**
+    *   If you configured `virtualenvs.in-project`, activate using:
+        ```bash
+        source .venv/bin/activate
+        ```
+    *   Otherwise, use Poetry's shell command:
+        ```bash
+        poetry shell
+        ```
 
-    # Install dev dependencies using pip
-    pip install -r requirements-dev.txt
-    ```
-7.  **Install Project in Editable Mode (for development):**
-    ```bash
-    pip install -e .
-    ```
-8.  **Install Pre-commit Hooks:**
+5.  **Install Pre-commit Hooks:** While the virtual environment is active, install the pre-commit hooks:
     ```bash
     pre-commit install
-    # pre-commit install --hook-type commit-msg # If using commitlint
     ```
 
 ## Usage
 
-*(To be added during development)*
+Once the environment is activated and the package installed (`poetry install`), you can run the auditor using:
 
-## Development
+```bash
+zeroth-law [OPTIONS] [PATHS]...
+```
 
-This project follows strict Test-Driven Development (TDD).
+Or via `poetry run`:
 
-*   **Run Checks:** `ruff check .`, `ruff format .`, `mypy --strict .`, `pylint --disable=all --enable=R0801 src/ tests/`
-*   **Run Tests:** `pytest`
-*   **Run Tests with Coverage:** `pytest --cov=src/zeroth_law tests/`
+```bash
+poetry run zeroth-law [OPTIONS] [PATHS]...
+```
+
+Run `zeroth-law --help` for a list of options.
+
+## Running Tests
+
+Activate the virtual environment and run:
+
+```bash
+poetry run pytest
+```
 
 ## Contributing
 
-*(To be added later - include details on Conventional Commits)*
+Please follow the setup instructions and ensure pre-commit hooks pass before submitting changes.

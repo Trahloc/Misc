@@ -1,84 +1,59 @@
 # Project TODO List
 
-## Phase 1: Project Initialization & Configuration
+## Phase 1: Core Setup & Basic Compliance Checks (Initial TDD)
 
-- [x] 1. Create Directory Structure
-- [x] 2. Populate `pyproject.toml` (incl. `poetry2conda` -> `poetry-plugin-export` fixes, build-system fix)
-- [x] 3. Populate `.gitignore` (incl. `requirements*.txt`)
-- [x] 4. Populate `README.md` (incl. framework filename fix & updated setup instructions)
-- [x] 5. Populate `.pre-commit-config.yaml`
-- [x] 6. Create `scripts/generate_requirements.sh` & make executable (renamed from `generate_environment.sh`)
-- [x] 7. Environment Setup (Revised Workflow):
-  - [x] Install `poetry` & `poetry-plugin-export` in bootstrap env (`localbin`)
-  - [x] Run `poetry lock`
-  - [x] Generate `requirements.txt` & `requirements-dev.txt` (using `poetry export`)
-  - [x] Create minimal `environment.yml` (using `requirements.txt`)
-  - [x] Run `micromamba env create -f environment.yml` (using `conda` alias)
-  - [x] Install dev dependencies (`conda run -n zeroth_law pip install -r requirements-dev.txt`)
-  - [x] Install `pre-commit` manually (workaround for export issue)
-  - [x] Run `conda run -n zeroth_law pre-commit install`
-  - [x] Run `conda run -n zeroth_law pip install -e .` (Install project editable)
+- [x] 1. Initialize project structure (`poetry new`, basic dirs like `src/zeroth_law`, `tests`).
+- [x] 2. Populate `pyproject.toml` (incl. build-system fix)
+- [x] 3. Set up `ruff` configuration (`pyproject.toml`).
+- [x] 4. Set up `mypy` configuration (`pyproject.toml`).
+- [x] 5. Set up `pytest` configuration (`pyproject.toml`, basic `conftest.py` if needed).
+- [x] 6. Set up `pre-commit` (`.pre-commit-config.yaml` with `ruff`, `mypy`).
+- [x] 7. Create initial `README.md` with setup instructions (using `poetry`).
+- [x] 8. Implement basic `file_finder.py` (TDD): Find `.py` files, exclude defaults.
+- [x] 9. Implement basic `config_loader.py` (TDD): Load basic settings (e.g., `exclude_dirs`, `exclude_files`) from `[tool.zeroth-law]` in `pyproject.toml`, merging with defaults.
+- [x] 10. Implement basic `cli.py` using `click` (TDD): Argument parsing (paths, recursive, verbosity, color), setup logging (`structlog`), call config loader, call file finder, orchestrate basic audit flow.
+- [x] 11. Implement basic Header Check (`analyzer/python/analyzer.py::check_header_compliance`).
+- [x] 12. Implement basic Footer Check (`analyzer/python/analyzer.py::check_footer_compliance`).
+- [x] 13. Implement main `analyze_file_compliance` orchestrator (`analyzer/python/analyzer.py`) calling header/footer checks.
+- [x] 14. Integrate checks into `cli.py::run_audit`.
+- [x] 15. Ensure pre-commit hooks pass (resolve initial issues, potentially adjust limits temporarily).
 
-## Phase 1.5: Legacy System Analysis
+## Phase 2: Advanced Compliance Checks & Refinements
 
-- [x] Analyze `.legacy` variant code and identify core functionalities.
-- [x] Document the purpose of each major component/function in the legacy system. (See [docs/legacy/analysis_summary.md](docs/legacy/analysis_summary.md))
-- [x] List specific features/checks performed by the legacy system to guide refactoring. (See [docs/legacy/analysis_summary.md](docs/legacy/analysis_summary.md))
+- [ ] 1. **Line Count Check:** (`analyzer/python/line_counts.py`) Implement `analyze_line_counts` (TDD). Integrate into `analyze_file_compliance`.
+- [ ] 2. **Complexity Check:** (`analyzer/python/complexity.py`, `ast_utils.py`) Implement `analyze_complexity` using `ast` (TDD). Integrate.
+- [ ] 3. **Docstring Check:** (`analyzer/python/docstrings.py`, `ast_utils.py`) Implement `analyze_docstrings` (module, function, class - TDD). Integrate.
+- [ ] 4. **Parameter Count Check:** (`analyzer/python/parameters.py`, `ast_utils.py`) Implement `analyze_parameters` (TDD). Integrate.
+- [ ] 5. **Statement Count Check:** (`analyzer/python/statements.py`, `ast_utils.py`) Implement `analyze_statements` (TDD). Integrate.
+- [ ] 6. **Refactor Long/Complex Code:** Address violations flagged for line count, complexity, parameters (e.g., in `cli.py`, `config_loader.py`, `analyzer.py`).
+- [ ] 7. **Fix Remaining Header/Footer Issues:** Debug why edits failed or manually fix remaining header/footer violations in files like `src/__init__.py`, test `__init__.py` files, etc.
+- [ ] 8. **Configuration Enhancements:**
+    - [ ] Support `ignore_codes` in `analyze_file_compliance` filtering.
+    - [ ] Add validation for config values (e.g., using Pydantic).
+    - [ ] Consider XDG Base Directory support for global config (`config_loader.py`).
+- [ ] 9. **Reporting Enhancements:**
+    - [ ] Improve detail/formatting of violation reports in `cli.py`.
+    - [ ] Consider different output formats (JSON, etc.).
+- [ ] 10. **CI Workflow:** Set up GitHub Actions workflow (`.github/workflows/ci.yml`) using `poetry`.
 
-## Phase 2: Core Logic & TDD
+## Phase 3: Framework Integration & Polish
 
-- [x] 8. Identify First Feature (based on `ZerothLawAIFramework.py313.md`) - Load `pyproject.toml` and extract Python version.
-- [x] 9. Write Failing Test (Red)
-- [x] 10. Implement Minimal Code (Green)
-- [x] 11. Refactor
-- [x] 12. Commit (using Conventional Commits)
+- [x] 1. **Framework Doc Update:** Update `frameworks/python/ZerothLawAIFramework.py313.md` to reflect `poetry` standardization.
+- [ ] 2. **Custom Git Hook Management (TDD):**
+    - [ ] 2.1. Define `install-git-hook` and `restore-git-hooks` commands in `cli.py`.
+    - [ ] 2.2. Implement core logic for finding Git root and project roots.
+    - [ ] 2.3. Implement logic to generate the custom multi-project pre-commit hook script content.
+    - [ ] 2.4. Implement file writing and permission setting for installing the hook.
+    - [ ] 2.5. Implement logic for `restore-git-hooks` (running `pre-commit install`).
+    - [ ] 2.6. Write tests covering script generation, installation, restoration, and edge cases.
+- [ ] 3. **Final README Review:** Ensure README is complete and accurate, including hook setup.
+- [ ] 4. **License Review:** Confirm chosen license (CC0) is appropriate.
+- [ ] 5. **Publishing Prep (Optional):** Prepare for potential PyPI release.
 
-## Phase 3: Iterative Development & Refinement
+## Backlog / Ideas
 
-- [ ] 13. Repeat TDD Cycle for subsequent features
-  - [x] 8a. Identify Next Feature (Informed by Legacy) - Find Python files to analyze.
-  - [x] 9a. Write Failing Test (Red)
-  - [x] 10a. Implement Minimal Code (Green)
-  - [x] 11a. Refactor
-  - [x] 12a. Commit (using Conventional Commits)
-  - [x] 8b. Identify Next Feature - Analyze AST for missing public function docstrings (D103).
-  - [x] 9b. Write Failing Test (Red)
-  - [x] 10b. Implement Minimal Code (Green)
-  - [x] 11b. Refactor
-  - [x] 12b. Commit
-  - [ ] 8c. Identify Next Feature - Check for Header Comment Presence (Principle #11)
-  - [ ] 9c. Write Failing Test (Red)
-  - [ ] 10c. Implement Minimal Code (Green)
-  - [x] 11c. Refactor
-  - [x] 12c. Commit
-  - [ ] 8d. Identify Next Feature - Check for Footer Comment Presence (Principle #11)
-  - [ ] 9d. Write Failing Test (Red)
-  - [ ] 10d. Implement Minimal Code (Green)
-  - [x] 11d. Refactor
-  - [x] 12d. Commit
-  - [ ] 8e. Identify Next Feature - Check Cyclomatic Complexity
-  - [ ] 9e. Write Failing Test (Red)
-  - [ ] 10e. Implement Minimal Code (Green)
-  - [x] 11e. Refactor
-  - [x] 12e. Commit
-  - [ ] 8f. Identify Next Feature - Check Max Parameters per Function
-  - [ ] 9f. Write Failing Test (Red)
-  - [ ] 10f. Implement Minimal Code (Green)
-  - [x] 11f. Refactor
-  - [x] 12f. Commit
-  - [ ] 8g. Identify Next Feature - Check Max Statements per Function
-  - [ ] 9g. Write Failing Test (Red)
-  - [ ] 10g. Implement Minimal Code (Green)
-  - [x] 11g. Refactor
-  - [x] 12g. Commit
-  - [ ] 8h. Identify Next Feature - Check Max Executable Lines per File
-  - [ ] 9h. Write Failing Test (Red)
-  - [ ] 10h. Implement Minimal Code (Green)
-  - [ ] 11h. Refactor
-  - [ ] 12h. Commit
-- [ ] 14. Continuously Integrate Tooling (`ruff`, `mypy`, `pylint`, `pytest --cov`)
-- [ ] 15. Set up CI (`.github/workflows/ci.yml`)
-- [ ] 16. Final Documentation & Review:
-  - [ ] Ensure in-file documentation pattern in all source files
-  - [ ] Update `README.md` (Usage, Contributing sections)
-  - [ ] Final review against all requirements
+- [ ] More sophisticated exclusion logic (`.gitignore` style?).
+- [ ] Auto-fixing capabilities (e.g., add missing footers).
+- [ ] Template generation/validation features.
+- [ ] Specific checks for AI-generated code patterns?
+- [ ] Integration with `pre-commit` beyond just running the tool.
