@@ -9,8 +9,9 @@
  - json
  - typing
 """
+
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 DEFAULT_CONFIG = {
     "max_line_length": 88,
@@ -21,14 +22,15 @@ DEFAULT_CONFIG = {
         ".*\\.pyc$",
         ".*\\.git.*",
         ".*__pycache__.*",
-        ".*\\.egg-info.*"
-    ]
+        ".*\\.egg-info.*",
+    ],
 }
+
 
 def load_config(config_path: str) -> Dict[str, Any]:
     """Load configuration from a JSON file."""
     try:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
             # Merge with default config
             merged = DEFAULT_CONFIG.copy()
@@ -38,6 +40,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
         return DEFAULT_CONFIG
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in config file: {e}")
+
 
 def get_config() -> Dict[str, Any]:
     """Get the current configuration."""

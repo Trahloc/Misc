@@ -9,6 +9,7 @@
     # - [module_path]: [What's needed.]
 """
 
+
 def example_function(data: list[int]) -> list[int]:
     """
     PURPOSE: Filters out negative values and sorts the remaining non-negative integers.
@@ -25,6 +26,7 @@ def example_function(data: list[int]) -> list[int]:
     filtered_data = [num for num in data if num >= 0]
     # Return the sorted list of non-negative integers
     return sorted(filtered_data)
+
 
 """
 ## KNOWN ERRORS: [List with severity.]

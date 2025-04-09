@@ -8,8 +8,10 @@
  - unittest
  - astscan.example_module
 """
+
 import unittest
 from astscan.example_module import add_numbers, multiply_numbers
+
 
 class TestExampleModule(unittest.TestCase):
     """Test class for example_module functions."""
@@ -23,6 +25,7 @@ class TestExampleModule(unittest.TestCase):
         """Test the multiply_numbers function."""
         result = multiply_numbers(2, 3)
         self.assertEqual(result, 6)
+
 
 if __name__ == "__main__":
     unittest.main()

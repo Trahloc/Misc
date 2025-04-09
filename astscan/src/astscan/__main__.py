@@ -8,6 +8,7 @@
 ## DEPENDENCIES:
  - astscan.cli
 """
+
 from astscan.cli import main
 
 if __name__ == "__main__":
