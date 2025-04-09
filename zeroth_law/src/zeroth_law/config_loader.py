@@ -14,6 +14,7 @@ Notes
 """
 
 import logging
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -21,52 +22,44 @@ import xdg
 
 # --- TOML Library Handling --- #
 
-
-# Define base exception first
-class TomlDecodeError(Exception):
-    """Base exception for TOML decoding errors."""
-
-
+# Keep track of which loader is available
 _TOML_LOADER: Any = None
 _TOMLLIB_FOUND = False
 _TOMLI_FOUND = False
 
 try:
-    # Use standard library tomllib (Python 3.11+)
     import tomllib
 
-    TomlDecodeError = tomllib.TomlDecodeError  # Reassign
     _TOML_LOADER = tomllib
     _TOMLLIB_FOUND = True
 except ImportError:
     try:
-        # Fallback to tomli
         import tomli
 
-        # Only reassign if tomllib wasn't found
-        TomlDecodeError = tomli.TOMLDecodeError  # type: ignore[assignment, misc]
         _TOML_LOADER = tomli
         _TOMLI_FOUND = True
     except ImportError:
-        pass  # _TOML_LOADER remains None, TomlDecodeError remains base class
+        pass  # No loader found
 
 
-# Dummy class if no TOML loader available
+# Define base exception for type hinting, real exception is caught below
+class TomlDecodeError(Exception):
+    """Base exception class for TOML decoding errors."""
+
+
 class _DummyTomlLoader:
     """Dummy class for placeholder TOML parsing when no library is installed."""
 
     @staticmethod
     # type: ignore[no-untyped-def]
     def load(*_args: Any, **_kwargs: Any) -> dict[str, Any]:  # ANN401 ignored
-        """Raise ImportError indicating missing TOML library."""  # D401 fixed
+        """Raise ImportError indicating missing TOML library."""
         err_msg = "TOML library (tomllib or tomli) not found. Cannot parse pyproject.toml."
         raise ImportError(err_msg)
 
 
-# Assign dummy loader if needed
-if not _TOMLLIB_FOUND and not _TOMLI_FOUND:
+if _TOML_LOADER is None:
     _TOML_LOADER = _DummyTomlLoader()
-    # TomlDecodeError remains the base class defined above
 
 
 log = logging.getLogger(__name__)
@@ -90,9 +83,11 @@ def find_pyproject_toml(start_path: Path | None = None) -> Path | None:
     2. pyproject.toml in start_path (or cwd) or its parents.
 
     Args:
+    ----
         start_path: The directory to start the upward search from. Defaults to CWD.
 
     Returns:
+    -------
         The Path object of the found config file, or None if not found.
 
     """
@@ -107,7 +102,7 @@ def find_pyproject_toml(start_path: Path | None = None) -> Path | None:
     # 2. Search upwards from start_path (or cwd)
     current_path = Path(start_path) if start_path else Path.cwd()
     log.debug("Searching for pyproject.toml upwards from: %s", current_path)
-    # Iterate using sequence unpacking (RUF005 fix)
+    # Iterate using sequence unpacking
     for parent_dir in (current_path, *current_path.parents):
         potential_path = parent_dir / "pyproject.toml"
         if potential_path.is_file():
@@ -118,19 +113,22 @@ def find_pyproject_toml(start_path: Path | None = None) -> Path | None:
     return None
 
 
-def load_config(config_path_override: str | Path | None = None) -> dict[str, Any]:  # noqa: C901
+def load_config(config_path_override: str | Path | None = None) -> dict[str, Any]:  # noqa: C901, PLR0912
     """Load Zeroth Law config, merge with defaults.
 
     Search XDG path and parent dirs for pyproject.toml if config_path_override is None.
 
     Args:
+    ----
         config_path_override: Explicit path to the config file (e.g., pyproject.toml).
                               If None, searches automatically (XDG, then upwards).
 
     Returns:
+    -------
         A dictionary containing the loaded and validated configuration.
 
     Raises:
+    ------
         FileNotFoundError: If an explicitly specified config_path_override is not found.
         TomlDecodeError: If the found or specified config file is invalid TOML.
         ImportError: If no TOML parsing library (tomllib/tomli) is installed.
@@ -152,22 +150,39 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
 
     log.debug("Loading configuration from: %s", found_path)
     loaded_config = DEFAULT_CONFIG.copy()
+    data: dict[str, Any] = {}
 
     try:
         with found_path.open("rb") as f:
             data = _TOML_LOADER.load(f)
-    except TomlDecodeError as e:
-        err_msg = f"Invalid TOML in config file: {found_path} - {e}"
-        log.exception(err_msg)
-        raise TomlDecodeError(err_msg) from e
+    # Catch specific errors if libraries were found
+    except getattr(sys.modules.get("tomllib"), "TOMLDecodeError", TomlDecodeError) as e_toml:
+        if _TOMLLIB_FOUND:
+            err_msg = f"Invalid TOML in config file ({found_path}): {e_toml}"
+            log.exception(err_msg)  # Use log.exception (TRY400)
+            raise TomlDecodeError(err_msg) from e_toml
+        # If tomllib wasn't found, this exception shouldn't be caught here
+        # unless tomli error inherits from base Exception and base TomlDecodeError is Exception
+        # Fall through to potentially catch tomli error or base Exception
+    except getattr(sys.modules.get("tomli"), "TOMLDecodeError", TomlDecodeError) as e_tomli:
+        if _TOMLI_FOUND:
+            err_msg = f"Invalid TOML in config file ({found_path}): {e_tomli}"
+            log.exception(err_msg)  # Use log.exception (TRY400)
+            raise TomlDecodeError(err_msg) from e_tomli
+        # Fall through if tomli wasn't the loaded library
     except OSError as e:
-        err_msg = f"Could not read config file: {found_path} - {e}"
-        log.exception(err_msg)
+        err_msg = f"Could not read config file ({found_path}): {e}"
+        log.exception(err_msg)  # Use log.exception (TRY400)
         raise OSError(err_msg) from e
     except ImportError as e:
         # Raised by _DummyTomlLoader
         log.error(e)
         raise
+    except Exception as e:
+        # Catch any other unexpected error during loading/parsing
+        err_msg = f"Unexpected error loading/parsing config file {found_path}: {e}"
+        log.exception(err_msg)  # Use log.exception (TRY400)
+        raise RuntimeError(err_msg) from e
 
     tool_data = data.get("tool", {})
     if not isinstance(tool_data, dict):

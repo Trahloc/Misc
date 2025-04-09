@@ -6,6 +6,7 @@ import importlib.metadata
 import logging  # Import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Import config loader first, it should always be importable relative to cli.py
 from .config_loader import load_config
@@ -17,13 +18,19 @@ try:
     from .file_finder import find_python_files
 except ImportError:
     # If run as script/module directly, adjust path
-    project_root = Path(__file__).parent.parent.parent
+    project_root = Path(__file__).resolve().parent.parent.parent
     # Only add to path if not already there to avoid duplicates
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
     # Re-import using the adjusted path if relative fails
-    from src.zeroth_law.analyzer.python.analyzer import analyze_file_compliance  # type: ignore[attr-defined]
-    from src.zeroth_law.file_finder import find_python_files
+    try:
+        # Re-import using the adjusted path
+        from src.zeroth_law.analyzer.python.analyzer import analyze_file_compliance
+        from src.zeroth_law.config_loader import load_config
+        from src.zeroth_law.file_finder import find_python_files
+    except ImportError as e:
+        print(f"Failed to import necessary modules even after path adjustment: {e}", file=sys.stderr)
+        sys.exit(3)  # Exit code indicating import failure
 
 # Setup basic logging config - will be adjusted by CLI args
 # Log to stderr by default
@@ -31,7 +38,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s", str
 log = logging.getLogger("zeroth_law")  # Get a logger instance
 
 
-def run_audit(start_dir: Path, config: dict) -> tuple[dict[Path, dict], bool]:
+def run_audit(start_dir: Path, config: dict[str, Any]) -> tuple[dict[Path, dict[str, list[str]]], bool]:
     """Run the audit and log results using the loaded configuration."""
     log.info("Starting audit in: %s", start_dir)
     try:
@@ -46,7 +53,7 @@ def run_audit(start_dir: Path, config: dict) -> tuple[dict[Path, dict], bool]:
     log.info("Found %d Python files to analyze.", len(python_files))
     log.info("Using configuration: %s", config)
 
-    all_results: dict[Path, dict] = {}
+    all_results: dict[Path, dict[str, list[str]]] = {}
     files_with_violations = 0
 
     for file_path in python_files:
@@ -56,10 +63,7 @@ def run_audit(start_dir: Path, config: dict) -> tuple[dict[Path, dict], bool]:
             violations = analyze_file_compliance(
                 file_path,
                 max_complexity=config.get("max_complexity", 10),
-                max_params=config.get("max_parameters", 5),
-                max_statements=config.get("max_statements", 50),
                 max_lines=config.get("max_lines", 100),
-                ignore_rules=config.get("ignore_rules", []),
             )
             if violations:
                 all_results[relative_path] = violations
@@ -90,7 +94,7 @@ def main() -> None:
     parser.add_argument(
         "directory",
         nargs="?",  # Optional positional argument
-        default=".",  # Default to current directory
+        default=Path.cwd(),  # Default to current directory
         help="Directory to audit (default: current directory)",
         type=Path,
     )
@@ -125,8 +129,14 @@ def main() -> None:
 
     try:
         config = load_config()
-    except (FileNotFoundError, ImportError, RuntimeError) as e:
-        log.exception("Error loading configuration: %s", e)
+    except FileNotFoundError as e:
+        log.error("Configuration error: %s", e)
+        sys.exit(2)
+    except ImportError as e:
+        log.error("Configuration error: %s", e)
+        sys.exit(2)
+    except Exception as e:
+        log.exception("Unexpected error loading configuration: %s", e)
         sys.exit(2)
 
     results, violations_found = run_audit(audit_dir, config)
