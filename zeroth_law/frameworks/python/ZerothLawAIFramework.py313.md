@@ -1,15 +1,15 @@
 # Zeroth Law: AI-Driven Python Code Quality Framework
 
 **Co-Author**: Trahloc colDhart
-**Version**: 2025-04-08
+**Version**: 2025-04-09
 
 ---
 
 ## 1. PURPOSE
-Design a minimal, AI-first framework for Python code quality targeting **Python 3.13+** and the **`micromamba`** environment manager. By mandating **Test-Driven Development (TDD)** alongside enforcing clarity, simplicity, modular design, opinionated standards, and comprehensive automated checks, this framework ensures every component is demonstrably correct, immediately understandable, maintainable, and verifiable, leveraging AI assistance for continuous refactoring and adaptation.
+Design a minimal, AI-first framework for Python code quality targeting **Python 3.13+** and **`poetry`** for environment and dependency management. By mandating **Test-Driven Development (TDD)** alongside enforcing clarity, simplicity, modular design, opinionated standards, and comprehensive automated checks, this framework ensures every component is demonstrably correct, immediately understandable, maintainable, and verifiable, leveraging AI assistance for continuous refactoring and adaptation.
 
 ## 2. APPLICATION
-All new or modified code **must** be developed following the Test-Driven Development cycle and pass all associated tests and guideline checks before merging into the main branch. Automated checks via `pre-commit` and CI apply each requirement based on configurations in `pyproject.toml`, blocking completion until tests pass and consistency is assured. This framework assumes AI actively assists in development (including test generation and refactoring) within the TDD loop, enabling rapid evolution and adherence to modern standards. Development utilizes `micromamba` environments derived from `pyproject.toml` dependency specifications.
+All new or modified code **must** be developed following the Test-Driven Development cycle and pass all associated tests and guideline checks before merging into the main branch. Automated checks via `pre-commit` and CI apply each requirement based on configurations in `pyproject.toml`, blocking completion until tests pass and consistency is assured. This framework assumes AI actively assists in development (including test generation and refactoring) within the TDD loop, enabling rapid evolution and adherence to modern standards. Development utilizes **`poetry`** environments defined by `pyproject.toml` dependency specifications.
 
 ## 3. GUIDING PRINCIPLES
 
@@ -17,7 +17,7 @@ All new or modified code **must** be developed following the Test-Driven Develop
 2.  **Single Responsibility & Clear API Boundaries**: Keep components focused on one reason to change, making them easier to test and reason about via TDD. Expose minimal necessary interfaces via `__init__.py` (managed by `autoinit` if desired). Isolation simplifies AI reasoning and independent refinement.
 3.  **First Principles Simplicity**: Solve problems directly with minimal complexity, driven by the need to pass the current test. Prefer clear Python 3.13+ features over intricate abstractions. Minimalism reduces error surface and boosts AI refactoring confidence within the TDD cycle.
 4.  **Follow Modern Project Standards**: Align with conventions from contemporary, reputable Python projects known for quality. Adopt proven patterns while remaining open to evolution. Use influential standards like `black` formatting as context, but configure `ruff format` to project-specific needs defined herein.
-5.  **Leverage Existing Libraries (No Reinvention)**: Utilize stable, well-maintained PyPI/Conda packages compatible with Python 3.13+. Treat vetted libraries as reliable blocks, focusing AI effort on unique project logic tested at integration boundaries.
+5.  **Leverage Existing Libraries (No Reinvention & No Monkey-Patching)**: Utilize stable, well-maintained PyPI packages compatible with Python 3.13+. Treat vetted libraries as reliable blocks, focusing AI effort on unique project logic tested at integration boundaries. **Strictly forbid** modifying the internal behavior of third-party libraries at runtime (monkey-patching). Interact with libraries only through their documented public APIs. Configure tools via their intended mechanisms (configuration files, command-line arguments), never by altering their code dynamically.
 6.  **Don't Repeat Yourself (DRY)**: During the Refactor step of TDD, consolidate logic identified via testing or analysis (`pylint R0801`). Eliminate duplication to reduce debt and ensure consistent updates.
 7.  **Self-Documenting Code & Explaining Rationale**: Use descriptive names (`what`). Employ docstrings/comments to explain the *why* (rationale, context) for non-obvious logic discovered during implementation or refactoring. Assume an AI reader understands Python 3.13+ syntax; provide the background needed for maintenance and AI-driven refactoring. Documentation follows implementation within the TDD cycle.
 8.  **Consistent Style & Idiomatic Usage**: Apply uniform coding style enforced by `ruff format` (project config) and `ruff check`, along with modern type hints and Python 3.13+ idioms. Style checks are part of the automated feedback loop.
@@ -111,9 +111,9 @@ All new or modified code **must** be developed following the Test-Driven Develop
 *   **Runtime Type Guards**: **Require** validation of external inputs via Pydantic/explicit checks, driven by tests.
 
 ### 4.13 Dependencies & Environment
-*   **Dependency Specification:** Define in `pyproject.toml` under `[tool.poetry.dependencies]` and `[tool.poetry.group.dev.dependencies]` for use with `poetry export` (via the `poetry-plugin-export` plugin) to generate requirement files.
-*   **Environment Management:** **Require** use of **`micromamba`** based on generated `environment.yml`.
-*   **Vetting**: Prefer standard libraries and reputable PyPI/Conda packages compatible with Python 3.13+. Check licenses.
+*   **Dependency Specification:** Define in `pyproject.toml` under `[tool.poetry.dependencies]` and development groups (e.g., `[tool.poetry.group.dev.dependencies]`).
+*   **Environment Management:** **Require** use of **`poetry`** for managing dependencies and virtual environments based on `pyproject.toml` and `poetry.lock`.
+*   **Vetting**: Prefer standard libraries and reputable PyPI packages compatible with Python 3.13+. Check licenses.
 *   **Justification**: Document reasons for significant third-party dependencies.
 *   **Minimize Environment Assumptions**: Strive for OS consistency. Document specific needs.
 
@@ -178,500 +178,132 @@ def perform_action(config: ConfigData, item_id: str) -> bool:
 ## 6. AUTOMATION
 
 ### 6.1 Tools
-Employ this mandatory toolset, configured via `pyproject.toml` and orchestrated by `pre-commit` and CI, supporting the TDD workflow with `micromamba` environments and Python 3.13+:
+Employ this mandatory toolset, configured via `pyproject.toml` and orchestrated by `pre-commit` and CI, supporting the TDD workflow with **`poetry`** environments and Python 3.13+:\n\n1.  **`poetry`**: Required for dependency management, environment creation, and running scripts within the managed environment.\n2.  **`pre-commit`**: Manages Git hooks for automated checks (lint, type, format, etc.).\n3.  **`ruff`**: Primary tool for linting, formatting, import sorting, doc checks.\n4.  **`mypy`**: Static type checker (`--strict` mode).\n5.  **`pylint` (Targeted Usage)**: Used exclusively for code duplication detection (`R0801`).\n6.  **`pytest`**: **Core testing framework** used continuously during the TDD Red-Green-Refactor cycle. Includes coverage via `pytest-cov`.\n7.  **`structlog`**: Required runtime library for structured JSON logging.\n8.  **`autoinit`** (Optional): Manages `__init__.py` files.
 
-1.  **`micromamba`**: Required environment manager.
-2.  **`poetry` & `poetry-plugin-export`**: Required for dependency management in `pyproject.toml` and exporting to `requirements.txt` format. (`poetry-plugin-export` should be installed in the environment used for generation, e.g., a bootstrap env or added to dev dependencies).
-3.  **`pre-commit`**: Manages Git hooks for automated checks (lint, type, format, etc.).
-4.  **`ruff`**: Primary tool for linting, formatting, import sorting, doc checks.
-5.  **`mypy`**: Static type checker (`--strict` mode).
-6.  **`pylint` (Targeted Usage)**: Used exclusively for code duplication detection (`R0801`).
-7.  **`pytest`**: **Core testing framework** used continuously during the TDD Red-Green-Refactor cycle. Includes coverage via `pytest-cov`.
-8.  **`structlog`**: Required runtime library for structured JSON logging.
-9.  **`autoinit`** (Optional): Manages `__init__.py` files.
+### 6.2 Environment & Dependency Workflow (Using Poetry)
 
-### 6.2 Environment & Dependency Workflow
+1.  **Define Dependencies:** Specify runtime dependencies in `pyproject.toml` under `[tool.poetry.dependencies]` and development dependencies under appropriate groups like `[tool.poetry.group.dev.dependencies]`.
+2.  **Install Environment & Dependencies:** Navigate to the project root (containing `pyproject.toml`) and run `poetry install --all-extras` (or specify groups like `--with dev`). This command:
+    *   Reads `pyproject.toml`.
+    *   Resolves dependencies using `poetry.lock` (creating it if it doesn't exist).
+    *   Creates a virtual environment (location configurable via `poetry config virtualenvs.path` or `poetry config virtualenvs.in-project true`).
+    *   Installs all specified dependencies into the virtual environment.
+3.  **Activate Environment:**
+    *   Use `poetry shell` to spawn a new shell session with the virtual environment activated.
+    *   Alternatively, if configured with `virtualenvs.in-project true`, activate directly: `source .venv/bin/activate` (adjust path if needed).
+4.  **Run Commands:** Execute tools and scripts within the managed environment using `poetry run <command>` (e.g., `poetry run pytest`, `poetry run mypy .`). This ensures the correct dependencies and Python interpreter are used without needing to manually activate the shell.
+5.  **Updating Dependencies:**
+    *   To update a specific package: `poetry update <package_name>`
+    *   To update all dependencies according to `pyproject.toml` constraints: `poetry update`
+    *   Commit the updated `poetry.lock` file after updates.
+6.  **CI:** The CI pipeline should install `poetry`, then use `poetry install` to set up the environment, and `poetry run` for executing checks, tests, and builds.
 
-1.  **Define Dependencies:** Specify runtime dependencies in `pyproject.toml` under `[tool.poetry.dependencies]` and development dependencies under `[tool.poetry.group.dev.dependencies]` (using Poetry's group syntax is recommended).
-2.  **Generate Requirement Files:** Run `poetry export` (requires the `poetry-plugin-export` plugin to be installed in the environment running the command, e.g., `localbin` or the activated project env if added to dev deps) to generate **two** requirement files:
-    *   `poetry export --without-hashes -o requirements.txt` (for main runtime dependencies)
-    *   `poetry export --without-hashes --only dev -o requirements-dev.txt` (for development-only dependencies)
-    These steps **must** be re-run whenever dependencies in `pyproject.toml` change. Automation via a script (like `scripts/generate_requirements.sh`) or `Makefile` target is highly recommended. These generated files (`requirements.txt`, `requirements-dev.txt`) should typically be added to `.gitignore`.
-3.  **Define `environment.yml` for Micromamba:** Create a minimal `environment.yml` that specifies the base Python version, includes `pip`, and instructs `pip` to install the main runtime dependencies from the generated `requirements.txt`. Example:
-    ```yaml
-    name: <env_name>
-    channels:
-      - conda-forge
-      - defaults
-    dependencies:
-      - python>=3.13,<4.0
-      - pip
-      - pip:
-          - -r requirements.txt
-    ```
-    This `environment.yml` file **should be committed** to version control.
-4.  **Create Environment:** Use `micromamba env create -f environment.yml -n <env_name>`. Note that this only installs the *main* dependencies specified in `requirements.txt`.
-5.  **Activate Environment:** Use `micromamba activate <env_name>` before running development tasks.
-6.  **Install Development Dependencies:** After activating the environment, install the development dependencies using pip: `pip install -r requirements-dev.txt`.
-7.  **CI:** The CI pipeline automates steps 2, 4, 5, and 6 within its workflow.
-
+### 6.3 Project Structure Example (Conceptual)
+```
 project_root/
 │
-├── .github/             # CI/CD workflows (e.g., GitHub Actions)
+├── .github/             # CI/CD workflows (e.g., GitHub Actions using Poetry)
 │   └── workflows/
 │       └── ci.yml
 │
-├── frameworks/          # Core framework definitions, organized by language
+├── frameworks/          # Core framework definitions
 │   └── python/
-│       └── ZerothLawAIFramework-*.md  # Specific Python framework versions
-│   # └── rust/ (Example for future language)
-│   #     └── ZerothLawAIFramework-*.md
+│       └── ZerothLawAIFramework-*.md
 │
-├── scripts/             # Helper scripts (e.g., env generation, release)
-│   └── generate_requirements.sh # Or similar if needed
+├── scripts/             # Helper scripts (run via `poetry run`)
+│   └── ...
 │
-├── src/                 # Source code for the zeroth_law *tool* itself
-│   └── zeroth_law/      # The Python package for the tool
+├── src/                 # Source code for the project/tool
+│   └── project_package/ # The main Python package
 │       ├── __init__.py
-│       └── ... (modules/subpackages for the tool)
+│       └── ...
 │
-├── templates/           # Project templates for bootstrapping new projects using ZL
-│   └── python/
-│       └── cookiecutter-zeroth-law-py/ # Example Python project template
-│           └── ...
-│   # └── rust/ (Example for future language template)
-│   #     └── ...
-│
-├── tests/               # Tests for the zeroth_law *tool* itself
+├── tests/               # Tests for the project/tool
 │   ├── __init__.py
-│   └── ... (test files mirroring src structure)
+│   └── ...
 │
 ├── .gitignore           # Standard Git ignore file
-├── .pre-commit-config.yaml # Pre-commit hook definitions
-├── CHANGELOG.md         # Optional but recommended: Log of changes
-├── CONTRIBUTING.md      # Optional but recommended: Contribution guidelines
-├── LICENSE                # Project license file
-├── Makefile             # Optional but useful: Define common tasks (e.g., make env, make test)
-├── README.md            # Main project README (explaining the tool and the framework)
-├── environment.yml      # Minimal file for micromamba env creation (uses requirements.txt)
-├── requirements.txt     # Generated main dependencies (usually .gitignored)
-├── requirements-dev.txt # Generated dev dependencies (usually .gitignored)
-└── pyproject.toml       # Central configuration & dependency spec (Poetry format for deps)
-
-### 6.4 `pyproject.toml` Example Configuration (Python 3.13+, Poetry Deps)
-
-```toml
-# filepath: /project_root/pyproject.toml
-
-[build-system]
-requires = ["setuptools>=61.0", "wheel"] # Standard build system deps
-build-backend = "setuptools.build_meta"
-
-# --- Project Metadata (PEP 621) ---
-# Include standard metadata primarily for packaging tools (e.g., building wheels/sdists).
-# Dependency and version information are duplicated under [tool.poetry] for compatibility
-# with the poetry2conda workflow required for micromamba.
-[project]
-name = "example_zeroth_tdd" # Keep consistent with tool.poetry.name
-# Version is managed under [tool.poetry] - DO NOT DUPLICATE here
-authors = [
-  { name = "Trahloc colDhart", email = "github@trahloc.com" }
-]
-description = "Python package via Zeroth Law (TDD, Python 3.13+, Micromamba)" # Keep consistent
-readme = "README.md"
-requires-python = ">=3.13" # Primary Python constraint
-license = { text = "MIT" } # Standard license expression
-classifiers = [
-  "Development Status :: 3 - Alpha", # Example status
-  "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.13",
-  # Add future Python versions as they are supported
-]
-keywords = ["zeroth-law", "ai-framework", "quality", "tdd", "python313"] # Example keywords
-
-# Define any command-line scripts provided by the package
-# [project.scripts]
-# my_cli = "package_name.cli:main"
-
-# --- Poetry Section (Primary Source for Dependencies & Version for poetry2conda) ---
-[tool.poetry]
-name = "example_zeroth_tdd" # Must match [project] name
-# Version uses Epoch/Date format (e.g., Unix timestamp)
-# Replace dynamically in release process or manually update.
-version = "1712601600" # Example timestamp: 2025-04-08 ~18:00 UTC
-description = "Python package via Zeroth Law (TDD, Python 3.13+, Micromamba)" # Matches [project]
-authors = ["Trahloc colDhart <github@trahloc.com>"] # Poetry author format
-license = "MIT" # Matches [project]
-readme = "README.md" # Matches [project]
-# Define where the package source code is located for Poetry build tools
-packages = [{include = "package_name", from = "src"}]
-# Explicitly state Python compatibility for Poetry
-[tool.poetry.dependencies]
-python = ">=3.13,<4.0" # Align with project.requires-python
-
-# --- Runtime Dependencies (Managed by Poetry) ---
-# Add essential runtime libraries here
-structlog = "^24.1.0"
-pydantic = "^2.6.0"
-# Example other dependencies:
-# click = "^8.1.0" # If building a CLI
-# requests = "^2.31.0" # If making HTTP requests
-
-# --- Development Dependencies (Managed by Poetry under Groups) ---
-[tool.poetry.group.dev.dependencies]
-# Testing
-pytest = "^7.4.0"
-pytest-cov = "^4.1.0" # For test coverage
-
-# Type Checking
-mypy = "^1.8.0" # Ensure version supports Python 3.13 robustly
-
-# Linting, Formatting, Doc Checks, Import Sorting
-ruff = "^0.2.2" # Use a specific recent version
-
-# Duplication Check (Targeted Use)
-pylint = "^3.1.0" # Ensure version supports Python 3.13 robustly
-
-# Environment Generation Tool - USE poetry-plugin-export instead
-# poetry2conda = "^1.0.0"
-poetry-plugin-export = "^1.8.0" # Check for the latest compatible version
-
-# Git Hooks Manager
-pre-commit = "^3.6.0"
-
-# Optional Tools
-autoinit = "^0.3.0" # If used for __init__.py management
-
-# Build/Publishing Tools (Optional)
-# build = "^1.0.0"
-# twine = "^5.0.0"
-
-# --- MyPy Configuration ---
-[tool.mypy]
-python_version = "3.13"
-warn_return_any = true
-warn_unused_configs = true
-ignore_missing_imports = true # Set to false for stricter checks if all stubs are present
-# Enable strict mode for comprehensive checks
-strict = true
-# Define cache directory *name*; actual location controlled by MYPY_CACHE_DIR env var
-# which should point inside $XDG_CACHE_HOME (e.g., $XDG_CACHE_HOME/mypy) per Principle #12
-cache_dir = "mypy_cache"
-
-# --- Pytest Configuration ---
-[tool.pytest.ini_options]
-minversion = "7.0"
-# -ra: show extra test summary info for failed/skipped/passed tests
-# -q: quiet mode (less verbose overall)
-# -vv: max verbosity for failures to aid debugging
-# --cov=src: measure coverage within the src directory
-# --cov-report=term-missing: show coverage summary and missing lines in terminal
-# --cov-fail-under=95: fail the run if coverage is below 95%
-addopts = "-ra -q -vv --cov=src --cov-report=term-missing --cov-fail-under=95"
-testpaths = [
-    "tests", # Directory where tests are located
-]
-# Pytest cache location relies on XDG_CACHE_HOME environment variable being set and respected
-# by pytest cacheprovider plugin per Principle #12. No explicit cache_dir setting here.
-
-# --- Coverage Configuration (for pytest-cov) ---
-[tool.coverage.run]
-branch = true     # Measure branch coverage
-source = ["src"]  # Measure coverage only for code within the src directory
-
-[tool.coverage.report]
-# fail_under = 95 # Already enforced by pytest addopts --cov-fail-under
-show_missing = true # Show line numbers of statements not covered
-
-# --- Ruff Configuration ---
-[tool.ruff]
-line-length = 140      # Project-specific formatting standard
-target-version = "py313" # Target Python 3.13 features/syntax
-
-# Define rule sets to enable. Explicitly select desired checks.
-# See Ruff documentation for available rule codes.
-select = [
-    "E", "W", # pycodestyle errors and warnings
-    "F",      # pyflakes (undefined names, unused imports/variables)
-    "I",      # isort (import sorting)
-    "UP",     # pyupgrade (modernize syntax)
-    "B",      # flake8-bugbear (potential logic errors/style issues)
-    "SIM",    # flake8-simplify (simplify code constructs)
-    "C4",     # flake8-comprehensions (use comprehensions effectively)
-    "BLE",    # flake8-blind-except (avoid broad exception handlers)
-    "A",      # flake8-builtins (avoid shadowing builtins)
-    "RUF",    # Ruff-specific rules
-    "D",      # pydocstyle (docstring presence, format, content)
-    "T20",    # flake8-print (detect leftover print statements)
-    "ISC",    # flake8-implicit-str-concat (detect implicit string concatenation)
-    "N",      # pep8-naming (naming conventions)
-]
-ignore = [
-    "D203", # Conflicts with some formatter styles (space before class docstring)
-    "D213", # Conflicts with some formatter styles (multi-line doc summary)
-    # Add any other specific rules to ignore project-wide if necessary, with justification.
-    # e.g., "N803" # Allow lowercase arg names if preferred style
-]
-exclude = [
-    ".git",
-    ".hg",
-    ".svn",
-    ".tox",
-    ".nox",
-    ".pants.d",
-    ".direnv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-    ".venv",
-    ".micromamba", # Exclude potential micromamba metadata if stored locally
-    "*/migrations/*", # Exclude database migrations
-    # Cache directories expected to be managed via XDG variables
-    # ".mypy_cache", # Controlled by MYPY_CACHE_DIR / tool.mypy.cache_dir name
-    # ".pytest_cache", # Controlled by XDG_CACHE_HOME ideally
-    # ".ruff_cache", # Controlled by XDG_CACHE_HOME
-]
-
-# Configure Ruff's formatter component (used if `ruff format` is run)
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "lf"
-
-# Configure Ruff's documentation style checking (pydocstyle integration)
-[tool.ruff.pydocstyle]
-convention = "google" # Choose preferred convention (google, numpy, pep257)
-
-# Configure Ruff's import sorting (isort integration)
-[tool.ruff.isort]
-force-single-line = true # Example: prefer single line imports where possible
-known-first-party = ["package_name"] # Help Ruff identify local project imports
-
-# Configure Ruff's McCabe complexity checker
-[tool.ruff.mccabe]
-max-complexity = 8 # Fail functions exceeding this complexity
-
-# --- Pylint Configuration (SIMILARITY ONLY) ---
-[tool.pylint.'MESSAGES CONTROL']
-# Disable ALL checks by default. Ruff handles standard linting.
-disable = "all"
-# Explicitly enable ONLY the similarity check message ID.
-enable = "R0801" # R0801: Similar lines in %s files
-
-[tool.pylint.similarities]
-# Fine-tune the similarity detection:
-min-similarity-lines = 5    # Minimum number of identical lines to trigger R0801. Adjust as needed.
-ignore-comments = true      # Ignore differences in comments
-ignore-docstrings = true    # Ignore differences in docstrings
-ignore-imports = true       # Ignore differences in import statements
-ignore-signatures = false   # Treat functions with different signatures as different code
-
-# --- Setuptools configuration (minimal, if needed for build) ---
-# Used if building packages with setuptools backend
-[tool.setuptools.packages.find]
-where = ["src"] # Tell setuptools where to find the source package
+├── .pre-commit-config.yaml # Pre-commit hook definitions (using `poetry run` where needed)
+├── pyproject.toml       # Defines project metadata, dependencies, tool configs (Poetry)
+├── poetry.lock          # Exact dependency versions (Managed by Poetry)
+└── README.md            # Project documentation (using Poetry setup instructions)
 ```
 
-### 6.5 Example `pre-commit` Configuration
+### 6.4 Pre-Commit Configuration
+*   Hooks requiring project dependencies (like `mypy`, `pylint`, custom scripts) should use `language: system` and invoke the tool via `entry: poetry run <command>`.
+*   Ensure `pre-commit install` is run after `poetry install`.
+
+### 6.5 Example CI Pipeline (GitHub Actions with Poetry)
 ```yaml
-# filepath: /project_root/.pre-commit-config.yaml
-minimum_pre_commit_version: '3.0.0'
-repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: check-yaml
-      - id: check-toml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-      # Optional: Hook to ensure requirements*.txt stay synced with pyproject.toml/poetry.lock
-      # Requires a script/Makefile target `make generate-reqs-check` or similar
-      # that generates & diffs, fails on diff.
-      # - id: run-make-generate-reqs-check # Custom hook name
-      #   name: Check requirements*.txt sync
-      #   entry: make generate-reqs-check
-      #   language: system
-      #   files: ^pyproject.toml$|^poetry.lock$ # Trigger on relevant changes
-      #   pass_filenames: false
-      #   stages: [commit] # Run on commit, not push
+name: Python CI
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.2.2 # Pin to match project version
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-      - id: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0 # Pin to match project version
-    hooks:
-      - id: mypy
-        files: ^src/
-        # Relies on MYPY_CACHE_DIR environment variable being set correctly
-        # to place cache according to XDG standard (Principle #12)
-        additional_dependencies: [] # Add type stubs if needed
-
-  # Pylint - Exclusively for Similarity Checks (R0801)
-  - repo: https://github.com/pycqa/pylint
-    rev: v3.1.0 # Pin to match project version
-    hooks:
-      - id: pylint
-        name: pylint (similarities only)
-        files: ^src/.*\.py$
-        # Configuration comes from pyproject.toml [tool.pylint.*] sections.
-        # Execution must happen within the activated micromamba environment
-        # where pylint and project dependencies are installed.
-        # Using `language: python` assumes pre-commit can find the active conda env python.
-        # If imports fail, switch to `language: system`.
-        language: python
-        # types: [python] # Already implied by language: python
-
-  # Autoinit (Optional)
-  # - repo: https://github.com/python-useful-helpers/autoinit
-  #   rev: v0.3.0
-  #   hooks:
-  #     - id: autoinit
-```
-
-### 6.6 Example CI Pipeline (GitHub Actions with Micromamba)
-```yaml
-# filepath: /project_root/.github/workflows/ci.yml
-
-name: CI Checks
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+on: [push, pull_request]
 
 jobs:
-  lint_test:
+  build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        # Ensure subsequent steps run in the conda environment shell
-        shell: bash -l {0}
+    strategy:
+      matrix:
+        python-version: ["3.13"] # Test against target Python version
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      # Setup Micromamba
-      - name: Setup Micromamba
-        uses: mamba-org/setup-micromamba@v1
-        with:
-          environment-name: zeroth-law-ci-env
-          # Use environment-file: environment.yml *after* it's generated
-          # We will create env from file in a later step
-          create-args: >-
-            python=${{ matrix.python-version }} # Specify Python version for base env
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      # Set XDG environment variables for subsequent steps
-      # Use workspace-relative paths for cache persistence via actions/cache
-      - name: Set XDG Environment Variables
-        run: |
-          echo "XDG_CACHE_HOME=${{ github.workspace }}/.cache" >> $GITHUB_ENV
-          echo "XDG_CONFIG_HOME=${{ github.workspace }}/.config" >> $GITHUB_ENV
-          echo "XDG_DATA_HOME=${{ github.workspace }}/.local/share" >> $GITHUB_ENV
-          # Set specific tool env vars pointing within XDG_CACHE_HOME
-          echo "MYPY_CACHE_DIR=${{ github.workspace }}/.cache/mypy" >> $GITHUB_ENV
-          echo "PIP_CACHE_DIR=${{ github.workspace }}/.cache/pip" >> $GITHUB_ENV
-        shell: bash # Use default shell for setting GITHUB_ENV
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true # Let Poetry manage the venv
+        virtualenvs-in-project: true # Optional: Keep venv in project dir
+        installer-parallel: true
 
-      # Cache Micromamba packages and pip downloads
-      - name: Cache Mamba Pkgs & Pip Cache
-        uses: actions/cache@v4 # Use v4
-        with:
-          path: |
-            ${{ env.MAMBA_ROOT_PREFIX }}/pkgs
-            ${{ github.workspace }}/.cache/pip
-            ${{ github.workspace }}/.cache/mypy # Cache mypy results too
-          key: ${{ runner.os }}-micromamba-${{ hashFiles('**/pyproject.toml', '**/poetry.lock') }} # Include poetry.lock in hash
-          restore-keys: |
-            ${{ runner.os }}-micromamba-
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-      # Install poetry and export plugin (needed to generate requirements files)
-      # Assumes poetry & plugin are NOT part of the final env's dev dependencies
-      # If they ARE in dev dependencies, install them AFTER creating the env.
-      - name: Install Poetry & Export Plugin (Bootstrap)
-        run: pip install poetry poetry-plugin-export
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root --all-extras # Install deps without project root
 
-      # Generate requirement files from pyproject.toml/poetry.lock
-      - name: Generate requirements.txt files
-        run: |
-          poetry export --without-hashes -o requirements.txt
-          poetry export --without-hashes --only dev -o requirements-dev.txt
-        shell: bash # Use default shell
+    - name: Install project
+      run: poetry install --no-interaction --all-extras # Install the project itself
 
-      # Create/Update Micromamba environment using the *minimal* environment.yml
-      # This installs Python, pip, and main dependencies via requirements.txt
-      - name: Create/Update Micromamba Environment
-        run: micromamba env update --file environment.yml --name zeroth-law-ci-env --prune
+    - name: Run linters and formatters (via pre-commit or poetry run)
+      run: poetry run pre-commit run --all-files --show-diff-on-failure
+      # Or run tools individually:
+      # run: |
+      #   poetry run ruff check .
+      #   poetry run ruff format --check .
+      #   poetry run mypy .
 
-      # --- Run Checks within the Activated Environment ---
-      # The 'shell: bash -l {0}' default ensures these run activated
+    - name: Run tests
+      run: poetry run pytest --cov=src --cov-report=xml # Or your specific test command
 
-      # Install Development Dependencies
-      - name: Install Dev Dependencies
-        run: pip install -r requirements-dev.txt
-
-      - name: Run Ruff Linter and Format Check
-        run: |
-          ruff check src/ tests/
-          ruff format --check src/ tests/
-
-      - name: Run Pylint (Similarities only)
-        run: pylint src/
-
-      - name: Run Mypy
-        run: mypy src/
-
-      - name: Run Tests with Pytest
-        run: pytest --cov=src --cov-report=term-missing --cov-fail-under=95
-
-      # Optional: Upload coverage report artifact
-      # - name: Upload coverage reports ...
+    # Optional: Upload coverage report
+    # - name: Upload coverage reports to Codecov
+    #   uses: codecov/codecov-action@v4
+    #   with:
+    #     token: ${{ secrets.CODECOV_TOKEN }} # Required for private repos
+    #     fail_ci_if_error: true
 ```
 
-### 6.7 AI Assistant Responsibilities
-> **AI Assistant Context Management:** AI assistants **must** proactively utilize file reading (`read_file`), history inspection (`git log`), and search tools (`grep_search`, `codebase_search`) to establish or re-establish context before proceeding with tasks, especially when resuming work or encountering ambiguity. Reliance solely on potentially incomplete or lost conversational history is prohibited. Adherence to this principle is part of Zeroth Law compliance for AI-driven development within this framework.
+## 7. FIXING PYTEST IMPORT ERRORS (with Poetry)
+
+Common causes for `ImportError` when running `pytest` using `poetry run pytest`:
+
+1.  **Project Not Installed:** Ensure `poetry install` has been run successfully. This installs the project itself in editable mode within the virtual environment.
+2.  **Incorrect `testpaths`:** Verify `[tool.pytest.ini_options].testpaths` in `pyproject.toml` points to your test directory (e.g., `tests`).
+3.  **Missing `__init__.py` Files:** Ensure necessary `__init__.py` files exist in your source directories (`src/your_package`) and test directories (`tests/`) to allow Python to recognize them as packages.
+4.  **Incorrect `PYTHONPATH` (Less Common with Poetry):** `poetry run` usually handles the path correctly. If issues persist, investigate potential `PYTHONPATH` conflicts, although this is unlikely if using `poetry run`.
 
 ---
 
-## 7. FIXING PYTEST IMPORT ERRORS (with Micromamba)
-
-Common causes for `ImportError` when running `pytest` in a `micromamba` environment:
-
-1.  **Environment Not Activated:** Ensure the correct `micromamba` environment (`micromamba activate <env_name>`) is active in your terminal session *before* running `pytest`.
-2.  **Missing `__init__.py`:** Ensure directories within `src/package_name` and `tests` intended as packages have an `__init__.py`.
-3.  **Running `pytest` Incorrectly:** Always run `pytest` from the project root (`project_root/`).
-4.  **Package Not Installed:** Although `micromamba` installs dependencies listed in `environment.yml` (which includes main deps via `requirements.txt`), development dependencies and the project code itself might not be installed or visible. Ensure:
-    *   The correct environment is activated (`micromamba activate <env_name>`).
-    *   Development dependencies were installed (`pip install -r requirements-dev.txt`).
-    *   The project is installed in editable mode (`pip install -e .`). This is often the crucial step for `pytest` to find your local source code.
-5.  **`PYTHONPATH` Issues:** Avoid manipulating `PYTHONPATH` directly; use editable installs.
-6.  **Stale Files:** Ensure `requirements.txt` and `requirements-dev.txt` were regenerated via `poetry export` after any `pyproject.toml` dependency changes, and the environment was updated (`micromamba env update ...`, followed by `pip install -r requirements-dev.txt` if dev deps changed).
-
----
-
-## 8. APPENDIX: RECOMMENDED ISSUE LABELS
-*(Optional section for project management consistency)*
-
-Using a standard set of labels in issue trackers (e.g., GitHub Issues) improves clarity and organization. Consider adopting labels like:
-
-*   **Type:** `type:bug`, `type:feature`, `type:docs`, `type:refactor`, `type:test`, `type:ci`, `type:chore`
-*   **Status:** `status:needs-triage`, `status:todo`, `status:in-progress`, `status:needs-review`, `status:blocked`, `status:done`
-*   **Priority:** `priority:critical`, `priority:high`, `priority:medium`, `priority:low`
-*   **Breaking Change:** `breaking-change` (Useful for Conventional Commits/Versioning context)
+## 8. FRAMEWORK EVOLUTION
+*This framework is a living document.*
