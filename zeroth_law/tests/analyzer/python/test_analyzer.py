@@ -1,19 +1,25 @@
+# FILE: tests/analyzer/python/test_analyzer.py
+"""Tests for the main Python file analyzer function."""
+
 """Tests for the compliance checker module."""
 
+import os
+import sys
 from pathlib import Path
 
 import pytest
 
-# Assuming the checker function/class will be in src.zeroth_law.analyzer.compliance_checker
-# Updated import for new structure
-from src.zeroth_law.analyzer.python.analyzer import (
-    analyze_complexity,
-    analyze_line_counts,
-    analyze_parameters,
-    analyze_statements,
+# Ensure the src directory is in the path for imports
+# ... sys.path manipulation ...
+# Remove non-existent import
+# from src.zeroth_law.analyzer.python.analyzer import (
+#     analyze_file_compliance, check_header_compliance, check_footer_compliance, check_test_file_existence
+# )
+# Import only what's needed and available
+from zeroth_law.analyzer.python.analyzer import (
+    analyze_file_compliance,
     check_footer_compliance,
     check_header_compliance,
-    check_test_file_existence,
 )
 
 
@@ -216,7 +222,7 @@ def test_too_many_executable_lines(tmp_path: Path) -> None:
 # TODO: Add executable line test for files with different comment/blank line densities.
 
 
-@pytest.mark.no_cover()
+@pytest.mark.no_cover
 def test_missing_test_file_fails(tmp_path: Path) -> None:
     """Verify detection of a missing test file for an existing source file."""
     # Arrange
@@ -288,3 +294,8 @@ def test_ignores_init_py(tmp_path: Path) -> None:
     # Assert
     # We expect no violations because the only source file is __init__.py, which should be ignored.
     assert not violations
+
+
+# TODO: Add tests for max_params and max_statements when implemented
+
+# <<< ZEROTH LAW FOOTER >>>
