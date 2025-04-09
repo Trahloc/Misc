@@ -2,18 +2,20 @@
 # PURPOSE: Test database schema management
 ## INTERFACES: None (test module)
 """
+
 import pytest
 import pytest_asyncio
 import aiosqlite
-from pathlib import Path
 
 from hugsearch.database.schema import init_db, migrate_schema, SCHEMA_VERSION
+
 
 @pytest_asyncio.fixture(scope="function")
 async def test_db(tmp_path):
     """Create empty test database"""
     db_path = tmp_path / "test_models.db"
     yield db_path
+
 
 @pytest.mark.asyncio
 async def test_schema_initialization(test_db):
@@ -34,11 +36,11 @@ async def test_schema_initialization(test_db):
         tables = {row[0] for row in await cursor.fetchall()}
 
         required_tables = {
-            'schema_version',
-            'models',
-            'model_tags',
-            'model_descriptions',
-            'followed_creators'
+            "schema_version",
+            "models",
+            "model_tags",
+            "model_descriptions",
+            "followed_creators",
         }
         assert required_tables.issubset(tables)
 
@@ -50,11 +52,12 @@ async def test_schema_initialization(test_db):
         indexes = {row[0] for row in await cursor.fetchall()}
 
         required_indexes = {
-            'idx_models_name',
-            'idx_models_name_lower',
-            'idx_model_tags'
+            "idx_models_name",
+            "idx_models_name_lower",
+            "idx_model_tags",
         }
         assert required_indexes.issubset(indexes)
+
 
 @pytest.mark.asyncio
 async def test_schema_migration(test_db):

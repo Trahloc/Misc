@@ -2,13 +2,14 @@
 # PURPOSE: Test search functionality
 ## INTERFACES: None (test module)
 """
+
 import pytest
 import pytest_asyncio
-from pathlib import Path
 
 from hugsearch.database import search_models
 from hugsearch.database.models import upsert_model
 from hugsearch.database.schema import init_db
+
 
 @pytest_asyncio.fixture
 async def test_db(tmp_path):
@@ -26,7 +27,7 @@ async def test_db(tmp_path):
             "tags": ["llm", "base-model"],
             "downloads": 1000,
             "likes": 500,
-            "lastModified": "2024-01-01"
+            "lastModified": "2024-01-01",
         },
         {
             "id": "model2",
@@ -36,7 +37,7 @@ async def test_db(tmp_path):
             "tags": ["llm", "efficient"],
             "downloads": 800,
             "likes": 400,
-            "lastModified": "2024-02-01"
+            "lastModified": "2024-02-01",
         },
         {
             "id": "model3",
@@ -46,14 +47,15 @@ async def test_db(tmp_path):
             "tags": ["llm", "code", "large"],
             "downloads": 1500,
             "likes": 600,
-            "lastModified": "2024-03-01"
-        }
+            "lastModified": "2024-03-01",
+        },
     ]
 
     for model in models:
         await upsert_model(db_path, model)
 
     return db_path
+
 
 @pytest.mark.asyncio
 async def test_basic_search(test_db):
@@ -63,6 +65,7 @@ async def test_basic_search(test_db):
     assert len(results) == 2
     assert any(r["name"] == "LLAMA 7B" for r in results)
     assert any(r["name"] == "CodeLlama-34b" for r in results)
+
 
 @pytest.mark.asyncio
 async def test_case_sensitive_search(test_db):
@@ -75,6 +78,7 @@ async def test_case_sensitive_search(test_db):
     results = await search_models(test_db, "LLAMA", case_sensitive=True)
     assert len(results) == 1
     assert results[0]["name"] == "LLAMA 7B"
+
 
 @pytest.mark.asyncio
 async def test_exact_match_search(test_db):
@@ -91,6 +95,7 @@ async def test_exact_match_search(test_db):
     assert len(results) == 1
     assert results[0]["name"] == "LLAMA 7B"
 
+
 @pytest.mark.asyncio
 async def test_tag_filter(test_db):
     """Test tag filtering"""
@@ -98,6 +103,7 @@ async def test_tag_filter(test_db):
     results = await search_models(test_db, "llama", filters={"tags": "code"})
     assert len(results) == 1
     assert results[0]["name"] == "CodeLlama-34b"
+
 
 @pytest.mark.asyncio
 async def test_boolean_operators(test_db):

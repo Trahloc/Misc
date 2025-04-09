@@ -14,11 +14,12 @@
 #   json
 #   tempfile
 """
+
 import json
 import tempfile
 import os
-import pytest
 from hugsearch.config import get_config, load_config, DEFAULT_CONFIG
+
 
 def test_config_exists():
     """
@@ -30,7 +31,9 @@ def test_config_exists():
     """
     # This import will raise an ImportError if the module doesn't exist
     from hugsearch import config
+
     assert config
+
 
 def test_default_config():
     """
@@ -47,8 +50,11 @@ def test_default_config():
     assert "ignore_patterns" in DEFAULT_CONFIG
     assert isinstance(DEFAULT_CONFIG["ignore_patterns"], list)
     # Check that some expected patterns are in the ignore list
-    assert any("__pycache__" in pattern for pattern in DEFAULT_CONFIG["ignore_patterns"])
+    assert any(
+        "__pycache__" in pattern for pattern in DEFAULT_CONFIG["ignore_patterns"]
+    )
     assert any(".git" in pattern for pattern in DEFAULT_CONFIG["ignore_patterns"])
+
 
 def test_get_config():
     """
@@ -61,15 +67,17 @@ def test_get_config():
     config = get_config()
     # Check it's a Config object
     from hugsearch.config import Config
+
     assert isinstance(config, Config)
-    
+
     # Check it has the expected values
     assert config.limits.max_line_length == 140
     assert config.limits.max_function_lines == 30
-    
+
     # Test dictionary access
     assert config["limits"]["max_line_length"] == 140
     assert config["limits"]["max_function_lines"] == 30
+
 
 def test_load_config():
     """
@@ -84,11 +92,11 @@ def test_load_config():
         # Write a partial config
         json.dump({"limits": {"max_line_length": 120}, "custom_setting": "test"}, temp)
         temp_path = temp.name
-    
+
     try:
         # Test loading the config
         config = load_config(temp_path)
-        
+
         # Check merged values
         assert config.limits.max_line_length == 120  # From custom config
         assert config.limits.max_function_lines == 30  # From default config
@@ -96,6 +104,7 @@ def test_load_config():
     finally:
         # Clean up
         os.unlink(temp_path)
+
 
 def test_load_config_file_not_found():
     """
@@ -110,6 +119,7 @@ def test_load_config_file_not_found():
     assert config.limits.max_line_length == 140
     assert config.limits.max_function_lines == 30
 
+
 def test_load_config_invalid_json():
     """
     PURPOSE: Test that load_config raises an exception for invalid JSON.
@@ -122,16 +132,17 @@ def test_load_config_invalid_json():
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp:
         temp.write("{invalid json")
         temp_path = temp.name
-    
+
     try:
         # Direct test of _load_from_file function to ensure it raises ValueError
         from hugsearch.config import _load_from_file
+
         try:
             _load_from_file(temp_path)
             assert False, "_load_from_file did not raise ValueError"
         except ValueError:
             print("_load_from_file correctly raised ValueError")
-        
+
         # Let's try calling load_config directly without pytest.raises
         try:
             config = load_config(temp_path)
@@ -146,6 +157,8 @@ def test_load_config_invalid_json():
     finally:
         # Clean up
         os.unlink(temp_path)
+
+
 """
 ## KNOWN ERRORS: None
 
@@ -157,4 +170,4 @@ def test_load_config_invalid_json():
 
 ## FUTURE TODOs:
  - Add tests for additional configuration scenarios if needed
-""" 
+"""

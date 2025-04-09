@@ -9,7 +9,7 @@
 #   pytest
 #   hugsearch.__main__
 """
-import pytest
+
 
 def test___main___exists():
     """
@@ -24,9 +24,12 @@ def test___main___exists():
     try:
         # This import will raise an ImportError if the module doesn't exist
         from hugsearch import __main__
+
         assert True
     except ImportError:
         assert False, "__main__ module does not exist"
+
+
 """
 ## KNOWN ERRORS: None
 
@@ -35,4 +38,4 @@ def test___main___exists():
 
 ## FUTURE TODOs:
  - Add more specific tests for the __main__ module
-""" 
+"""

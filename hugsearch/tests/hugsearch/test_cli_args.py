@@ -9,7 +9,7 @@
 #   pytest
 #   hugsearch.cli_args
 """
-import pytest
+
 
 def test_cli_args_exists():
     """
@@ -24,9 +24,12 @@ def test_cli_args_exists():
     try:
         # This import will raise an ImportError if the module doesn't exist
         from hugsearch import cli_args
+
         assert True
     except ImportError:
         assert False, "cli_args module does not exist"
+
+
 """
 ## KNOWN ERRORS: None
 
@@ -35,4 +38,4 @@ def test_cli_args_exists():
 
 ## FUTURE TODOs:
  - Add more specific tests for CLI arguments
-""" 
+"""

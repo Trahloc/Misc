@@ -8,10 +8,10 @@
  - pytest
  - hugsearch.scheduler
 """
-import pytest
 
 # Import the module to test
 from hugsearch.scheduler import *
+
 
 def test_scheduler_exists():
     """

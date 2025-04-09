@@ -10,7 +10,7 @@
 - apscheduler: Scheduling updates
 - huggingface_hub: HF API interactions
 """
-import asyncio
+
 from datetime import datetime
 from typing import List, Optional, Union
 from pathlib import Path
@@ -18,12 +18,13 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from huggingface_hub import HfApi
 from . import database
-from .config import get_config
+
 
 class UpdateScheduler:
     """
     PURPOSE: Handles scheduled and manual updates of model data
     """
+
     def __init__(self, db_path: Union[str, Path]):
         self.db_path = Path(db_path)
         self.scheduler = AsyncIOScheduler()
@@ -37,8 +38,8 @@ class UpdateScheduler:
         self.scheduler.add_job(
             self.check_for_updates,
             CronTrigger(hour=5, minute=0),
-            id='daily_update',
-            replace_existing=True
+            id="daily_update",
+            replace_existing=True,
         )
 
     async def start(self) -> None:
@@ -60,9 +61,7 @@ class UpdateScheduler:
         try:
             # Get list of followed creators
             async with database.get_connection(self.db_path) as db:
-                creators = await db.execute(
-                    "SELECT author FROM followed_creators"
-                )
+                creators = await db.execute("SELECT author FROM followed_creators")
                 creator_list = [row[0] for row in await creators.fetchall()]
 
             # Update each creator's models
@@ -75,8 +74,7 @@ class UpdateScheduler:
             now = datetime.now().isoformat()
             async with database.get_connection(self.db_path) as db:
                 await db.execute(
-                    "UPDATE followed_creators SET last_checked = ?",
-                    (now,)
+                    "UPDATE followed_creators SET last_checked = ?", (now,)
                 )
                 await db.commit()
 
@@ -87,7 +85,7 @@ class UpdateScheduler:
     async def refresh_models(
         self,
         specific_items: Optional[List[str]] = None,
-        item_type: str = 'model'  # 'model', 'user', or 'search'
+        item_type: str = "model",  # 'model', 'user', or 'search'
     ) -> None:
         """
         PURPOSE: Manually refresh specific models, users, or search results
@@ -98,22 +96,23 @@ class UpdateScheduler:
 
         RETURNS: None
         """
-        if item_type == 'model' and specific_items:
+        if item_type == "model" and specific_items:
             for model_id in specific_items:
                 model_info = self.hf_api.model_info(model_id)
                 await database.upsert_model(self.db_path, model_info)
 
-        elif item_type == 'user' and specific_items:
+        elif item_type == "user" and specific_items:
             for username in specific_items:
                 models = self.hf_api.list_models(author=username)
                 for model in models:
                     await database.upsert_model(self.db_path, model)
 
-        elif item_type == 'search' and specific_items:
+        elif item_type == "search" and specific_items:
             for query in specific_items:
                 models = self.hf_api.list_models(search=query)
                 for model in models:
                     await database.upsert_model(self.db_path, model)
+
 
 async def create_scheduler(db_path: Union[str, Path]) -> UpdateScheduler:
     """

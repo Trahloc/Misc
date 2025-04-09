@@ -10,7 +10,7 @@
 #   pytest
 #   pyproject.toml
 """
-import os
+
 import pytest
 import warnings
 import tomli
@@ -32,12 +32,13 @@ def _get_pyproject_data():
         warnings.warn(f"Error reading pyproject.toml: {str(e)}")
         return {}
 
+
 def test_author_info_customized():
     """
     PURPOSE: Verify that the author information has been customized from default values.
 
     CONTEXT: This test checks if author name and email are still set to template defaults.
-    
+
     PARAMS: None
 
     RETURNS: None
@@ -61,7 +62,10 @@ def test_author_info_customized():
                 "You should update the author name in pyproject.toml."
             )
 
-        if author_email == "your.email@example.com" or author_email == "developer@example.com":
+        if (
+            author_email == "your.email@example.com"
+            or author_email == "developer@example.com"
+        ):
             warnings.warn(
                 f"\nDEFAULT EMAIL DETECTED: Author email is still set to '{author_email}'.\n"
                 "This suggests the project was not properly customized when created.\n"

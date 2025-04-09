@@ -43,4 +43,4 @@ ignore_patterns = [
     "**/.coverage",
     "**/htmlcov/**",
     ".*\\.egg-info.*",
-] 
+]

@@ -7,50 +7,56 @@
 ## DEPENDENCIES:
 - aiosqlite: Async SQLite operations
 """
+
 from pathlib import Path
 from typing import List, Dict, Union
 
 import aiosqlite
 
+
 async def get_model_tags(db_path: Union[str, Path], model_id: str) -> List[str]:
     """Get all tags for a specific model"""
     async with aiosqlite.connect(db_path) as db:
         cursor = await db.execute(
-            "SELECT tag FROM model_tags WHERE model_id = ? ORDER BY tag",
-            (model_id,)
+            "SELECT tag FROM model_tags WHERE model_id = ? ORDER BY tag", (model_id,)
         )
         rows = await cursor.fetchall()
         return [row[0] for row in rows]
 
+
 async def search_by_tag(
-    db_path: Union[str, Path],
-    tag: str,
-    case_sensitive: bool = False
+    db_path: Union[str, Path], tag: str, case_sensitive: bool = False
 ) -> List[Dict]:
     """Find all models with a specific tag"""
     async with aiosqlite.connect(db_path) as db:
         db.row_factory = aiosqlite.Row
         if case_sensitive:
-            cursor = await db.execute("""
+            cursor = await db.execute(
+                """
                 SELECT m.* FROM models m
                 JOIN model_tags t ON m.id = t.model_id
                 WHERE t.tag = ?
                 ORDER BY m.name
-            """, (tag,))
+            """,
+                (tag,),
+            )
         else:
-            cursor = await db.execute("""
+            cursor = await db.execute(
+                """
                 SELECT m.* FROM models m
                 JOIN model_tags t ON m.id = t.model_id
                 WHERE t.tag_lower = ?
                 ORDER BY m.name
-            """, (tag.lower(),))
+            """,
+                (tag.lower(),),
+            )
 
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
 
+
 async def get_all_tags(
-    db_path: Union[str, Path],
-    include_counts: bool = False
+    db_path: Union[str, Path], include_counts: bool = False
 ) -> Union[List[str], List[Dict[str, Union[str, int]]]]:
     """Get all known tags, optionally with usage counts"""
     async with aiosqlite.connect(db_path) as db:

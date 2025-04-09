@@ -10,6 +10,7 @@
 #   pytest
 #   hugsearch.exceptions
 """
+
 import pytest
 from hugsearch.exceptions import (
     ZerothLawError,
@@ -17,8 +18,9 @@ from hugsearch.exceptions import (
     NotPythonFileError,
     NotADirectoryError,
     AnalysisError,
-    ConfigError
+    ConfigError,
 )
+
 
 def test_exceptions_exist():
     """
@@ -34,6 +36,7 @@ def test_exceptions_exist():
     assert NotADirectoryError
     assert AnalysisError
     assert ConfigError
+
 
 def test_exception_inheritance():
     """
@@ -53,6 +56,7 @@ def test_exception_inheritance():
     # ZerothLawError should inherit from Exception
     assert issubclass(ZerothLawError, Exception)
 
+
 def test_exception_raising():
     """
     PURPOSE: Test that exceptions can be raised and caught properly.
@@ -64,21 +68,23 @@ def test_exception_raising():
     # Test raising and catching each exception type
     with pytest.raises(ZerothLawError):
         raise ZerothLawError("Test error")
-    
+
     with pytest.raises(FileNotFoundError):
         raise FileNotFoundError("Test error")
-    
+
     with pytest.raises(NotPythonFileError):
         raise NotPythonFileError("Test error")
-    
+
     with pytest.raises(NotADirectoryError):
         raise NotADirectoryError("Test error")
-    
+
     with pytest.raises(AnalysisError):
         raise AnalysisError("Test error")
-    
+
     with pytest.raises(ConfigError):
         raise ConfigError("Test error")
+
+
 """
 ## KNOWN ERRORS: None
 
@@ -89,4 +95,4 @@ def test_exception_raising():
 
 ## FUTURE TODOs:
  - Add tests for exception message formatting if implemented
-""" 
+"""

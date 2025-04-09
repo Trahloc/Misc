@@ -12,12 +12,13 @@
 - aiosqlite
 - hugsearch.database
 """
+
 import pytest
 import pytest_asyncio
 import aiosqlite
 from pathlib import Path
-import json
 from hugsearch.database import init_db, upsert_model, search_models
+
 
 @pytest_asyncio.fixture
 async def test_db():
@@ -42,7 +43,7 @@ async def test_db():
                 "tags": ["llm", "base-model"],
                 "downloads": 1000,
                 "likes": 500,
-                "lastModified": "2024-01-01"
+                "lastModified": "2024-01-01",
             },
             {
                 "id": "model2",
@@ -52,7 +53,7 @@ async def test_db():
                 "tags": ["gpt", "medium"],
                 "downloads": 2000,
                 "likes": 800,
-                "lastModified": "2024-02-01"
+                "lastModified": "2024-02-01",
             },
             {
                 "id": "model3",
@@ -62,8 +63,8 @@ async def test_db():
                 "tags": ["llm", "code", "large"],
                 "downloads": 1500,
                 "likes": 600,
-                "lastModified": "2024-03-01"
-            }
+                "lastModified": "2024-03-01",
+            },
         ]
 
         for model in test_models:
@@ -79,7 +80,9 @@ async def test_db():
             except Exception:
                 # If we can't delete it now, mark it for deletion on interpreter exit
                 import atexit
+
                 atexit.register(lambda p=db_path: p.unlink(missing_ok=True))
+
 
 @pytest.mark.asyncio
 async def test_search_models(test_db):
@@ -99,6 +102,7 @@ async def test_search_models(test_db):
     results = await search_models(test_db, "gpt OR llama")
     assert len(results) == 3
 
+
 @pytest.mark.asyncio
 async def test_case_sensitive_search(test_db):
     """Test case sensitive search"""
@@ -110,6 +114,7 @@ async def test_case_sensitive_search(test_db):
     results = await search_models(test_db, "LLAMA", case_sensitive=True)
     assert len(results) == 1
     assert results[0]["name"] == "LLAMA 7B"
+
 
 @pytest.mark.asyncio
 async def test_exact_match_search(test_db):
@@ -125,6 +130,7 @@ async def test_exact_match_search(test_db):
     results = await search_models(test_db, "LLAMA", exact_match=True)
     assert len(results) == 1
 
+
 @pytest.mark.asyncio
 async def test_filter_search(test_db):
     """Test search with filters"""
@@ -138,7 +144,8 @@ async def test_filter_search(test_db):
     assert len(results) == 2
 
     # Test multiple filters
-    results = await search_models(test_db, "llm",
-                                filters={"author": "meta", "tags": "code"})
+    results = await search_models(
+        test_db, "llm", filters={"author": "meta", "tags": "code"}
+    )
     assert len(results) == 1
     assert results[0]["name"] == "CodeLlama-34b"

@@ -14,15 +14,16 @@
  - typing_extensions: Optional for Literal in Python < 3.8
  - os: For PathLike
 """
+
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Union, Any, Callable, TypeVar, Optional, Protocol, cast
+from typing import Dict, List, Union, Any, Callable, TypeVar, Protocol
 
 # Define type variables
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
+U = TypeVar("U")
 
 # Try to use Literal from typing (Python 3.8+) or typing_extensions
 try:
@@ -42,7 +43,7 @@ except ImportError:
 PathLike = Union[str, os.PathLike, Path]
 
 # JSON-related types
-JsonValue = Union[None, bool, int, float, str, List['JsonValue'], 'JsonDict']
+JsonValue = Union[None, bool, int, float, str, List["JsonValue"], "JsonDict"]
 JsonDict = Dict[str, JsonValue]
 
 # Callback function types
@@ -50,27 +51,35 @@ CallbackFunc = Callable[[Any], None]
 ResultCallback = Callable[[T], U]
 
 # Log level literals
-LogLevel = Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 # Date-related types
 DateLike = Union[datetime, str, int, float]
 
+
 class Closeable(Protocol):
     """Protocol for objects that can be closed."""
+
     def close(self) -> None: ...
+
 
 class Disposable(Protocol):
     """Protocol for objects that can be disposed."""
+
     def dispose(self) -> None: ...
+
 
 class HasName(Protocol):
     """Protocol for objects that have a name property."""
+
     @property
     def name(self) -> str: ...
+
 
 # Application-specific type definitions
 class ConfigDict(TypedDict, total=False):
     """Type definition for configuration dictionaries."""
+
     app_name: str
     version: str
     debug: bool

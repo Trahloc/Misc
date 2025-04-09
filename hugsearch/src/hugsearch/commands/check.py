@@ -10,24 +10,34 @@
  - sys: Python information
  - importlib.metadata: Package information (Python 3.8+)
 """
+
 import sys
 import platform
-from pathlib import Path
 import click
 
 # Use importlib.metadata for Python 3.8+ or pkg_resources as fallback
 if sys.version_info >= (3, 8):
     from importlib import metadata as importlib_metadata
+
     def get_installed_packages():
         """Get installed packages using importlib.metadata."""
-        return {dist.metadata["Name"].lower(): dist.version for dist in importlib_metadata.distributions()}
+        return {
+            dist.metadata["Name"].lower(): dist.version
+            for dist in importlib_metadata.distributions()
+        }
 else:
     import pkg_resources
+
     def get_installed_packages():
         """Get installed packages using pkg_resources."""
-        return {dist.project_name.lower(): dist.version for dist in pkg_resources.working_set}
+        return {
+            dist.project_name.lower(): dist.version
+            for dist in pkg_resources.working_set
+        }
+
 
 from hugsearch.utils import get_project_root
+
 
 @click.command(name="check")
 @click.option("--deps", is_flag=True, help="Check and list installed dependencies.")
@@ -40,11 +50,11 @@ def command(ctx: click.Context, deps: bool, env: bool, paths: bool):
 
     If no options are specified, all checks will be performed.
     """
-    logger = ctx.obj['logger']
+    logger = ctx.obj["logger"]
     # Get verbosity from parent context
     verbose = 0
     if ctx.parent:
-        verbose = ctx.parent.params.get('verbose', 0)
+        verbose = ctx.parent.params.get("verbose", 0)
 
     # If no specific checks requested, do all checks
     if not any([deps, env, paths]):
@@ -86,6 +96,7 @@ def command(ctx: click.Context, deps: bool, env: bool, paths: bool):
         logger.error(error_msg)
         ctx.exit(1)
 
+
 def check_environment(verbose: int = 0):
     """Check and display system and Python environment information."""
     if verbose > 1:
@@ -97,6 +108,7 @@ def check_environment(verbose: int = 0):
     click.echo(f"  • Platform: {platform.platform()}")
     click.echo(f"  • Machine: {platform.machine()}")
     click.echo(f"  • Processor: {platform.processor() or 'Unknown'}")
+
 
 def check_dependencies(verbose: int = 0):
     """Check installed dependencies and their versions."""
@@ -129,6 +141,7 @@ def check_dependencies(verbose: int = 0):
             if verbose > 1:
                 click.echo(f"[DEBUG] Missing dependency: {dep}")
 
+
 def check_paths(verbose: int = 0):
     """Check and display important application paths."""
     if verbose > 1:
@@ -153,7 +166,10 @@ def check_paths(verbose: int = 0):
         status = "✅" if exists else "⚠️ Not found"
         click.echo(f"  • {name}: {path} {status}")
         if verbose > 1:
-            click.echo(f"[DEBUG] {name} directory {'exists' if exists else 'not found'} at {path}")
+            click.echo(
+                f"[DEBUG] {name} directory {'exists' if exists else 'not found'} at {path}"
+            )
+
 
 """
 ## KNOWN ERRORS: None

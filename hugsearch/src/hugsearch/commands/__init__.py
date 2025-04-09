@@ -11,17 +11,18 @@
  - .check: System check command implementation
  - .info: Info command implementation
 """
+
 from . import version
 from . import check
 from . import info
 
-__all__ = ['version', 'check', 'info']
+__all__ = ["version", "check", "info"]
 """
 ## KNOWN ERRORS: None
 
 ## IMPROVEMENTS:
  - Explicit exports
- - Updated to include only essential commands 
+ - Updated to include only essential commands
  - Removed example-specific commands
 
 ## FUTURE TODOs:

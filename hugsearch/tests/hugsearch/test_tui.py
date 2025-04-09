@@ -8,10 +8,10 @@
  - pytest
  - hugsearch.tui
 """
-import pytest
 
 # Import the module to test
 from hugsearch.tui import *
+
 
 def test_tui_exists():
     """

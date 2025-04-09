@@ -10,9 +10,11 @@
  - sys
  - pathlib
 """
+
 import sys
 from pathlib import Path
 import pytest
+
 
 def pytest_configure(config):
     """
@@ -30,6 +32,7 @@ def pytest_configure(config):
     # Add the project root to the Python path if it's not already there
     if str(root_dir) not in sys.path:
         sys.path.insert(0, str(root_dir))
+
 
 @pytest.fixture(scope="function")
 async def test_db(tmp_path):
@@ -49,6 +52,7 @@ async def test_db(tmp_path):
     if db_path.exists():
         db_path.unlink()
 
+
 # Add any other shared fixtures here
 @pytest.fixture(scope="session")
 def base_fixture():
@@ -58,6 +62,7 @@ def base_fixture():
     RETURNS: None - placeholder for actual test resources
     """
     return None
+
 
 """
 ## KNOWN ERRORS: None

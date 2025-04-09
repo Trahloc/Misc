@@ -2,13 +2,14 @@
 # PURPOSE: Test model CRUD operations
 ## INTERFACES: None (test module)
 """
+
 import json
 import pytest
 import pytest_asyncio
-from pathlib import Path
 
 from hugsearch.database.models import upsert_model, get_model, delete_model
 from hugsearch.database.schema import init_db
+
 
 @pytest_asyncio.fixture
 async def test_db(tmp_path):
@@ -16,6 +17,7 @@ async def test_db(tmp_path):
     db_path = tmp_path / "test_models.db"
     await init_db(db_path)
     return db_path
+
 
 @pytest.mark.asyncio
 async def test_model_crud(test_db):
@@ -27,7 +29,7 @@ async def test_model_crud(test_db):
         "author": "test-author",
         "description": "A test model",
         "tags": ["test", "fixture"],
-        "lastModified": "2024-01-01"
+        "lastModified": "2024-01-01",
     }
     await upsert_model(test_db, model_data)
 
@@ -53,6 +55,7 @@ async def test_model_crud(test_db):
     deleted_model = await get_model(test_db, "test-model")
     assert deleted_model is None
 
+
 @pytest.mark.asyncio
 async def test_model_metadata(test_db):
     """Test handling of model metadata"""
@@ -65,7 +68,7 @@ async def test_model_metadata(test_db):
         "downloads": 1000,
         "likes": 500,
         "extra_field": "custom value",
-        "lastModified": "2024-01-01"
+        "lastModified": "2024-01-01",
     }
     await upsert_model(test_db, model_data)
 

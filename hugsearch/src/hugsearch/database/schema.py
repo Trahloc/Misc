@@ -6,11 +6,13 @@
 ## DEPENDENCIES:
 - aiosqlite: Async SQLite operations
 """
+
 import aiosqlite
 from pathlib import Path
 from typing import Union
 
 SCHEMA_VERSION = 2
+
 
 async def init_db(db_path: Union[str, Path]) -> None:
     """Initialize database schema"""
@@ -38,9 +40,15 @@ async def init_db(db_path: Union[str, Path]) -> None:
             )
         """)
         await db.execute("CREATE INDEX IF NOT EXISTS idx_models_name ON models(name)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_models_name_lower ON models(name_lower)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_models_author ON models(author)")
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_models_author_lower ON models(author_lower)")
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_models_name_lower ON models(name_lower)"
+        )
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_models_author ON models(author)"
+        )
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_models_author_lower ON models(author_lower)"
+        )
 
         # Tags table for clean tag management
         await db.execute("""
@@ -52,7 +60,9 @@ async def init_db(db_path: Union[str, Path]) -> None:
                 FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
             )
         """)
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_model_tags ON model_tags(tag_lower)")
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_model_tags ON model_tags(tag_lower)"
+        )
 
         # Description search using FTS5
         await db.execute("""
@@ -71,9 +81,12 @@ async def init_db(db_path: Union[str, Path]) -> None:
         """)
 
         # Set initial schema version
-        await db.execute("INSERT OR REPLACE INTO schema_version (version) VALUES (?)",
-                        (SCHEMA_VERSION,))
+        await db.execute(
+            "INSERT OR REPLACE INTO schema_version (version) VALUES (?)",
+            (SCHEMA_VERSION,),
+        )
         await db.commit()
+
 
 async def migrate_schema(db_path: Union[str, Path]) -> None:
     """Handle any necessary schema migrations"""
@@ -95,9 +108,15 @@ async def migrate_schema(db_path: Union[str, Path]) -> None:
                     last_checked TEXT NOT NULL
                 )
             """)
-            await db.execute("CREATE INDEX IF NOT EXISTS idx_models_name ON models(name)")
-            await db.execute("CREATE INDEX IF NOT EXISTS idx_models_name_lower ON models(name_lower)")
-            await db.execute("CREATE INDEX IF NOT EXISTS idx_models_author ON models(author)")
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_models_name ON models(name)"
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_models_name_lower ON models(name_lower)"
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_models_author ON models(author)"
+            )
 
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS model_tags (
@@ -108,7 +127,9 @@ async def migrate_schema(db_path: Union[str, Path]) -> None:
                     FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
                 )
             """)
-            await db.execute("CREATE INDEX IF NOT EXISTS idx_model_tags ON model_tags(tag_lower)")
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_model_tags ON model_tags(tag_lower)"
+            )
 
             await db.execute("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS model_descriptions USING fts5(
@@ -127,7 +148,9 @@ async def migrate_schema(db_path: Union[str, Path]) -> None:
         if current_version < 2:
             await db.execute("ALTER TABLE models ADD COLUMN author_lower TEXT")
             await db.execute("UPDATE models SET author_lower = lower(author)")
-            await db.execute("CREATE INDEX IF NOT EXISTS idx_models_author_lower ON models(author_lower)")
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_models_author_lower ON models(author_lower)"
+            )
 
         if current_version < SCHEMA_VERSION:
             await db.execute("UPDATE schema_version SET version = ?", (SCHEMA_VERSION,))

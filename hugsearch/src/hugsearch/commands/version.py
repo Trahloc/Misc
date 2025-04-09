@@ -10,6 +10,7 @@
  - importlib.metadata: Package version information (Python 3.8+)
  - hugsearch.config: Configuration management
 """
+
 import sys
 import platform
 from datetime import datetime
@@ -18,6 +19,7 @@ import click
 # Use importlib.metadata for Python 3.8+ or pkg_resources as fallback
 if sys.version_info >= (3, 8):
     from importlib import metadata as importlib_metadata
+
     def get_package_version(package_name):
         """Get package version using importlib.metadata."""
         try:
@@ -26,6 +28,7 @@ if sys.version_info >= (3, 8):
             return "unknown"
 else:
     import pkg_resources
+
     def get_package_version(package_name):
         """Get package version using pkg_resources."""
         try:
@@ -33,18 +36,20 @@ else:
         except pkg_resources.DistributionNotFound:
             return "unknown"
 
+
 from hugsearch.config import get_config
+
 
 @click.command(name="version")
 @click.option("--json", is_flag=True, help="Output version information in JSON format.")
 @click.pass_context
 def command(ctx: click.Context, json: bool):
     """Display version information about the application."""
-    logger = ctx.obj['logger']
+    logger = ctx.obj["logger"]
     # Get verbosity from parent context
     verbose = 0
     if ctx.parent:
-        verbose = ctx.parent.params.get('verbose', 0)
+        verbose = ctx.parent.params.get("verbose", 0)
 
     try:
         # Get basic version info from config
@@ -56,6 +61,7 @@ def command(ctx: click.Context, json: bool):
         # Basic version info
         if json:
             import json as json_lib
+
             output = {
                 "name": app_name,
                 "version": version,
@@ -126,6 +132,7 @@ def command(ctx: click.Context, json: bool):
         click.echo(f"[ERROR] {error_msg}", err=True)
         logger.error(error_msg)
         ctx.exit(1)
+
 
 """
 ## KNOWN ERRORS: None
