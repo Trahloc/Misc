@@ -1,1 +1,3 @@
-"""Init for templates/python."""
+"""Init for Python template files."""
+
+# <<< ZEROTH LAW FOOTER >>>

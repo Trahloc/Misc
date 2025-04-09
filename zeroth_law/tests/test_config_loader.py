@@ -1,9 +1,9 @@
-"""Tests for the configuration loading functionality."""
+"""Tests for the config_loader module."""
 
 import sys
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Optional, Set, Type, Union  # noqa: F401 - Keep Union needed by noqa C901
+from typing import Any, Dict, Optional, Set, Type, Union  # - Keep Union needed by noqa C901
 from unittest import mock
 
 import pytest
@@ -17,8 +17,8 @@ if sys.version_info >= (3, 11):
 else:
     tomllib = None  # Tests needing tomllib might need to be skipped or adapted
 
-# Define TomlDecodeError if using built-in tomllib
-TomlDecodeError = tomllib.TomlDecodeError if tomllib else None
+# Use the correct exception name
+TomlDecodeError = tomllib.TOMLDecodeError
 
 
 # Test Case 1: Config File Not Found (Automatic Search)
