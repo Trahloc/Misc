@@ -254,9 +254,9 @@ def main():
             )
 
         save_metadata_to_json(metadata, output_filename)
-    except (requests.exceptions.RequestException, ValueError) as e:
+    except (requests.exceptions.RequestException, ValueError):
         # Specific errors are already printed in the fetching function
-        print(f"\nFailed to retrieve or process metadata.", file=sys.stderr)
+        print("\nFailed to retrieve or process metadata.", file=sys.stderr)
         sys.exit(1)
     except Exception as e:  # Catch any other unexpected errors
         print(f"An unexpected error occurred: {e}", file=sys.stderr)
