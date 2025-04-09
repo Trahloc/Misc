@@ -19,29 +19,13 @@ from .file_finder import find_python_files
 
 # Ensure src is discoverable for imports when run directly
 # This might not be strictly necessary when installed, but helps during development
-try:
-    from .analyzer.python.analyzer import analyze_file_compliance  # type: ignore[attr-defined]
-    from .file_finder import find_python_files
-except ImportError:
-    # If run as script/module directly, adjust path
-    project_root = Path(__file__).resolve().parent.parent.parent
-    # Only add to path if not already there to avoid duplicates
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-    # Re-import using the adjusted path if relative fails
-    try:
-        # Re-import using the adjusted path
-        from src.zeroth_law.analyzer.python.analyzer import analyze_file_compliance
-        from src.zeroth_law.config_loader import load_config
-        from src.zeroth_law.file_finder import find_python_files
-    except ImportError as e:
-        print(f"Failed to import necessary modules even after path adjustment: {e}", file=sys.stderr)
-        sys.exit(3)  # Exit code indicating import failure
+# Moved import attempts lower to be within functions that need them or after logging setup
 
 # Setup basic logging config - will be adjusted by CLI args
 # Log to stderr by default
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s", stream=sys.stderr)
-log = logging.getLogger("zeroth_law")  # Get a logger instance
+# Get logger early, but structlog config happens in setup_logging
+log_std = logging.getLogger("zeroth_law")
 
 
 # --- Logging Setup Function ---
@@ -69,62 +53,42 @@ def setup_logging(log_level: int, use_color: bool) -> None:
     )
 
     # Configure standard logging handler to use structlog
-    # Get the root logger and set its level
-    std_logging_logger = logging.getLogger()
+    std_logging_logger = logging.getLogger()  # Get root logger
     std_logging_logger.setLevel(log_level)
 
     # Remove existing handlers if any (e.g., from previous basicConfig)
-    # This prevents duplicate output
     for handler in std_logging_logger.handlers[:]:
         std_logging_logger.removeHandler(handler)
 
-    # Create a standard handler and add it
     handler = logging.StreamHandler(sys.stderr)
-    # No formatter needed on the handler itself, structlog processors do the work
     std_logging_logger.addHandler(handler)
 
 
-# Get a logger instance using structlog
+# Get a structlog logger instance - this will now use the configured setup
 log: BoundLogger = structlog.get_logger()
 
-# --- Imports from project --- #
 
-# Attempt imports, handle potential issues if run directly vs installed
-# Define expected types first
-AnalyzeFunctionType = Any
-analyze_file_compliance: AnalyzeFunctionType
-
-try:
-    # Assuming when installed, these relative imports work
-    # Try importing without type ignore first - use specific type if possible
-    # Assuming analyze_file_compliance returns Dict[str, List[str]]
-    from .analyzer.python.analyzer import analyze_file_compliance as analyze_func
-    from .config_loader import load_config
-
-    AnalyzeFunctionType = type(analyze_func)
-    analyze_file_compliance = analyze_func
-    from .file_finder import find_python_files
-except ImportError:
-    # If run as script/module directly, adjust path
-    project_root = Path(__file__).resolve().parent.parent.parent
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-    try:
-        # Re-import using the adjusted path
-        from src.zeroth_law.analyzer.python.analyzer import analyze_file_compliance as analyze_func_alt
-        from src.zeroth_law.config_loader import load_config
-
-        AnalyzeFunctionType = type(analyze_func_alt)
-        analyze_file_compliance = analyze_func_alt
-        from src.zeroth_law.file_finder import find_python_files
-    except ImportError as e:
-        print(f"Failed to import necessary modules even after path adjustment: {e}", file=sys.stderr)
-        sys.exit(3)  # Exit code indicating import failure
+# --- Audit Logic (Moved from main cli group) ---
 
 
-# Modified run_audit to handle list of paths and recursive flag
 def run_audit(paths_to_check: list[Path], recursive: bool, config: dict[str, Any]) -> tuple[dict[Path, dict[str, list[str]]], bool]:
     """Run the audit on specified paths and log results using the loaded configuration."""
+    # Re-import necessary components here to ensure path adjustments work
+    # This is slightly less ideal but necessary given the direct run vs install challenges
+    try:
+        from .analyzer.python.analyzer import analyze_file_compliance
+        from .file_finder import find_python_files
+    except ImportError:
+        project_root = Path(__file__).resolve().parent.parent.parent
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
+        try:
+            from src.zeroth_law.analyzer.python.analyzer import analyze_file_compliance
+            from src.zeroth_law.file_finder import find_python_files
+        except ImportError as e:
+            log.critical("Failed to import analyzer/finder in run_audit", error=e)
+            raise  # Re-raise to signal critical failure
+
     log.info("Starting audit on paths: %s (Recursive: %s)", [p.name for p in paths_to_check], recursive)
     log.info("Using configuration: %s", config)
 
@@ -135,71 +99,75 @@ def run_audit(paths_to_check: list[Path], recursive: bool, config: dict[str, Any
     for path_item in paths_to_check:
         if path_item.is_file():
             if path_item.name.endswith(".py"):
-                # Check if file matches exclude patterns before adding
-                # Note: find_python_files handles this implicitly, but we need it here for direct files
                 is_excluded = False
                 for pattern in exclude_files_cfg:
                     if path_item.match(pattern):
-                        log.debug(f"Excluding file due to pattern '{pattern}': {path_item}")
+                        log.debug("Excluding file due to pattern '%s': %s", pattern, path_item)
                         is_excluded = True
                         break
                 if not is_excluded:
                     files_to_analyze.add(path_item)
             else:
-                log.warning(f"Skipping non-Python file: {path_item}")
+                log.warning("Skipping non-Python file: %s", path_item)
         elif path_item.is_dir():
+            # Apply exclude_dirs check *before* recursion/globbing
+            is_dir_excluded = False
+            for excluded_dir_name in exclude_dirs_cfg:
+                # Check if the current dir name matches or is a subdirectory of an excluded dir
+                # Using parts allows for checking parent directory names as well
+                if excluded_dir_name in path_item.parts:
+                    log.debug("Skipping excluded directory: %s", path_item)
+                    is_dir_excluded = True
+                    break
+                # Also check if the dir name itself matches (e.g. exclude '.venv')
+                if path_item.name == excluded_dir_name:
+                    log.debug("Skipping excluded directory: %s", path_item)
+                    is_dir_excluded = True
+                    break
+            if is_dir_excluded:
+                continue  # Skip this directory entirely
+
             if recursive:
-                log.debug(f"Recursively searching directory: {path_item}")
+                log.debug("Recursively searching directory: %s", path_item)
                 try:
+                    # Pass excludes to find_python_files
                     found_files = find_python_files(path_item, exclude_dirs=exclude_dirs_cfg, exclude_files=exclude_files_cfg)
                     files_to_analyze.update(found_files)
                 except FileNotFoundError:
-                    log.warning(f"Directory not found during recursive search: {path_item}")
+                    log.warning("Directory not found during recursive search: %s", path_item)
             else:
-                log.debug(f"Searching top-level of directory: {path_item}")
-                # Non-recursive: just glob *.py in the immediate directory
+                log.debug("Searching top-level of directory: %s", path_item)
                 for py_file in path_item.glob("*.py"):
-                    # Check excludes for top-level files too
                     is_excluded = False
+                    # Check file excludes
                     for pattern in exclude_files_cfg:
                         if py_file.match(pattern):
-                            log.debug(f"Excluding file due to pattern '{pattern}': {py_file}")
+                            log.debug("Excluding file due to pattern '%s': %s", pattern, py_file)
                             is_excluded = True
                             break
                     if not is_excluded:
-                        # Check dir excludes for top-level scan? find_python_files did this.
-                        # Simple check: is the file itself in an excluded dir name?
-                        in_excluded_dir = False
-                        for excluded_dir_name in exclude_dirs_cfg:
-                            if excluded_dir_name in py_file.parts:
-                                log.debug(f"Excluding file in excluded dir '{excluded_dir_name}': {py_file}")
-                                in_excluded_dir = True
-                                break
-                        if not in_excluded_dir:
-                            files_to_analyze.add(py_file)
+                        files_to_analyze.add(py_file)
         else:
-            log.warning(f"Path is not a file or directory: {path_item}")
+            log.warning("Path is not a file or directory: %s", path_item)
 
     if not files_to_analyze:
         log.warning("No Python files found to analyze in the specified paths.")
-        return {}, False  # No violations found as no files were analyzed
+        return {}, False
 
     log.info("Found %d Python files to analyze.", len(files_to_analyze))
 
     all_results: dict[Path, dict[str, list[str]]] = {}
     files_with_violations = 0
-    cwd = Path.cwd()  # Use for making result paths relative
+    cwd = Path.cwd()
 
-    for file_path in sorted(list(files_to_analyze)):  # Sort for consistent output
-        # Use relative path from CWD for reporting consistency
+    for file_path in sorted(list(files_to_analyze)):
         try:
             relative_path = file_path.relative_to(cwd)
         except ValueError:
-            relative_path = file_path  # Keep absolute if not relative to CWD
+            relative_path = file_path
 
         log.debug("Analyzing: %s", relative_path)
         try:
-            # Ensure analyze_file_compliance is callable
             if not callable(analyze_file_compliance):
                 raise TypeError("analyze_file_compliance function not loaded correctly.")
 
@@ -216,8 +184,8 @@ def run_audit(paths_to_check: list[Path], recursive: bool, config: dict[str, Any
                 files_with_violations += 1
                 log.warning(" -> Violations found in %s: %s", relative_path, list(violations.keys()))
             else:
-                all_results[relative_path] = {}  # Explicitly mark compliant files
-        except Exception as e:  # Keep broad exception for analysis errors
+                all_results[relative_path] = {}
+        except Exception as e:
             log.exception(" -> ERROR analyzing file %s: %s", relative_path, e)
             all_results[relative_path] = {"analysis_error": [str(e)]}
             files_with_violations += 1
@@ -233,104 +201,128 @@ def run_audit(paths_to_check: list[Path], recursive: bool, config: dict[str, Any
     return all_results, violations_found
 
 
+# --- Git Hook Script Generation --- #
+def generate_custom_hook_script() -> str:
+    """Generates the content for the custom multi-project pre-commit hook."""
+    # Re-import necessary components here
+    try:
+        from .git_utils import generate_custom_hook_script as generate_hook
+    except ImportError:
+        project_root = Path(__file__).resolve().parent.parent.parent
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
+        try:
+            from src.zeroth_law.git_utils import generate_custom_hook_script as generate_hook
+        except ImportError as e:
+            log.critical("Failed to import git_utils in generate_custom_hook_script", error=e)
+            raise
+    return generate_hook()
+
+
 # --- Click CLI Definition ---
-# Define version here for the option
-_VERSION = importlib.metadata.version("zeroth_law")
+_VERSION = "unknown"
+try:
+    _VERSION = importlib.metadata.version("zeroth_law")
+except importlib.metadata.PackageNotFoundError:
+    log.warning("Could not determine package version using importlib.metadata.")
 
 
 # Shared callback for verbosity options
 def _verbosity_callback(ctx: click.Context, param: click.Parameter, value: bool | None) -> None:
     if not value or ctx.resilient_parsing:
         return
-    # Determine log level based on which flag was passed (or default)
+    # Store the desired level based on flags
     if ctx.params.get("quiet"):
-        log_level = logging.WARNING
+        ctx.meta["log_level_request"] = logging.WARNING
     elif ctx.params.get("debug"):
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO  # Default
-    ctx.meta["log_level"] = log_level
+        ctx.meta["log_level_request"] = logging.DEBUG
+    else:  # Default or -v
+        ctx.meta["log_level_request"] = logging.INFO
 
 
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]))  # Changed: Renamed to cli_group
 @click.version_option(_VERSION, "-V", "--version", package_name="zeroth_law")
 @click.option(
     "-q",
     "--quiet",
     is_flag=True,
     help="Suppress informational messages, show only warnings and errors.",
-    expose_value=False,  # Let callback handle it
+    expose_value=False,
     callback=_verbosity_callback,
 )
 @click.option(
     "-v",
     "--verbose",
     is_flag=True,
-    help="Show informational messages (mutually exclusive with -q, -vv).",
-    expose_value=False,  # Let callback handle it
+    help="Show informational messages (default).",
+    expose_value=False,
     callback=_verbosity_callback,
-    # Note: Click doesn't have built-in mutually exclusive groups like argparse.
-    # We rely on the callback logic; passing multiple is not an error but last one wins effectively.
 )
 @click.option(
     "-vv",
     "--debug",
     is_flag=True,
-    help="Show detailed debug messages (mutually exclusive with -q, -v).",
-    expose_value=False,  # Let callback handle it
+    help="Show detailed debug messages.",
+    expose_value=False,
     callback=_verbosity_callback,
 )
-@click.option("-r", "--recursive", is_flag=True, help="Recursively search directories for Python files.")
 @click.option("-c", "--color", "--colour", is_flag=True, help="Enable colored logging output.")
+@click.pass_context
+def cli_group(ctx: click.Context, color: bool) -> None:
+    """Zeroth Law Compliance Auditor.
+
+    Run without a command to perform an audit on specified paths (or CWD).
+    """
+    # Setup logging early based on flags passed to the group
+    log_level = ctx.meta.get("log_level_request", logging.INFO)
+    setup_logging(log_level, color)
+    # Store final log level and color for commands to use if needed
+    ctx.meta["log_level"] = log_level
+    ctx.meta["color"] = color
+    log.debug("CLI group initialized", log_level=log_level, color=color)
+
+
+# New default command for auditing
+@cli_group.command("audit")
 @click.argument(
     "paths",
     nargs=-1,  # 0 or more arguments
     type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, resolve_path=True),
 )
-@click.pass_context  # Pass context object (ctx)
-def cli(ctx: click.Context, paths: tuple[Path, ...], recursive: bool, color: bool) -> None:
-    """Zeroth Law Compliance Auditor."""
-    # Setup logging using collected level and color flag
-    log_level = ctx.meta.get("log_level", logging.INFO)  # Get level from callback or default
-    setup_logging(log_level, color)
-
+@click.option("-r", "--recursive", is_flag=True, help="Recursively search directories for Python files.")
+@click.pass_context
+def audit_command(ctx: click.Context, paths: tuple[Path, ...], recursive: bool) -> None:
+    """Perform compliance audit on specified PATHS (default: CWD)."""
+    log_level = ctx.meta["log_level"]
     # Handle default path if none provided
     paths_list = list(paths) if paths else [Path.cwd()]
-    # Paths are already resolved by click.Path(exists=True)
+    log.debug("Audit command called", paths=paths_list, recursive=recursive)
 
     try:
         config = load_config()
     except FileNotFoundError as e:
         log.error("Configuration error: %s", e, exc_info=True if log_level <= logging.DEBUG else False)
         ctx.exit(2)
-    except ImportError as e:  # For missing TOML lib
+    except ImportError as e:
         log.error("Configuration error: %s", e)
         ctx.exit(2)
     except Exception as e:
         log.exception("Unexpected error loading configuration: %s", e)
         ctx.exit(2)
 
-    # Pass paths and recursive flag to run_audit
-    # Use paths_list here
     results, violations_found = run_audit(paths_to_check=paths_list, recursive=recursive, config=config)
-
-    # Debug: Log the full results dictionary
-    log.debug("Full results from run_audit: %s", results)
 
     if violations_found:
         log.warning("\nDetailed Violations:")
-        # Sort results for consistent output
         for file, violations in sorted(results.items()):
             if violations:
                 log.warning("\nFile: %s", file)
-                for category, issues in sorted(violations.items()):  # Sort categories
+                for category, issues in sorted(violations.items()):
                     log.warning("  %s:", category.capitalize())
-                    for issue in issues:  # Keep original order of issues within category
-                        # Issue might be a tuple or string, handle gracefully
+                    for issue in issues:
                         issue_str = str(issue)
-                        # Simple newline handling for logging
                         if "\n" in issue_str:
-                            log.warning("    - %s [...]", issue_str.split("\n")[0])  # Log only first line
+                            log.warning("    - %s [...]", issue_str.split("\n")[0])
                         else:
                             log.warning("    - %s", issue_str)
         ctx.exit(1)
@@ -339,7 +331,8 @@ def cli(ctx: click.Context, paths: tuple[Path, ...], recursive: bool, color: boo
         ctx.exit(0)
 
 
-@cli.command("install-git-hook")
+# Attach other commands to the group
+@cli_group.command("install-git-hook")
 @click.option(
     "--git-root",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True),
@@ -349,16 +342,14 @@ def cli(ctx: click.Context, paths: tuple[Path, ...], recursive: bool, color: boo
 )
 @click.pass_context
 def install_git_hook(ctx, git_root: str):
-    """Install the custom multi-project pre-commit hook script.
-
-    Generates and installs a script to .git/hooks/pre-commit that dispatches
-    to project-specific .pre-commit-config.yaml files.
-    Warns if a root config exists, suggesting this is for multi-project repos.
-    """
+    """Install the custom multi-project pre-commit hook script."""
+    # Setup logging using level from context
+    log_level = ctx.meta.get("log_level", logging.INFO)
+    color = ctx.meta.get("color", False)
+    setup_logging(log_level, color)  # Re-setup in case command is run standalone
     log.debug("Install git hook command called", git_root=git_root)
     git_root_path = Path(git_root).resolve()
 
-    # 1. Verify it's a git repo by checking for .git dir
     dot_git_path = git_root_path / ".git"
     if not dot_git_path.is_dir():
         log.error("Target directory is not a valid Git repository root.", path=str(git_root_path))
@@ -368,19 +359,17 @@ def install_git_hook(ctx, git_root: str):
     hooks_dir = dot_git_path / "hooks"
     hook_file_path = hooks_dir / "pre-commit"
 
-    # 2. Generate script content
     try:
         script_content = generate_custom_hook_script()
         if not script_content.startswith("#!/usr/bin/env bash"):
-            raise ValueError("Generated script content seems invalid.")  # Basic sanity check
+            raise ValueError("Generated script content seems invalid.")
     except Exception as e:
         log.exception("Failed to generate custom hook script content.")
         click.echo(f"Error: Failed to generate hook script: {e}", err=True)
         ctx.exit(1)
 
-    # 3. Write script to hook file
     try:
-        hooks_dir.mkdir(exist_ok=True)  # Ensure hooks directory exists
+        hooks_dir.mkdir(exist_ok=True)
         with open(hook_file_path, "w", encoding="utf-8") as f:
             f.write(script_content)
         log.info("Custom hook script written successfully.", path=str(hook_file_path))
@@ -389,21 +378,17 @@ def install_git_hook(ctx, git_root: str):
         click.echo(f"Error: Could not write hook file to '{hook_file_path}': {e}", err=True)
         ctx.exit(1)
 
-    # 4. Make script executable
     try:
-        # Set executable permissions for user, group, others (ugo+x)
         current_permissions = os.stat(hook_file_path).st_mode
         os.chmod(hook_file_path, current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         log.info("Set execute permissions on hook script.", path=str(hook_file_path))
     except OSError as e:
         log.exception("Failed to set execute permission on hook script.", path=str(hook_file_path))
         click.echo(f"Error: Could not set execute permission on '{hook_file_path}': {e}", err=True)
-        # Don't exit, maybe user can fix manually, but warn
         click.echo("Warning: Please manually ensure the hook script is executable (`chmod +x ...`).", err=True)
 
     click.echo(f"Successfully installed Zeroth Law custom pre-commit hook to: {hook_file_path}")
 
-    # 5. Check for root config and issue warning
     root_config_path = git_root_path / ".pre-commit-config.yaml"
     if root_config_path.is_file():
         log.warning("Root pre-commit config found during custom hook installation.")
@@ -417,7 +402,7 @@ def install_git_hook(ctx, git_root: str):
         click.echo("-" * 20, err=True)
 
 
-@cli.command("restore-git-hooks")
+@cli_group.command("restore-git-hooks")
 @click.option(
     "--git-root",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True),
@@ -427,15 +412,13 @@ def install_git_hook(ctx, git_root: str):
 )
 @click.pass_context
 def restore_git_hooks(ctx, git_root: str):
-    """Restore the default pre-commit hook script.
-
-    Runs `pre-commit install` to overwrite any custom hook script.
-    Use this if the repository is not a multi-project monorepo.
-    """
+    """Restore the default pre-commit hook script."""
+    log_level = ctx.meta.get("log_level", logging.INFO)
+    color = ctx.meta.get("color", False)
+    setup_logging(log_level, color)
     log.debug("Restore git hooks command called", git_root=git_root)
     git_root_path = Path(git_root).resolve()
 
-    # Verify it's a git repo first
     dot_git_path = git_root_path / ".git"
     if not dot_git_path.is_dir():
         log.error("Target directory is not a valid Git repository root.", path=str(git_root_path))
@@ -455,7 +438,7 @@ def restore_git_hooks(ctx, git_root: str):
         log.info("pre-commit install completed.", output=result.stdout.strip())
         click.echo("Successfully restored default pre-commit hooks.")
         if result.stdout.strip():
-            click.echo(result.stdout.strip())  # Show pre-commit output
+            click.echo(result.stdout.strip())
 
     except FileNotFoundError:
         log.error("'pre-commit' command not found. Is pre-commit installed and in PATH?")
@@ -471,10 +454,12 @@ def restore_git_hooks(ctx, git_root: str):
         ctx.exit(1)
 
 
-# Remove old argparse main function
-# def main() -> None: ...
+# Make the audit command the default if no other command is given
+# This requires a bit more setup usually, but let's keep it explicit for now
+# with the 'audit' command name.
+
 
 if __name__ == "__main__":
-    cli()
+    cli_group()  # Changed: Call the renamed group function
 
 # <<< ZEROTH LAW FOOTER >>>
