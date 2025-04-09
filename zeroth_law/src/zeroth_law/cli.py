@@ -13,12 +13,9 @@ import click  # Import Click
 import structlog
 from structlog.stdlib import BoundLogger
 
-from .analyzer import analyze_file_compliance
-
 # Import config loader first, it should always be importable relative to cli.py
-from .config_loader import DEFAULT_CONFIG, ConfigError, load_config
+from .config_loader import DEFAULT_CONFIG, load_config
 from .file_finder import find_python_files
-from .reporter import report_violations
 
 # Ensure src is discoverable for imports when run directly
 # This might not be strictly necessary when installed, but helps during development
@@ -285,6 +282,11 @@ def _verbosity_callback(ctx: click.Context, param: click.Parameter, value: bool 
 )
 @click.option("-r", "--recursive", is_flag=True, help="Recursively search directories for Python files.")
 @click.option("-c", "--color", "--colour", is_flag=True, help="Enable colored logging output.")
+@click.argument(
+    "paths",
+    nargs=-1,  # 0 or more arguments
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, resolve_path=True),
+)
 @click.pass_context  # Pass context object (ctx)
 def cli(ctx: click.Context, paths: tuple[Path, ...], recursive: bool, color: bool) -> None:
     """Zeroth Law Compliance Auditor."""

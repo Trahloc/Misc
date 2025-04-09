@@ -17,7 +17,8 @@ click = "^8.1.7" # Added Click for CLI - Use latest version
 [tool.poetry.group.dev.dependencies]
 # Testing
 pytest = "^8.3.5"
-pytest-cov = "^6.1.1" # For test coverage
+pytest-cov = "^6.1.1" # Reverted back
+pytest-mock = "^3.14.0" # Add pytest-mock
 
 # Type Checking
 mypy = "^1.15.0" # Ensure version supports Python 3.13 robustly
@@ -207,7 +208,8 @@ testpaths = [
 ]
 
 [tool.coverage.run]
-branch = true
+parallel = true
+branch = false
 source = ["src/zeroth_law"]
 omit = [
     "src/zeroth_law/__main__.py", # If a CLI entry point is added

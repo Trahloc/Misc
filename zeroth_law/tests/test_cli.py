@@ -24,6 +24,20 @@ def run_cli(args: list[str], cwd: Path | None = None) -> subprocess.CompletedPro
     command = [str(script_path)] + args
     process_env = os.environ.copy()
 
+    # --- Coverage Setup for Subprocess ---
+    project_root = Path(__file__).parent.parent  # Assumes tests/ is one level below root
+    coverage_rc_path = project_root / "pyproject.toml"
+    if coverage_rc_path.exists():
+        process_env["COVERAGE_PROCESS_START"] = str(coverage_rc_path)
+        # Ensure the source directory is discoverable by the subprocess coverage
+        if "PYTHONPATH" in process_env:
+            process_env["PYTHONPATH"] = f"{project_root / 'src'}:{process_env['PYTHONPATH']}"
+        else:
+            process_env["PYTHONPATH"] = str(project_root / "src")
+    else:
+        print(f"Warning: Coverage config not found at {coverage_rc_path}", file=sys.stderr)
+    # -------------------------------------
+
     return subprocess.run(
         command,
         capture_output=True,
@@ -161,7 +175,8 @@ def test_run_audit_calls_analyzer_with_all_params(mock_analyzer: MagicMock, tmp_
     mock_analyzer.return_value = {}
 
     # Act
-    run_audit(start_dir=project_dir, config=config)
+    # Pass project_dir as a list to paths_to_check and set recursive=True
+    run_audit(paths_to_check=[project_dir], recursive=True, config=config)
 
     # Assert
     mock_analyzer.assert_called()  # Check if it was called at all
