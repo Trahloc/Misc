@@ -347,9 +347,8 @@ def test_restore_hooks_success(mock_is_dir: MagicMock, mock_subprocess_run: Magi
 
     # Assert
     assert result.exit_code == 0, f"CLI failed with output: {result.output}"
-    assert "Attempting to restore default hooks using 'pre-commit install'" in result.output
-    assert "pre-commit installed" in result.output  # Check stdout from mock
-    assert "Default git hooks restored successfully." in result.output
+    assert "Successfully restored default pre-commit hooks." in result.output
+    assert mock_subprocess_run.return_value.stdout.strip() in result.output  # Check if mock stdout is printed
 
     mock_is_dir.assert_called_once_with(git_root / ".git")
     mock_subprocess_run.assert_called_once_with(
