@@ -1,4 +1,4 @@
-# /home/trahloc/code/Misc/.pre-commit-config.yaml
+# /home/trahloc/code/Misc/zeroth_law/.pre-commit-config.yaml
 # Minimal root configuration for repo-wide checks (if any).
 # The main logic for project-specific checks is handled by the
 # custom .git/hooks/pre-commit script installed by `zeroth_law install-git-hook`.
