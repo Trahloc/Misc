@@ -11,41 +11,39 @@ repos:
     rev: v0.4.10 # Pin to a specific version
     hooks:
       - id: ruff
-        # Use poetry run to ensure it uses the project environment and config
-        entry: poetry run ruff check .
-        language: system
+        entry: ruff check
+        language: python
         types: [python]
-        pass_filenames: false # Let ruff find files based on config
-        args: [] # Keep args empty, rely on pyproject.toml config
+        pass_filenames: true # Explicitly rely on pre-commit passing files
+        args: [] # No extra args, especially not '.'
       - id: ruff-format
-        # Use poetry run to ensure it uses the project environment and config
-        entry: poetry run ruff format .
-        language: system
+        entry: ruff format
+        language: python
         types: [python]
-        pass_filenames: false # Let ruff find files based on config
-        args: [] # Keep args empty, rely on pyproject.toml config
+        pass_filenames: true # Explicitly rely on pre-commit passing files
+        args: [] # No extra args, especially not '.'
 
 # MyPy - Static Typing
 -   repo: local
     hooks:
       - id: mypy
         name: mypy (local project)
-        language: system # Assumes mypy is installed in the env (via poetry)
-        # Use poetry run; run from project root, finds pyproject.toml
-        entry: poetry run mypy .
+        language: python
+        entry: mypy
         types: [python]
-        pass_filenames: false
+        pass_filenames: true # Explicitly rely on pre-commit passing files
+        args: [] # Let mypy operate on passed files
 
 # Pylint - Similarity Checks Only
 -   repo: local
     hooks:
       - id: pylint-similarity
         name: pylint (similarities only - local project)
-        language: system # Assumes pylint is installed in the env (via poetry)
-        # Use poetry run; pass relevant args, including config. src/ and tests/ relative to CWD.
-        entry: poetry run pylint --rcfile=pyproject.toml --disable=all --enable=R0801 src/ tests/
+        language: python
+        entry: pylint
         types: [python]
-        pass_filenames: false # Pylint finds files based on entry args
+        pass_filenames: true
+        args: ["--disable=all", "--enable=R0801"]
 
 # Generate CODE_TODOS.md dashboard
 -   repo: local
