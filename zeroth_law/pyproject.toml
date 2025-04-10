@@ -192,13 +192,15 @@ ignore_missing_imports = true
 
 [tool.pylint.'MAIN']
 # Use all default checkers.
-disable = """
-    all
-"""
+disable = ["all"] # Disable all checks
 enable = ["R0801"] # similar lines in modules checker
 ignore = ["CVS", ".git", ".hg", ".svn", "tests/", "venv", ".venv"]
 persistent = "yes"
 jobs = 0 # Use all available CPUs
+
+# Markdownlint configuration
+[tool.markdownlint]
+MD007 = { ul-indent = 4 } # Set unordered list indentation to 4 spaces
 
 [tool.pytest.ini_options]
 minversion = "6.0"

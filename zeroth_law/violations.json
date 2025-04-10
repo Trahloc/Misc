@@ -1,0 +1,233 @@
+{
+  "summary": {
+    "total_files": 18,
+    "files_with_violations": 18,
+    "compliant_files": 0
+  },
+  "violations": {
+    "/home/trahloc/code/Misc/zeroth_law/src/__init__.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "footer": [
+        "FOOTER_MISSING"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/__init__.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/__init__.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/__init__.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/analyzer.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "line_counts": [
+        [
+          "max_executable_lines",
+          127
+        ]
+      ],
+      "complexity": [
+        [
+          "check_header_compliance",
+          34,
+          12
+        ],
+        [
+          "analyze_file_compliance",
+          141,
+          21
+        ]
+      ],
+      "parameters": [
+        [
+          "analyze_file_compliance",
+          141,
+          6
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/ast_utils.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/complexity.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "complexity": [
+        [
+          "complex_function",
+          6,
+          12
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/docstrings.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/line_counts.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "complexity": [
+        [
+          "_count_executable_lines",
+          35,
+          14
+        ]
+      ],
+      "parameters": [
+        [
+          "_is_docstring_token",
+          19,
+          6
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/parameters.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "complexity": [
+        [
+          "analyze_parameters",
+          20,
+          11
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/analyzer/python/statements.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "line_counts": [
+        [
+          "max_executable_lines",
+          106
+        ]
+      ],
+      "complexity": [
+        [
+          "analyze_statements",
+          116,
+          11
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/cli.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "line_counts": [
+        [
+          "max_executable_lines",
+          348
+        ]
+      ],
+      "complexity": [
+        [
+          "run_audit",
+          36,
+          22
+        ]
+      ],
+      "statements": [
+        [
+          "run_audit",
+          36,
+          57
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/config_defaults.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "footer": [
+        "FOOTER_MISSING"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/config_loader.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "line_counts": [
+        [
+          "max_executable_lines",
+          130
+        ]
+      ],
+      "complexity": [
+        [
+          "load_config",
+          115,
+          25
+        ]
+      ],
+      "statements": [
+        [
+          "load_config",
+          115,
+          59
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/config_validation.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "footer": [
+        "FOOTER_MISSING"
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/file_finder.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "complexity": [
+        [
+          "find_python_files",
+          25,
+          12
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/git_utils.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "footer": [
+        "FOOTER_MISSING"
+      ],
+      "line_counts": [
+        [
+          "max_executable_lines",
+          102
+        ]
+      ]
+    },
+    "/home/trahloc/code/Misc/zeroth_law/src/zeroth_law/path_utils.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "footer": [
+        "FOOTER_MISSING"
+      ]
+    }
+  }
+}
