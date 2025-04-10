@@ -1,1 +1,0 @@
-"""Python analyzer tests package."""

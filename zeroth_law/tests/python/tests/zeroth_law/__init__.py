@@ -1,1 +1,0 @@
-"""Zeroth Law tests package."""
