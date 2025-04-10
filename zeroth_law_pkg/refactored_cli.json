@@ -1,0 +1,20 @@
+{
+  "summary": {
+    "total_files": 1,
+    "files_with_violations": 1,
+    "compliant_files": 0
+  },
+  "violations": {
+    "src/zeroth_law/cli.py": {
+      "header": [
+        "HEADER_LINE_1_MISMATCH"
+      ],
+      "line_counts": [
+        [
+          "max_executable_lines",
+          358
+        ]
+      ]
+    }
+  }
+}
