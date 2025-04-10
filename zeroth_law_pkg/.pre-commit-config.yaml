@@ -29,9 +29,9 @@ repos:
       - id: mypy
         name: mypy (local project)
         language: system
-        entry: echo "echo is working" && sh -c 'cd zeroth_law_pkg && mypy . --config-file ./pyproject.toml'
+        entry: echo "Running mypy in zeroth_law_pkg" && sh -c 'cd zeroth_law_pkg && mypy . --config-file ./pyproject.toml' # Force clean state via echo first
         pass_filenames: false
-        args: []
+        args: [] # Args are part of entry
 
 # Pylint - Similarity Checks Only
 -   repo: local
