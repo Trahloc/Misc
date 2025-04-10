@@ -99,3 +99,77 @@
     *   `Misc/zeroth_law/.pre-commit-config.yaml`: Project-specific checks (`ruff`, `mypy`, etc.).
 
 **Rationale:** This approach explicitly codifies the required multi-project behavior within the Zeroth Law tooling, providing a robust, albeit custom, solution that aligns with the framework's goals for automated enforcement in complex repository structures.
+
+## Vision: ZLT as Central Orchestrator for ZLF Enforcement (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ)
+
+**Decision:** Solidified the long-term vision for the Zeroth Law Tool (ZLT). ZLT is intended to be the **single, programmatic enforcer** of the Zeroth Law Framework (ZLF) principles. It will achieve this by directly orchestrating the execution of specialized "consultant" tools (`ruff`, `mypy`, `pytest`, `pylint R0801`, fuzzers like `Atheris`, etc.) based on ZLF rules and project-specific configuration (primarily `pyproject.toml`).
+
+**Rationale:**
+*   **Programmatic Ground Truth:** Provides a deterministic, tool-based assessment of ZLF compliance, minimizing ambiguity and reliance on varying AI interpretations for core checks.
+*   **Unified Interface:** Developers (AI or human) interact primarily with `zlt validate` for comprehensive feedback.
+*   **Consistent Enforcement:** Ensures checks are run uniformly according to ZLF across different environments (local, CI).
+*   **Simplified Workflow:** Reduces the need to manage and invoke numerous separate tools manually or via complex hook/CI configurations *once ZLT is mature*.
+
+**Implications for ZLT Development:**
+*   Requires significant ZLT development to implement robust execution wrappers for each consultant tool.
+*   Needs a well-defined configuration schema (`pyproject.toml`) for ZLT to manage tool execution parameters (paths, flags, timeouts, targets).
+*   Requires logic within ZLT to interpret the exit codes and output of each consultant tool in the context of ZLF.
+*   Demands a unified reporting system to present aggregated compliance results.
+
+**Current State vs. Future:** This remains the *aspirational architecture*. Currently, ZLT performs some checks directly and may aggregate others, but full orchestration requires substantial development. Near-term workflows will still involve direct tool usage and ZLT's current, more limited capabilities. The ZLF document (`ZerothLawAIFramework.py313.md`) has been updated to reflect this *target* state.
+
+## Refined ZLT Vision: Broad Consultation & Evidence-Based Optimization (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ)
+
+**Decision:** Further refined the ZLT vision based on discussions prioritizing maximum violation detection over minimal configuration. ZLT will aim to run a broader set of checks from consultant tools by default, handle aggregation internally, and use a separate `ZLT-dev` process for long-term, evidence-based optimization.
+
+**Strategy Details:**
+1.  **Broad Default Checks:** ZLT, when executing consultant tools like `pylint`, will use a configuration that enables a wide range of checks by default. Only rules known to directly conflict with preferred tools (like `ruff` for style) or that are trivially redundant will be explicitly blacklisted initially.
+2.  **ZLT Handles Aggregation:** A core ZLT task is to gather all violations reported by the various consultants and then aggregate/de-duplicate them. It needs to normalize similar violation types reported by different tools and present a unified list of unique ZLF violations found.
+3.  **`ZLT-dev` for Optimization:** A separate development/testing process (`ZLT-dev`) will be created. Its role is to:
+    *   Harvest real-world test cases (starting with ZLT's own tests).
+    *   Run unrestricted consultant tools against these tests.
+    *   Build and maintain a capability map (likely in an SQLite DB) tracking which tool rules detect which ZLF violations in the known samples, highlighting unique vs. overlapping detections.
+    *   Periodically use insights from this map to provide *evidence-based recommendations* for potentially optimizing ZLT's *default* active rule configurations (e.g., disabling a `pylint` rule if the map consistently shows `ruff` provides equal or better detection across all known samples).
+
+**Rationale:**
+*   **Prioritizes Detection:** Reduces the risk of "false negatives" (missed violations) compared to a strict initial whitelist approach.
+*   **Manages Complexity Internally:** Shifts the burden of handling tool overlap and result correlation onto ZLT, simplifying the experience for the end-user/AI developer.
+*   **Evidence-Based Optimization:** Avoids premature optimization or assumption-based configuration. Changes to the default active ruleset are driven by data gathered over time by `ZLT-dev`.
+*   **Continuous Evolution:** Creates a mechanism for ZLT's configuration strategy to adapt as consultant tools evolve.
+
+**Impact:**
+*   Increases the initial implementation complexity for ZLT (aggregation logic).
+*   Requires development of the `ZLT-dev` process and capability mapping database.
+*   Leads to a potentially more robust detection mechanism in the near term and an adaptable, evidence-based configuration in the long term.
+*   `TODO.md` and `ZerothLawAIFramework.py313.md` have been updated to reflect this strategy.
+
+### 4.14 Input Robustness Verification (via Fuzz Testing)
+*(Supports Principle #14)*
+
+*   **Purpose:** To ensure modules handling complex or untrusted data are resilient against unexpected, malformed, or potentially malicious inputs that might not be covered by standard TDD/DDT test cases. Fuzzing acts as a stress test for input processing logic.
+*   **Requirement Trigger:** ZLF **requires** fuzz testing for modules that:
+    *   Parse complex file formats (e.g., configuration files beyond simple key-value, data serialization formats like custom binary protocols, source code).
+
+## Naming Convention: Project Root vs. Package Directory (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - AI: Run `date --iso-8601=seconds`)
+
+**Problem:** The common Python convention `project/src/project/` leads to ambiguity and communication issues (especially with AI assistants) when differentiating between the project root directory and the Python package directory.
+
+**Decision:** The ZLF mandates that the project root directory name and the primary Python package directory name (within `src/`) **must not** be identical.
+
+The **recommended and adopted convention** for ZLF projects is:
+`project_pkg/src/project/`
+
+*   **Project Root:** `project_pkg` (e.g., `zeroth_law_pkg`)
+*   **Package Directory:** `project` (e.g., `zeroth_law`)
+*   **Imports:** Remain clean (e.g., `from zeroth_law import cli`)
+
+**Rationale:**
+*   Provides clear, unambiguous distinction between the containing project directory (`_pkg` suffix) and the importable Python package.
+*   Prioritizes a clean, standard import name (`project`), which is used frequently in code and expected by tooling.
+*   The suffixed root name (`project_pkg`) is explicit for configuration and navigation.
+*   Avoids platform-specific issues (like case sensitivity) and uses standard characters.
+
+**Impact:**
+*   Requires renaming existing project root directories (e.g., `zeroth_law` -> `zeroth_law_pkg`).
+*   Tooling configurations (like `pyproject.toml`) need to be aware that the package `project` resides in `src/` within the `project_pkg` root.
+*   The ZLF document (`frameworks/python/ZerothLawAIFramework.py313.md`) has been updated to reflect this mandate and recommendation in Section 6.3.
