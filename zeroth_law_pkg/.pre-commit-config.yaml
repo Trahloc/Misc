@@ -1,0 +1,59 @@
+# /home/trahloc/code/Misc/zeroth_law_pkg/.pre-commit-config.yaml
+# Project-specific pre-commit configuration for zeroth_law
+# This file is executed by the custom git hook script when changes
+# are detected only within the zeroth_law_pkg/ directory.
+
+# (No need for project_root definition here)
+
+repos:
+# Ruff - Linter & Formatter
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10 # Pin to a specific version
+    hooks:
+      - id: ruff
+        entry: ruff check
+        language: python
+        types: [python]
+        pass_filenames: true # Explicitly rely on pre-commit passing files
+        args: [] # No extra args, especially not '.'
+      - id: ruff-format
+        entry: ruff format
+        language: python
+        types: [python]
+        pass_filenames: true # Explicitly rely on pre-commit passing files
+        args: [] # No extra args, especially not '.'
+
+# MyPy - Static Typing
+-   repo: local
+    hooks:
+      - id: mypy
+        name: mypy (local project)
+        language: system
+        entry: echo "echo is working" && sh -c 'cd zeroth_law_pkg && mypy . --config-file ./pyproject.toml'
+        pass_filenames: false
+        args: []
+
+# Pylint - Similarity Checks Only
+-   repo: local
+    hooks:
+      - id: pylint-similarity
+        name: pylint (similarities only - local project)
+        language: python
+        entry: pylint
+        types: [python]
+        pass_filenames: true
+        args: ["--disable=all", "--enable=R0801"]
+
+# Generate CODE_TODOS.md dashboard
+-   repo: local
+    hooks:
+      - id: generate-todos
+        name: Generate CODE_TODOS.md
+        entry: zeroth_law_pkg/scripts/generate_code_todos.sh # Path relative to Git root
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+
+# Removed redundant pre-commit-hooks (check-yaml, etc.) as they exist in root config.
+# Removed misplaced check-multi-project hook as its logic is in the custom dispatcher script.
