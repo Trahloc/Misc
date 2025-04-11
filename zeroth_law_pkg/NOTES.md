@@ -209,15 +209,15 @@ The only configuration found to reliably execute `mypy` correctly *within the ho
 
 ## Stable Branch Vision vs. Development Practicality (2025-04-11T09:57:24+08:00)
 
-**Goal:** The ultimate aim remains a `stable` branch where the Zeroth Law Framework (ZLF) is strictly enforced, potentially treating all warnings from consultant tools (`ruff`, `mypy`, `pylint`, etc.) as errors. This state relies on the Zeroth Law Tool (ZLT) being mature enough to orchestrate all checks, aggregate results, and provide unified feedback.
+**Goal:** The ultimate aim remains a `main` branch where the Zeroth Law Framework (ZLF) is strictly enforced, potentially treating all warnings from consultant tools (`ruff`, `mypy`, `pylint`, etc.) as errors. This state relies on the Zeroth Law Tool (ZLT) being mature enough to orchestrate all checks, aggregate results, and provide unified feedback.
 
-**Current Reality:** ZLT is not yet capable of fulfilling this comprehensive orchestration role. Attempting to enforce the strict `stable` standard manually or with current pre-commit hooks alone creates excessive friction and hinders development flow, contradicting ZLF principles.
+**Current Reality:** ZLT is not yet capable of fulfilling this comprehensive orchestration role. Attempting to enforce the strict `main` standard manually or with current pre-commit hooks alone creates excessive friction and hinders development flow, contradicting ZLF principles.
 
-**Decision & Rationale:** As a practical, temporary measure, the development process will operate with relaxed standards to facilitate progress until ZLT matures. The "warnings as errors" philosophy is suspended for non-critical issues during this phase.
+**Decision & Rationale:** As a practical, temporary measure, a `dev` branch has been created from `main`. All active development will occur on `dev` with relaxed standards to facilitate progress until ZLT matures. The "warnings as errors" philosophy is suspended for non-critical issues during this phase on the `dev` branch. The `main` branch is reserved for the future ZLT-enforced state.
 
-**Current Implementation:**
+**Current Implementation (`dev` branch):**
 *   **`pyproject.toml` Adjustment:** The `[tool.ruff.lint]` configuration has been modified:
     *   `select = ["E", "F"]`: Only critical Pyflakes error categories (E, F) are selected for `ruff check`, significantly reducing the number of issues flagged during pre-commit.
     *   `ignore = [...]`: A comprehensive list of specific warning/style rule codes has been added to `ignore` to further minimize noise from less critical checks.
-*   **Goal Preservation:** This relaxation is explicitly temporary. The long-term goal of a ZLT-enforced `stable` branch remains unchanged. The focus is on unblocking development while ZLT evolves.
+*   **Goal Preservation:** This relaxation is explicitly temporary and applies to the `dev` branch. The long-term goal of a ZLT-enforced `main` branch remains unchanged. The focus is on unblocking development while ZLT evolves.
 *   **Formatting:** Consistent formatting is still enforced by `ruff format` via IDE format-on-save, with the `pre-commit` hook acting as a final safety net.

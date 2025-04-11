@@ -142,3 +142,5 @@ environment.yml
 requirements.txt
 requirements-dev.txt
 
+# Generated code todos
+CODE_TODOS.md

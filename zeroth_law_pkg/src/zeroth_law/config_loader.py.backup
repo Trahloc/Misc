@@ -1,0 +1,320 @@
+# FILE: src/zeroth_law/config_loader.py
+"""Loads and validates project configuration for Zeroth Law auditing.
+
+Handles reading settings from pyproject.toml.
+
+CONTEXT:
+  Developed via TDD. Initial focus is loading essential configuration
+  like the target Python version from pyproject.toml.
+
+Notes
+-----
+  Uses tomllib (Python 3.11+) for TOML parsing.
+
+"""
+
+import logging
+from pathlib import Path
+from typing import Any, Optional, Union
+
+import xdg
+from pydantic import ValidationError
+
+# Import defaults from shared module
+from zeroth_law.config_defaults import DEFAULT_CONFIG
+
+# --- TOML Library Handling --- #
+
+# Keep track of which loader is available
+_TOML_LOADER: Any = None
+_TOMLLIB: Any = None
+_TOMLI: Any = None
+
+try:
+    import tomllib
+
+    _TOML_LOADER = tomllib
+    _TOMLLIB = tomllib
+except ImportError:
+    try:
+        import tomli
+
+        _TOML_LOADER = tomli
+        _TOMLI = tomli
+    except ImportError:
+        pass  # No loader found
+
+
+# Define base exception for type hinting/fallback
+class TomlDecodeError(Exception):
+    """Base exception class for TOML decoding errors."""
+
+
+class _DummyTomlLoader:
+    """Dummy class for placeholder TOML parsing when no library is installed."""
+
+    @staticmethod
+    # type: ignore[no-untyped-def]
+    def load(*_args: Any, **_kwargs: Any) -> dict[str, Any]:  # ANN401 ignored
+        """Raise ImportError indicating missing TOML library."""
+        err_msg = "TOML library (tomllib or tomli) not found. Cannot parse pyproject.toml."
+        raise ImportError(err_msg)
+
+
+if _TOML_LOADER is None:
+    _TOML_LOADER = _DummyTomlLoader()
+
+
+log = logging.getLogger(__name__)
+
+# Default configuration values
+_CONFIG_SECTION = "tool.zeroth-law"
+
+# Import our validation after DEFAULT_CONFIG
+from zeroth_law.config_validation import validate_config
+
+
+def find_pyproject_toml(start_path: Path | None = None) -> Path | None:
+    """Find Zeroth Law config, check XDG dir then search upwards.
+
+    Looks for:
+    1. $XDG_CONFIG_HOME/zeroth_law/pyproject.toml (or default ~/.config/)
+    2. pyproject.toml in start_path (or cwd) or its parents.
+
+    Args:
+    ----
+        start_path: The directory to start the upward search from. Defaults to CWD.
+
+    Returns:
+    -------
+        The Path object of the found config file, or None if not found.
+
+    """
+    # 1. Check XDG config location
+    xdg_base_dir: Path = xdg.xdg_config_home()
+    xdg_config_path = xdg_base_dir / "zeroth_law" / "pyproject.toml"
+    log.debug("Checking XDG config path: %s", xdg_config_path)
+    if xdg_config_path.is_file():
+        log.debug("Found config in XDG directory.")
+        return xdg_config_path
+
+    # 2. Search upwards from start_path (or cwd)
+    current_path = Path(start_path) if start_path else Path.cwd()
+    log.debug("Searching for pyproject.toml upwards from: %s", current_path)
+    # Iterate using sequence unpacking
+    for parent_dir in (current_path, *current_path.parents):
+        potential_path = parent_dir / "pyproject.toml"
+        if potential_path.is_file():
+            log.debug("Found config at: %s", potential_path)
+            return potential_path
+
+    log.debug("No pyproject.toml found in XDG or parent directories.")
+    return None
+
+
+# --- Config Loading Functions ---
+def parse_toml_file(file_path: Path) -> dict[str, Any]:
+    """Parse a TOML file into a dictionary.
+
+    Args:
+        file_path: Path to the TOML file to parse.
+
+    Returns:
+        A dictionary containing the parsed TOML content.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        TomlDecodeError: If the file contains invalid TOML.
+        ImportError: If no TOML parsing library is available.
+        OSError: If the file cannot be read.
+
+    """
+    if not file_path.is_file():
+        err_msg = f"Config file not found: {file_path}"
+        log.error(err_msg)
+        raise FileNotFoundError(err_msg)
+
+    try:
+        with file_path.open("rb") as f:
+            return _TOML_LOADER.load(f)
+    except ImportError as e:  # Raised by _DummyTomlLoader
+        log.error(f"{e}")
+        raise
+    except OSError as e:
+        err_msg = f"Could not read config file ({file_path}): {e}"
+        log.exception(err_msg)
+        raise OSError(err_msg) from e
+    except Exception as e:
+        is_tomllib_error = _TOMLLIB and isinstance(e, _TOMLLIB.TOMLDecodeError)
+        is_tomli_error = _TOMLI and isinstance(e, _TOMLI.TOMLDecodeError)
+        if is_tomllib_error or is_tomli_error:
+            err_msg = f"Invalid TOML in config file ({file_path}): {e}"
+            log.exception(err_msg)
+            # Raise the base class for consistent handling upstream if needed
+            raise TomlDecodeError(err_msg) from e
+        # Catch any other unexpected error during loading/parsing
+        err_msg = f"Unexpected error loading/parsing config file {file_path}: {e}"
+        log.exception(err_msg)
+        raise RuntimeError(err_msg) from e
+
+
+def extract_config_section(toml_data: dict[str, Any], section_path: str) -> dict[str, Any]:
+    """Extract a specific section from parsed TOML data.
+
+    Args:
+        toml_data: Dictionary containing parsed TOML data.
+        section_path: Dot-separated path to the config section (e.g., "tool.zeroth-law").
+
+    Returns:
+        Dictionary containing the configuration section, or empty dict if not found.
+
+    """
+    # Split the section path into components
+    path_parts = section_path.split(".")
+
+    # Extract the first level (usually "tool")
+    current_data = toml_data.get(path_parts[0], {})
+    if not isinstance(current_data, dict):
+        log.warning("Unexpected type for [%s] section: %s. Using defaults.", path_parts[0], type(current_data).__name__)
+        return {}
+
+    # Extract the nested section (usually "zeroth-law")
+    if len(path_parts) > 1:
+        current_data = current_data.get(path_parts[1], {})
+        if not isinstance(current_data, dict):
+            log.warning("Unexpected type for [%s] section: %s. Using defaults.", section_path, type(current_data).__name__)
+            return {}
+
+    return current_data
+
+
+def merge_with_defaults(config_section: dict[str, Any]) -> dict[str, Any]:
+    """Merge configuration with defaults and validate.
+
+    Args:
+        config_section: Dictionary containing the extracted configuration section.
+
+    Returns:
+        Dictionary containing the merged and validated configuration.
+
+    """
+    # Start with a copy of the defaults
+    merged_config = DEFAULT_CONFIG.copy()
+
+    # Override with values from config_section
+    for key, default_value in DEFAULT_CONFIG.items():
+        if key in config_section:
+            loaded_value = config_section[key]
+            log.debug(
+                "Found custom value for %s: %s (default: %s)",
+                key,
+                loaded_value,
+                default_value,
+            )
+            merged_config[key] = loaded_value
+
+    # Validate the merged configuration
+    try:
+        validated_config = validate_config(merged_config)
+        # Convert Pydantic model back to dict for backward compatibility
+        return validated_config.model_dump()
+    except ValidationError as e:
+        log.warning("Configuration validation failed: %s. Reverting invalid values to defaults.", e)
+
+        # Extract the valid fields from the failed validation
+        valid_config = DEFAULT_CONFIG.copy()
+
+        # Identify which fields had validation errors
+        invalid_fields = set()
+        for err in e.errors():
+            if err.get("loc"):
+                invalid_fields.add(err["loc"][0])
+
+        # Keep only the valid config values from the merged config
+        for key, value in merged_config.items():
+            if key not in invalid_fields:
+                valid_config[key] = value
+
+        log.debug("Using partial config with invalid fields reverted to defaults: %s", valid_config)
+        return valid_config
+
+
+def load_config(config_path_override: str | Path | None = None) -> dict[str, Any]:
+    """Load Zeroth Law config, merge with defaults.
+
+    Search XDG path and parent dirs for pyproject.toml if config_path_override is None.
+
+    Args:
+    ----
+        config_path_override: Explicit path to the config file (e.g., pyproject.toml).
+                              If None, searches automatically (XDG, then upwards).
+
+    Returns:
+    -------
+        A dictionary containing the loaded and validated configuration.
+
+    Raises:
+    ------
+        FileNotFoundError: If an explicitly specified config_path_override is not found.
+        TomlDecodeError: If the found or specified config file is invalid TOML.
+        ImportError: If no TOML parsing library (tomllib/tomli) is installed.
+        OSError: If the config file cannot be read.
+        ValidationError: If the configuration values are invalid.
+
+    """
+    # Find the config file
+    found_path: Path | None
+    if config_path_override is None:
+        found_path = find_pyproject_toml()
+        if found_path is None:
+            log.warning("No config file found (XDG or upwards search). Using defaults.")
+            return DEFAULT_CONFIG.copy()
+    else:
+        found_path = Path(config_path_override)
+
+    # Parse the TOML file
+    try:
+        toml_data = parse_toml_file(found_path)
+    except FileNotFoundError:
+        if config_path_override is not None:
+            # Only re-raise if the path was explicitly provided
+            raise
+        log.warning("Config file not found. Using defaults.")
+        return DEFAULT_CONFIG.copy()
+
+    # Extract the Zeroth Law configuration section
+    config_section = extract_config_section(toml_data, _CONFIG_SECTION)
+
+    # Merge with defaults and validate
+    return merge_with_defaults(config_section)
+
+
+def _load_python_version_constraint(_file_path: Path) -> str | None:  # ARG001 handled by prefix
+    """Load the python version constraint from pyproject.toml (Placeholder/Legacy)."""
+    log.warning("_load_python_version_constraint is likely legacy and unused.")
+    return None
+
+
+# ----------------------------------------------------------------------------
+# FOOTER
+# ----------------------------------------------------------------------------
+"""
+## LIMITATIONS & RISKS:
+# - Currently only stubs, no real loading or validation.
+# - Assumes pyproject.toml exists in a predictable location relative to source.
+
+## REFINEMENT IDEAS:
+# - Implement actual TOML parsing using `tomllib` (Python 3.11+).
+# - Use Pydantic for validation of the [tool.zeroth-law] section.
+# - Add error handling for missing file or invalid TOML.
+# - Provide default values for settings.
+
+## ZEROTH LAW COMPLIANCE:
+# Framework Version: <Specify Framework Version>
+# TDD Cycle: <Specify Test Status (e.g., Red, Green, Refactor)>
+# Last Check: <Timestamp>
+# Score: <Score>
+# Penalties: <Penalties>
+"""
+
+# <<< ZEROTH LAW FOOTER >>>
