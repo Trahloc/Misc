@@ -9,8 +9,7 @@ import logging
 from pathlib import Path
 from typing import Self
 
-import ruff.complexity as ruff_complexity  # Use ruff's complexity logic
-
+# Removed problematic import: import ruff.complexity as ruff_complexity
 # from .ast_utils import _add_parent_pointers, _parse_file_to_ast
 from .ast_utils import _build_parent_map, _parse_file_to_ast
 
@@ -37,17 +36,18 @@ class ComplexityVisitor(ast.NodeVisitor):
 
         """
         self.complexity = 1  # Start with 1 for the function entry
-        self._current_node = node  # Store the target node if provided
+        self._target_node = node  # Store the target node if provided
+        if node:
+            # If node provided, visit it immediately to calculate complexity
+            self.visit(node)
 
     def visit(self: Self, node: ast.AST) -> None:
         """Visit a node, incrementing complexity for branching constructs.
 
         Only visits children if the node is the target function or its descendant.
+        Stops recursion into nested functions/classes defined within the target.
         """
-        # If a target node was specified, only proceed if this node is the target or a descendant.
-        # This prevents counting complexity from nested functions/classes.
-        if self._current_node and not self._is_descendant_or_self(node, self._current_node):
-            return  # Skip nodes outside the target function scope
+        is_branching = False
 
         # Increment complexity for specific node types
         if isinstance(
@@ -61,44 +61,45 @@ class ComplexityVisitor(ast.NodeVisitor):
                 ast.Or,  # or operator (short-circuiting)
                 ast.Try,  # try block (base complexity)
                 ast.ExceptHandler,  # except block (each handler adds complexity)
-                ast.With,  # with statement (potential complexity in context manager)
-                ast.AsyncWith,  # async with statement
+                # ast.With,  # Exclude simple with (radon doesn't count)
+                # ast.AsyncWith, # Exclude simple async with
                 ast.Match,  # match statement (base complexity)
                 ast.MatchAs,  # match ... as ...
                 ast.MatchOr,  # or pattern in match case
                 ast.IfExp,  # ternary expression (if x else y)
-                ast.comprehension,  # list/dict/set comprehension (the 'if' part)
+                ast.Assert,  # Assert statement adds complexity
+                # Comprehensions: The `if` part adds complexity
+                ast.ListComp,
+                ast.SetComp,
+                ast.DictComp,
+                ast.GeneratorExp,
             ),
         ):
+            is_branching = True
             self.complexity += 1
 
-        # Special handling for If nodes: count elif and else branches
-        if isinstance(node, ast.If) and node.orelse:
-            # If there's an else block, it adds complexity
-            # This count was previously missing, causing the test to fail
-            if len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If):
-                # This is an elif, already counted in the loop above
-                pass
-            else:
-                # This is an else, adds complexity
-                self.complexity += 1
+        # Special handling for Try: need to investigate if `finally` adds complexity
+        # if isinstance(node, ast.Try) and node.finalbody:
+        #    self.complexity += 1 # If finally always adds
 
-        # Recursively visit children
-        self.generic_visit(node)
+        # Special handling for comprehensions - the ifs inside add complexity
+        if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+            for gen in node.generators:
+                for if_clause in gen.ifs:
+                    self.complexity += 1  # Each 'if' in the comprehension
+                    self.visit(if_clause)  # Visit the condition itself for and/or
 
-    def _is_descendant_or_self(self: Self, node: ast.AST, ancestor: ast.AST) -> bool:
-        """Check if `node` is the same as `ancestor` or one of its descendants."""
-        current: ast.AST | None = node
-        while current:
-            if current is ancestor:
-                return True
-            # Check if _parents attribute exists and is not empty
-            parents = getattr(current, "_parents", [])
-            if not parents:
-                break  # Reached the root or a node without parent info
-            # Move to the first parent (assuming single inheritance for simplicity here)
-            current = parents[0]
-        return False
+        # Recurse into children, BUT stop if we encounter a nested function/class
+        # Only visit children if the current node is not a nested definition
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) or node is self._target_node:
+            # If it's the target node itself, we definitely visit its children
+            # If it's not a definition, visit children
+            super().generic_visit(node)
+
+        # Note: The previous _is_descendant_or_self logic was complex and potentially buggy.
+        # This simpler approach stops recursion *into* nested definitions.
+
+    # No longer need _is_descendant_or_self
 
 
 def analyze_complexity(file_path: str | Path, threshold: int) -> list[ComplexityViolation]:
@@ -124,36 +125,25 @@ def analyze_complexity(file_path: str | Path, threshold: int) -> list[Complexity
     """
     violations: list[ComplexityViolation] = []
     try:
-        tree, content = _parse_file_to_ast(file_path)
-        # _add_parent_pointers(tree)  # Add parent pointers needed for is_method check
+        tree, _ = _parse_file_to_ast(file_path)
         parent_map = _build_parent_map(tree)
 
-        # Use ruff's visitor for complexity calculation
-        visitor = ruff_complexity.Visitor(max_complexity=threshold, metrics={})
-        visitor.visit(tree)
-
-        for item in visitor.items:
-            # Check if the complex item is a function or async function
-            # We need to find the corresponding AST node to check if it's a method
-            func_node = None
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and node.name == item.name and node.lineno == item.lineno:
-                    func_node = node
-                    break
-
-            if func_node:
-                # Check if it's a method
-                # is_method = any(isinstance(parent, ast.ClassDef) for parent in getattr(func_node, "_parents", []))
-                parent = parent_map.get(func_node)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                # Check if it's a method (defined inside a class)
+                parent = parent_map.get(node)
                 is_method = parent is not None and isinstance(parent, ast.ClassDef)
 
-                # Only add violation if it's *not* a method (or adjust logic if methods should be included)
-                if not is_method:
-                    violations.append((item.name, item.lineno, item.complexity))
-            else:
-                # Ruff visitor might identify complex blocks that aren't top-level functions
-                # For now, only report function complexity
-                pass
+                # For now, analyze both functions and methods
+                # if is_method:
+                #     continue # Optionally skip methods
+
+                # Use the local ComplexityVisitor
+                visitor = ComplexityVisitor(node=node)  # Pass the function node to the constructor
+                complexity_score = visitor.complexity
+
+                if complexity_score > threshold:
+                    violations.append((node.name, node.lineno, complexity_score))
 
     except (FileNotFoundError, SyntaxError, OSError) as e:
         log.error(f"Could not analyze complexity for {file_path}: {e}")

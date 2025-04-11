@@ -1,3 +1,4 @@
+# File: src/zeroth_law/config_validation.py
 """Configuration validation using Pydantic models.
 
 Provides strict validation for Zeroth Law configuration values.

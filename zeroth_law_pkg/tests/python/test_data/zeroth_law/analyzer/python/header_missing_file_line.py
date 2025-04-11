@@ -1,4 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
+# File: tests/python/test_data/zeroth_law/analyzer/python/header_missing_file_line.py
 """Module docstring."""
 
 

@@ -1,3 +1,4 @@
+# File: src/zeroth_law/config_defaults.py
 """Default configuration values for Zeroth Law.
 
 This module contains the default values for all configuration options.

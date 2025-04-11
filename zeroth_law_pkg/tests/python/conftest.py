@@ -1,3 +1,4 @@
+# File: tests/python/conftest.py
 """Configuration for pytest to set up Python path correctly."""
 
 import sys

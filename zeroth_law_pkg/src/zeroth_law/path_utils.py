@@ -1,3 +1,4 @@
+# File: src/zeroth_law/path_utils.py
 """Path-related utility functions."""
 
 import logging

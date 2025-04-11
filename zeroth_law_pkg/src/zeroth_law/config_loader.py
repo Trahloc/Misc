@@ -1,3 +1,4 @@
+# File: src/zeroth_law/config_loader.py
 """Configuration handling for Zeroth Law.
 
 This module loads and validates project configuration for Zeroth Law auditing.

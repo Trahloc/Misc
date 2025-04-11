@@ -1,5 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
-# FILE: high_complexity.py
+# File: tests/python/test_data/zeroth_law/analyzer/python/high_complexity.py
 """Module docstring."""
 
 

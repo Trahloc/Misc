@@ -71,6 +71,10 @@
 - [ ] 5. **License Review:** Confirm chosen license (CC0) is appropriate.
 - [ ] 6. **Publishing Prep (Optional):** Prepare for potential PyPI release.
 
+## Known Issues / Tech Debt
+- [ ] Investigate and fix root cause of `mypy` "Source file found twice" error when executed via `action_runner.py`. Re-enable `mypy` in `tool_mapping.json` for the `lint` action once resolved. (Currently handled by pre-commit hook).
+- [ ] Review and refactor suppressed `E402` (module import not at top of file) errors identified in `CODE_TODOS.md`. Remove `sys.path` modifications if redundant due to Poetry's editable install.
+
 ## Phase X: ZLT Core Orchestration Engine
 # Goal: Develop ZLT to directly execute and interpret consultant tools as the primary ZLF enforcement mechanism.
 - [ ] ZLT: Implement initial "pass-through" execution for core consultants (`ruff check`, `ruff format`, `mypy`, `pytest`). ZLT acts as an alias, running the tool and reporting raw results. *(Priority: Get data flowing through ZLT)*.

@@ -1,5 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
-# FILE: docstrings_example.py
+# File: tests/python/test_data/zeroth_law/analyzer/python/docstrings_example.py
 """Module docstring."""
 
 

@@ -1,3 +1,4 @@
+# File: tests/test_cli_help_options.py
 """Tests to ensure CLI options are documented in help and tested."""
 
 import re

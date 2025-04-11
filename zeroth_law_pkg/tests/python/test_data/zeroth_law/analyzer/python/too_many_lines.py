@@ -1,5 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
-# FILE: too_many_lines.py
+# File: tests/python/test_data/zeroth_law/analyzer/python/too_many_lines.py
 """Module docstring."""
 
 

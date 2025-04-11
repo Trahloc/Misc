@@ -1,3 +1,4 @@
+# File: tests/test_cli_json_output.py
 """Tests for the JSON output functionality in the CLI."""
 
 import json

@@ -1,5 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
-# FILE: ignore_rule_test.py
+# File: tests/python/test_data/zeroth_law/analyzer/python/ignore_rule_test.py
 """Module docstring."""
 
 

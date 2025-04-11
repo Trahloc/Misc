@@ -114,7 +114,7 @@ def test_install_hook_option_invocation(option, value):
     # Mock relevant functions to prevent actual operation
     with (
         patch.object(Path, "is_dir", return_value=True),
-        patch.object(cli_module, "generate_custom_hook_script", return_value="#!/bin/bash\n"),
+        patch("src.zeroth_law.git_utils.generate_custom_hook_script", return_value="#!/bin/bash\n"),
         patch.object(Path, "mkdir"),
         patch.object(Path, "open"),
     ):

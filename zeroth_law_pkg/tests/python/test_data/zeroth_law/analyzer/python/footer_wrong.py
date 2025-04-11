@@ -1,5 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
-# FILE: footer_wrong.py
+# File: tests/python/test_data/zeroth_law/analyzer/python/footer_wrong.py
 """Module docstring."""
 
 

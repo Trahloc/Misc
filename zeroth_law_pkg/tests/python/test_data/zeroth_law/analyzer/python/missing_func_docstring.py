@@ -1,5 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
-# FILE: missing_func_docstring.py
+# File: tests/python/test_data/zeroth_law/analyzer/python/missing_func_docstring.py
 """Module docstring."""
 
 

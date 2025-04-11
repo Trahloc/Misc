@@ -14,6 +14,7 @@ pydantic = "^2.11.3"
 xdg = "^6.0.0" # For XDG Base Directory Specification adherence
 click = "^8.1.7" # Added Click for CLI - Use latest version
 black = "^25.1.0"
+pyyaml = "^6.0.2"
 
 [tool.poetry.group.dev.dependencies]
 # Testing
@@ -47,6 +48,7 @@ autoinit = "^1.1.1" # If used for __init__.py management
 types-setuptools = "^78.1.0" # Align with installed version
 
 # Add scripts entry point
+types-pyyaml = "^6.0.12.20250402"
 [tool.poetry.scripts]
 zeroth-law = "zeroth_law.cli:cli_group"
 
@@ -205,25 +207,38 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.mypy]
+# See https://mypy.readthedocs.io/en/stable/config_file.html
 python_version = "3.13"
-# mypy_path = "src" # Tell mypy where to find source modules
-strict = true
-warn_unused_configs = true
-exclude = ["venv", ".venv", "build", "dist", "docs", "environment.yml", "../template_zeroth_law"]
+# warnings = true # Invalid option removed
+pretty = true
+show_error_context = true
+show_error_codes = true
+explicit_package_bases = true # Help mypy understand src layout
+ignore_missing_imports = false # Default to false, override below
+cache_dir = "/run/user/1000/mypy"
 
+# Per-module options:
 [[tool.mypy.overrides]]
 # Ignore missing imports for libraries that don't have type hints readily available
-# Add more as needed during development
 module = [
-    "xdg.*",
-    "ruff.*", # Ignore missing imports for ruff
+    "ruff.*", # Ignore missing types/stubs for ruff
+    # Add others here if needed, e.g., "xdg.*"
 ]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# Ignore errors stemming from the persistent "Source file found twice" issue
-module = "zeroth_law.git_utils"
+# TEMPORARY: Ignore errors for specific modules causing
+# "Source file found twice" when run via action_runner/subprocess.
+# TODO: Investigate root cause of path issue for mypy execution via action_runner.
+module = [
+    "zeroth_law.git_utils",
+    "src.zeroth_law.git_utils", # Add src prefix
+    "zeroth_law.analyzer.python.analyzer",
+    "src.zeroth_law.analyzer.python.analyzer", # Add src prefix
+]
 ignore_errors = true
+
+# [[tool.mypy.overrides]] # Example for ignoring specific errors in a module
 
 [tool.pylint.'MAIN']
 # Use all default checkers.

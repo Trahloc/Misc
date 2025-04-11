@@ -1,0 +1,94 @@
+# File: src/zeroth_law/tool_mapping.yaml
+# Zeroth Law Toolkit (zlt) Tool Mapping
+# Maps zlt actions to underlying development tools and their arguments.
+
+format:
+  description: Formats code according to project style guides.
+  tools:
+    ruff_format: # Unique identifier for the tool within this action
+      command: ruff format
+      option_mappings:
+        paths: null # Indicates direct pass-through of positional arguments
+        verbose: -v
+        quiet: -q
+        config: --config # Option takes a value
+    # Example of another potential formatter:
+    # black:
+    #   command: black
+    #   option_mappings:
+    #     paths: null
+    #     check: --check
+    #     config: --config
+
+lint:
+  description: Lints code for style and potential errors.
+  tools:
+    ruff_check:
+      command: ruff check
+      option_mappings:
+        paths: null
+        verbose: -v
+        quiet: -q
+        config: --config
+        exit_zero: --exit-zero # Flag option
+    # Example of another potential linter:
+    # mypy:
+    #  command: mypy
+    #  option_mappings:
+    #    paths: null
+    #    config: --config-file
+
+test:
+  description: Runs automated tests.
+  tools:
+    pytest:
+      command: pytest
+      option_mappings:
+        paths: null
+        verbose: -v
+        quiet: -q
+        # Options that pytest accepts directly (passthrough)
+        k: -k
+        m: -m
+        x: -x
+
+coverage:
+  description: Measures test coverage.
+  tools:
+    pytest_cov:
+      command: pytest --cov
+      option_mappings:
+        paths: null # Typically points to the source directory, e.g., --cov=src
+        verbose: -v
+        quiet: -q
+        # Add other relevant pytest-cov options here if needed
+
+duplicate:
+  description: Detects duplicate code.
+  tools:
+    pmd_cpd:
+      command: pmd-cpd # Placeholder - requires installation and specific args
+      option_mappings:
+        paths: --files # Example mapping, might need adjustment for pmd-cpd
+        # Add other relevant pmd-cpd options here
+
+security:
+  description: Scans code for security vulnerabilities.
+  tools:
+    bandit:
+      command: bandit -r # Placeholder - requires installation and specific args
+      option_mappings:
+        paths: null # Bandit typically takes paths directly
+        config: -c # Example mapping
+        verbose: -v
+        quiet: -q
+        # Add other relevant bandit options here
+
+fuzz:
+  description: Runs fuzz tests to find unexpected behavior.
+  tools:
+    atheris: # Placeholder - requires significant setup
+      command: python your_fuzz_script.py # Example command structure
+      option_mappings:
+        paths: null # Fuzzer targets might be passed differently
+        # Add other relevant atheris/fuzzer options here

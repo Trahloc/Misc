@@ -1,5 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
-# FILE: header_missing_docstring.py
+# File: tests/python/test_data/zeroth_law/analyzer/python/header_missing_docstring.py
 
 
 def main() -> None:

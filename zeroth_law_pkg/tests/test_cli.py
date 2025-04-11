@@ -1,3 +1,4 @@
+# File: tests/test_cli.py
 """Tests for the command-line interface (cli.py)."""
 
 import os

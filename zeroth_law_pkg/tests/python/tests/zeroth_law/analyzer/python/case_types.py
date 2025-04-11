@@ -1,4 +1,4 @@
-# <<< ZEROTH LAW HEADER >>>
+# File: tests/python/tests/zeroth_law/analyzer/python/case_types.py
 """Test case type definitions for the Python analyzer."""
 
 from dataclasses import dataclass

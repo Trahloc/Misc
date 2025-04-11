@@ -1,3 +1,4 @@
+# File: tests/test_file_finder.py
 """Tests for the file_finder module."""
 
 from pathlib import Path
