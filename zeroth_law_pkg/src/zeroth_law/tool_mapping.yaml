@@ -2,93 +2,150 @@
 # Zeroth Law Toolkit (zlt) Tool Mapping
 # Maps zlt actions to underlying development tools and their arguments.
 
+# === FORMAT ACTION ===
 format:
   description: Formats code according to project style guides.
+
+  zlt_options:
+    verbose:
+      type: flag
+      description: Enable verbose output.
+    quiet:
+      type: flag
+      description: Suppress non-error output.
+    config:
+      type: value
+      value_type: path
+      description: Path to configuration file.
+    check:
+      type: flag
+      description: Run in check mode (don\'t modify files).
+    paths:
+      type: positional
+      description: Files or directories to format.
+
   tools:
-    ruff_format: # Unique identifier for the tool within this action
-      command: ruff format
-      option_mappings:
-        paths: null # Indicates direct pass-through of positional arguments
+    ruff_format:
+      command: ["ruff", "format"]
+      maps_options:
+        # verbose: Maps to ruff format -v / --verbose
+        # Help: -v, --verbose / Enable verbose logging
         verbose: -v
+        # quiet: Maps to ruff format -q / --quiet
+        # Help: -q, --quiet / Print diagnostics, but nothing else
         quiet: -q
-        config: --config # Option takes a value
-    # Example of another potential formatter:
+        # config: Maps to ruff format --config <CONFIG_OPTION>
+        # Help: --config <CONFIG_OPTION> / Either a path to a TOML configuration file...
+        config: --config
+        # check: Maps to ruff format --check
+        # Help: --check / Avoid writing any formatted files back...
+        check: --check
+        # paths: Tool accepts positional arguments for paths
+        paths: null
     # black:
     #   command: black
-    #   option_mappings:
-    #     paths: null
-    #     check: --check
-    #     config: --config
+    #   maps_options: {}
+    #   # TODO: Fill based on 'black --help'
 
+# === LINT ACTION ===
 lint:
   description: Lints code for style and potential errors.
+
+  zlt_options:
+    verbose:
+      type: flag
+      description: Enable verbose output.
+    quiet:
+      type: flag
+      description: Suppress non-error output.
+    config:
+      type: value
+      value_type: path
+      description: Path to configuration file.
+    exit_zero:
+      type: flag
+      description: Exit with status code 0 even if issues are found.
+    # fix: # Example of adding a lint-specific option later
+    #   type: flag
+    #   description: Attempt to automatically fix fixable violations.
+    paths:
+      type: positional
+      # default: ["src", "tests"] # Example
+      description: Files or directories to lint.
+
   tools:
     ruff_check:
-      command: ruff check
-      option_mappings:
-        paths: null
+      command: ["ruff", "check"]
+      maps_options:
+        # verbose: Maps to ruff check -v / --verbose
+        # Help: -v, --verbose / Enable verbose logging
         verbose: -v
+        # quiet: Maps to ruff check -q / --quiet
+        # Help: -q, --quiet / Print diagnostics, but nothing else
         quiet: -q
+        # config: Maps to ruff check --config <CONFIG_OPTION>
+        # Help: --config <CONFIG_OPTION> / Either a path to a TOML configuration file...
         config: --config
-        exit_zero: --exit-zero # Flag option
-    # Example of another potential linter:
+        # exit_zero: Maps to ruff check -e / --exit-zero
+        # Help: -e, --exit-zero / Exit with status code "0", even upon detecting lint violations
+        exit_zero: --exit-zero
+        # paths: Tool accepts positional arguments for paths
+        paths: null
+        # Note: zlt option 'fix' is not mapped here yet.
     # mypy:
-    #  command: mypy
-    #  option_mappings:
-    #    paths: null
-    #    config: --config-file
+    #   command: ["mypy"] # Example as list
+    #   maps_options: {}
+    #   # TODO: Fill based on 'mypy --help'
 
+# === TEST ACTION ===
 test:
+  # TODO: Define zlt_options and tools/maps_options for test
   description: Runs automated tests.
   tools:
     pytest:
-      command: pytest
-      option_mappings:
+      command: ["pytest"]
+      option_mappings: # Keep old structure temporarily
         paths: null
         verbose: -v
         quiet: -q
-        # Options that pytest accepts directly (passthrough)
         k: -k
         m: -m
         x: -x
 
+# === OTHER ACTIONS (Keep old structure temporarily) ===
 coverage:
   description: Measures test coverage.
   tools:
     pytest_cov:
-      command: pytest --cov
+      command: ["pytest", "--cov"]
       option_mappings:
-        paths: null # Typically points to the source directory, e.g., --cov=src
+        paths: null
         verbose: -v
         quiet: -q
-        # Add other relevant pytest-cov options here if needed
 
 duplicate:
   description: Detects duplicate code.
   tools:
     pmd_cpd:
-      command: pmd-cpd # Placeholder - requires installation and specific args
+      command: ["pmd-cpd"]
       option_mappings:
-        paths: --files # Example mapping, might need adjustment for pmd-cpd
-        # Add other relevant pmd-cpd options here
+        paths: --files
 
 security:
   description: Scans code for security vulnerabilities.
   tools:
     bandit:
-      command: bandit -r # Placeholder - requires installation and specific args
+      command: ["bandit", "-r"]
       option_mappings:
-        paths: null # Bandit typically takes paths directly
-        config: -c # Example mapping
+        paths: null
+        config: -c
         verbose: -v
         quiet: -q
-        # Add other relevant bandit options here
 
 fuzz:
   description: Runs fuzz tests to find unexpected behavior.
   tools:
-    atheris: # Placeholder - requires significant setup
-      command: python your_fuzz_script.py # Example command structure
+    atheris: # Placeholder
+      command: ["python", "your_fuzz_script.py"]
       option_mappings:
-        paths: null # Fuzzer targets might be passed differently
-        # Add other relevant atheris/fuzzer options here
+        paths: null
