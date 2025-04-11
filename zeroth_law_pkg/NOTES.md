@@ -206,3 +206,18 @@ The only configuration found to reliably execute `mypy` correctly *within the ho
 ```
 
 **Rationale for Workaround:** Adding the `echo` *before* the `sh -c '...'` command seems to influence the hook execution environment provided by `pre-commit` when using `language: system`. This allows the subsequent subshell (`sh -c`) to correctly resolve `sh`, `cd`, and `mypy` relative to the PATH and the CWD set by the dispatcher (`zeroth_law_pkg`). Without the preceding `echo`, the environment appeared inconsistent, potentially misinterpreting command paths or CWD. This workaround specifically addresses the hook execution environment quirk encountered in this setup.
+
+## Stable Branch Vision vs. Development Practicality (2025-04-11T09:57:24+08:00)
+
+**Goal:** The ultimate aim remains a `stable` branch where the Zeroth Law Framework (ZLF) is strictly enforced, potentially treating all warnings from consultant tools (`ruff`, `mypy`, `pylint`, etc.) as errors. This state relies on the Zeroth Law Tool (ZLT) being mature enough to orchestrate all checks, aggregate results, and provide unified feedback.
+
+**Current Reality:** ZLT is not yet capable of fulfilling this comprehensive orchestration role. Attempting to enforce the strict `stable` standard manually or with current pre-commit hooks alone creates excessive friction and hinders development flow, contradicting ZLF principles.
+
+**Decision & Rationale:** As a practical, temporary measure, the development process will operate with relaxed standards to facilitate progress until ZLT matures. The "warnings as errors" philosophy is suspended for non-critical issues during this phase.
+
+**Current Implementation:**
+*   **`pyproject.toml` Adjustment:** The `[tool.ruff.lint]` configuration has been modified:
+    *   `select = ["E", "F"]`: Only critical Pyflakes error categories (E, F) are selected for `ruff check`, significantly reducing the number of issues flagged during pre-commit.
+    *   `ignore = [...]`: A comprehensive list of specific warning/style rule codes has been added to `ignore` to further minimize noise from less critical checks.
+*   **Goal Preservation:** This relaxation is explicitly temporary. The long-term goal of a ZLT-enforced `stable` branch remains unchanged. The focus is on unblocking development while ZLT evolves.
+*   **Formatting:** Consistent formatting is still enforced by `ruff format` via IDE format-on-save, with the `pre-commit` hook acting as a final safety net.
