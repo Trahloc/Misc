@@ -3,11 +3,14 @@
 
 import json  # Re-add JSON import
 import logging
+import subprocess
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import click
+
+from .action_runner import load_tool_mapping, run_action  # Import necessary functions and constant
 
 # Import the new action runner
 # Internal imports
@@ -258,7 +261,37 @@ def _log_violations_as_text(
                     log.warning("    - %s", str(issue))
 
 
-# --- CLI Group and Global Options ---
+# --- Generic Action Handler ---
+@click.pass_context
+def _generic_action_handler(ctx: click.Context, paths: tuple[Path, ...], **kwargs) -> None:
+    """Generic callback for dynamically generated action commands."""
+    action_name = ctx.command.name
+    project_root = ctx.obj["project_root"]
+    tool_mapping = ctx.obj["tool_mapping"]
+    verbosity = ctx.obj.get("verbosity", 0)  # Get verbosity, default 0
+
+    log.info(f"Running dynamic action: {action_name}")
+
+    cli_args = {"verbosity": verbosity}
+    cli_args.update({k: v for k, v in kwargs.items() if v is not None and v is not False})
+
+    passed = run_action(
+        action_name=action_name,
+        mapping=tool_mapping,
+        project_root=project_root,
+        cli_args=cli_args,
+        paths=list(paths),
+    )
+
+    if not passed:
+        log.error(f"Action '{action_name}' failed.")
+        ctx.exit(1)
+    else:
+        log.info(f"Action '{action_name}' completed successfully.")
+        ctx.exit(0)
+
+
+# === Main CLI Group Definition ===
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(package_name="zeroth-law", prog_name="zeroth-law")
 @click.option(
@@ -293,285 +326,163 @@ def _log_violations_as_text(
 )
 @click.pass_context
 def cli_group(ctx: click.Context, verbosity: int, quiet: bool, color: bool | None, config_path_override: Path | None) -> None:
-    """Zeroth Law Compliance Auditor CLI."""
-    # --- Logging Setup ---
-    log_level = logging.WARNING  # Default
+    """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
+    # This function now only sets up context needed *at runtime* by commands.
+    # Dynamic command generation happens *outside* this function at module load time.
+
+    # Setup logging (based on arguments passed to the group)
     if quiet:
         log_level = logging.ERROR
     elif verbosity == 1:
         log_level = logging.INFO
     elif verbosity >= 2:
         log_level = logging.DEBUG
-
-    # Basic logging config (Add color handling later if needed)
+    else:
+        log_level = logging.WARNING
     logging.basicConfig(
         level=log_level,
-        format="%(asctime)s [%(levelname)-8s] %(message)s [%(name)s]",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    log.debug("Logging setup complete. Level: %s", logging.getLevelName(log_level))
 
-    # Store global options in context
-    ctx.ensure_object(dict)
-    ctx.obj["LOG_LEVEL"] = log_level
-    ctx.obj["COLOR"] = color
-    ctx.obj["VERBOSITY"] = verbosity
-    ctx.obj["QUIET"] = quiet
-    ctx.obj["CONFIG_PATH_OVERRIDE"] = config_path_override
+    # Find project root (might be needed by commands)
+    # Note: find_project_root needs a start_path
+    project_root = find_project_root(start_path=Path.cwd())
+    if not project_root:
+        # Log error but don't exit here, allow utility commands that might not need it
+        log.error("Could not determine project root. Some commands might fail.")
 
-    log.debug(
-        "CLI group initiated. log_level=%s, color=%s",
-        logging.getLevelName(log_level),
-        color,
-    )
+    # Load config (needed by commands) - Pass only the override path
+    config = load_config(config_path_override=config_path_override)
+    if config is None:
+        config = {}
 
-    # --- Determine Project Root & Load Config/Mapping ---
-    try:
-        project_root = find_project_root(Path.cwd())
-        if not project_root:
-            raise ValueError("Could not determine project root containing pyproject.toml or similar.")
-        log.debug(f"Detected project root: {project_root}")
-        ctx.obj["PROJECT_ROOT"] = project_root
-    except ValueError as e:
-        log.error(f"{e} Using current directory '{Path.cwd()}' as fallback.")
-        project_root = Path.cwd()
-        ctx.obj["PROJECT_ROOT"] = project_root
+    # Load tool mapping (needed by generic handler)
+    # Load it again here to store in context, even though it was loaded for command generation
+    tool_mapping = load_tool_mapping(project_root) if project_root else {}
+    if tool_mapping is None:
+        tool_mapping = {}
 
-    # Load config (respecting override)
-    config_to_load = config_path_override
-    if not config_to_load:
-        # Auto-detect config file (pyproject.toml is common)
-        potential_config = project_root / "pyproject.toml"
-        if potential_config.is_file():
-            config_to_load = potential_config
-            log.info(f"Auto-detected configuration file: {config_to_load}")
-
-    if config_to_load:
-        config_data = load_config(config_to_load)
-        ctx.obj["CONFIG"] = config_data
-    else:
-        log.warning("No configuration file specified or auto-detected. Using defaults.")
-        ctx.obj["CONFIG"] = {}
-
-    # Load tool mapping
-    mapping_data = load_tool_mapping(project_root)
-    if mapping_data is None:
-        log.error("Failed to load tool mapping. Aborting.")
-        ctx.exit(1)
-    ctx.obj["TOOL_MAPPING"] = mapping_data
-
-
-# --- NEW Action Commands ---
-
-# Import action runner after cli_group is defined
-from .action_runner import load_tool_mapping, run_action  # noqa: E402
-
-
-@cli_group.command("lint")
-@click.argument(
-    "paths",
-    nargs=-1,
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path),
-    required=False,  # Allow running on default paths
-)
-@click.pass_context
-def lint_command(ctx: click.Context, paths: tuple[Path, ...]) -> None:
-    """Run configured linters (ruff, mypy, etc.) on specified paths or defaults."""
-    log.info("Initiating lint action...")
-    mapping = ctx.obj.get("TOOL_MAPPING")
-    project_root = ctx.obj.get("PROJECT_ROOT")
-    cli_args = {
-        "verbose": ctx.obj.get("VERBOSITY", 0) > 0,
-        "quiet": ctx.obj.get("QUIET", False),
-        "config": ctx.obj.get("CONFIG_PATH_OVERRIDE"),
-        # Add other common/lint-specific flags here as needed
+    # Store context needed by commands
+    ctx.obj = {
+        "project_root": project_root,
+        "config": config,
+        "tool_mapping": tool_mapping,
+        "verbosity": verbosity,
+        "quiet": quiet,
     }
+    log.debug("CLI runtime context prepared.")
 
-    passed = run_action("lint", mapping, project_root, cli_args, list(paths))
 
-    if not passed:
-        log.error("Linting failed.")
-        ctx.exit(1)
+# === Dynamic Command Generation (at module load time) ===
+def _add_dynamic_commands() -> None:
+    """Loads mapping and adds commands to cli_group."""
+    # Need to find project root here as well for loading the mapping
+    temp_project_root = find_project_root(start_path=Path.cwd())
+    if not temp_project_root:
+        log.warning("Could not determine project root during command generation. No dynamic commands added.")
+        return
+
+    tool_mapping = load_tool_mapping(temp_project_root)
+
+    # Define global options handled by the main cli_group or implicitly
+    GLOBAL_OPTIONS = {"verbose", "quiet", "config"}
+    GLOBAL_SHORT_OPTIONS = {"-v", "-q", "-c"}  # Short names used by global options
+
+    if tool_mapping:
+        log.debug(f"Dynamically generating commands for actions: {list(tool_mapping.keys())}")
+        for action_name, action_config in tool_mapping.items():
+            if not isinstance(action_config, dict):
+                log.warning(f"Skipping invalid action configuration for '{action_name}': Expected a dictionary.")
+                continue
+
+            # Get ZLT option definitions for this action
+            zlt_options_config = action_config.get("zlt_options")
+            if not isinstance(zlt_options_config, dict):
+                log.warning(f"Skipping action '{action_name}' due to missing or invalid 'zlt_options' section.")
+                continue
+
+            command_help = action_config.get("description", f"Run the '{action_name}' action.")
+            params = []  # List to hold click parameters
+
+            # Create Click parameters based on zlt_options
+            for zlt_opt_name, opt_conf in zlt_options_config.items():
+                if not isinstance(opt_conf, dict):
+                    continue
+
+                # Skip creating subcommand options for those handled globally
+                if zlt_opt_name in GLOBAL_OPTIONS:
+                    log.debug(f"Skipping subcommand option for global option: {zlt_opt_name}")
+                    continue
+
+                option_type = opt_conf.get("type")
+
+                # Handle positional paths argument
+                if option_type == "positional":
+                    params.append(
+                        click.Argument(
+                            ["paths"],  # Standard name for positional paths
+                            nargs=-1,
+                            type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path),
+                            required=False,
+                            # default=opt_conf.get("default") # Click doesn't directly support list default for nargs=-1 here
+                        )
+                    )
+                    continue  # Move to next zlt_option
+
+                # Handle flag/value options
+                click_option_names = [f"--{zlt_opt_name}"]
+                short_name = opt_conf.get("short")
+                if short_name:
+                    if short_name in GLOBAL_SHORT_OPTIONS:
+                        log.warning(
+                            f"Short option '{short_name}' for '{zlt_opt_name}' in action '{action_name}' "
+                            f"conflicts with a global option. Skipping short name."
+                        )
+                    else:
+                        # TODO: Check for conflicts within the *same* command's options?
+                        click_option_names.append(short_name)
+
+                is_flag = option_type == "flag"
+                # Separate keyword args from positional option names
+                option_kwargs = {
+                    "is_flag": is_flag,
+                    "help": opt_conf.get("description"),
+                    "default": None if not is_flag else False,
+                }
+                if not is_flag:
+                    opt_val_type = opt_conf.get("value_type", "str")
+                    type_map = {"str": str, "int": int, "path": click.Path(path_type=Path)}
+                    option_kwargs["type"] = type_map.get(opt_val_type, str)
+
+                try:
+                    # Pass option names list as the FIRST argument, others as **kwargs
+                    params.append(click.Option(click_option_names, **option_kwargs))
+                except Exception as e:
+                    log.error(f"Failed to create click option for '{zlt_opt_name}' in action '{action_name}': {e}")
+
+            # Create and add the command
+            try:
+                cmd = click.Command(
+                    name=action_name,
+                    callback=_generic_action_handler,
+                    params=params,
+                    help=command_help,
+                    context_settings=CONTEXT_SETTINGS,
+                )
+                cli_group.add_command(cmd)
+                log.debug(f"Added dynamic command '{action_name}'")
+            except Exception as e:
+                log.error(f"Failed to create or add command for action '{action_name}': {e}")
     else:
-        log.info("Linting completed successfully.")
-        ctx.exit(0)
+        log.warning("No tool mapping loaded, dynamic command generation skipped.")
 
 
-@cli_group.command("format")
-@click.option("--check", is_flag=True, help="Run formatter in check mode (no changes).")
-@click.argument(
-    "paths",
-    nargs=-1,
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path),
-    required=False,
-)
-@click.pass_context
-def format_command(ctx: click.Context, check: bool, paths: tuple[Path, ...]) -> None:
-    """Run configured formatter (ruff format) on specified paths or defaults."""
-    action_name = "format"
-    log.info(f"Initiating {action_name} action... (Check mode: {check})")
-    mapping = ctx.obj.get("TOOL_MAPPING")
-    project_root = ctx.obj.get("PROJECT_ROOT")
-    cli_args = {
-        "check": check,
-        "verbose": ctx.obj.get("VERBOSITY", 0) > 0,
-        "quiet": ctx.obj.get("QUIET", False),
-        "config": ctx.obj.get("CONFIG_PATH_OVERRIDE"),
-    }
-
-    passed = run_action(action_name, mapping, project_root, cli_args, list(paths))
-
-    if not passed:
-        log.error(f".{action_name.capitalize()} failed.")
-        ctx.exit(1)
-    else:
-        log.info(f".{action_name.capitalize()} completed successfully.")
-        ctx.exit(0)
+# Call the function to add dynamic commands when the module is loaded
+_add_dynamic_commands()
 
 
-@cli_group.command("test")
-# Add relevant pytest options as click options, mapping keys to mapping names
-@click.option("-k", "k", help="pytest: Only run tests matching KEYWORD expression.")
-@click.option("-m", "m", help="pytest: Only run tests matching MARK expression.")
-@click.option("-x", "x", is_flag=True, help="pytest: Exit instantly on first error.")
-@click.argument(
-    "paths",
-    nargs=-1,
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path),
-    required=False,
-)
-@click.pass_context
-def test_command(ctx: click.Context, paths: tuple[Path, ...], **kwargs) -> None:
-    """Run the test suite (pytest) on specified paths or defaults."""
-    action_name = "test"
-    log.info(f"Initiating {action_name} action...")
-    mapping = ctx.obj.get("TOOL_MAPPING")
-    project_root = ctx.obj.get("PROJECT_ROOT")
-    cli_args = {
-        "verbose": ctx.obj.get("VERBOSITY", 0) > 0,
-        "quiet": ctx.obj.get("QUIET", False),
-        "config": ctx.obj.get("CONFIG_PATH_OVERRIDE"),
-        # Add passthrough args from kwargs
-        **{k: v for k, v in kwargs.items() if v is not None and v is not False},
-    }
-
-    passed = run_action(action_name, mapping, project_root, cli_args, list(paths))
-
-    if not passed:
-        log.error(f".{action_name.capitalize()} failed.")
-        ctx.exit(1)
-    else:
-        log.info(f".{action_name.capitalize()} completed successfully.")
-        ctx.exit(0)
-
-
-@cli_group.command("validate")
-# This command orchestrates multiple checks
-@click.pass_context
-def validate_command(ctx: click.Context) -> None:
-    """Run all configured ZLF checks (lint, test, format --check, etc.)."""
-    log.info("Initiating comprehensive ZLF validation...")
-    config = ctx.obj.get("CONFIG")  # Use loaded config
-    mapping = ctx.obj.get("TOOL_MAPPING")
-    project_root = ctx.obj.get("PROJECT_ROOT")
-    cli_args = {
-        "verbose": ctx.obj.get("VERBOSITY", 0) > 0,
-        "quiet": ctx.obj.get("QUIET", False),
-        "config": ctx.obj.get("CONFIG_PATH_OVERRIDE"),
-    }
-    paths = []  # Run on defaults for validate
-
-    all_passed = True
-
-    # Run Linters
-    log.info("--- Running Linters ---")
-    if not run_action("lint", mapping, project_root, cli_args, paths):
-        all_passed = False
-        log.error("Linting checks failed.")
-    else:
-        log.info("Linting checks passed.")
-
-    # Run Format Check
-    log.info("--- Checking Formatting ---")
-    format_check_args = cli_args | {"check": True}  # Add check=True
-    if not run_action("format", mapping, project_root, format_check_args, paths):
-        all_passed = False
-        log.error("Formatting check failed.")
-    else:
-        log.info("Formatting check passed.")
-
-    # Run Tests
-    log.info("--- Running Tests ---")
-    if not run_action("test", mapping, project_root, cli_args, paths):
-        all_passed = False
-        log.error("Tests failed.")
-    else:
-        log.info("Tests passed.")
-
-    # TODO: Add calls to other checks (duplication, coverage, fuzz) based on config/ZLF rules
-
-    log.info("--- Validation Summary ---")
-    if not all_passed:
-        log.error("ZLF validation failed.")
-        ctx.exit(1)
-    else:
-        log.info("ZLF validation completed successfully.")
-        ctx.exit(0)
-
-
-# Remove the internal helper functions as they are moved or deprecated
-# def setup_logging(log_level: int, use_color: bool) -> None:
-# def find_files_to_audit(...)
-# def analyze_files(...)
-# def _format_violations_as_json(...)
-# def _log_violations_as_text(...)
-# def run_audit(...)
-
-
-# --- Keep Utility Commands (audit - deprecated, install-git-hook, restore-git-hooks) ---
-@cli_group.command("audit", deprecated=True)
-@click.argument(
-    "paths",
-    nargs=-1,
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path),
-    default=None,
-)
-@click.option(
-    "-c",
-    "--config",
-    "config_path",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, path_type=Path),
-    help="Path to configuration file. DEPRECATED: Config loaded automatically.",
-)
-@click.option(
-    "-r",
-    "--recursive",
-    is_flag=True,
-    help="DEPRECATED: Recursively search directories for files. Use underlying tools for directory handling.",
-)
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="DEPRECATED: JSON output controlled by validate command or global flags.",
-)
-@click.pass_context
-def audit_command(
-    ctx: click.Context,
-    paths: tuple[Path, ...],
-    config_path: Path | None,
-    recursive: bool,
-    output_json: bool = False,
-) -> None:
-    """DEPRECATED: Use the 'validate' command instead."""
-    log.warning("The 'audit' command is deprecated. Use specific action commands like 'lint', 'test', or 'validate'.")
-    # Maybe forward to validate or just show the warning?
-    # For now, just warn and exit.
-    # ctx.forward(validate_command)
-    click.echo("Use 'zlt validate' or other specific commands.", err=True)
-    ctx.exit(1)
-
-
-# install-git-hook command (keep as is, but use context for root)
+# === Utility Commands (Defined *after* cli_group is created and dynamic commands are added) ===
 @cli_group.command("install-git-hook")
 @click.option(
     "--git-root",
@@ -581,62 +492,48 @@ def audit_command(
 )
 @click.pass_context
 def install_git_hook(ctx: click.Context, git_root: str | None) -> None:
-    """Install the custom multi-project pre-commit hook script."""
-    log_level = ctx.obj.get("LOG_LEVEL")
-    logging.getLogger().setLevel(log_level)
-
-    log.debug("Install git hook command called", specified_git_root=git_root)
+    """Installs the custom ZLT pre-commit hook for multi-project support."""
+    # Access project_root from context if needed, but don't rely on it being set if called before cli_group
+    # For robustness, maybe re-find roots here if needed?
+    project_root = ctx.obj.get("project_root")  # Can be None if context setup failed
+    if not project_root:
+        project_root = find_project_root(start_path=Path.cwd())  # Find again if needed
 
     try:
-        # Determine the target Git root
-        if git_root:
-            target_git_root_path = Path(git_root).resolve()
-            # Verify it's actually a git root or inside one
-            actual_git_root = find_git_root(target_git_root_path)
-            if actual_git_root != target_git_root_path:
-                log.warning(f"Provided path '{git_root}' is not the Git root. Using detected root: {actual_git_root}")
-                target_git_root_path = actual_git_root
+        git_root_path = Path(git_root) if git_root else find_git_root(start_path=Path.cwd())  # Find relative to CWD
+        if not git_root_path:
+            log.error("Could not determine Git repository root. Please specify with --git-root.")
+            ctx.exit(1)
+
+        # Ensure project_root is valid before using its name
+        if not project_root or not project_root.is_dir():
+            log.error("Project root is invalid or not found. Cannot install hook relative to project.")
+            ctx.exit(1)
+
+        log.info(f"Using Git root: {git_root_path}")
+        log.info(f"Using Project root: {project_root}")
+
+        root_pre_commit_config = git_root_path / ".pre-commit-config.yaml"
+        if root_pre_commit_config.exists():
+            log.warning(
+                f"Found existing {root_pre_commit_config}. "
+                f"The ZLT hook will dispatch to project-specific configs "
+                f"like {project_root.name}/.pre-commit-config.yaml, "
+                f"potentially bypassing the root config during commit."
+            )
+            log.warning("If this is not a multi-project monorepo, consider using 'zlt restore-git-hooks'.")
+
+        success = install_git_hook_script(git_root_path, project_root)
+        if success:
+            log.info("Successfully installed ZLT pre-commit hook script.")
         else:
-            # Auto-detect from project root or CWD
-            start_path = ctx.obj.get("PROJECT_ROOT") or Path.cwd()
-            target_git_root_path = find_git_root(start_path)
-
-        if not target_git_root_path:
-            raise ValueError("Could not determine Git repository root.")
-
-        log.info(f"Installing hook in Git root: {target_git_root_path}")
-        hook_file_path = install_git_hook_script(target_git_root_path)
-        click.echo(f"Successfully installed Zeroth Law custom pre-commit hook to: {hook_file_path}")
-
-        # Check for root pre-commit config and warn if found
-        root_config_path = target_git_root_path / ".pre-commit-config.yaml"
-        if root_config_path.is_file():
-            log.warning("Root pre-commit config found during custom hook installation.")
-            # (Warning messages remain the same)
-            click.echo("-" * 20, err=True)
-            click.echo("WARNING: Found '.pre-commit-config.yaml' at the Git root.", err=True)
-            click.echo("         The Zeroth Law custom multi-project hook has been installed.", err=True)
-            click.echo("         This hook prioritizes project-specific configs in subdirectories.", err=True)
-            click.echo("         If this repository IS NOT intended as a multi-project monorepo,", err=True)
-            click.echo("         you should restore the standard pre-commit hook behavior.", err=True)
-            click.echo("         Consider running: zeroth-law restore-git-hooks", err=True)
-            click.echo("-" * 20, err=True)
-
-    except ValueError as e:
-        log.error(f"Git hook installation failed: {e}")
-        click.echo(f"Error: {e}", err=True)
-        ctx.exit(1)
-    except ImportError as e:
-        log.error(f"Import error: {e}")
-        click.echo(f"Error: Required function not available: {e}", err=True)
-        ctx.exit(1)
+            log.error("Failed to install ZLT pre-commit hook script.")
+            ctx.exit(1)
     except Exception as e:
-        log.exception("Unexpected error during Git hook installation", exc_info=e)
-        click.echo(f"An unexpected error occurred: {e}", err=True)
+        log.exception("An error occurred during git hook installation.", exc_info=e)
         ctx.exit(1)
 
 
-# --- Restore Git Hooks Command --- (Use context for root)
 @cli_group.command("restore-git-hooks")
 @click.option(
     "--git-root",
@@ -646,48 +543,50 @@ def install_git_hook(ctx: click.Context, git_root: str | None) -> None:
 )
 @click.pass_context
 def restore_git_hooks(ctx: click.Context, git_root: str | None) -> None:
-    """Restore the default pre-commit hook script using 'pre-commit install'."""
-    log_level = ctx.obj.get("LOG_LEVEL")
-    logging.getLogger().setLevel(log_level)
-
-    log.debug("Restore git hooks command called", specified_git_root=git_root)
-
+    """Restores standard pre-commit hooks, removing the ZLT dispatcher."""
+    project_root = ctx.obj["project_root"]
     try:
-        from zeroth_law.git_utils import restore_git_hooks as restore_hooks_func  # Avoid name clash
+        git_root_path = Path(git_root) if git_root else find_git_root(start_path=project_root)
+        if not git_root_path:
+            log.error("Could not determine Git repository root. Please specify with --git-root.")
+            ctx.exit(1)
 
-        # Determine the target Git root
-        if git_root:
-            target_git_root_path = Path(git_root).resolve()
-            actual_git_root = find_git_root(target_git_root_path)
-            if actual_git_root != target_git_root_path:
-                log.warning(f"Provided path '{git_root}' is not the Git root. Using detected root: {actual_git_root}")
-                target_git_root_path = actual_git_root
-        else:
-            start_path = ctx.obj.get("PROJECT_ROOT") or Path.cwd()
-            target_git_root_path = find_git_root(start_path)
+        log.info(f"Attempting to restore standard pre-commit hooks in: {git_root_path}")
 
-        if not target_git_root_path:
-            raise ValueError("Could not determine Git repository root.")
+        # Attempt to run 'pre-commit install' in the git root
+        # This might require pre-commit to be installed globally or in the environment
+        try:
+            result = subprocess.run(
+                ["pre-commit", "install"],
+                cwd=git_root_path,
+                capture_output=True,
+                text=True,
+                check=True,
+                encoding="utf-8",
+            )
+            log.info("Successfully ran 'pre-commit install' to restore hooks.")
+            log.debug("pre-commit install output:\n%s", result.stdout)
+        except FileNotFoundError:
+            log.error("'pre-commit' command not found. Cannot restore hooks automatically.")
+            log.error("Please install pre-commit and run 'pre-commit install' manually in the git root.")
+            ctx.exit(1)
+        except subprocess.CalledProcessError as e:
+            log.error(f"'pre-commit install' failed (Exit Code: {e.returncode}):")
+            log.error("--- stderr ---")
+            log.error(e.stderr)
+            log.error("Please check your pre-commit setup and try running manually.")
+            ctx.exit(1)
+        except Exception as e:
+            log.exception("An unexpected error occurred while running 'pre-commit install'.", exc_info=e)
+            ctx.exit(1)
 
-        log.info(f"Restoring default hooks in Git root: {target_git_root_path}")
-        restore_hooks_func(target_git_root_path)
-        click.echo("Default pre-commit hooks restored successfully.")
-
-    except ValueError as e:
-        log.error(f"Git hook restoration failed: {e}")
-        click.echo(f"Error: {e}", err=True)
-        ctx.exit(1)
-    except ImportError as e:
-        log.error(f"Import error: {e}")
-        click.echo(f"Error: Required function not available: {e}", err=True)
-        ctx.exit(1)
     except Exception as e:
-        log.exception("Unexpected error during Git hook restoration", exc_info=e)
-        click.echo(f"An unexpected error occurred: {e}", err=True)
+        log.exception("An error occurred during git hook restoration.", exc_info=e)
         ctx.exit(1)
 
 
 if __name__ == "__main__":
     cli_group()
+
 
 # <<< ZEROTH LAW FOOTER >>>
