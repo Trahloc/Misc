@@ -51,6 +51,7 @@ types-setuptools = "^78.1.0" # Align with installed version
 types-pyyaml = "^6.0.12.20250402"
 [tool.poetry.scripts]
 zeroth-law = "zeroth_law.cli:cli_group"
+zlt = "zeroth_law.cli:cli_group" # Add zlt alias
 
 # --- Add Zeroth Law Tool Configuration --- #
 [tool.zeroth-law]
