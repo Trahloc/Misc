@@ -221,3 +221,72 @@ The only configuration found to reliably execute `mypy` correctly *within the ho
     *   `ignore = [...]`: A comprehensive list of specific warning/style rule codes has been added to `ignore` to further minimize noise from less critical checks.
 *   **Goal Preservation:** This relaxation is explicitly temporary and applies to the `dev` branch. The long-term goal of a ZLT-enforced `main` branch remains unchanged. The focus is on unblocking development while ZLT evolves.
 *   **Formatting:** Consistent formatting is still enforced by `ruff format` via IDE format-on-save, with the `pre-commit` hook acting as a final safety net.
+
+## Finalized tool_mapping.yaml Structure (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - AI: Run date --iso-8601=seconds)
+
+**Problem:** Previous attempts to structure `option_mappings` in `tool_mapping.yaml` using nested dictionaries or lists of dictionaries failed due to `PyYAML` parsing errors (`mapping values are not allowed here`), despite the structures appearing valid according to the YAML specification. This blocked the goal of creating a rich mapping for a unified CLI interface.
+
+**Goal:** Define a YAML structure that:
+1.  Is reliably parsed by `PyYAML`.
+2.  Clearly defines the unified options presented by `zlt` for a given action (the "ZLT Interface").
+3.  Maps these unified `zlt` options to the specific command-line arguments required by each underlying "consultant" tool.
+4.  Implicitly acts as a capability map, showing which tools support which conceptual `zlt` options.
+5.  Is information-rich, allowing definitions of option types, descriptions, etc.
+
+**Solution: Separated `zlt_options` and `maps_options`**
+
+```yaml
+# Action Definition (e.g., format)
+format:
+  description: Description of the ZLT action.
+
+  # 1. Define the ZLT unified interface concepts for this action
+  zlt_options:
+    # Key: Conceptual option name used in zlt CLI (e.g., --quiet)
+    quiet:
+      # Value: Mapping defining the ZLT option's properties
+      type: flag # Type (flag, value)
+      # short: -q # Optional: Short flag name for CLI
+      description: Unified description for this ZLT option.
+    config:
+      type: value
+      value_type: path # Optional: Hint for CLI type
+      description: Unified description.
+    # Special entry for positional paths
+    paths:
+      type: positional
+      # default: ["src"] # Optional list of default paths
+      description: Unified description for paths.
+    # ... other conceptual ZLT options for this action ...
+
+  # 2. Define tools implementing this action
+  tools:
+    # Key: Unique name for the tool entry
+    ruff_format:
+      command: ruff format # Base command for the tool
+      # Value: Mapping defining the tool and its specific option translations
+      maps_options:
+        # Key: The name of the option from 'zlt_options' above (e.g., quiet)
+        # Value: The specific argument string the *tool* expects (e.g., -q)
+        quiet: -q
+        config: --config
+        paths: null # Indicates tool uses positional paths defined in zlt_options.paths
+        # Note: If 'verbose' existed in zlt_options but isn't listed here,
+        #       it means ruff_format doesn't support zlt's verbose concept.
+    black:
+      command: black
+      maps_options:
+        quiet: --quiet # Black uses a different flag for the same concept
+        config: --config
+        paths: null
+        # ... potentially other mappings specific to black ...
+```
+
+**Rationale:**
+*   **Parsability:** This structure uses standard nested mappings (`zlt_options`) and simple key-value mappings (`maps_options`) in ways that `PyYAML` consistently handles, avoiding the previous parsing errors.
+*   **Unified Interface:** `zlt_options` clearly defines the public-facing options for each `zlt` action.
+*   **Translation Layer:** `maps_options` provides the explicit mapping from the `zlt` concept to the tool's specific argument string.
+*   **Capability Map:** The presence or absence of a key in `maps_options` indicates whether a specific tool supports that conceptual `zlt` option.
+*   **Richness:** `zlt_options` holds the detailed metadata (`type`, `description`, `value_type`).
+
+**Implementation:** This requires refactoring `cli.py` to build Click options from `zlt_options` and `action_runner.py` to use `maps_options` for translating arguments during execution.
