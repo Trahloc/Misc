@@ -10,13 +10,9 @@ from typing import Any
 
 import click
 
-from .action_runner import load_tool_mapping, run_action  # Import necessary functions and constant
-
-# Import the new action runner
-# Internal imports
-from .config_loader import (
-    load_config,
-)
+# from .action_runner import load_tool_mapping, run_action  # Import necessary functions and constant
+from .action_runner import run_action  # Corrected import
+from .config_loader import load_config
 from .file_finder import find_python_files
 from .git_utils import (
     find_git_root,
@@ -265,30 +261,55 @@ def _log_violations_as_text(
 @click.pass_context
 def _generic_action_handler(ctx: click.Context, paths: tuple[Path, ...], **kwargs) -> None:
     """Generic callback for dynamically generated action commands."""
+    # Collect all arguments passed to the ZLT command
+    # Filter out None values, maybe handle defaults?
+    cli_options = {k: v for k, v in kwargs.items() if v is not None and k not in ["paths"]}
+
+    # Handle paths separately, ensuring they are Path objects
+    paths_arg = kwargs.get("paths", [])
+    paths = [Path(p) for p in paths_arg] if paths_arg else []
+
+    # Get the action name from the invoked command
     action_name = ctx.command.name
-    project_root = ctx.obj["project_root"]
-    tool_mapping = ctx.obj["tool_mapping"]
-    verbosity = ctx.obj.get("verbosity", 0)  # Get verbosity, default 0
+    log.debug(f"Generic handler invoked for action: {action_name}")
+    log.debug(f"CLI Options received: {cli_options}")
+    log.debug(f"Paths received: {paths}")
 
-    log.info(f"Running dynamic action: {action_name}")
+    # Retrieve the full config and project root from context
+    project_root = ctx.obj.get("project_root")
+    full_config = ctx.obj.get("config")
 
-    cli_args = {"verbosity": verbosity}
-    cli_args.update({k: v for k, v in kwargs.items() if v is not None and v is not False})
-
-    passed = run_action(
-        action_name=action_name,
-        mapping=tool_mapping,
-        project_root=project_root,
-        cli_args=cli_args,
-        paths=list(paths),
-    )
-
-    if not passed:
-        log.error(f"Action '{action_name}' failed.")
+    if not project_root or not full_config:
+        log.error("Project root or configuration missing in context. Cannot run action.")
         ctx.exit(1)
-    else:
-        log.info(f"Action '{action_name}' completed successfully.")
-        ctx.exit(0)
+
+    # Get the specific configuration for this action
+    action_config = full_config.get("actions", {}).get(action_name)
+    if not action_config or not isinstance(action_config, dict):
+        log.error(f"Configuration for action '{action_name}' not found or invalid.")
+        ctx.exit(1)
+
+    # Call the action runner with the specific action config
+    try:
+        success = run_action(
+            action_name=action_name,
+            action_config=action_config,  # Pass the specific action's config
+            project_root=project_root,
+            cli_args=cli_options,
+            paths=paths,
+        )
+
+        if not success:
+            log.error(f"Action '{action_name}' failed.")
+            # Optionally, exit with a non-zero code to indicate failure
+            ctx.exit(1)
+        else:
+            log.info(f"Action '{action_name}' completed successfully.")
+            # Success, exit code 0 (default)
+
+    except Exception as e:
+        log.exception(f"An unexpected error occurred running action '{action_name}'", exc_info=e)
+        ctx.exit(1)
 
 
 # === Main CLI Group Definition ===
@@ -357,49 +378,61 @@ def cli_group(ctx: click.Context, verbosity: int, quiet: bool, color: bool | Non
     if config is None:
         config = {}
 
-    # Load tool mapping (needed by generic handler)
-    # Load it again here to store in context, even though it was loaded for command generation
-    tool_mapping = load_tool_mapping(project_root) if project_root else {}
-    if tool_mapping is None:
-        tool_mapping = {}
+    # Store project_root and config in context for commands to use
+    ctx.ensure_object(dict)
+    ctx.obj["project_root"] = project_root
+    ctx.obj["config"] = config  # Store the loaded config (which includes actions)
+    ctx.obj["verbosity"] = verbosity  # Store verbosity
+    ctx.obj["quiet"] = quiet  # Store quiet flag
 
-    # Store context needed by commands
-    ctx.obj = {
-        "project_root": project_root,
-        "config": config,
-        "tool_mapping": tool_mapping,
-        "verbosity": verbosity,
-        "quiet": quiet,
-    }
-    log.debug("CLI runtime context prepared.")
+    # Handle color option
 
 
 # === Dynamic Command Generation (at module load time) ===
 def _add_dynamic_commands() -> None:
     """Loads mapping and adds commands to cli_group."""
-    # Need to find project root here as well for loading the mapping
-    temp_project_root = find_project_root(start_path=Path.cwd())
-    if not temp_project_root:
-        log.warning("Could not determine project root during command generation. No dynamic commands added.")
-        return
+    # Find the project root path once
+    try:
+        temp_project_root = find_project_root(start_path=Path.cwd())
+        if not temp_project_root:
+            log.warning("Could not find project root. Dynamic commands may not load correctly.")
+            # Proceed without project root, some features might fail later
+    except Exception as e:
+        log.warning(f"Error finding project root: {e}. Dynamic commands may not load correctly.")
+        temp_project_root = None
 
-    tool_mapping = load_tool_mapping(temp_project_root)
+    # Load the main configuration which should now include the 'actions'
+    try:
+        # Use the found project root to potentially locate pyproject.toml if not overridden
+        # Ensure the CWD is correct if temp_project_root is used implicitly by load_config
+        # We assume load_config searches from CWD if no override is given
+        zlt_config = load_config()
+        action_definitions = zlt_config.get("actions", {})
+        if not isinstance(action_definitions, dict):
+            log.warning(f"Loaded 'actions' is not a dictionary: {type(action_definitions)}. Skipping dynamic commands.")
+            action_definitions = {}
+    except FileNotFoundError:
+        log.warning("Configuration file (e.g., pyproject.toml) not found. Skipping dynamic commands.")
+        action_definitions = {}
+    except Exception as e:
+        log.warning(f"Error loading configuration: {e}. Skipping dynamic commands.")
+        action_definitions = {}
 
     # Define global options handled by the main cli_group or implicitly
     GLOBAL_OPTIONS = {"verbose", "quiet", "config"}
     GLOBAL_SHORT_OPTIONS = {"-v", "-q", "-c"}  # Short names used by global options
 
-    if tool_mapping:
-        log.debug(f"Dynamically generating commands for actions: {list(tool_mapping.keys())}")
-        for action_name, action_config in tool_mapping.items():
+    if action_definitions:
+        log.debug(f"Dynamically generating commands for actions: {list(action_definitions.keys())}")
+        for action_name, action_config in action_definitions.items():
             if not isinstance(action_config, dict):
                 log.warning(f"Skipping invalid action configuration for '{action_name}': Expected a dictionary.")
                 continue
 
-            # Get ZLT option definitions for this action
+            # Get ZLT option definitions for this action from pyproject.toml
             zlt_options_config = action_config.get("zlt_options")
             if not isinstance(zlt_options_config, dict):
-                log.warning(f"Skipping action '{action_name}' due to missing or invalid 'zlt_options' section.")
+                log.warning(f"Skipping action '{action_name}' due to missing or invalid 'zlt_options' section in pyproject.toml.")
                 continue
 
             command_help = action_config.get("description", f"Run the '{action_name}' action.")
@@ -475,7 +508,7 @@ def _add_dynamic_commands() -> None:
             except Exception as e:
                 log.error(f"Failed to create or add command for action '{action_name}': {e}")
     else:
-        log.warning("No tool mapping loaded, dynamic command generation skipped.")
+        log.warning("No actions defined in configuration, dynamic command generation skipped.")
 
 
 # Call the function to add dynamic commands when the module is loaded
@@ -523,11 +556,14 @@ def install_git_hook(ctx: click.Context, git_root: str | None) -> None:
             )
             log.warning("If this is not a multi-project monorepo, consider using 'zlt restore-git-hooks'.")
 
-        success = install_git_hook_script(git_root_path, project_root)
-        if success:
-            log.info("Successfully installed ZLT pre-commit hook script.")
-        else:
-            log.error("Failed to install ZLT pre-commit hook script.")
+        try:
+            log.info(f"Installing custom multi-project pre-commit hook in {git_root_path}")
+            # Assuming install_git_hook_script only needs the git_root
+            hook_path = install_git_hook_script(git_root_path)  # Pass only git_root
+            log.info(f"Hook installed successfully at {hook_path}")
+            ctx.exit(0)
+        except ValueError as e:
+            log.error(f"Could not find Git repository root: {e}")
             ctx.exit(1)
     except Exception as e:
         log.exception("An error occurred during git hook installation.", exc_info=e)

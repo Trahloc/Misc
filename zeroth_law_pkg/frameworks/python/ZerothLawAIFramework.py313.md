@@ -1,7 +1,7 @@
 # Zeroth Law Framework (ZLF): AI-Driven Python Code Quality
 
 **Co-Author**: Trahloc colDhart
-**Version**: 2025-04-10T13:10:28+08:00 # AI run `date --iso-8601=seconds` to update
+**Version**: 2025-04-18T14:29:24+08:00 # AI run `date --iso-8601=seconds` to update
 
 ---
 
@@ -31,12 +31,12 @@
     *   [5.3 Footer](#53-footer)
 *   [6. AUTOMATION](#6-automation)
     *   [6.1 Tools (Consultants)](#61-tools-consultants)
-    *   [6.2 Environment & Dependency Workflow (Using Poetry)](#62-environment--dependency-workflow-using-poetry)
+    *   [6.2 Environment & Dependency Workflow (Using `uv`)](#62-environment--dependency-workflow-using-uv)
     *   [6.3 Project Structure Example (Conceptual)](#63-project-structure-example-conceptual)
     *   [6.4 Pre-Commit Configuration (`.pre-commit-config.yaml`)](#64-pre-commit-configuration-pre-commit-configyaml)
-    *   [6.5 Example CI Pipeline (GitHub Actions with Poetry)](#65-example-ci-pipeline-github-actions-with-poetry)
+    *   [6.5 Example CI Pipeline (GitHub Actions with `uv`)](#65-example-ci-pipeline-github-actions-with-uv)
 *   [7. COMMON ISSUES & FIXES](#7-common-issues--fixes)
-    *   [7.1 `pytest` Import Errors (with Poetry)](#71-pytest-import-errors-with-poetry)
+    *   [7.1 `pytest` Import Errors (with `uv`)](#71-pytest-import-errors-with-uv)
     *   [7.2 Pre-Commit Failures](#72-pre-commit-failures)
 *   [8. PROJECT KNOWLEDGE MANAGEMENT](#8-project-knowledge-management)
 *   [9. ONBOARDING LEGACY CODE](#9-onboarding-legacy-code)
@@ -60,7 +60,7 @@
 
 ## 1. PURPOSE
 
-Design a minimal, AI-first **Zeroth Law Framework (ZLF)** for Python code quality targeting **Python 3.13+** and **`poetry`** for environment and dependency management. This ZLF serves as the primary rulebook for an **AI developer**, with human oversight limited to strategic direction and ambiguity resolution.
+Design a minimal, AI-first **Zeroth Law Framework (ZLF)** for Python code quality targeting **Python 3.13+** and **`uv`** for environment and dependency management. This ZLF serves as the primary rulebook for an **AI developer**, with human oversight limited to strategic direction and ambiguity resolution.
 
 The **Zeroth Law Tool (ZLT)** serves as the programmatic embodiment and enforcer of this framework. Its long-term vision is to orchestrate the execution of specialized 'consultant' tools (e.g., `ruff`, `mypy`, `pytest`, fuzzers; see Section [6.1](#61-tools-consultants)) based on ZLF rules and project configuration, providing a unified, deterministic judgment of compliance (the **Programmatic Ground Truth**). While ZLT development progresses towards this goal, adherence currently relies on both direct tool usage and ZLT's existing capabilities.
 
@@ -70,9 +70,9 @@ By mandating **Test-Driven Development (TDD)** (Section [4.1](#41-test-driven-de
 
 All new or modified code **must** be developed by the AI developer following the strict **Test-Driven Development (TDD)** cycle (Red-Green-Refactor; see Section [4.1](#41-test-driven-development-tdd-workflow)), leveraging **Data-Driven Testing (DDT)** techniques where applicable (see Section [4.2](#42-data-driven-testing-ddt-practices)). Code **must** pass all associated tests and automated guideline checks (orchestrated or verified by ZLT) before merging into the main development branch (`dev`).
 
-Automated checks (`ruff`, `mypy`, `pylint R0801`, `pytest` - the "consultant tools") via `pre-commit` (Section [6.4](#64-pre-commit-configuration-pre-commit-configyaml)) and CI (Section [6.5](#65-example-ci-pipeline-github-actions-with-poetry)) act as the primary, non-negotiable feedback loop, applying requirements based on `pyproject.toml` configurations. Merging is blocked until compliance is achieved. The AI developer **must** use this automated feedback (ideally presented unifiedly by ZLT) to iteratively correct code. If automated checks present multiple failures, the **recommended** fixing order is: **Format (`ruff format`) -> Type/Lint (`mypy`, `ruff check`) -> Tests (`pytest`)**.
+Automated checks (`ruff`, `mypy`, `pylint R0801`, `pytest` - the "consultant tools") via `pre-commit` (Section [6.4](#64-pre-commit-configuration-pre-commit-configyaml)) and CI (Section [6.5](#65-example-ci-pipeline-github-actions-with-uv)) act as the primary, non-negotiable feedback loop, applying requirements based on `pyproject.toml` configurations. Merging is blocked until compliance is achieved. The AI developer **must** use this automated feedback (ideally presented unifiedly by ZLT) to iteratively correct code. If automated checks present multiple failures, the **recommended** fixing order is: **Format (`ruff format`) -> Type/Lint (`mypy`, `ruff check`) -> Tests (`pytest`)**.
 
-Development **must** utilize **`poetry`** environments defined by `pyproject.toml` and managed via `poetry install`/`poetry run` (see Section [6.2](#62-environment--dependency-workflow-using-poetry)). The human collaborator provides high-level goals and resolves only true ambiguities or AI development loops, not routine code review. The target end-state includes a `stable` branch where *all* warnings are treated as errors, representing a higher quality gate enforced by ZLT.
+Development **must** utilize **`uv`** environments defined by `pyproject.toml` and managed via `uv venv`/`uv pip sync`/`uv run` (see Section [6.2](#62-environment--dependency-workflow-using-uv)). The human collaborator provides high-level goals and resolves only true ambiguities or AI development loops, not routine code review. The target end-state includes a `stable` branch where *all* warnings are treated as errors, representing a higher quality gate enforced by ZLT.
 
 ## 3. GUIDING PRINCIPLES
 
@@ -82,30 +82,31 @@ These principles form the foundation of the ZLF and guide the AI developer's act
 2.  **Data-Driven Testing (DDT) Efficiency**: **Require** leveraging DDT techniques, primarily using `pytest.mark.parametrize`, when testing the same logic path against multiple input/output variations. Separate test data from test logic for clarity and maintainability, especially for complex inputs (see Section [4.2](#42-data-driven-testing-ddt-practices)). This complements TDD by efficiently handling variations. (Verification relies on test structure analysis, potentially a future ZLT feature).
 3.  **Single Responsibility & Clear API Boundaries**: Keep components focused on one reason to change, making them easier to test and reason about via TDD/DDT. Expose minimal necessary interfaces via `__init__.py` (managed by `autoinit` if desired). Isolation simplifies AI reasoning and independent refinement. (Partially assessed via complexity/size metrics).
 4.  **First Principles Simplicity**: Solve problems directly with minimal complexity, driven by the need to pass the current test. **Prefer** clear Python 3.13+ features over intricate abstractions. Minimalism reduces error surface and boosts AI refactoring confidence within the TDD cycle. (Assessed via complexity/size metrics).
-5.  **Leverage Existing Libraries (Configured Enforcement & No Reinvention)**:
-    *   Utilize stable, well-maintained PyPI packages compatible with Python 3.13+ (`poetry` managed). Treat vetted libraries as reliable components.
+5.  **Minimize Backslash Escape Fragility**: **Strongly prefer** methods that avoid complex backslash (`\\`) escaping, especially when dealing with text parsing (e.g., command-line help output) or regular expressions that need to pass through the AI-Tool-File-Python toolchain. Backslashes are highly prone to misinterpretation or corruption at various layers (AI generation, tool application, shell interaction, file encoding, Python string literals, regex engine parsing). **Favor** procedural parsing (string methods, loops, conditional logic based on indentation or simple markers) over intricate regex patterns requiring heavy escaping. While standard escapes like `\\n` or `\\t` are acceptable, avoid relying on complex sequences (e.g., excessive escaping of regex metacharacters) where simpler, more direct parsing logic can achieve the same result. (Verification via code review and analysis of parsing logic complexity, potentially a future ZLT check).
+6.  **Leverage Existing Libraries (Configured Enforcement & No Reinvention)**:
+    *   Utilize stable, well-maintained PyPI packages compatible with Python 3.13+ (`uv` managed). Treat vetted libraries as reliable components.
     *   **Configure standard tools** (`ruff`, `mypy`, `pytest`, `pylint`) via `pyproject.toml` according to ZLF specifications. Passing checks from these **configured tools currently serves as the primary enforcement mechanism** for corresponding ZLF principles. These tools act as essential "consultants" providing automated feedback, orchestrated ideally by ZLT.
     *   **Strictly forbid** modifying the internal behavior of third-party libraries at runtime (monkey-patching). Interact only via documented public APIs.
     *   **No Reinvention:** Do not reimplement functionality already provided by the Python standard library or mandated tools unless absolutely necessary and justified by tests. Custom checks (e.g., AST analysis within ZLT) require strong justification if a core ZLF principle cannot be measured by standard tooling.
-6.  **Don't Repeat Yourself (DRY)**: During the Refactor step of TDD, consolidate logic identified via testing or analysis (`pylint R0801`). Eliminate duplication to reduce debt and ensure consistent updates. Apply DRY to test code as well (aided by DDT). (Enforced via `pylint R0801` check by ZLT).
-7.  **Self-Documenting Code & Explicit Rationale**:
+7.  **Don't Repeat Yourself (DRY)**: During the Refactor step of TDD, consolidate logic identified via testing or analysis (`pylint R0801`). Eliminate duplication to reduce debt and ensure consistent updates. Apply DRY to test code as well (aided by DDT). (Enforced via `pylint R0801` check by ZLT).
+8.  **Self-Documenting Code & Explicit Rationale**:
     *   Use descriptive names (`what`). Code clarity is paramount for AI comprehension.
     *   Employ docstrings/comments to explain the *why* (rationale, context) only for **non-obvious logic**. Assume an AI reader understands Python 3.13+ syntax.
     *   **Triggers for Rationale Comments:** Add comments when the code implements: (a) Workarounds for external library issues, (b) Logic chosen after other attempts failed (documenting the dead-end), (c) Complex algorithms/state management deviating significantly from simple approaches. The goal is to prevent future AI developers from repeating exploration or encountering the same pitfalls.
     *   Documentation follows implementation within the TDD cycle. (Partially enforced via `ruff D` rules by ZLT).
-8.  **Consistent Style & Idiomatic Usage**: Apply uniform coding style enforced by `ruff format` (project config) and `ruff check`, along with modern type hints (Python 3.13+) and idioms. Style checks are a core part of the automated feedback loop, executed by ZLT.
-9.  **Comprehensive Testing & Automation (Inherent via TDD/DDT)**: TDD/DDT naturally produce high test coverage for correctness and regression prevention. Automate checks (`ruff`, `mypy`, `pylint R0801`, `pytest`, potentially fuzzers) via `pre-commit` and CI, ideally orchestrated by ZLT as essential, non-negotiable feedback mechanisms supporting the AI developer's workflow. (Enforced via tool execution by ZLT).
-10. **Explicit Error Handling & Reliable Resource Management**: Design tests that cover expected error conditions. Implement specific exception handling and ensure resources (files, connections, locks) are reliably released via context managers (`with`) or `try...finally`, verified by tests covering success and failure paths. (Enforced via `pytest` results and specific `ruff` rules by ZLT).
-11. **AI-Led Continuous Refactoring (TDD Refactor Step Scope)**:
+9.  **Consistent Style & Idiomatic Usage**: Apply uniform coding style enforced by `ruff format` (project config) and `ruff check`, along with modern type hints (Python 3.13+) and idioms. Style checks are a core part of the automated feedback loop, executed by ZLT.
+10. **Comprehensive Testing & Automation (Inherent via TDD/DDT)**: TDD/DDT naturally produce high test coverage for correctness and regression prevention. Automate checks (`ruff`, `mypy`, `pylint R0801`, `pytest`, potentially fuzzers) via `pre-commit` and CI, ideally orchestrated by ZLT as essential, non-negotiable feedback mechanisms supporting the AI developer's workflow. (Enforced via tool execution by ZLT).
+11. **Explicit Error Handling & Reliable Resource Management**: Design tests that cover expected error conditions. Implement specific exception handling and ensure resources (files, connections, locks) are reliably released via context managers (`with`) or `try...finally`, verified by tests covering success and failure paths. (Enforced via `pytest` results and specific `ruff` rules by ZLT).
+12. **AI-Led Continuous Refactoring (TDD Refactor Step Scope)**:
     *   Embrace code evolution within the **Refactor** step of the TDD cycle.
     *   **Baseline (Mandatory):** Clean up code added/modified in the Green step to meet all static analysis requirements (`ruff`, `mypy`, `pylint R0801`), format correctly, and adhere to clarity/simplicity principles (Principles #4, #8).
     *   **Incremental Improvement:** Proactively make immediate, localized improvements (simplify conditions, improve names, apply Python 3.13 idioms, extract small helpers) related to the code just touched.
     *   **Larger Refactoring:** Identify opportunities for significant architectural refactoring but typically defer implementation. Add ideas to `REFINEMENT IDEAS` (Section [5.3](#53-footer)) or initiate a *new* TDD cycle specifically for that refactoring, driven by new tests proving its value. The AI **should** prioritize completing the current cycle cleanly over attempting deep refactoring mid-cycle.
-12. **Design for Concurrency Safety (When Required & Testable)**: If concurrency is needed, use TDD to drive the design. Write tests that attempt to expose potential race conditions or safety issues (acknowledging difficulty). Implement solutions using appropriate mechanisms (e.g., `asyncio`, `threading`) driven by tests. Protect shared state with synchronization primitives. Prevent race conditions and document the concurrency model. (See Section [4.9](#49-concurrency-and-resource-management)). (Verification relies on test results and potentially specialized concurrency analysis tools, future ZLT scope).
-13. **Adhere to Filesystem Standards (XDG & Tooling Configuration)**:
+13. **Design for Concurrency Safety (When Required & Testable)**: If concurrency is needed, use TDD to drive the design. Write tests that attempt to expose potential race conditions or safety issues (acknowledging difficulty). Implement solutions using appropriate mechanisms (e.g., `asyncio`, `threading`) driven by tests. Protect shared state with synchronization primitives. Prevent race conditions and document the concurrency model. (See Section [4.9](#49-concurrency-and-resource-management)). (Verification relies on test results and potentially specialized concurrency analysis tools, future ZLT scope).
+14. **Adhere to Filesystem Standards (XDG & Tooling Configuration)**:
     *   **Runtime:** Applications **must** store user-specific files according to the XDG Base Directory Specification (using environment variables like `$XDG_CONFIG_HOME`). Write tests verifying correct file placement.
     *   **Tooling:** Development/CI tooling **must**, where configurable, be set up to use XDG-compliant directories for caches/config, enforced via `pyproject.toml` and only rely on environment variables as a last resort. (Verification via configuration checks, potentially by ZLT).
-14. **Input Robustness (Where Applicable)**: Modules processing complex or untrusted external data (e.g., parsers, network handlers) **must** demonstrate resilience against malformed or unexpected inputs. (Enforced via fuzz testing orchestrated by ZLT, see Section [4.X](#4x-input-robustness-verification-via-fuzz-testing) - *To be added*).
+15. **Input Robustness (Where Applicable)**: Modules processing complex or untrusted external data (e.g., parsers, network handlers) **must** demonstrate resilience against malformed or unexpected inputs. (Enforced via fuzz testing orchestrated by ZLT, see Section [4.X](#4x-input-robustness-verification-via-fuzz-testing) - *To be added*).
 
 ---
 
@@ -211,7 +212,7 @@ This section details specific practices and metrics used to assess compliance wi
 *   **Conventional Commits:** **Require** adherence to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification for all Git commit messages. The AI developer **must** generate compliant messages, often corresponding to TDD cycles (e.g., `feat: implement X`, `test: add test for Y`, `refactor: improve Z`). (Potentially linted by `pre-commit` hook, outside ZLT's direct execution scope but part of the overall workflow).
 
 ### 4.11 Versioning Scheme
-*   **Epoch/Date Versioning:** **Require** utilizing a strictly increasing version scheme based on time (e.g., `YYYYMMDD.HHMMSS` or Unix epoch seconds). Define in `pyproject.toml` (`[tool.poetry.version]`). This deterministic scheme is suitable for AI management and relies on the comprehensive TDD suite for compatibility assurance between versions.
+*   **Epoch/Date Versioning:** **Require** utilizing a strictly increasing version scheme based on time (e.g., `YYYYMMDD.HHMMSS` or Unix epoch seconds). Define in `pyproject.toml` (`[project.version]`). This deterministic scheme is suitable for AI management and relies on the comprehensive TDD suite for compatibility assurance between versions.
 
 ### 4.12 Validation Metrics (Outcomes & Enforcements)
 These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
@@ -226,11 +227,11 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
 
 ### 4.13 Dependencies & Environment
 *(Supports Principle #5)*
-*   **Dependency Specification:** **Require** defining runtime dependencies in `pyproject.toml` under `[tool.poetry.dependencies]` and development dependencies under appropriate groups (e.g., `[tool.poetry.group.dev.dependencies]`). AI developer manages this via `poetry add/remove/update`.
-*   **Environment Management:** **Require** use of **`poetry`** for managing dependencies and virtual environments based on `pyproject.toml` and `poetry.lock`. ZLT **must** be run within this environment.
+*   **Dependency Specification:** **Require** defining runtime dependencies in `pyproject.toml` under `[project.dependencies]` (PEP 621) and development dependencies under `[project.optional-dependencies.<group>]` (e.g., `[project.optional-dependencies.dev]`). AI developer manages this via `uv pip install <pkg>` (which modifies `pyproject.toml`) or direct edits followed by `uv lock`/`uv pip sync`.
+*   **Environment Management:** **Require** use of **`uv`** for managing dependencies and virtual environments based on `pyproject.toml` and `uv.lock` (if used, or potentially `poetry.lock` for transition). ZLT **must** be run within this environment (e.g., via `uv run zlt ...`).
 *   **Vetting**: **Prefer** standard libraries and reputable PyPI packages compatible with Python 3.13+. Check licenses.
 *   **Justification**: Document reasons for significant third-party dependencies in `NOTES.md` or relevant docstrings.
-*   **Minimize Environment Assumptions**: Strive for OS consistency. Document specific needs.
+*   **Locking:** **Recommend** using a lock file (`uv lock > uv.lock` or using `poetry.lock`) for reproducible environments, especially in CI.
 
 ---
 
@@ -351,25 +352,28 @@ This section details the tooling and configurations used to automate ZLF enforce
 
 ### 6.1 Tools (Consultants)
 
-ZLT utilizes the following mandatory 'consultant' tools. ZLT **requires** these tools to be available in the project's `poetry` environment (Section [4.13](#413-dependencies--environment)) to perform its compliance checks. Configuration **must** reside in `pyproject.toml`.
+ZLT utilizes the following mandatory 'consultant' tools. ZLT **requires** these tools to be available in the project's `uv`-managed environment (Section [4.13](#413-dependencies--environment)) to perform its compliance checks. Configuration **must** reside in `pyproject.toml`.
 
-1.  **`poetry`**: Required for dependency management, environment creation, and running scripts (`poetry run ...`). ZLT relies on the environment managed by `poetry`.
+1.  **`uv`**: Required for dependency management, environment creation, and running scripts (`uv run ...`). ZLT relies on the environment managed by `uv`.
 2.  **`pre-commit`**: Manages Git hooks executing automated checks (ideally just `zlt validate`). Uses the project-specific `.pre-commit-config.yaml` (Section [6.4](#64-pre-commit-configuration-pre-commit-configyaml)).
 3.  **`ruff`**: Primary consultant for linting (`ruff check`), formatting (`ruff format`), import sorting, and docstring checks (`D` rules). ZLT executes `ruff` based on `pyproject.toml [tool.ruff]`.
 4.  **`mypy`**: Consultant for static type checking. ZLT **must** execute `mypy` with the `--strict` flag, configured via `pyproject.toml [tool.mypy]`.
-5.  **`pylint` (Targeted Usage)**: Consultant used exclusively for code duplication detection (`R0801`). ZLT executes `pylint --disable=all --enable=R0801 <targets>`.
+5.  **`pylint` (Targeted Usage)**: Consultant used exclusively for code duplication detection (`R0801`). ZLT executes `pylint --disable=all --enable=R0801 <targets>`. Configured via `pyproject.toml [tool.pylint.*]`.
 6.  **`pytest`**: **Core testing framework consultant**. ZLT executes `pytest` to run tests developed via TDD/DDT and collects coverage using `pytest-cov`, configured in `pyproject.toml [tool.pytest.ini_options]`.
-7.  **`structlog`**: Required runtime library for structured JSON/Console logging (see Section [4.6](#46-error-reporting--logging)). (Not directly executed by ZLT, but its usage pattern might be linted).
-8.  **`Atheris`** (or other designated fuzzer): Consultant for Input Robustness checks (Principle #14, Section [4.X](#4x-input-robustness-verification-via-fuzz-testing)). ZLT executes configured fuzz targets. *(Fuzzer integration TBD)*.
-9.  **`autoinit`** (Optional): Manages `__init__.py` files if desired.
+7.  **`structlog`**: Required runtime library for structured JSON/Console logging (see Section [4.6](#46-error-reporting--logging)).
+8.  **`Atheris`** (or other designated fuzzer): Consultant for Input Robustness checks. ZLT executes configured fuzz targets. *(Integration TBD)*.
+9.  **`autoinit`** (Optional): Manages `__init__.py` files.
+10. **Poetry (Legacy/Transitional)**: May be present in migrating projects but **must not** be the primary manager for new ZLF projects. `uv` can install from `poetry.lock` using `uv pip sync --resolver=poetry poetry.lock`.
 
-### 6.2 Environment & Dependency Workflow (Using Poetry)
-This workflow is typically executed by the AI developer or automation scripts, enabling ZLT and its consultants:
+### 6.2 Environment & Dependency Workflow (Using `uv`)
+This workflow is typically executed by the AI developer or automation scripts:
 
-1.  **Define/Update Dependencies:** AI adds/removes/updates packages in `pyproject.toml` using `poetry add/remove/update`. Ensure all consultant tools are included in dev dependencies.
-2.  **Install Environment & Dependencies:** In project root: `poetry install --all-extras` (or specific groups). Creates `.venv` (if configured) and installs based on `poetry.lock`.
-3.  **Run Commands:** Execute tools via `poetry run <command>` (e.g., `poetry run zlt validate`, or individual tools like `poetry run pytest` during development). This ensures execution within the correct environment.
-4.  **CI:** CI pipeline uses `poetry install` to set up the environment and `poetry run zlt validate` (ideally) or individual tool commands for all checks, tests, and builds.
+1.  **Create Environment (First time):** `uv venv` (creates `.venv` by default).
+2.  **Activate Environment (Optional):** `source .venv/bin/activate` (or equivalent for shell/OS).
+3.  **Add/Update Dependencies:** `uv pip install <package>[==<version>] [--dev]` (or modify `pyproject.toml [project]` directly). Use `--dev` to add to `[project.optional-dependencies.dev]`.
+4.  **Sync Environment:** `uv pip sync pyproject.toml [--all-extras | --extras <group>]` installs/updates based on `pyproject.toml` (or `uv pip sync uv.lock` / `uv pip sync --resolver=poetry poetry.lock` if using lock files).
+5.  **Run Commands:** Execute tools via `uv run <command>` (e.g., `uv run zlt validate`, `uv run pytest`). This ensures execution within the correct environment without explicit activation.
+6.  **CI:** CI pipeline uses `uv venv` and `uv pip sync` to set up the environment and `uv run zlt validate` (ideally) or individual tool commands for checks.
 
 ### 6.3 Project Structure Example (Conceptual)
 *(Assumes project root contains `pyproject.toml`)*
@@ -420,20 +424,13 @@ project_pkg/         # Project Root (Recommended naming convention)
 ### 6.4 Pre-Commit Configuration (`.pre-commit-config.yaml`)
 *   **Location:** **Must** reside in the project root (alongside `pyproject.toml`).
 *   **Ideal Hook:** The primary hook **should** be `entry: poetry run zlt validate`.
-*   **Interim Hooks:** Until ZLT fully orchestrates, hooks may call individual tools. Hooks requiring project dependencies (`mypy`, `pytest`, `pylint`, custom scripts, ZLT itself) **must** use `language: system` and `entry: poetry run <command>`.
+*   **Interim Hooks:** Until ZLT fully orchestrates, hooks may call individual tools. Hooks requiring project dependencies (`mypy`, `pytest`, `pylint`, custom scripts, ZLT itself) **must** use `language: system` and `entry: uv run <command>`. Ensure the environment where `pre-commit` runs has `uv` available, or use a `language: python` hook with `uv` listed in `additional_dependencies` to bootstrap it.
 *   **Activation:** Ensure Git hooks are active (e.g., via `pre-commit install --config .pre-commit-config.yaml -t pre-commit -t pre-push` or ZLT's hook management if implemented).
-*   **Monorepo Hook Management:** Standard `pre-commit` hook installation (via `pre-commit install`) operates relative to the Git repository root. If ZLF projects reside in subdirectories (e.g., `git-root/zlf-project/`) each with their own `.pre-commit-config.yaml`, the standard root-level hook will not execute these project-specific configurations correctly.
-    *   **Solution:** ZLT provides commands to manage a custom Git root hook specifically for this monorepo scenario. **Require** running `poetry run zlt install-git-hook --git-root <path_to_git_root>`.
-    *   **Mechanism:** This command installs a custom script into the Git root's `.git/hooks/pre-commit`. This script intercepts commits, examines staged files, and identifies if they belong to a *single* ZLF project (by locating a `.pre-commit-config.yaml` in the project's directory).
-        *   If a single project is identified, the script then executes `pre-commit run --config <project_path>/.pre-commit-config.yaml` targeting only the staged files within that project.
-        *   It handles commits involving multiple projects (by erroring) or only root-level files (by typically allowing them, assuming no root-level ZLF config applies) to ensure it coexists correctly with non-ZLF projects ("good neighbor" behavior).
-    *   **Restoration:** Use `poetry run zlt restore-git-hooks --git-root <path_to_git_root>` to remove the custom dispatcher and restore standard `pre-commit` behavior if needed (e.g., converting back to a single-project repository).
-    *   **Benefit:** This ZLT-managed hook ensures project-specific ZLF checks are reliably enforced during commits, regardless of whether the project lives in a dedicated repository or a monorepo subdirectory.
+*   **Monorepo Hook Management:** The `zlt install-git-hook` mechanism remains valid. The generated hook script should be updated to invoke project-specific hooks using `uv run ...` if necessary, or ensure the hook environment setup correctly activates the project's `uv` environment.
 
-### 6.5 Example CI Pipeline (GitHub Actions with Poetry)
+### 6.5 Example CI Pipeline (GitHub Actions with `uv`)
 ```yaml
-# Example demonstrating the ideal ZLT-centric approach
-name: Python CI (Zeroth Law Framework)
+name: Python CI (Zeroth Law Framework with uv)
 
 on: [push, pull_request]
 
@@ -452,35 +449,44 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true # Recommended for caching
-        installer-parallel: true
+    - name: Install uv
+      uses: yezz123/setup-uv@v4 # Or official uv action if available
+      # Or: run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      #     run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-    - name: Load cached venv
-      id: cached-poetry-dependencies
+    - name: Create venv and cache dependencies
       uses: actions/cache@v4
       with:
         path: .venv
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        # Key includes Python version and lock file hash (or pyproject.toml hash if no lock)
+        key: venv-uv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/uv.lock', '**/poetry.lock', '**/pyproject.toml') }}
+      id: cache-venv
 
-    - name: Install dependencies (including dev, requires ZLT and consultants)
-      run: poetry install --no-interaction --all-extras
+    - name: Create venv
+      run: uv venv
+      if: steps.cache-venv.outputs.cache-hit != 'true'
 
-    # Preferred Method: Single ZLT command
+    - name: Install dependencies (using uv)
+      # Sync based on lock file if present, otherwise pyproject.toml
+      # Use --all-extras or specific extras as needed for dev deps
+      run: |
+        if [ -f uv.lock ]; then
+          uv pip sync uv.lock
+        elif [ -f poetry.lock ]; then
+          uv pip sync --resolver=poetry poetry.lock
+        else
+          uv pip sync pyproject.toml --all-extras
+        fi
+
+    # Preferred Method: Single ZLT command run via uv
     - name: Run ZLF Compliance Checks via ZLT
-      run: poetry run zlt validate --ci # Example flag for CI mode
+      run: uv run zlt validate --ci
 
     # --- Fallback/Interim Method (If ZLT not fully orchestrating) ---
-    # - name: Run pre-commit checks (Format, Lint, Types, etc.)
-    #   run: poetry run pre-commit run --all-files --show-diff-on-failure --config .pre-commit-config.yaml
-    # - name: Run Tests with Coverage (if not covered by pre-commit/ZLT)
-    #   run: poetry run pytest --cov=src --cov-report=xml --cov-fail-under=95 # Adjust path & threshold
-    # - name: Run Fuzzing (Example, if not covered by ZLT)
-    #   run: |
-    #     poetry run python -m atheris tests/fuzz/fuzz_parser.py -max_total_time=60 || echo "Fuzzing found issues" # Handle failure
+    # - name: Run pre-commit checks (via uv run)
+    #   run: uv run pre-commit run --all-files --show-diff-on-failure --config .pre-commit-config.yaml
+    # - name: Run Tests with Coverage (via uv run)
+    #   run: uv run pytest --cov=src --cov-report=xml --cov-fail-under=95
 
     # Optional: Upload coverage reports (if generated separately)
     # - name: Upload coverage to Codecov ...
@@ -488,16 +494,16 @@ jobs:
 
 ## 7. COMMON ISSUES & FIXES
 
-### 7.1 `pytest` Import Errors (with Poetry)
-Common causes for `ImportError` when using `poetry run pytest` (or via ZLT):
-1.  **Project Not Installed:** Ensure `poetry install` completed successfully (installs project in editable mode).
+### 7.1 `pytest` Import Errors (with `uv`)
+Common causes for `ImportError` when using `uv run pytest` (or via ZLT):
+1.  **Project Not Installed:** Ensure `uv venv` completed successfully (installs project in editable mode).
 2.  **Incorrect `testpaths`:** Verify `[tool.pytest.ini_options].testpaths` in `pyproject.toml` points to `tests`.
 3.  **Missing `__init__.py` Files:** Ensure necessary `__init__.py` exist in source (`src/your_package`) and test directories (`tests/`) for package recognition. `autoinit` can manage this.
-4.  **Incorrect `PYTHONPATH` (Unlikely with `poetry run`):** `poetry run` usually handles this. ZLT **must** operate within the `poetry` environment. Investigate only if other causes are ruled out.
+4.  **Incorrect `PYTHONPATH` (Unlikely with `uv run`):** `uv run` usually handles this. ZLT **must** operate within the `uv` environment. Investigate only if other causes are ruled out.
 
 ### 7.2 Pre-Commit Failures
 *   **Formatters Failing on Change:** Tools like `ruff format` *will* cause `pre-commit` to fail if they modify files. **Solution:** **Require** configuring the IDE (e.g., VS Code/Cursor with Ruff extension) for format-on-save (see Section [8](#8-project-knowledge-management), `NOTES.md`). The `pre-commit` hook (or ZLT running the formatter check) then acts as a safety net.
-*   **Hook Configuration Errors:** Ensure paths in `.pre-commit-config.yaml` are correct relative to the project root and that `poetry run` is used for tools needing the project environment (if not using ZLT directly). ZLT will rely on configurations in `pyproject.toml`.
+*   **Hook Configuration Errors:** Ensure paths in `.pre-commit-config.yaml` are correct relative to the project root and that `uv run` is used for tools needing the project environment (if not using ZLT directly). ZLT will rely on configurations in `pyproject.toml`.
 
 ---
 

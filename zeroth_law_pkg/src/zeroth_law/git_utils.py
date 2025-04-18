@@ -195,21 +195,24 @@ elif [ "$num_projects" -eq 1 ]; then
         exit 0
     fi
 
-    # Execute pre-commit run within a subshell after cd-ing into the project dir
-    echo "[Zeroth Law Hook] Attempting to run checks for project '$project_dir'..."
-    if ! command -v poetry &> /dev/null
+    # Execute pre-commit run using uv run
+    echo "[Zeroth Law Hook] Attempting to run checks for project '$project_dir' using uv..."
+    if ! command -v uv &> /dev/null
     then
-        echo "[Zeroth Law Hook] ERROR: 'poetry' command not found. Cannot run project checks." >&2
-        echo "[Zeroth Law Hook] Ensure poetry is installed and accessible in the hook environment's PATH." >&2
+        echo "[Zeroth Law Hook] ERROR: 'uv' command not found. Cannot run project checks." >&2
+        echo "[Zeroth Law Hook] Ensure uv is installed and accessible in the hook environment's PATH." >&2
         exit 1
     fi
-    (\
-      echo "[Zeroth Law Hook Subshell] Changing directory to '$project_path_abs'" && \
-      cd "$project_path_abs" && \
-      echo "[Zeroth Law Hook Subshell] CWD is '$(pwd)', running poetry..." && \
-      poetry run pre-commit run --config "$project_config_path_abs" --files "${project_staged_files_abs[@]}" \
-    )
-    exit $? # Exit with the exit code of the subshell
+    # Change to the project directory before running uv
+    echo "[Zeroth Law Hook] Changing directory to '$project_path_abs'..."
+    cd "$project_path_abs" || exit 1 # Exit if cd fails
+
+    # Now run uv, which should find the local environment/pyproject.toml
+    echo "[Zeroth Law Hook] Running uv run -- pre-commit run from $(pwd)..."
+    uv run -- pre-commit run --config "$project_config_path_abs" --files "${project_staged_files_abs[@]}" \
+        --hook-stage commit --verbose || exit 1
+
+    exit $? # Exit with the exit code of uv run
 else
     # Scenario 3: Root-Only or No-Project Commit -> Pass using standard pre-commit
     if [ -f "$git_root/.pre-commit-config.yaml" ]; then
@@ -222,7 +225,6 @@ else
         exit 0
     fi
 fi
-
 """
     return script_content.strip()
 

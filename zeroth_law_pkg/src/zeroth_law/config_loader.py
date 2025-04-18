@@ -163,21 +163,13 @@ def extract_config_section(toml_data: dict[str, Any], section_path: str) -> dict
     return current_data
 
 
-def merge_with_defaults(config_section: dict[str, Any]) -> dict[str, Any]:
-    """Merge configuration with defaults and validate.
-
-    Args:
-        config_section: Configuration values to merge with defaults.
-
-    Returns:
-        Dictionary containing the merged and validated configuration.
-
-    """
+def merge_with_defaults(config_section: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:
+    """Merge a configuration section with defaults, excluding 'actions'."""
     # Start with a copy of the defaults
-    merged_config = DEFAULT_CONFIG.copy()
+    merged_config = defaults.copy()
 
-    # Override with values from config_section
-    for key, default_value in DEFAULT_CONFIG.items():
+    # Override with values from config_section, skipping 'actions'
+    for key, default_value in defaults.items():
         if key in config_section:
             loaded_value = config_section[key]
             log.debug(
@@ -187,34 +179,38 @@ def merge_with_defaults(config_section: dict[str, Any]) -> dict[str, Any]:
                 default_value,
             )
             merged_config[key] = loaded_value
+        # Handle keys present in config_section but not in defaults (excluding 'actions')
+        elif key not in defaults and key != "actions":
+            log.warning(f"Unknown configuration key '{key}' found. Ignoring.")
 
-    # Validate the merged configuration
+    # Ensure 'actions' is not in the dict passed to validation
+    merged_config.pop("actions", None)
+
+    # Validate the merged configuration (without actions)
     try:
-        validated_config = validate_config(merged_config)
-        # Convert Pydantic model back to dict for backward compatibility
-        return validated_config.model_dump()
+        # Pass only the default keys for validation
+        config_to_validate = {k: merged_config.get(k, defaults[k]) for k in defaults}
+        validated_config_model = validate_config(config_to_validate)
+        # Convert Pydantic model back to dict
+        return validated_config_model.model_dump()
     except Exception as e:
         log.warning(
             "Configuration validation failed: %s. Reverting invalid values to defaults.",
             e,
+            exc_info=True,  # Log traceback for validation errors
         )
 
         # For non-ValidationError exceptions, return the default config
         if not hasattr(e, "errors"):
-            return DEFAULT_CONFIG.copy()
+            return defaults.copy()
 
         # Extract the valid fields from the failed validation
-        valid_config = DEFAULT_CONFIG.copy()
-
-        # Identify which fields had validation errors
-        invalid_fields = set()
-        for err in e.errors():
-            if err.get("loc"):
-                invalid_fields.add(err["loc"][0])
+        valid_config = defaults.copy()
+        invalid_fields = {err.get("loc", [None])[0] for err in e.errors() if err.get("loc")}
 
         # Keep only the valid config values from the merged config
         for key, value in merged_config.items():
-            if key not in invalid_fields:
+            if key in defaults and key not in invalid_fields:
                 valid_config[key] = value
 
         log.debug(
@@ -224,51 +220,71 @@ def merge_with_defaults(config_section: dict[str, Any]) -> dict[str, Any]:
         return valid_config
 
 
+def load_action_definitions(config_section: dict[str, Any]) -> dict[str, Any]:
+    """Extract the 'actions' dictionary from the main config section."""
+    actions = config_section.get("actions", {})
+    if not isinstance(actions, dict):
+        log.warning(
+            f"Invalid type for '[{_TOOL_SECTION_PATH}.actions]' section: "
+            f"{type(actions).__name__}. Expected a dictionary. No actions loaded.",
+        )
+        return {}
+    log.debug(f"Loaded actions definition: {list(actions.keys())}")
+    return actions
+
+
 def load_config(config_path_override: str | Path | None = None) -> dict[str, Any]:
-    """Load Zeroth Law config, merge with defaults.
-
-    Search XDG path and parent dirs for pyproject.toml if config_path_override is None.
-
-    Args:
-        config_path_override: Explicit path to the config file (e.g., pyproject.toml).
-                              If None, searches automatically (XDG, then upwards).
-
-    Returns:
-        A dictionary containing the loaded and validated configuration.
-
-    Raises:
-        FileNotFoundError: If an explicitly specified config_path_override is not found.
-        TomlDecodeError: If the found or specified config file is invalid TOML.
-        ImportError: If no TOML parsing library (tomllib/tomli) is installed.
-        OSError: If the config file cannot be read.
-        ValidationError: If the configuration values are invalid.
-
-    """
+    """Load Zeroth Law config, process actions separately, merge rest with defaults."""
     # Find the config file
     found_path: Path | None
     if config_path_override is None:
         found_path = find_pyproject_toml()
         if found_path is None:
             log.warning("No config file found (XDG or upwards search). Using defaults.")
-            return DEFAULT_CONFIG.copy()
+            final_config = DEFAULT_CONFIG.copy()
+            final_config["actions"] = {}
+            return final_config
     else:
         found_path = Path(config_path_override)
 
-    # Parse the TOML file
+    if not found_path or not found_path.exists():
+        # If no config file found, return defaults + empty actions
+        log.debug("No config file found. Returning default config with empty actions.")
+        final_config = DEFAULT_CONFIG.copy()
+        final_config["actions"] = {}
+        return final_config
+
     try:
+        # Parse the TOML file
         toml_data = parse_toml_file(found_path)
-    except FileNotFoundError:
-        if config_path_override is not None:
-            # Only re-raise if the path was explicitly provided
-            raise
-        log.warning("Config file not found. Using defaults.")
-        return DEFAULT_CONFIG.copy()
+        # Extract the main tool section
+        config_section = extract_config_section(toml_data, _TOOL_SECTION_PATH)
 
-    # Extract the Zeroth Law configuration section
-    config_section = extract_config_section(toml_data, _CONFIG_SECTION)
+        # Separate actions from the rest of the config
+        actions_config = load_action_definitions(config_section)  # Use the dedicated function
+        # Create a copy of the section without actions for merging with defaults
+        config_section_without_actions = {k: v for k, v in config_section.items() if k != "actions"}
 
-    # Merge with defaults and validate
-    return merge_with_defaults(config_section)
+        # Merge the non-actions part with defaults and validate
+        merged_validated_config = merge_with_defaults(config_section_without_actions, DEFAULT_CONFIG)
+
+        # Combine the validated/merged part with the original actions
+        final_config = merged_validated_config
+        final_config["actions"] = actions_config
+
+        return final_config
+
+    except (FileNotFoundError, TomlDecodeError, ImportError, OSError) as e:
+        log.error(f"Failed to load config from {found_path}: {e}")
+        # Return defaults + empty actions on load error
+        final_config = DEFAULT_CONFIG.copy()
+        final_config["actions"] = {}
+        return final_config
+    except Exception as e:
+        log.exception(f"Unexpected error loading config from {found_path}. Returning defaults.", exc_info=e)
+        final_config = DEFAULT_CONFIG.copy()
+        final_config["actions"] = {}
+        return final_config
 
 
 def _load_python_version_constraint(

@@ -1,151 +1,312 @@
 # File: src/zeroth_law/tool_mapping.yaml
 # Zeroth Law Toolkit (zlt) Tool Mapping
-# Maps zlt actions to underlying development tools and their arguments.
+# Maps ZLT actions/groups to underlying tool definitions.
 
-# === FORMAT ACTION ===
-format:
-  description: Formats code according to project style guides.
+actions:
+  # === FORMAT ACTION ===
+  format:
+    description: Formats code according to project style guides.
+    zlt_options:
+      verbose:
+        type: flag
+        cli_name: -v
+        description: Enable verbose output.
+      quiet:
+        type: flag
+        cli_name: -q
+        description: Suppress non-error output.
+      config:
+        type: value
+        cli_name: --config
+        value_type: path
+        description: Path to configuration file.
+      check:
+        type: flag
+        cli_name: --check
+        description: Run in check mode (don't modify files).
+      paths:
+        type: positional
+        description: Files or directories to format.
+    tools:
+      - definition_ref: tools/ruff/ruff_format.yaml
+        option_links:
+          verbose: verbose
+          quiet: quiet
+          config: config
+          check: check
+          paths: files # Map zlt paths to tool's 'files' positional arg
 
-  zlt_options:
-    verbose:
-      type: flag
-      description: Enable verbose output.
-    quiet:
-      type: flag
-      description: Suppress non-error output.
-    config:
-      type: value
-      value_type: path
-      description: Path to configuration file.
-    check:
-      type: flag
-      description: Run in check mode (don\'t modify files).
-    paths:
-      type: positional
-      description: Files or directories to format.
+  # === LINT ACTION ===
+  lint:
+    description: Lints code for style and potential errors.
+    zlt_options:
+      verbose:
+        type: flag
+        cli_name: -v
+        description: Enable verbose output.
+      quiet:
+        type: flag
+        cli_name: -q
+        description: Suppress non-error output.
+      config:
+        type: value
+        cli_name: --config
+        value_type: path
+        description: Path to configuration file.
+      exit_zero:
+        type: flag
+        cli_name: --exit-zero
+        description: Exit with status code 0 even if issues are found.
+      paths:
+        type: positional
+        description: Files or directories to lint.
+    tools:
+      - definition_ref: tools/ruff/ruff_check.yaml
+        option_links:
+          verbose: verbose
+          quiet: quiet
+          config: config
+          exit_zero: exit_zero
+          paths: files
 
-  tools:
-    ruff_format:
-      command: ["ruff", "format"]
-      maps_options:
-        # verbose: Maps to ruff format -v / --verbose
-        # Help: -v, --verbose / Enable verbose logging
-        verbose: -v
-        # quiet: Maps to ruff format -q / --quiet
-        # Help: -q, --quiet / Print diagnostics, but nothing else
-        quiet: -q
-        # config: Maps to ruff format --config <CONFIG_OPTION>
-        # Help: --config <CONFIG_OPTION> / Either a path to a TOML configuration file...
-        config: --config
-        # check: Maps to ruff format --check
-        # Help: --check / Avoid writing any formatted files back...
-        check: --check
-        # paths: Tool accepts positional arguments for paths
-        paths: null
-    # black:
-    #   command: black
-    #   maps_options: {}
-    #   # TODO: Fill based on 'black --help'
+  # === LINT-FIX ACTION ===
+  lint-fix:
+    description: Automatically fixes lint violations.
+    zlt_options:
+      verbose:
+        type: flag
+        cli_name: -v
+        description: Enable verbose output.
+      quiet:
+        type: flag
+        cli_name: -q
+        description: Suppress non-error output.
+      config:
+        type: value
+        cli_name: --config
+        value_type: path
+        description: Path to configuration file.
+      # Add options specific to fixing?
+      show_fixes:
+        type: flag
+        cli_name: --show-fixes
+        description: Show explanations for applied fixes.
+      unsafe_fixes:
+        type: flag
+        cli_name: --unsafe-fixes
+        description: Apply potentially unsafe fixes.
+      paths:
+        type: positional
+        description: Files or directories to fix.
+    tools:
+      - definition_ref: tools/ruff/ruff_check.yaml
+        default_args: ["--fix"] # Always add --fix for this action
+        option_links:
+          verbose: verbose
+          quiet: quiet
+          config: config
+          show_fixes: show_fixes
+          unsafe_fixes: unsafe_fixes
+          paths: files
 
-# === LINT ACTION ===
-lint:
-  description: Lints code for style and potential errors.
+  # === TEST ACTION ===
+  test:
+    description: Runs automated tests.
+    zlt_options:
+      verbose:
+        type: flag
+        cli_name: -v
+        description: Increase verbosity.
+      quiet:
+        type: flag
+        cli_name: -q
+        description: Decrease verbosity.
+      config:
+        type: value
+        cli_name: -c # Map ZLT config to pytest -c
+        value_type: path
+        description: Path to pytest configuration file.
+      keyword:
+        type: value
+        cli_name: -k
+        value_type: string
+        description: Run tests matching keyword expression.
+      marker:
+        type: value
+        cli_name: -m
+        value_type: string
+        description: Run tests matching marker expression.
+      exitfirst:
+        type: flag
+        cli_name: -x
+        description: Exit instantly on first error or failed test.
+      collect_only:
+        type: flag
+        cli_name: --collect-only
+        description: Only collect tests, don't execute.
+      paths:
+        type: positional
+        description: Files or directories for test discovery.
+    tools:
+      - definition_ref: tools/pytest/pytest.yaml
+        option_links:
+          verbose: verbose
+          quiet: quiet
+          config: config_file # Link ZLT 'config' to pytest's 'config_file' (-c)
+          keyword: keyword
+          marker: marker
+          exitfirst: exitfirst
+          collect_only: collect_only
+          paths: file_or_dir
 
-  zlt_options:
-    verbose:
-      type: flag
-      description: Enable verbose output.
-    quiet:
-      type: flag
-      description: Suppress non-error output.
-    config:
-      type: value
-      value_type: path
-      description: Path to configuration file.
-    exit_zero:
-      type: flag
-      description: Exit with status code 0 even if issues are found.
-    # fix: # Example of adding a lint-specific option later
-    #   type: flag
-    #   description: Attempt to automatically fix fixable violations.
-    paths:
-      type: positional
-      # default: ["src", "tests"] # Example
-      description: Files or directories to lint.
+  # === CHECK-TYPES ACTION ===
+  check-types:
+    description: Performs static type checking.
+    zlt_options:
+      verbose:
+        type: flag
+        cli_name: -v
+        description: More verbose messages.
+      quiet:
+        type: flag
+        cli_name: -q
+        description: Suppress non-error messages.
+      config:
+        type: value
+        cli_name: --config-file
+        value_type: path
+        description: Path to mypy configuration file.
+      strict:
+        type: flag
+        cli_name: --strict
+        description: Enable strict checking.
+      ignore_missing_imports:
+        type: flag
+        cli_name: --ignore-missing-imports
+        description: Suppress errors about unresolved imports.
+      paths:
+        type: positional
+        description: Files or directories to type check.
+    tools:
+      - definition_ref: tools/mypy/mypy.yaml
+        option_links:
+          verbose: verbose
+          quiet: quiet
+          config: config_file
+          strict: strict
+          ignore_missing_imports: ignore_missing_imports
+          paths: files
 
-  tools:
-    ruff_check:
-      command: ["ruff", "check"]
-      maps_options:
-        # verbose: Maps to ruff check -v / --verbose
-        # Help: -v, --verbose / Enable verbose logging
-        verbose: -v
-        # quiet: Maps to ruff check -q / --quiet
-        # Help: -q, --quiet / Print diagnostics, but nothing else
-        quiet: -q
-        # config: Maps to ruff check --config <CONFIG_OPTION>
-        # Help: --config <CONFIG_OPTION> / Either a path to a TOML configuration file...
-        config: --config
-        # exit_zero: Maps to ruff check -e / --exit-zero
-        # Help: -e, --exit-zero / Exit with status code "0", even upon detecting lint violations
-        exit_zero: --exit-zero
-        # paths: Tool accepts positional arguments for paths
-        paths: null
-        # Note: zlt option 'fix' is not mapped here yet.
-    # mypy:
-    #   command: ["mypy"] # Example as list
-    #   maps_options: {}
-    #   # TODO: Fill based on 'mypy --help'
+  # === COVERAGE GROUP ===
+  coverage:
+    type: group
+    description: Code coverage operations.
+    actions:
+      run:
+        description: Run tests with coverage measurement.
+        zlt_options:
+          module:
+            type: value
+            cli_name: -m
+            value_type: string
+            description: Run library module as a script.
+          source:
+            type: value
+            cli_name: --source
+            value_type: string
+            description: Measure coverage for specified source files/packages.
+          append:
+            type: flag
+            cli_name: -a
+            description: Append data to existing coverage file.
+          config:
+            type: value
+            cli_name: --rcfile
+            value_type: path
+            description: Specify coverage configuration file.
+          paths:
+            type: positional
+            description: Module or script path to run under coverage.
+        tools:
+          - definition_ref: tools/coverage/coverage_run.yaml
+            option_links:
+              module: module # Maps ZLT '-m' to the coverage '-m' flag logic
+              source: source
+              append: append
+              config: config_file
+              paths: module_or_script_path # Maps ZLT paths to tool's positional
 
-# === TEST ACTION ===
-test:
-  # TODO: Define zlt_options and tools/maps_options for test
-  description: Runs automated tests.
-  tools:
-    pytest:
-      command: ["pytest"]
-      option_mappings: # Keep old structure temporarily
-        paths: null
-        verbose: -v
-        quiet: -q
-        k: -k
-        m: -m
-        x: -x
+      report:
+        description: Generate a text coverage report.
+        zlt_options:
+          fail_under:
+            type: value
+            cli_name: --fail-under
+            value_type: integer
+            description: Exit with status 2 if coverage is below MIN.
+          config:
+            type: value
+            cli_name: --rcfile
+            value_type: path
+            description: Specify coverage configuration file.
+          skip_covered:
+            type: flag
+            cli_name: --skip-covered
+            description: Skip modules with 100% coverage in the report.
+          sort:
+            type: value
+            cli_name: --sort
+            value_type: string
+            description: Sort report by column (Name, Stmts, Miss, etc.).
+        tools:
+          - definition_ref: tools/coverage/coverage_report.yaml
+            option_links:
+              fail_under: fail_under
+              config: config_file
+              skip_covered: skip_covered
+              sort: sort
 
-# === OTHER ACTIONS (Keep old structure temporarily) ===
-coverage:
-  description: Measures test coverage.
-  tools:
-    pytest_cov:
-      command: ["pytest", "--cov"]
-      option_mappings:
-        paths: null
-        verbose: -v
-        quiet: -q
+      html:
+        description: Generate an HTML coverage report.
+        zlt_options:
+          directory:
+            type: value
+            cli_name: -d
+            value_type: path
+            description: Write the HTML report to DIR.
+          fail_under:
+            type: value
+            cli_name: --fail-under
+            value_type: integer
+            description: Exit with status 2 if coverage is below MIN.
+          config:
+            type: value
+            cli_name: --rcfile
+            value_type: path
+            description: Specify coverage configuration file.
+          title:
+            type: value
+            cli_name: --title
+            value_type: string
+            description: Set the title for the HTML report.
+        tools:
+          - definition_ref: tools/coverage/coverage_html.yaml
+            option_links:
+              directory: directory
+              fail_under: fail_under
+              config: config_file
+              title: title
 
-duplicate:
-  description: Detects duplicate code.
-  tools:
-    pmd_cpd:
-      command: ["pmd-cpd"]
-      option_mappings:
-        paths: --files
-
-security:
-  description: Scans code for security vulnerabilities.
-  tools:
-    bandit:
-      command: ["bandit", "-r"]
-      option_mappings:
-        paths: null
-        config: -c
-        verbose: -v
-        quiet: -q
-
-fuzz:
-  description: Runs fuzz tests to find unexpected behavior.
-  tools:
-    atheris: # Placeholder
-      command: ["python", "your_fuzz_script.py"]
-      option_mappings:
-        paths: null
+  # === PLACEHOLDER ACTIONS ===
+  security:
+    description: Scans code for security vulnerabilities. (Not Implemented)
+    zlt_options: {}
+    tools: []
+  duplicate:
+    description: Detects duplicate code. (Not Implemented)
+    zlt_options: {}
+    tools: []
+  fuzz:
+    description: Runs fuzz tests to find unexpected behavior. (Not Implemented)
+    zlt_options: {}
+    tools: []

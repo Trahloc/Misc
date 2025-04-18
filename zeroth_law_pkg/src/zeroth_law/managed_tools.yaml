@@ -1,0 +1,88 @@
+# Defines tools ZLT actively manages and executables it explicitly ignores.
+
+# List of tool executable names ZLT should manage (generate baselines, validate JSON).
+managed_tools:
+  - autopep8
+  - bandit
+  - bandit-baseline
+  - bandit-config-generator
+  - black
+  - coverage
+  - deptry
+  - flake8
+  - isort
+  - isort-identify-imports
+  - mutmut
+  - mypy
+  - pipdeptree
+  - poetry # Assuming it might be needed/present
+  - pre-commit
+  - py-spy
+  - pyflakes
+  - pylint
+  - pyproject-build
+  - pytest
+  - radon
+  - ruff # Base command
+  # Subcommands like 'ruff check' will be handled by the command generation logic
+  # The definition structure itself captures subcommands; this list is just for discovery.
+  - safety
+  - scalene
+  - uv # Assuming it might be needed/present
+  - vulture
+
+# List of executable base names found in the venv bin directory that ZLT should ignore.
+excluded_executables:
+  # Standard venv scripts
+  - activate
+  - activate.csh
+  - activate.fish
+  - activate.nu
+  - activate.ps1
+  - activate_this
+  - activate_this.py
+  - coverage-3 # Likely alias
+  - coverage-3.13 # Specific version alias
+  - coverage3 # Old alias
+  - pip
+  - pip-3 # Likely alias
+  - pip-3.13 # Specific version alias
+  - pip3
+  - pip3.13 # Specific version alias
+  - python
+  - python3
+  - python3.13
+  - wheel
+  # Known non-user-facing tools or internal helpers
+  - blackd # Black daemon
+  - dmypy # MyPy daemon
+  - f2py # Fortran wrapper
+  - get_gprof # Debugging util
+  - get_objgraph # Debugging util
+  - mypyc # MyPy compiler
+  - normalizer # Internal?
+  - numpy-config # NumPy utility
+  - pbr # Python Build Reasonableness tool
+  - py.test # Old pytest alias
+  - pylint-config # Pylint utility
+  - pyreverse # Pylint utility
+  - python_config # Example sometimes present
+  - stubgen # MyPy utility
+  - stubtest # MyPy utility
+  - symilar # Pylint utility
+  - undill # Dill helper
+  # Other installed CLIs we aren't managing via ZLT baselines (yet?)
+  - hypothesis # Primarily a library
+  - identify-cli # Unknown
+  - markdown-it # Markdown tool
+  - nltk # NLP toolkit CLI
+  - nodeenv # Node.js env tool
+  - pycodestyle # Covered by ruff
+  # pyflakes # Managed, removed from exclude
+  - pygmentize # Syntax highlighter CLI
+  - tqdm # Library helper
+  - typer # Library helper
+  - virtualenv # Environment manager, replaced by uv
+  # Exclude the project's own scripts defined in pyproject.toml
+  - zeroth-law
+  - zlt

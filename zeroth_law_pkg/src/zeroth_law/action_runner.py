@@ -5,9 +5,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Any, cast
-
-import yaml
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -117,13 +115,12 @@ def _build_path_arguments(
     return path_args
 
 
-def _prepare_environment(tool_name: str, project_root: Path) -> dict[str, str] | None:
-    """Prepares environment variables for specific tools (e.g., MYPYPATH for mypy)."""
-    env_vars: dict[str, str] | None = None  # Start with None (use default os.environ)
+def _prepare_environment(tool_name: str, project_root: Path) -> dict[str, str]:
+    """Prepares environment variables, returning a modifiable copy."""
+    # Always start with a copy of the current environment
+    env_vars = os.environ.copy()
 
     if tool_name == "mypy":
-        # Create a copy of the current environment only if we need to modify it
-        env_vars = os.environ.copy()
         current_mypypath = env_vars.get("MYPYPATH", "")
         src_path = project_root / "src"
 
@@ -137,12 +134,11 @@ def _prepare_environment(tool_name: str, project_root: Path) -> dict[str, str] |
             log.debug(f"Set MYPYPATH for mypy execution: {env_vars['MYPYPATH']}")
         else:
             log.warning(f"'src' directory not found at {src_path}. Cannot automatically set MYPYPATH for mypy.")
-            # If src not found, don't modify the environment, revert to default
-            env_vars = None
+            # If src not found, MYPYPATH remains unchanged in the copied env
 
     # Future: Add logic for other tools requiring specific env vars here
 
-    return env_vars
+    return env_vars  # Always return the (potentially modified) copy
 
 
 def _execute_tool(
@@ -164,24 +160,28 @@ def _execute_tool(
             encoding="utf-8",
             env=env_vars,
         )
-        log.debug(f"Tool {tool_name} exited with code {result.returncode}")
+
+        # Handle output/logging based on json_output flag
+        json_output = cli_args.get("json", False)
+        stdout = result.stdout.strip()
+
+        if json_output:
+            if stdout:  # Only print if there is something to print
+                print(stdout)  # Print raw output for JSON flag
+        else:
+            if stdout:
+                log.info(f"Output:\n{stdout}")  # Log output for non-JSON flag
+            else:
+                log.info("Tool produced no output.")
 
         if result.returncode != 0:
             tool_passed = False
-            log.error(f"Tool '{tool_name}' failed (Exit Code: {result.returncode}):")
-            if result.stdout:
-                log.error("--- stdout ---")
-                log.error(result.stdout.strip())
-            if result.stderr:
-                log.error("--- stderr ---")
-                log.error(result.stderr.strip())
+            log.error(f"Tool '{tool_name}' failed (Exit Code: {result.returncode}) - captured above")
+            # Error details logged previously
         elif cli_args.get("verbose", 0) > 0 or cli_args.get("verbosity", 0) > 0:
-            if result.stdout:
-                log.info(f"--- stdout ({tool_name}) ---")
-                log.info(result.stdout.strip())
+            # Verbose logging already happened via debug logs
             if result.stderr:
-                log.info(f"--- stderr ({tool_name}) ---")
-                log.info(result.stderr.strip())
+                log.info(f"Tool '{tool_name}' stderr (already debug logged): {result.stderr.strip()}")
 
     except FileNotFoundError:
         log.error(f"Execution failed for tool '{tool_name}': 'poetry' command not found. Is Poetry installed and in PATH?")
@@ -193,50 +193,23 @@ def _execute_tool(
     return tool_passed
 
 
-def load_tool_mapping(project_root: Path) -> dict[str, Any] | None:
-    """Loads the tool mapping configuration from the YAML file."""
-    # Construct path relative to project root (assuming src layout)
-    mapping_file_path = project_root / "src" / "zeroth_law" / YAML_MAPPING_FILE_NAME  # Use YAML constant
-    log.debug(f"Attempting to load tool mapping from: {mapping_file_path}")
-
-    if not mapping_file_path.is_file():
-        log.error(f"Tool mapping file '{YAML_MAPPING_FILE_NAME}' not found at expected location: {mapping_file_path}")
-        return None
-
-    try:
-        with mapping_file_path.open("r", encoding="utf-8") as f:
-            # mapping_data = json.load(f) # Old JSON loading
-            mapping_data = yaml.safe_load(f)  # Use yaml.safe_load
-        log.debug("Successfully loaded tool mapping.")
-        # Cast to the expected type to satisfy the linter
-        return cast(dict[str, Any], mapping_data)
-    # except json.JSONDecodeError as e: # Old JSON error handling
-    #     log.error(f"Error decoding JSON from {mapping_file_path}: {e}")
-    #     return None
-    except yaml.YAMLError as e:  # Use YAML error handling
-        log.error(f"Error parsing YAML from {mapping_file_path}: {e}")
-        return None
-    except OSError as e:
-        log.error(f"Error reading tool mapping file {mapping_file_path}: {e}")
-        return None
-
-
 def run_action(
     action_name: str,
-    mapping: dict[str, Any],  # Full mapping loaded from YAML
+    action_config: dict[str, Any],  # Config for the specific action being run
     project_root: Path,
     cli_args: dict[str, Any],  # Args passed to ZLT (keys = zlt_option names)
     paths: list[Path],
 ) -> bool:
-    """Runs the specified action by executing underlying tools based on the mapping.
+    """Runs the specified action by executing underlying tools based on the action's config.
 
     Args:
     ----
         action_name: The name of the action to run (e.g., 'format', 'lint').
-        mapping: The loaded tool mapping dictionary.
+        action_config: The configuration dictionary for the specific action, loaded from pyproject.toml.
+                       Expected structure: {"description": ..., "zlt_options": ..., "tools": ...}
         project_root: The root directory of the project.
         cli_args: Dictionary of parsed command-line arguments/options for the zlt command.
-                  Keys should match the option names defined in the mapping (e.g., 'check', 'verbose').
+                  Keys should match the option names defined in zlt_options.
         paths: List of target file/directory paths provided.
 
     Returns:
@@ -246,56 +219,63 @@ def run_action(
     """
     log.info(f"Running action: {action_name} with args: {cli_args} on paths: {paths}")
 
-    if action_name not in mapping:
-        log.error(f"Action '{action_name}' not found in tool mapping.")
+    # Extract necessary parts from action_config
+    action_tools = action_config.get("tools")
+    zlt_options_config = action_config.get("zlt_options", {})  # Needed for building args
+
+    if not action_tools or not isinstance(action_tools, dict):
+        log.error(f"No valid 'tools' defined for action '{action_name}' in configuration.")
         return False
 
-    action_config = mapping[action_name]
-    zlt_options_config = action_config.get("zlt_options", {})  # Get action's option definitions
-    all_tools_passed = True
+    overall_success = True
 
-    for tool_name, tool_config in action_config.get("tools", {}).items():
-        log.debug(f"Preparing to run tool: {tool_name}")
-
-        base_command = tool_config.get("command", [])
-        if not base_command:
-            log.error(f"No base command defined for tool '{tool_name}' in mapping.")
-            all_tools_passed = False
+    # Iterate through tools defined for this action
+    for tool_name, tool_config in action_tools.items():
+        if not isinstance(tool_config, dict):
+            log.warning(f"Skipping invalid tool configuration for '{tool_name}' in action '{action_name}'.")
             continue
 
-        # Get the tool's specific mapping configuration
-        tool_maps_options = tool_config.get("maps_options", {})
+        base_command_list = tool_config.get("command")
+        maps_options = tool_config.get("maps_options", {})
 
-        # Build arguments using the tool's mapping and the action's definitions
-        tool_args = _build_tool_arguments(tool_maps_options, zlt_options_config, cli_args, tool_name)
+        if not base_command_list or not isinstance(base_command_list, list):
+            log.warning(f"Skipping tool '{tool_name}' due to missing or invalid 'command' list.")
+            continue
+        if not isinstance(maps_options, dict):
+            log.warning(f"Invalid 'maps_options' for tool '{tool_name}'. Assuming no option mapping.")
+            maps_options = {}
+
+        log.debug(f"Processing tool: {tool_name} with base command: {base_command_list}")
+
+        # Build arguments based on zlt options and tool's mapping
+        tool_args = _build_tool_arguments(maps_options=maps_options, zlt_options=zlt_options_config, cli_args=cli_args, tool_name=tool_name)
 
         # Build path arguments
-        path_args = _build_path_arguments(tool_maps_options, zlt_options_config, paths, project_root, tool_name)
+        path_args = _build_path_arguments(
+            tool_maps_options=maps_options,  # Pass the specific tool's map
+            zlt_options_config=zlt_options_config,  # Pass the action's definitions
+            paths=paths,
+            project_root=project_root,
+            tool_name=tool_name,
+        )
 
-        # Combine command parts
-        command_to_run = ["poetry", "run"] + base_command + tool_args + path_args
+        # Combine base command, mapped arguments, and path arguments
+        command_to_run = base_command_list + tool_args + path_args
 
-        log.info(f"Executing: {' '.join(command_to_run)}")
+        log.info(f"Executing command for '{tool_name}': {' '.join(command_to_run)}")
 
-        # Prepare environment variables (e.g., MYPYPATH for mypy)
+        # Prepare environment (e.g., for mypy)
         env_vars = _prepare_environment(tool_name, project_root)
 
-        # Execute the tool and handle results
-        if not _execute_tool(command_to_run, project_root, env_vars, tool_name, cli_args):
-            all_tools_passed = False
-            # Decide on error handling: break or continue?
-            # For now, let's continue to run other tools even if one fails,
-            # but ensure the overall action result reflects the failure.
-            # If poetry itself is not found, _execute_tool handles logging and returns False,
-            # which will set all_tools_passed = False. We can add a break here if needed.
-            if "poetry" in command_to_run and "command not found" in locals().get("e", ""):
-                # Check if the error was FileNotFoundError for poetry
-                # This check is a bit fragile, relying on exception message content.
-                # A better approach might involve custom exceptions from _execute_tool.
-                log.critical("Poetry command not found. Aborting action.")
-                break
+        # Execute the tool
+        tool_passed = _execute_tool(command_to_run, project_root, env_vars, tool_name, cli_args)
+        if not tool_passed:
+            overall_success = False
+            # Decide whether to continue with other tools or stop on first failure
+            # For now, continue executing all tools defined for the action
+            log.error(f"Tool '{tool_name}' failed for action '{action_name}'. Continuing...")
 
-    return all_tools_passed
+    return overall_success
 
 
 # <<< ZEROTH LAW FOOTER >>>
