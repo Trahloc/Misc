@@ -88,16 +88,46 @@
 - [ ] ZLT: Implement execution & interpretation wrapper for Fuzzers (e.g., `Atheris`) based on `pyproject.toml` config.
 - [ ] ZLT: Implement result aggregation and de-duplication logic (normalize similar errors from different tools).
 - [ ] ZLT: Develop unified reporting module for aggregated/de-duplicated results.
+- [ ] ZLT: Define and implement violation severity levels (INFO, WARN, FAIL) in reporting:
+    - INFO: Meta suggestions (e.g., better docstring phrasing).
+    - WARN: Violates a principle, but doesn't impact functionality or clarity.
+    - FAIL: Breaks TDD, type coverage, correctness, or structural integrity.
 - [ ] ZLT: Refactor `cli.py::run_audit` to utilize the new orchestration engine.
 
 ## Phase Y: ZLT-dev - Capability Mapping & Optimization
 # Goal: Continuously improve ZLT's understanding of consultant tools and optimize its default configuration based on evidence from real tests.
-- [ ] ZLT-dev: Design test harvesting mechanism (initially target ZLT's own test suite).
-- [ ] ZLT-dev: Implement unrestricted consultant tool execution against harvested tests.
-- [ ] ZLT-dev: Design SQLite schema for storing capability map (Rule -> Tool -> Principle -> Test File -> etc.).
-- [ ] ZLT-dev: Implement output parsing and correlation logic to populate the SQLite capability map.
-- [ ] ZLT-dev: Develop logic to query the map and identify unique contributions vs. overlaps.
-- [ ] ZLT-dev: Design feedback mechanism/process to update ZLT's default consultant configurations based on map insights (e.g., disable empirically redundant rules).
+- [ ] **1. Create Rule-to-Principle Registry:**
+    - [ ] Define YAML/JSON schema mapping tool rule IDs (e.g., `ruff:SIM108`) to ZLF Principles (e.g., `[#12]`).
+    - [ ] Implement initial population for known high-value rules.
+    - [ ] (Optional) Implement auto-PR suggestion for unmapped rules encountered during analysis.
+- [ ] **2. Define Test Intent Capture Method:**
+    - [ ] Define the dual mechanism for capturing test intent:
+        - **Primary:** `@zlf_principle([...])` decorator (robust, AST-parsable). Define placeholder decorator.
+        - **Supported:** Structured comments (`# ZLF: [...]`) for flexibility/legacy.
+        - Specify decorator takes precedence if both exist.
+    - [ ] Define the Module -> Class -> Function tagging granularity and inheritance model:
+        - Module: `# ZLF_MODULE: [...]`
+        - Class/Function: `@zlf_principle([...])`
+        - Lower levels override/extend higher levels.
+    - [ ] Define convention for multiple principles: Allow list, first entry denotes primary intent.
+    - [ ] Define convention for parameterized tests: Tag applies to base function for all variants.
+    - [ ] Implement AST parsing logic within ZLT-dev to extract this metadata during test analysis.
+- [ ] **3. Implement Test Harvesting & Execution:**
+    - [ ] Design mechanism to identify and collect relevant test cases (initially ZLT's own tests).
+    - [ ] Implement logic within ZLT-dev to execute consultant tools broadly against harvested tests.
+- [ ] **4. Implement Violation Logging & Correlation:**
+    - [ ] Design structured logging format (e.g., JSON/DB schema) to store: `test_case`, `line_triggered`, `code_snippet`, `tool`, `rule`, `mapped_zlf_principles`, `test_intent_principles`.
+    - [ ] Implement ZLT-dev logic to parse tool output, look up principles from the registry, extract test intent, and populate the log/DB.
+- [ ] **5. Implement Capability Map Analysis:**
+    - [ ] Develop queries/logic to analyze the collected data for:
+        - Rule frequency per ZLF principle.
+        - Rule overlap/redundancy (e.g., which rules consistently fire together for the same principle on the same code).
+        - Coverage gaps (ZLF principles with low rule coverage).
+        - Confidence scores for rule-principle mappings.
+- [ ] **6. Design Configuration Feedback Loop:**
+    - [ ] Define process/tooling for using analysis results to propose evidence-based updates to ZLT's default consultant configurations (e.g., suggesting rules to disable/enable).
+- [ ] **7. (Optional) `.zgraph.yaml` Integration:**
+    - [ ] Explore modeling principles and rule mappings within `.zgraph.yaml` for high-level coverage visualization.
 
 ## Backlog / Ideas
 
@@ -109,3 +139,111 @@
 - [ ] Create a VS Code/Cursor extension for direct IDE integration of Zeroth Law checks.
 - [ ] Support for automatically migrating existing projects to Zeroth Law compliance.
 - [ ] Documentation on multi-project monorepo best practices with Zeroth Law.
+
+## Migration: Poetry to `uv` Standardization
+# Goal: Transition ZLF and ZLT to use `uv` as the primary package/environment manager.
+- [ ] **Update `pyproject.toml`:** Migrate dependencies from `[tool.poetry]` to `[project]` (PEP 621).
+- [ ] **Update `generate_baseline_files.py`:** Ensure it runs correctly within a `uv` environment (e.g., if tool paths change).
+- [ ] **Update `test_tool_integration.py`:** Modify `get_poetry_cli_tools` to use `uv venv` (or equivalent) to find the environment and list tools.
+- [ ] **Update `test_cruft_detection.py`:** Ensure `get_git_tracked_files` works correctly (uses `os.environ`, likely ok, but verify).
+- [ ] **Update `ZerothLawAIFramework.py313.md`:** Replace Poetry references/examples with `uv`.
+- [ ] **Update `NOTES.md`:** Ensure consistency with `uv` standardization.
+- [ ] **Update CI Workflow:** Change `ci.yml` to use `uv` for setup and installation.
+- [ ] **Update `pre-commit` (if needed):** Check if hooks using `poetry run` need changing (likely okay if `uv` environment is active).
+- [ ] **Update `README.md`:** Change setup/usage instructions to use `uv`.
+
+## Architectural Clarity & Validation (`.zgraph.yaml`)
+# Goal: Implement a declarative YAML format (`.zgraph.yaml`) to map architectural intent and enable validation/visualization.
+- [ ] **Define `.zgraph.yaml` Schema:** Finalize schema for nodes (components/roles) and edges (semantic relationships like invokes, reads, configures).
+- [ ] **Implement Parser/Loader:** Create logic (likely in `tool_registry` or dedicated module) to load and validate `.zgraph.yaml`.
+- [ ] **Implement Diagram Generation:** Add `zlt graph export --format <mermaid|graphviz>` command to generate diagrams from `.zgraph.yaml`.
+- [ ] **Implement Progressive Validation in `zlt validate`:**
+    - [ ] **Step 1 (Sanity Check):** Compare components declared in `.zgraph.yaml` against components known from ZLT's configuration (e.g., loaded tools). Warn on mismatches.
+    - [ ] **Step 2 (Metadata Links):** Add support for optional metadata in `.zgraph.yaml` (e.g., `pyproject_path`) and validate linked configuration paths exist.
+    - [ ] (Future) Step 3: Explore deeper introspection if needed.
+- [ ] **Initial Population:** Create `.zgraph.yaml` for the `zeroth_law_pkg` project itself.
+
+## Refactor Tool Definitions & Mapping (Split Approach)
+
+**Goal:** Move away from a monolithic `tool_mapping.yaml` to a more structured approach where tool capabilities are defined separately from how ZLT uses them, enabling better reuse, scalability, and future multi-tool orchestration.
+
+**Phase 1: Define Tool Capabilities & Refactor Loaders/Mapping**
+
+*   [X] **Establish `tools/` Directory Structure:** Create `src/zeroth_law/tools/` (Done).
+*   [X] **Define Tool YAML Schema (`tools/*.yaml`):** Define structure for options, types, help text (Done - Implicitly via created files).
+*   [X] **Create Initial Tool Definitions:** Manually create YAMLs for `coverage run/report/html` in `src/zeroth_law/tools/coverage/` (Done).
+*   [X] **Refine `tool_mapping.yaml` Schema & Apply:** Define group/subcommand structure and `definition_ref`/`option_links`. Applied to `coverage` section (Done).
+*   [ ] **Implement Loading Logic (`src/zeroth_law/tool_registry.py`):**
+    *   Create `src/zeroth_law/tool_registry.py`.
+    *   Implement functions to scan `tools/` and load all tool definition YAMLs.
+    *   Implement function to load the main `tool_mapping.yaml`.
+    *   Implement validation of the loaded structures (e.g., check if `definition_ref` points to existing files, if `option_links` map to existing options).
+    *   Create data structures (classes/dicts) to hold the combined, linked information.
+    *   Provide accessor functions (e.g., `get_zlt_actions_config()`, `get_tool_definition(ref)`, `get_action_mapping(action_path)`) for `cli.py` and `action_runner.py` to use.
+
+**Phase 2: Adapt CLI and Action Runner**
+
+*   [ ] **Refactor `cli.py` (`_add_dynamic_commands`):**
+    *   Replace direct YAML parsing with calls to the new `tool_registry` accessors.
+    *   Build Click interface based *only* on the `zlt_options` defined in `tool_mapping.yaml`.
+    *   Implement logic to handle `type: group` and recursively create nested Click command groups.
+*   [ ] **Refactor `action_runner.py` (`run_action` & helpers):**
+    *   Replace direct YAML parsing with calls to `tool_registry`.
+    *   Use `get_action_mapping` to find the linked tool(s) and their definitions.
+    *   Use the `option_links` and the full tool definition data to translate `cli_args` into the final command list for `subprocess.run`.
+
+**Phase 3: Populate & Enhance**
+
+*   [ ] **Create Remaining Tool Definitions:** Populate `tools/` with YAML definitions for `ruff`, `mypy`, `pytest`, `bandit`, etc.
+    - Add sub-task: **Define and enforce YAML structure rules:**
+        - `command`: string
+        - `description`: string
+        - `help_crc32_baseline_file`: string (path relative to project root)
+        - `ignored_help_line_crc32s`: list of int
+        - `options`: map (key: internal name)
+            - `flags`: list of string (mandatory, e.g., `["-v", "--verbose"]`)
+            - `type`: string (mandatory, `flag` or `value`)
+            - `value_type`: string (mandatory if type is `value`)
+            - `allow_multiple`: bool (optional, default false)
+            - `# help:` comment (optional)
+            - `help_line_crc32`: list of int (mandatory, maps to baseline line CRCs)
+        - `positional_args`: map (optional, key: internal name)
+            - `name`: string (mandatory)
+            - `description`: string (mandatory)
+            - `required`: bool (mandatory)
+            - `nargs`: string (mandatory, e.g., `*`, `?`, `+`)
+            - `help_line_crc32`: list of int (mandatory)
+    - [ ] bandit
+    - [ ] black
+    - [x] coverage (Done - *but needs reformatting to match rules*)
+    - [x] mypy (Done - *but needs reformatting to match rules*)
+    - [ ] pydantic
+    - [ ] pylint
+    - [x] pytest (Done - *but needs reformatting to match rules*)
+    - [ ] pyyaml
+    - [x] ruff (check & format done - *defines standard*)
+    - [ ] etc...
+*   [ ] **Refactor Remaining ZLT Actions:** Update `format`, `lint`, `test`, `check-types`, etc., in `tool_mapping.yaml` to use the new structure (linking to definitions created above).
+*   [X] **Implement Tool Definition Validation Tests:** Create `pytest` tests that run tool commands with `--help`, parse the output, and assert that it matches the contents of the corresponding `tools/*.yaml` file. (Implemented robust CRC32 hash validation with ignored lines and unexpected line detection).
+    - Add sub-task: Enhance `test_txt_json_consistency.py`: When a CRC mismatch triggers an AI update task, the failure message should also prompt the AI to verify that any *new* options/args/subcommands evident in the `.txt` file are correctly reflected in the updated `.json` structure (beyond just fixing the CRC).
+*   [ ] **Implement Multi-Tool Orchestration:** Enhance `action_runner.py` to handle cases where multiple tools are listed for a single ZLT action, potentially running them sequentially based on priority.
+
+## Tool Interface Definition Workflow (v3 - AI Interpretation)
+# Goal: Refine the process for capturing and verifying tool CLI definitions using AI interpretation.
+- [x] **Refactor `generate_baseline_files.py`:**
+    - Keep `.txt` capture & `tool_index.json` CRC update logic.
+    - Remove old JSON generation (per-line CRCs, etc.).
+    - Add logic to generate a *minimal skeleton* `.json` file, pre-populating `metadata.ground_truth_crc` from the index.
+    - [x] **Simplify Paths:** Remove `txt/` and `json/` subdirectories. Files are now `tools/<tool>/<id>.txt` and `tools/<tool>/<id>.json`.
+- [x] **Implement Skeleton Detection Test:** Create `tests/test_tool_defs/test_json_is_populated.py` to ensure `.json` files contain actual interpreted content, not just the skeleton.
+    - [x] **Simplify Paths:** Update paths in tests (`test_ensure_*.py`, `test_txt_json_consistency.py`, `test_json_is_populated.py`).
+- [x] **Update Schema Guidelines:** Add guidance to `tools/zlt_schema_guidelines.md` emphasizing the AI's responsibility to maintain consistency for unchanged options/args when updating `.json` files.
+- [x] **Separate Capabilities:** Create `src/zeroth_law/tools/tool_capabilities.yaml` to store functional categories (Formatter, Linter, etc.), separate from CLI structure.
+- [ ] **AI Task: Populate `.json` Definitions:** Systematically process `.txt` files and populate the corresponding `.json` skeleton files according to the guidelines.
+- [ ] **Refine Schema:** Update `tools/zlt_schema_guidelines.md` with the refined `value_name` rule (list vs. string based on `nargs`, no internal whitespace in names/flags).
+- [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate `value_name` structure, `nargs` consistency, and whitespace rules in names/flags.
+
+-   [ ] **Review `poetry.json`:** The current `poetry.txt` seems to contain help for `poetry list` rather than the main command.
+    -   Regenerate the baseline using `poetry --help` (or similar) to capture the correct help text.
+    -   Repopulate `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`.
+-   [ ] **Add JSON Schema Validation Test:** Implement a new `pytest` test that validates *all* populated `.json` files (`file_status: populated`) against the formal schema (`zlt_schema.py`) to catch structural errors beyond CRC/skeleton checks.

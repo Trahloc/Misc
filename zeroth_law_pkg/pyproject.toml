@@ -1,57 +1,86 @@
-[tool.poetry]
-name = "zeroth_law"
-version = "2025.4.8"  # Epoch/Date based versioning
+# --- Standard Project Metadata (PEP 621) ---
+[project]
+name = "zeroth-law"
+version = "2025.4.8" # Epoch/Date based versioning
 description = "Enforcer for the Zeroth Law AI Framework"
-authors = ["Trahloc colDhart <github@trahloc.com>"] # Placeholder - Please update
-license = "CC0" # Placeholder - Choose appropriate license
+authors = [
+    { name = "Trahloc colDhart", email = "github@trahloc.com" }, # Updated format
+]
+license = { text = "CC0" } # Standard license format
 readme = "README.md"
-packages = [{include = "zeroth_law", from = "src"}]
+requires-python = ">=3.13,<4.0"
+classifiers = [ # Optional: Add classifiers for PyPI
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "License :: CC0 License",
+    "Operating System :: OS Independent",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.13,<4.0"
-structlog = "^25.2.0"
-pydantic = "^2.11.3"
-xdg = "^6.0.0" # For XDG Base Directory Specification adherence
-click = "^8.1.7" # Added Click for CLI - Use latest version
-black = "^25.1.0"
-pyyaml = "^6.0.2"
+# Runtime Dependencies
+dependencies = [
+    "structlog",
+    "pydantic",
+    "xdg", # For XDG Base Directory Specification adherence
+    "click",
+    "black",
+    "pyyaml",
+]
 
-[tool.poetry.group.dev.dependencies]
-# Testing
-pytest = "^8.3.5"
-pytest-cov = "^6.1.1" # Reverted back
-pytest-mock = "^3.14.0" # Add pytest-mock
+# Optional Dependencies (for development, testing, etc.)
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest",
+    "pytest-mock",
+    "pytest-cov",
+    "ruff",
+    "coverage",
+    "mypy",
+    "types-pyyaml",
+    "toml",
 
-# Type Checking
-mypy = "^1.15.0" # Ensure version supports Python 3.13 robustly
+    # Duplication Check (Targeted Use)
+    "pylint", # Ensure version supports Python 3.13 robustly
 
-# Linting, Formatting, Doc Checks, Import Sorting
-ruff = "^0.11.4" # Use a specific recent version
+    # Git Hooks Manager
+    "pre-commit",
 
-# Duplication Check (Targeted Use)
-pylint = "^3.3.6" # Ensure version supports Python 3.13 robustly
+    # Optional Tools
+    "autoinit", # If used for __init__.py management
 
-# Environment Generation Tool (No longer needed with pure Poetry workflow)
-# poetry-plugin-export = "^1.9.0" # Check for the latest compatible version
+    # Types (Ensure these match versions used)
+    "types-setuptools", # Align with installed version
 
-# Git Hooks Manager
-pre-commit = "^4.2.0"
+    # --- Other necessary dev tools (Uncommented) --- #
+    "autopep8",
+    "pyflakes",
+    "hypothesis",
+    "bandit",
+    "radon",
+    "mutmut",
+    "vulture",
+    "py-spy",
+    "scalene",
+    "build", # Needed for pyproject-build script
+    "pipdeptree",
+    "deptry",
+    "safety",
+    "flake8", # Although ruff covers much, might be needed for specific checks/tests
+    "poetry", # Added to ensure it's available if tests check for it
+]
 
-# Optional Tools
-autoinit = "^1.1.1" # If used for __init__.py management
-
-# Build/Publishing Tools (Optional)
-# build = "^1.0.0"
-# twine = "^5.0.0"
-
-# Types (Ensure these match versions used)
-types-setuptools = "^78.1.0" # Align with installed version
-
-# Add scripts entry point
-types-pyyaml = "^6.0.12.20250402"
-[tool.poetry.scripts]
+# Scripts / Entry Points
+[project.scripts]
 zeroth-law = "zeroth_law.cli:cli_group"
 zlt = "zeroth_law.cli:cli_group" # Add zlt alias
+generate-baselines = "zeroth_law.dev_scripts.generate_baseline_files:main"
+
+# --- Build System (Required by PEP 517) ---
+[build-system]
+requires = ["setuptools>=61.0"] # Or another build backend like hatchling, flit_core
+build-backend = "setuptools.build_meta"
+
+# --- Existing Tool Configurations (Keep As Is) --- #
 
 # --- Add Zeroth Law Tool Configuration --- #
 [tool.zeroth-law]
@@ -273,7 +302,3 @@ omit = [
 #fail_under = 90 # Uncomment and adjust threshold later
 show_missing = true
 skip_covered = true
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"

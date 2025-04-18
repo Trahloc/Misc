@@ -4,6 +4,61 @@
 
 ---
 
+## Current Workflow: Tool Help Baseline Generation & Verification (2025-04-13T16:01:32+08:00)
+
+**Summary:** This section documents the current, authoritative workflow for generating and verifying configuration definitions for external command-line tools integrated with ZLT. This process ensures ZLT's understanding of a tool's interface (stored in YAML) remains synchronized with the tool's actual help output (captured in TXT/JSON baselines).
+
+**Workflow Steps:**
+
+1.  **Capture (`src/zeroth_law/dev_scripts/capture_txt_tty_output.py`):
+    *   Executes the target command (e.g., `ruff --help`) within a pseudo-terminal (PTY) environment.
+    *   Crucially, the command's output is piped through `cat` (`sh -c 'command | cat'`) within the PTY.
+    *   **Rationale:** This captures the layout intended for a terminal but uses `cat` to reliably strip ANSI escape codes (colors, formatting) before further processing.
+    *   Returns the resulting raw bytes and exit code.
+
+2.  **Generate (`src/zeroth_law/dev_scripts/generate_baseline_files.py`):
+    *   Takes a command string as input.
+    *   Calls the Capture script logic.
+    *   Decodes the captured bytes (UTF-8).
+    *   **Saves Ground Truth:**
+        *   `src/zeroth_law/tools/<tool>/txt/<stem>.txt`: Stores the full decoded string for human readability.
+        *   `src/zeroth_law/tools/<tool>/json/<stem>.json`: Stores a structured representation:
+            *   `command_used`: List of original command parts.
+            *   `generation_timestamp`: ISO 8601 timestamp (UTC).
+            *   `overall_crc32_hex`: Hex CRC32 of the entire decoded string.
+            *   `lines`: List of objects, each containing:
+                *   `line_number`: 1-based index.
+                *   `raw_content`: The text of the line (from the `cat`-filtered output).
+                *   `crc32_hex`: Hex CRC32 of the `raw_content`, calculated using `lib.crc.calculate_hex_crc32`.
+    *   **Idempotent:** Re-running this script for the same command overwrites the `.txt` and `.json` files, updating the timestamp.
+
+3.  **AI Interpretation (YAML):
+    *   `src/zeroth_law/tools/<tool>/yaml/<stem>.yaml`: This file is created or updated by the AI (or a human).
+    *   It represents ZLT's structured understanding of the tool's interface, based on analysis of the corresponding `.json` file.
+    *   Contains keys like `command`, `description`, `help_command`, `help_crc32_baseline_file`, `ignored_help_line_crc32s`, `options`, `positional_args`, `subcommands`.
+    *   Crucially, `ignored_help_line_crc32s` and `help_line_crc32` within options/args/subcommands list the hex CRC strings from the `.json` file that define those elements.
+
+4.  **Verify (`tests/test_tool_defs/test_crc_consistency.py`):
+    *   This `pytest` test automates the consistency check between the JSON ground truth and the YAML interpretation.
+    *   It discovers corresponding `.json` and `.yaml` pairs.
+    *   **Checks Performed:**
+        *   YAML Existence: Fails if `.yaml` is missing for a `.json`.
+        *   YAML Load & Path: Fails if `.yaml` is unparseable or `help_crc32_baseline_file` is incorrect.
+        *   JSON Load: Fails if `.json` is unparseable.
+        *   **CRC Set Comparison:**
+            *   Extracts all unique `crc32_hex` values from JSON lines (`json_crc_set`).
+            *   Extracts all unique `crc32_hex` values listed anywhere in the YAML (`yaml_crc_set`).
+            *   **If `json_crc_set == yaml_crc_set`:** Pass.
+            *   **If `json_crc_set != yaml_crc_set`:** Fail, providing specific error messages:
+                *   Lists CRCs missing from YAML (`json_crc_set - yaml_crc_set`).
+                *   Lists stale/incorrect CRCs in YAML (`yaml_crc_set - json_crc_set`).
+                *   Considers the JSON timestamp (`generation_timestamp`) to guide the user (e.g., if JSON is recent, assume YAML needs fixing; if JSON is old, suggest regenerating baseline first).
+    *   **Outcome:** This test acts as the gatekeeper, signalling when AI/human intervention is required to update the YAML interpretation based on changes in the ground truth.
+
+**Superseding Notice:** This section describes the current, implemented workflow. Details regarding specific script names, normalization methods (like `COLUMNS=32767`), or validation logic found in older sections (e.g., "Tool Definition Help Validation Refactoring & Enhancement" dated 2025-04-12) are superseded by this description. The core *rationale* in older sections may still be relevant.
+
+---
+
 ## Pre-commit, Ruff Format, and IDE Integration (Recovered Discussion)
 
 **Initial Problem:** The `ruff-format` pre-commit hook was causing commit failures even when it successfully formatted files, because pre-commit halts on *any* file modification by a hook. This created friction, conflicting with Zeroth Law's goal of smooth flow.
@@ -290,3 +345,200 @@ format:
 *   **Richness:** `zlt_options` holds the detailed metadata (`type`, `description`, `value_type`).
 
 **Implementation:** This requires refactoring `cli.py` to build Click options from `zlt_options` and `action_runner.py` to use `maps_options` for translating arguments during execution.
+
+## Mandate: Minimize Mocking in Tests (2025-04-12T11:03:18+08:00)
+
+**Decision:** To ensure tests accurately reflect the behavior of the system and its integrated components, the use of mocking (`unittest.mock`, `pytest-mock`) must be strictly limited.
+
+**Mandate:**
+1.  **No Mocking Internal Components:** Tests **must not** mock functions, classes, or modules that are part of the `zeroth_law` codebase itself (e.g., `cli.py`, `config_loader.py`, `action_runner.py`, `analyzer/`). Tests should interact with these components through their public APIs or by invoking the CLI.
+2.  **No Mocking Accessible External Tools:** Tests **must not** mock the execution (`subprocess.run`) of external tools that are directly accessible and configurable (e.g., `ruff`, `mypy`, `pytest`). Tests requiring interaction with these tools should set up necessary configurations (e.g., temporary `pyproject.toml`, source files) and invoke the actual tools (e.g., via the appropriate `zlt` action command).
+3.  **Permitted Mocking:** Mocking is **only permitted** for:
+    *   Simulating truly external systems or dependencies (e.g., network services, databases - not currently applicable to ZLT).
+    *   Controlling specific environmental conditions that are difficult or impossible to replicate reliably (e.g., specific filesystem states using `Path` method mocks like `is_dir`, `exists`; specific non-deterministic behavior like random number generation).
+    *   Testing specific error handling paths for external processes (e.g., mocking `subprocess.run` *only* to simulate a non-zero exit code or specific error output from an external tool, while the success path uses the real tool).
+
+**Rationale:**
+*   **Test Reality:** Ensures tests validate the actual integration and behavior of the codebase, reducing the risk of tests passing while the real application fails.
+*   **Refactoring Confidence:** Provides greater confidence when refactoring, as tests are coupled to behavior rather than implementation details hidden by mocks.
+*   **Maintainability:** Reduces the fragility associated with complex mock setups that can break easily during refactoring.
+
+**Impact:**
+*   Requires reviewing and refactoring existing tests (identified in `test_cli.py`, `test_cli_json_output.py`, `test_cli_option_validation.py`) to remove inappropriate mocks.
+*   May increase test setup complexity (e.g., creating temporary file structures and configurations).
+*   Leads to more robust and reliable tests that provide higher confidence in the system's correctness.
+
+## ZLF Exception: Using JSON for Machine-Generated Data Artifacts (2025-04-12T15:00:00+08:00)
+
+**Context:** The ZLF generally prefers YAML over JSON due to YAML's support for comments, which aligns with Principle #7 (Self-Documenting Code & Explicit Rationale). This is important for configuration files or other formats intended for human/AI understanding and maintenance.
+
+**Specific Case:** The strategy for verifying tool interfaces involves generating baseline data from command `--help` output. This process uses a script (`src/zeroth_law/dev_scripts/generate_baseline_files.py`) to capture help text, normalize it (via `| cat`), calculate CRC32 hashes (overall and per-line), and store this information.
+
+**Decision:** For this *specific type of data artifact* (machine-generated, machine-read baseline data for automated tests), JSON is deemed an acceptable format, constituting a justified exception to the general preference for YAML.
+
+**Rationale:**
+*   **Machine-Centric:** The primary consumer of this file is the automated test suite, not a human or AI maintainer reading it for configuration or logic understanding.
+*   **No Embedded Rationale Needed:** The *purpose* and *structure* of this data are defined by the generating script and the consuming test logic, not by comments within the file itself. The rationale for the *approach* is documented elsewhere (e.g., `NOTES.md`, commit history).
+*   **Robustness & Simplicity:** JSON offers robust handling of text data (including potential special characters in help output via standard escaping) and simpler, less error-prone parsing compared to YAML for purely data-transfer purposes.
+
+**Conclusion:** While YAML remains the preferred format for human/AI-editable configuration within the ZLF, JSON is permitted for machine-generated data artifacts where embedded comments are unnecessary and JSON's parsing simplicity and robustness are advantageous.
+
+## Tool Definition Help Validation Refactoring & Enhancement (2025-04-12T19:19:13+08:00)
+
+**Note:** The specific implementation details regarding normalization and validation logic described below are **superseded** by the workflow outlined in the "Current Workflow: Tool Help Baseline Generation & Verification" section (dated 2025-04-13). However, the problems identified and the rationale for refactoring remain relevant.
+
+**Problem:** Initial tests validating tool definition YAMLs against command `--help` output using CRC32 hashes were brittle and failed inconsistently.
+*   Failures occurred due to differences in terminal width affecting line wrapping in help text (`mypy` was particularly problematic).
+*   Significant code duplication existed across test files (`tests/test_tool_defs/`).
+*   The initial validation logic was complex and potentially incomplete.
+
+**Solution & Rationale (Historical Context):**
+1.  **Refactor to `conftest.py`:** Moved common helper functions (`get_command_output`, etc.), constants, and fixtures (`tool_definition`, `baseline_crc_data`) into `tests/test_tool_defs/conftest.py` to eliminate duplication. Test files now import helpers from `conftest`.
+2.  **YAML Updates:** Added the `ignored_help_line_crc32s: []` key to relevant tool definition YAMLs and populated them with initial boilerplate/header CRCs.
+3.  **Test Cleanup:** Removed redundant or unreliable older tests.
+
+**Result:** The refactoring improved test structure and maintainability, paving the way for the current, more robust verification approach.
+
+## ZLF Principle Tagging Strategy for Tests (2025-04-12T20:03:10+08:00)
+
+**Goal:** Establish a clear and robust mechanism for associating test cases with the specific Zeroth Law Framework (ZLF) principles they aim to validate or exercise. This association is crucial for the `ZLT-dev` capability mapping process.
+
+**Decisions (Based on AI Discussion):**
+
+1.  **Tagging Mechanism (Decorator vs. Comment):**
+    *   **Primary Method:** `@zlf_principle([...])` decorator. Chosen for robustness, AST parsability, validation potential, and future extensibility. A placeholder decorator (no runtime logic initially) will be defined.
+    *   **Supported Alternative:** `# ZLF: [...]` structured comments. Allowed for lower friction, legacy cases, or simpler environments.
+    *   **Precedence:** If both are present on the same element, the decorator's value is used.
+
+2.  **Tagging Granularity & Inheritance:**
+    *   **Module Level:** `# ZLF_MODULE: [...]` comment at the top of the file sets a default for all tests within.
+    *   **Class Level:** `@zlf_principle([...])` decorator on a test class sets defaults for its methods.
+    *   **Function Level:** `@zlf_principle([...])` decorator on a test function provides the most specific tag.
+    *   **Inheritance:** Function > Class > Module. Tags at lower levels override or extend (policy TBD, likely override) tags from higher levels. This minimizes boilerplate while maximizing specificity.
+
+3.  **Handling Multiple Principles:**
+    *   **Allowed:** Tests can be tagged with multiple ZLF principles.
+    *   **Primary Intent:** The *first* principle listed in the tag array is considered the primary intent the test is designed to validate. Subsequent principles represent collateral coverage.
+    *   **Example:** `@zlf_principle(["#12", "#6"])` - Primary focus on Clarity (#12), also covers Complexity (#6).
+
+4.  **Parameterized Tests (`@pytest.mark.parametrize`):**
+    *   **Tagging:** The `@zlf_principle` tag is applied to the base test function definition.
+    *   **Interpretation:** The tag applies equally to all test instances generated by the parametrization. Per-parameter tagging is deemed overly complex for current needs.
+
+**Rationale:** This combined approach balances the need for a robust, parsable standard (decorators) with flexibility (comments, inheritance) and provides clear conventions for handling multiple principles and parametrization, supporting the goals of `ZLT-dev` capability mapping.
+
+## Adapting TDD/DDT for External/Generated Data & AI Integration (2025-04-13T13:30:44+08:00)
+
+**Problem:** Applying pure TDD/DDT is challenging when dealing with external systems (like tool `--help` output) or when integrating AI analysis, as the "expected" state isn't fully determined a priori.
+
+**Approach (ZLF Adaptation):**
+1.  **Step 0 (Characterization/Baseline):** Generate the current, real-world data (e.g., using `generate_baseline_json.py` to capture `tool --help` output). This establishes the "source of truth" for the current external state.
+2.  **Step 1 (Define Intent/Structure - YAML):** Define the *semantic structure* and *ZLT's understanding* of the tool/data in a configuration file (e.g., tool definition YAMLs in `src/zeroth_law/tools/`). This declares *what* we want ZLT to know.
+3.  **Step 2 (Link Structure to Reality - Initial Mapping):** Manually or semi-automatically connect the YAML structure to the baseline data (e.g., map YAML options to specific line CRCs in the JSON baseline). This synchronizes ZLT's understanding with the initial reality.
+4.  **Step 3 (Regression Test - Pytest):** Use automated tests (like the CRC validation tests) to *continuously verify* that ZLT's understanding (YAML) remains synchronized with the characterized reality (JSON baseline). These tests act as regression guards.
+
+**Handling Changes:**
+*   When a test fails, it signals desynchronization.
+*   Regenerate the baseline data (Step 0).
+*   Manually inspect the diff between the old/new baseline and the YAML definition.
+*   If the external change was intentional, **update the YAML** (Step 2) to realign ZLT's understanding. The test *should* fail until this is done.
+*   If the change was unintentional or breaks ZLT's core assumptions, the test has caught a valid regression.
+
+**AI Integration:**
+*   **Future Helper:** AI can assist in Step 2 (mapping YAML to baseline data) by performing semantic analysis of help text.
+*   **Future Validator:** AI can act as an additional test layer, semantically comparing YAML definitions against baseline content.
+*   **Core ZLT:** The validated YAML definitions become the knowledge base for ZLT's AI-driven orchestration and configuration of tools.
+
+**Conclusion:** TDD/DDT adapts by using characterization tests and baselines. The "test-first" focus applies to the *structure* and *validation logic*, while the external data is captured and used for ongoing regression testing. AI enhances this by adding semantic understanding and validation layers.
+
+## Lessons Learned / Dead Ends (Help Validation)
+
+*   **Normalization via `COLUMNS=32767`:** An early attempt to fix inconsistent line wrapping in `--help` output involved setting the `COLUMNS` environment variable to a very large value before capturing output. While helpful, this wasn't universally effective and could still lead to subtle differences. The current approach of piping through `cat` (`sh -c 'command | cat'`) during capture proved more robust and simpler for removing ANSI codes and ensuring consistent line breaks.
+*   **Complex Validation Logic:** The previous `pytest` validation involved multiple steps: checking overall hash, then checking for missing expected CRCs, then calculating set differences to find unexpected CRCs. While functional, this was complex. The current approach simplifies this to a direct comparison of the complete CRC sets (`json_crc_set == yaml_crc_set`), which is easier to understand and implement, providing clearer failure modes (missing vs. stale CRCs).
+
+## Mandate: Standardize on `uv` as the Primary Environment/Package Manager (2025-04-13T18:25:00Z) # AI: Run date --iso-8601=seconds
+
+**Decision:** The Zeroth Law Framework (ZLF) will standardize on **`uv`** as the **primary and recommended** tool for Python environment management and package installation for projects adhering to the ZLF.
+
+**Rationale:**
+*   **ZLF Opinionation:** Aligns with the ZLF goal of being opinionated about core tooling to ensure consistency and reduce friction.
+*   **Standards Alignment (PEP 621):** `uv` natively uses the standard `[project]` table in `pyproject.toml` for dependency specification, promoting interoperability and adherence to modern Python packaging standards.
+*   **Performance:** `uv` offers significant speed advantages over Poetry for dependency resolution and installation.
+*   **Modern Tooling:** Represents a current and actively developed tool focused on performance and standards compliance.
+
+**Legacy/Transitional Support for Poetry:**
+*   Poetry is now considered **legacy/transitional** within the ZLF context.
+*   Projects migrating to ZLF may still use Poetry initially.
+*   `uv` provides compatibility by being able to install dependencies from an existing `poetry.lock` file via `uv pip sync --resolver=poetry poetry.lock`. This offers a gradual migration path.
+*   New ZLF-native projects **must** use `uv` and define dependencies in the `[project]` table.
+
+**Impact:**
+*   The ZLF documentation (`ZerothLawAIFramework.py313.md`) will be updated to reflect `uv` as the standard.
+*   `pyproject.toml` examples and requirements will use the `[project]` table for dependencies.
+*   Scripts and tests interacting with the environment manager (e.g., `generate_baseline_files.py`, `test_tool_integration.py`) must be updated to use `uv` commands or operate correctly within a `uv`-managed environment.
+*   CI/CD workflows must be updated to use `uv` for environment setup and dependency installation.
+*   `TODO.md` will be updated with specific migration tasks.
+
+## Refined Tool Interface Workflow & AI Interpretation (v3) (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ) # AI: Run `date --iso-8601=seconds`
+
+**Summary:** This section details the current, streamlined workflow for managing external tool interface definitions, emphasizing the separation between automated ground-truth tracking and AI-driven interpretation. This supersedes previous workflows involving YAML or complex per-line CRC checks.
+
+**Workflow Steps:**
+
+1.  **Tool Discovery & Indexing (`tool_discovery.py` / Test Suite):**
+    *   Automated tests examine the environment's executables against whitelists/blacklists.
+    *   Whitelisted tools are added/verified in a central manifest: `src/zeroth_law/tools/tool_index.json`.
+    *   This index maps tool identifiers (e.g., `ruff_check`) to metadata, critically including the **last known CRC32 hash** of the tool's ground-truth `.txt` help file.
+
+2.  **Ground Truth & Skeleton Generation (`generate_baseline_files.py`):**
+    *   Captures `tool --help | cat` output into a `.txt` file (`src/zeroth_law/tools/<tool>/<id>.txt`).
+    *   Calculates the CRC32 hash of this `.txt` file.
+    *   **Updates `tool_index.json`** with the new CRC for the corresponding tool ID.
+    *   Generates a **minimal skeleton** `.json` file (`src/zeroth_law/tools/<tool>/<id>.json`). This skeleton contains basic keys (`command_sequence`, `description`, `options`, etc.) with empty/placeholder values. Crucially, the skeleton **includes `metadata.ground_truth_crc` set to `"0x00000000"`**.
+
+3.  **AI Interpretation (`.json` Population):**
+    *   **Me (the AI)** reads the ground-truth `.txt` file.
+    *   **Me (the AI)** populates the content of the skeleton `.json` file (filling `description`, `options`, `arguments`, etc.) based on the `.txt` content and the schema in `tools/zlt_schema_guidelines.md`.
+    *   **Me (the AI)** must update `metadata.ground_truth_crc` to the correct CRC value from `tool_index.json` during population.
+    *   **Consistency Constraint:** When updating an existing `.json`, unchanged options/arguments must retain their names and structure to avoid breaking programmatic dependencies. Changes should only reflect actual updates from the `.txt`.
+
+4.  **Verification (`test_txt_json_consistency.py`):**
+    *   **Sole Purpose:** Compares the `metadata.ground_truth_crc` value *inside* the `.json` file against the CRC value stored in `tool_index.json` for the same tool ID.
+    *   It **does not** check if the file is a skeleton or populated.
+    *   Mismatch triggers a test failure with explicit instructions for **Me (the AI)** to re-read the `.txt`, update the `.json` content, ensure consistency, and align the embedded `metadata.ground_truth_crc` with the `tool_index.json` value.
+
+5.  **Population Check (Separate Tests):**
+    *   Separate tests (`test_json_is_populated.py`, `test_json_schema_validation.py`) are responsible for verifying that `.json` files are correctly populated and adhere to the schema. This includes checking for non-empty fields and correct structure.
+
+**Rationale:** This workflow leverages automation for tracking ground truth changes (via CRC in the index) and provides structure (via skeleton JSON with a zeroed CRC), while delegating the complex interpretation task to the AI, with clear validation gates (CRC match, population check, schema check) and update instructions.
+
+**Consumption by ZLT:** This populated and validated `.json` file then serves as the essential machine-readable knowledge base consumed by ZLT's orchestration engine (e.g., `action_runner.py`) to correctly execute the tool and translate ZLT-level configurations into tool-specific command-line arguments.
+
+# Process for Populating Tool Definition JSON Files
+
+1.  **Identify Incorrect/Incomplete JSON Files:**
+    *   Run `uv run pytest tests/test_tool_defs/`
+    *   Identify failures in:
+        *   `test_txt_json_consistency.py::test_json_crc_matches_index`: Indicates the `metadata.ground_truth_crc` in the JSON doesn't match the index (it might still be the initial `0x00000000` or an outdated value).
+        *   `test_json_is_populated.py`: Indicates the JSON file lacks sufficient populated content (e.g., empty description, no options listed).
+        *   `test_json_schema_validation.py`: Indicates the JSON file structure violates the schema.
+
+2.  **Iterate Through Failing Files:**
+    *   For each failing tool ID (e.g., `mytool` or `mytool-subcommand`):
+        *   **Locate Files:**
+            *   JSON: `src/zeroth_law/tools/mytool/mytool.json` (or corresponding path)
+            *   Help Text: `src/zeroth_law/tools/mytool/mytool.txt` (or corresponding path)
+            *   Index: `src/zeroth_law/tools/tool_index.json`
+        *   **Read Help Text:** Use `read_file` on the `.txt` file.
+        *   **Get Index CRC:** Extract the expected `ground_truth_crc` for the tool ID from `tool_index.json`.
+        *   **Populate/Correct JSON:**
+            *   Use `edit_file` on the `.json` file.
+            *   Update `metadata.ground_truth_crc` with the correct CRC value from the index.
+            *   Fill/Update `description`, `usage`, `options`, `arguments`, `subcommands` based on the `.txt` help text and schema guidelines (`tools/zlt_schema_guidelines.md`), ensuring consistency for unchanged elements and adding any newly discovered elements from the help text.
+        *   **Handle Edit Failures:** If `edit_file` reports "no changes" but `pytest` still fails the file, use `reapply` on the target `.json` file.
+        *   **Verify:** Rerun `uv run pytest tests/test_tool_defs/` to confirm the test(s) for the specific tool ID now pass.
+
+3.  **Repeat:** Continue until all tests in `tests/test_tool_defs/` pass.
+
+4.  **Cleanup:**
+    *   Address any duplicate/redundant tool definitions (e.g., hyphen vs. underscore variants like `isort-identify-imports` vs `isort_identify-imports`). Remove unnecessary files (`.json`, `.txt`) and corresponding entries from `tool_index.json`.
