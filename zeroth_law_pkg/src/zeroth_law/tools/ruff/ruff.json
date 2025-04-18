@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "tool_name": "Ruff",
+    "description": "An extremely fast Python linter and code formatter.",
+    "version_pin": "latest",
+    "file_status": "populated",
+    "ground_truth_crc": "0xae0936d1"
+  },
+  "schema_version": "0.1",
+  "command_sequence": [
+    "ruff"
+  ],
+  "usage": "ruff [OPTIONS] <COMMAND>",
+  "summary": "An extremely fast Python linter and code formatter.",
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Print help.",
+      "required": false
+    },
+    {
+      "short": "-V",
+      "long": "--version",
+      "description": "Print version.",
+      "required": false
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "Enable verbose logging.",
+      "required": false
+    },
+    {
+      "short": "-q",
+      "long": "--quiet",
+      "description": "Enable quiet mode.",
+      "required": false
+    },
+    {
+      "short": "-s",
+      "long": "--silent",
+      "description": "Enable silent mode.",
+      "required": false
+    },
+    {
+      "short": null,
+      "long": "--config",
+      "description": "Path to a configuration file (ruff.toml or pyproject.toml).",
+      "arg_hint": "FILE",
+      "required": false
+    },
+    {
+      "short": null,
+      "long": "--isolated",
+      "description": "Ignore all configuration files.",
+      "required": false
+    }
+  ],
+  "subcommands": [
+    {
+      "name": "check",
+      "summary": "Run Ruff on the given files or directories (default).",
+      "description": "Checks Python files for linting errors.",
+      "usage": "ruff check [OPTIONS] [FILES]..."
+    },
+    {
+      "name": "rule",
+      "summary": "Explain a rule (or all rules).",
+      "description": "Provides detailed explanations for specific Ruff rules.",
+      "usage": "ruff rule [RULE]"
+    },
+    {
+      "name": "config",
+      "summary": "List or describe the available configuration options.",
+      "description": "Displays available configuration settings for Ruff.",
+      "usage": "ruff config"
+    },
+    {
+      "name": "linter",
+      "summary": "List all supported upstream linters.",
+      "description": "Shows the linters Ruff integrates with (e.g., Flake8, PyLint).",
+      "usage": "ruff linter"
+    },
+    {
+      "name": "clean",
+      "summary": "Clear any caches used by Ruff.",
+      "description": "Removes cached results to ensure fresh analysis.",
+      "usage": "ruff clean"
+    },
+    {
+      "name": "format",
+      "summary": "Run the Ruff formatter on the given files or directories.",
+      "description": "Formats Python code according to configured style.",
+      "usage": "ruff format [OPTIONS] [FILES]..."
+    },
+    {
+      "name": "server",
+      "summary": "Run the Ruff language server.",
+      "description": "Starts the language server protocol (LSP) for editor integration.",
+      "usage": "ruff server [OPTIONS]"
+    },
+    {
+      "name": "analyze",
+      "summary": "Analyze Python code",
+      "description": "Analyzes Python code for complexity and maintainability.",
+      "usage": "ruff analyze [OPTIONS] [FILES]..."
+    },
+    {
+      "name": "version",
+      "summary": "Show version information.",
+      "description": "Displays the installed Ruff version.",
+      "usage": "ruff version"
+    },
+    {
+      "name": "help",
+      "summary": "Print this message or the help of the given subcommand(s).",
+      "description": "Displays help information for Ruff or specific subcommands.",
+      "usage": "ruff help [COMMAND]"
+    }
+  ]
+}

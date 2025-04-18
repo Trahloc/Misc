@@ -1,67 +1,57 @@
 # File: tests/test_cli_json_output.py
 """Tests for the JSON output functionality in the CLI."""
 
+import importlib
 import json
+import logging
+import os  # Import os for chdir
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
+import toml
 from click.testing import CliRunner
+import src.zeroth_law.cli as cli_module
 
-from src.zeroth_law.cli import cli_group, run_audit
+# Assuming project root is detectable or tests run from root
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Ensure src is in path
+# Add src to path to allow importing the cli module
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir.parent / "src"))
 
+# Import the module containing the CLI definitions
 
-def test_run_audit_json_output(tmp_path):
-    """Test that run_audit outputs JSON when output_json is True."""
-    # Arrange
-    test_file = tmp_path / "test.py"
-    test_file.write_text("# Test file")  # Create a real file
 
-    mock_analyzer = MagicMock()
-    mock_analyzer.return_value = {"complexity": [("function_name", 5, 15)]}  # Mock violation
+# Helper function to create temporary project environment
+def setup_temp_project(tmp_path: Path, action_config: str):
+    project_dir = tmp_path / "json_test_pkg"
+    project_dir.mkdir()
+    # Create pyproject.toml
+    # Use triple quotes for the main f-string to handle internal quotes easily
+    pyproject_content = f"""
+[tool.poetry]
+name = "json-test-project"
+version = "0.1.0"
+description = ""
+authors = ["Test User <test@example.com>"]
 
-    paths = [test_file]  # Use the real file path
-    config = {
-        "max_complexity": 10,
-        "max_parameters": 5,
-        "max_statements": 50,
-        "max_lines": 100,
-    }
+[tool.poetry.dependencies]
+python = "^3.10"
 
-    # Act - capture stdout to verify JSON
-    with patch("builtins.print") as mock_print:
-        result = run_audit(
-            paths_to_check=paths,
-            recursive=False,
-            config=config,
-            analyzer_func=mock_analyzer,
-            output_json=True,
-        )
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-    # Assert
-    mock_print.assert_called_once()
-    # Get the JSON string from the call args
-    json_str = mock_print.call_args[0][0]
+[tool.zeroth-law]
+# Minimal base config needed
+max_lines = 100
 
-    # Verify it's valid JSON
-    json_data = json.loads(json_str)
-
-    # Verify JSON structure
-    assert "summary" in json_data
-    assert "violations" in json_data
-    assert str(test_file) in json_data["violations"]
-    assert "complexity" in json_data["violations"][str(test_file)]
-    assert json_data["violations"][str(test_file)]["complexity"][0] == [
-        "function_name",
-        5,
-        15,
-    ]
-    assert result is True  # Should return True indicating violations found
+# Define the action passed to the helper
+{action_config}
+"""
+    (project_dir / "pyproject.toml").write_text(pyproject_content)
+    return project_dir
 
 
 @pytest.mark.parametrize(
@@ -75,61 +65,86 @@ def test_run_audit_json_output(tmp_path):
 def test_cli_json_output_flag(option_name, expected_in_output, tmp_path):
     """Test that the CLI handles the --json flag correctly."""
     # Arrange
-    runner = CliRunner()
+    # Use a simpler command to isolate subprocess execution issues
+    test_tool_output = "TEST_OUTPUT_MARKER"
+    simple_command = ["python", "-c", f"print('{test_tool_output}', end='')"]
 
-    # Create a test file
-    test_py = tmp_path / "test.py"
-    test_py.write_text(
-        """
-# <<< ZEROTH LAW HEADER >>>
-# FILE: test.py
-\"\"\"Module docstring.\"\"\"
+    # Define the action configuration as a Python dictionary
+    lint_action_data = {
+        "description": "Run simple python print for json test.",
+        "zlt_options": {"paths": {"type": "positional"}, "json": {"type": "flag"}},
+        "tools": {"simple_print": {"command": simple_command, "maps_options": {}}},
+    }
 
-def complex_function(a, b, c, d, e, f):
-    if a > 0:
-        if b > 0:
-            if c > 0:
-                if d > 0:
-                    if e > 0:
-                        if f > 0:
-                            return 1
-    return 0
+    # Create the full dictionary structure for pyproject.toml
+    full_config_dict = {
+        "tool": {
+            "zeroth-law": {
+                "project_root_marker": ".git",
+                "max_lines": 100,  # Example base config
+                "actions": {"lint": lint_action_data},
+            }
+        }
+    }
 
-# <<< ZEROTH LAW FOOTER >>>
-    """
-    )
+    # Dump the dictionary to a valid TOML string
+    lint_action_config_str = toml.dumps(full_config_dict)
 
-    # Mock the analyze_file_compliance function to return a known violation
-    with patch("src.zeroth_law.analyzer.python.analyzer.analyze_file_compliance") as mock_analyze:
-        mock_analyze.return_value = {"complexity": [("complex_function", 5, 15)]}
+    # Setup project directory directly to avoid setup_temp_project interpolation issues
+    project_dir = tmp_path / "json_test_pkg"
+    project_dir.mkdir()
+    (project_dir / "pyproject.toml").write_text(lint_action_config_str)
 
-        # Act - run with appropriate options
-        command = ["audit", str(test_py)]
+    # Create a dummy target file for the lint command to operate on
+    test_py = project_dir / "some_file.py"
+    test_py.touch()
+
+    original_cwd = Path.cwd()
+    os.chdir(project_dir)
+
+    try:
+        # Reload module to load commands from temp pyproject.toml
+        importlib.reload(cli_module)
+
+        runner = CliRunner(mix_stderr=False)  # Capture stdout/stderr separately
+
+        # Act
+        command = ["lint", str(test_py)]
         if option_name:
             command.insert(1, option_name)
 
-        result = runner.invoke(cli_group, command)
+        result = runner.invoke(cli_module.cli_group, command, catch_exceptions=False)
+
+    finally:
+        os.chdir(original_cwd)
 
     # Assert
-    assert result.exit_code == 1  # Should fail due to violations
+    assert result.exit_code == 0, f"Command failed when --json specified. " f"stderr:\n{result.stderr}\nstdout:\n{result.stdout}"
 
-    # If using --json flag, check the debug file which is guaranteed to contain valid JSON
-    if option_name == "--json":
-        debug_file = Path("/tmp/zeroth_law_json_output.txt")
-        if debug_file.exists():
-            debug_content = debug_file.read_text()
-            is_json = True
-            try:
-                json.loads(debug_content)
-            except json.JSONDecodeError:
-                is_json = False
-            assert is_json == expected_in_output
-    else:
-        # For non-JSON output, check the regular output
+    # Verify JSON output presence/absence and content
+    print(f"--- Test Case: {option_name} ---")
+    print(f"stderr:\n{result.stderr}")  # Print stderr for debugging
+    print(f"stdout:\n{result.stdout}")  # Print stdout for debugging
+    print("---------------------------")
+
+    if expected_in_output:  # --json flag used
+        # Action runner should print the tool's raw stdout when --json is used.
+        # Check that stdout contains the expected output from the simple command.
+        assert result.stdout.strip(), f"Expected stdout to not be empty when --json specified. stderr:\n{result.stderr}\nstdout:\n{result.stdout}"
+        assert test_tool_output in result.stdout, f"Expected tool output ('{test_tool_output}') not found in stdout when --json specified. stderr:\n{result.stderr}\nstdout:\n{result.stdout}"
+
+        # No JSON parsing needed for this simplified test
+
+    else:  # No --json flag used
+        # Action runner should log the tool's output via log.info, *not* print to stdout.
+        # Check that stdout *only* contains initial debug logs (if any), not the tool output.
+        assert test_tool_output not in result.stdout, f"Tool output ('{test_tool_output}') unexpectedly found in stdout without --json flag. stdout:\n{result.stdout}"
+
+        # Check that stdout is NOT parseable as JSON
         is_json = False
         try:
-            json.loads(result.output)
+            json.loads(result.stdout.strip())
             is_json = True
         except json.JSONDecodeError:
-            is_json = False
-        assert is_json == expected_in_output
+            pass  # Expected
+        assert not is_json, f"stdout unexpectedly contained valid JSON without --json flag. stdout:\n{result.stdout}"

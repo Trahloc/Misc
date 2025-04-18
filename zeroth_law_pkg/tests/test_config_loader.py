@@ -1,6 +1,7 @@
 # File: tests/test_config_loader.py
 """Tests for refactored configuration loading functions."""
 
+import tomllib
 from pathlib import Path
 from unittest import mock
 
@@ -65,21 +66,16 @@ def test_parse_toml_file_decode_error(tmp_path):
     config_file.touch()
 
     # Create an exception that will match the TOML error check
-    class MockTOMLDecodeError(Exception):
+    # Use tomllib.TOMLDecodeError directly
+    class MockTOMLDecodeError(tomllib.TOMLDecodeError):
         pass
 
-    # Mock the dependencies
-    with mock.patch("zeroth_law.config_loader._TOMLI") as mock_tomli:
-        mock_tomli.TOMLDecodeError = MockTOMLDecodeError
-        # TOMLLIB should be None to ensure the tomli error is checked
-        with mock.patch("zeroth_law.config_loader._TOMLLIB", None):
-            # Make the load function raise the decode error
-            with mock.patch(
-                "zeroth_law.config_loader._TOML_LOADER.load",
-                side_effect=MockTOMLDecodeError("Invalid TOML"),
-            ):
-                with pytest.raises(TomlDecodeError):
-                    parse_toml_file(config_file)
+    # Mock the dependencies - mock tomllib.load
+    with mock.patch("tomllib.load", side_effect=MockTOMLDecodeError("Mock decode error")) as mock_load:
+        # Act & Assert
+        with pytest.raises(TomlDecodeError, match="Invalid TOML"):
+            parse_toml_file(config_file)
+        mock_load.assert_called_once()
 
 
 def test_extract_config_section():
@@ -125,16 +121,13 @@ def test_merge_with_defaults():
     custom_config = {"max_complexity": 5, "max_lines": 80}
 
     # Merge with defaults
-    merged = merge_with_defaults(custom_config)
+    merged = merge_with_defaults(custom_config, DEFAULT_CONFIG)
 
-    # Check custom values were kept
-    assert merged["max_complexity"] == 5
-    assert merged["max_lines"] == 80
-
-    # Check default values were included
-    for key in DEFAULT_CONFIG:
-        if key not in custom_config:
-            assert merged[key] == DEFAULT_CONFIG[key]
+    # Assertions
+    assert merged["max_complexity"] == 5  # Custom value
+    assert merged["max_lines"] == 80  # Custom value
+    assert merged["max_parameters"] == DEFAULT_CONFIG["max_parameters"]  # Default
+    assert "actions" not in merged  # Ensure actions key is excluded
 
 
 def test_merge_with_defaults_validation_error():
@@ -150,10 +143,13 @@ def test_merge_with_defaults_validation_error():
                 return [{"loc": ("max_complexity",), "msg": "Not an integer"}]
 
         mock_validate.side_effect = MockValidationError("Validation error")
-        merged = merge_with_defaults(invalid_config)
+        merged = merge_with_defaults(invalid_config, DEFAULT_CONFIG)
 
-        # Should use default for the invalid field
-        assert merged["max_complexity"] == DEFAULT_CONFIG["max_complexity"]
+    # Assert that the invalid field reverts to default
+    assert merged["max_complexity"] == DEFAULT_CONFIG["max_complexity"]
+    # Assert other fields retain their defaults
+    assert merged["max_lines"] == DEFAULT_CONFIG["max_lines"]
+    assert "actions" not in merged
 
 
 def test_find_pyproject_toml_env_var(monkeypatch, tmp_path):
@@ -273,13 +269,14 @@ max_lines = 80
 def test_load_config_file_not_found():
     """Test loading config when file is not found."""
     # Load with nonexistent file path
-    with pytest.raises(FileNotFoundError):
-        load_config("/nonexistent/path")
+    # Should now return defaults + empty actions instead of raising
+    non_existent_path = Path("surely/this/does/not/exist/pyproject.toml")
+    config = load_config(non_existent_path)
 
-    # Load with auto-detection (should use defaults)
-    with mock.patch("zeroth_law.config_loader.find_pyproject_toml", return_value=None):
-        config = load_config()
-        assert config == DEFAULT_CONFIG
+    # Assert it returns defaults plus empty actions
+    expected_config = DEFAULT_CONFIG.copy()
+    expected_config["actions"] = {}
+    assert config == expected_config
 
 
 def test_load_config_section_not_found(tmp_path):
@@ -298,7 +295,10 @@ some_option = "value"
     config = load_config(config_file)
 
     # Should use defaults
-    assert config == DEFAULT_CONFIG
+    # Check that core config matches defaults, and actions is an empty dict
+    expected_config = DEFAULT_CONFIG.copy()
+    expected_config["actions"] = {}
+    assert config == expected_config
 
 
 def test_load_config_integration(tmp_path, monkeypatch):

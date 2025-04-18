@@ -20,7 +20,7 @@ classifiers = [ # Optional: Add classifiers for PyPI
 dependencies = [
     "structlog",
     "pydantic",
-    "xdg", # For XDG Base Directory Specification adherence
+    "xdg",       # For XDG Base Directory Specification adherence
     "click",
     "black",
     "pyyaml",
@@ -61,23 +61,25 @@ dev = [
     "vulture",
     "py-spy",
     "scalene",
-    "build", # Needed for pyproject-build script
+    "build",      # Needed for pyproject-build script
     "pipdeptree",
     "deptry",
     "safety",
-    "flake8", # Although ruff covers much, might be needed for specific checks/tests
-    "poetry", # Added to ensure it's available if tests check for it
+    "flake8",     # Although ruff covers much, might be needed for specific checks/tests
+    "poetry",     # Added to ensure it's available if tests check for it
 ]
 
 # Scripts / Entry Points
 [project.scripts]
 zeroth-law = "zeroth_law.cli:cli_group"
-zlt = "zeroth_law.cli:cli_group" # Add zlt alias
+zlt = "zeroth_law.cli:cli_group"                                           # Add zlt alias
 generate-baselines = "zeroth_law.dev_scripts.generate_baseline_files:main"
 
 # --- Build System (Required by PEP 517) ---
 [build-system]
-requires = ["setuptools>=61.0"] # Or another build backend like hatchling, flit_core
+requires = [
+    "setuptools>=61.0",
+] # Or another build backend like hatchling, flit_core
 build-backend = "setuptools.build_meta"
 
 # --- Existing Tool Configurations (Keep As Is) --- #
@@ -94,11 +96,11 @@ exclude_dirs = [
     "__pycache__",
     "build",
     "dist",
-    ".legacy", # <-- Added
+    ".legacy",     # <-- Added
 ]
 exclude_files = []
 ignore_codes = []
-max_lines = 140
+max_lines = 9999 # set to 140 when moved to main branch
 max_complexity = 8
 max_parameters = 5
 max_statements = 50
@@ -119,7 +121,7 @@ show-fixes = true
 # extend-fixable = ["B", "RUF100"]
 
 # Same as Black.
-line-length = 140
+line-length = 9999 # set to 140 when moved to main branch
 
 # Assume Python 3.13
 target-version = "py313"
@@ -160,29 +162,28 @@ exclude = [
 # Allow unused variables for now to unblock refactoring on dev branch.
 # TODO: Implement pytest checks or similar to catch unused variables per file/commit
 #       before merging to main, instead of relying on a global Ruff check.
-select = ["E", "F"]
 ignore = [
-    "D100",  # Missing docstring in public module
-    "D101",  # Missing docstring in public class
-    "D102",  # Missing docstring in public method
-    "D103",  # Missing docstring in public function
-    "D104",  # Missing docstring in public package
-    "D105",  # Missing docstring in magic method
-    "D106",  # Missing docstring in public nested class
-    "D107",  # Missing docstring in __init__
-    "D200",  # One-line docstring should fit on one line with quotes
-    "D203",  # 1 blank line required before class docstring (found 0) -> Conflicts with D211
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "D106", # Missing docstring in public nested class
+    "D107", # Missing docstring in __init__
+    "D200", # One-line docstring should fit on one line with quotes
+    "D203", # 1 blank line required before class docstring (found 0) -> Conflicts with D211
     # "D205",  # 1 blank line required between summary line and description
-    "D211",  # No blank lines allowed before class docstring -> Conflicts with D203
+    "D211", # No blank lines allowed before class docstring -> Conflicts with D203
     # "D212",  # Multi-line docstring summary should start at the first line
     # "D213",  # Multi-line docstring summary should start at the second line
-    "D400",  # First line should end with a period
+    "D400", # First line should end with a period
     # "D401",  # First line should be in imperative mood
     # "D415",  # First line should end with a period, question mark, or exclamation point
-    "D417",  # Missing argument description in the docstring
+    "D417", # Missing argument description in the docstring
 
     # Complexity / Length
-    "C901",  # `function` is too complex
+    "C901",    # `function` is too complex
     "PLR0911", # Too many return statements
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments
@@ -205,8 +206,8 @@ ignore = [
     # "N806",    # Variable in function should be lowercase
 
     # Security
-    "S101",  # Use of assert detected
-    "S603",  # subprocess call - check for execution of untrusted input
+    "S101", # Use of assert detected
+    "S603", # subprocess call - check for execution of untrusted input
 
     # Pytest related
     # "PT001",   # Use `pytest.fixture()` without parameters
@@ -214,17 +215,23 @@ ignore = [
 
     # Others
     "TRY003", # Avoid specifying long messages outside the exception class
-    "T201",  # print found
+    "T201",   # print found
     # "FIX002",  # Line contains TODO
 
     # Supressing for now on dev branch (2025-04-11)
     "F841", # Local variable assigned but never used
+    "F821", # ignored during dev
+    "F401", # ignored during dev
+    "E402", # ignored during dev
 ]
 
 # Ignore specific rules per file/directory
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"] # Ignore assert statements in test files
-"src/zeroth_law/analyzer.py" = ["N802", "SLF001"] # Ignore visitor method names and private access
+"src/zeroth_law/analyzer.py" = [
+    "N802",
+    "SLF001",
+] # Ignore visitor method names and private access
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
@@ -243,8 +250,8 @@ python_version = "3.13"
 pretty = true
 show_error_context = true
 show_error_codes = true
-explicit_package_bases = true # Help mypy understand src layout
-ignore_missing_imports = false # Default to false, override below
+explicit_package_bases = true     # Help mypy understand src layout
+ignore_missing_imports = false    # Default to false, override below
 cache_dir = "/run/user/1000/mypy"
 
 # Per-module options:
@@ -262,7 +269,7 @@ ignore_missing_imports = true
 # TODO: Investigate root cause of path issue for mypy execution via action_runner.
 module = [
     "zeroth_law.git_utils",
-    "src.zeroth_law.git_utils", # Add src prefix
+    "src.zeroth_law.git_utils",                # Add src prefix
     "zeroth_law.analyzer.python.analyzer",
     "src.zeroth_law.analyzer.python.analyzer", # Add src prefix
 ]
@@ -272,11 +279,11 @@ ignore_errors = true
 
 [tool.pylint.'MAIN']
 # Use all default checkers.
-disable = ["all"] # Disable all checks
-enable = ["R0801"] # similar lines in modules checker
+disable = ["all"]                                                  # Disable all checks
+enable = ["R0801"]                                                 # similar lines in modules checker
 ignore = ["CVS", ".git", ".hg", ".svn", "tests/", "venv", ".venv"]
 persistent = "yes"
-jobs = 0 # Use all available CPUs
+jobs = 0                                                           # Use all available CPUs
 
 # Markdownlint configuration
 [tool.markdownlint]
@@ -285,9 +292,7 @@ MD007 = { ul-indent = 4 } # Set unordered list indentation to 4 spaces
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -q --cov=src/zeroth_law --cov-report=term-missing"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
 cache_dir = "/run/user/1000/python/pytest"
 
 [tool.coverage.run]

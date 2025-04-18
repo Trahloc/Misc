@@ -51,7 +51,17 @@ class StatementCounterVisitor(ast.NodeVisitor):
             return True
         # Expression statements (like function calls that don't assign)
         if isinstance(node, ast.Expr):
-            return True
+            # Attempt to exclude docstrings specifically
+            if (
+                isinstance(node.value, ast.Constant) and isinstance(node.value.value, str)
+                # Additional check: Check if it's the first node in a function/class/module body?
+                # This requires parent info, which is complex. Let's use a simpler heuristic for now.
+                # TODO: Revisit robust docstring detection.
+            ):
+                # Assume top-level Expr with string Constant is a docstring for now.
+                # This might incorrectly exclude intended string literal statements.
+                return False  # Don't count likely docstrings
+            return True  # Count other Expr statements
         # Control flow structures also count as statements themselves
         if isinstance(
             node,
@@ -84,33 +94,25 @@ class StatementCounterVisitor(ast.NodeVisitor):
         if is_stmt:
             self.count += 1
 
-        # Prevent recursion into nested functions or classes
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            # As before, assume entry point is visit_FunctionDef/Async
-            return
-
         # Recurse only if it's a compound statement OR not a statement at all (e.g., BoolOp)
+        # The check `not is_stmt` ensures we visit nodes like BoolOp whose operands are statements
         if needs_recursion or not is_stmt:
             super().generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        """Entry point for counting statements in a function."""
-        # Skip docstring before counting
-        body_to_visit = node.body
-        if body_to_visit and isinstance(body_to_visit[0], ast.Expr) and isinstance(body_to_visit[0].value, ast.Constant):
-            body_to_visit = body_to_visit[1:]
-
-        for stmt in body_to_visit:
+        """Entry point for counting statements in a function.
+        Relies on the generic visit and _is_statement_node to handle body.
+        """
+        # Process the entire body, relying on visit/_is_statement_node to filter
+        for stmt in node.body:
             self.visit(stmt)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        """Entry point for counting statements in an async function."""
-        # Skip docstring before counting
-        body_to_visit = node.body
-        if body_to_visit and isinstance(body_to_visit[0], ast.Expr) and isinstance(body_to_visit[0].value, ast.Constant):
-            body_to_visit = body_to_visit[1:]
-
-        for stmt in body_to_visit:
+        """Entry point for counting statements in an async function.
+        Relies on the generic visit and _is_statement_node to handle body.
+        """
+        # Process the entire body, relying on visit/_is_statement_node to filter
+        for stmt in node.body:
             self.visit(stmt)
 
 
@@ -147,10 +149,13 @@ def analyze_statements(file_path: str | Path, threshold: int) -> list[StatementV
                 if is_method:
                     continue
 
-                # Count statements in the function body
-                statement_count: int = len(node.body)
-
+                visitor = StatementCounterVisitor()
+                visitor.visit(node)
+                statement_count = visitor.count
+                # Add debug logging
+                log.debug(f"Function: {node.name}, Line: {node.lineno}, " f"Counted Statements: {statement_count}, Threshold: {threshold}")
                 if statement_count > threshold:
+                    # Use node.lineno - assuming it now points to start of signature/decorators
                     violations.append((node.name, node.lineno, statement_count))
 
     except (FileNotFoundError, SyntaxError, OSError) as e:

@@ -1,0 +1,13 @@
+{
+  "command_sequence": [
+    "isort-identify-imports"
+  ],
+  "description": "",
+  "usage": "",
+  "options": [],
+  "arguments": [],
+  "subcommands": [],
+  "metadata": {
+    "ground_truth_crc": "0x00000000"
+  }
+}

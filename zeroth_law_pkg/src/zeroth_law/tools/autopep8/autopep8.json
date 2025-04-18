@@ -1,0 +1,238 @@
+{
+  "command_sequence": [
+    "autopep8"
+  ],
+  "description": "Automatically formats Python code to conform to the PEP 8 style guide.",
+  "usage": "autopep8 [-h] [--version] [-v] [-d] [-i] [--global-config filename] [--ignore-local-config] [-r] [-j n] [-p n] [-a] [--experimental] [--exclude globs] [--list-fixes] [--ignore errors] [--select errors] [--max-line-length n] [--line-range line line] [--hang-closing] [--exit-code] [files ...]",
+  "options": [
+    {
+      "short_form": "-h",
+      "long_form": "--help",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "show this help message and exit",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--version",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "show program's version number and exit",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-v",
+      "long_form": "--verbose",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "print verbose messages; multiple -v result in more verbose messages",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-d",
+      "long_form": "--diff",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "print the diff for the fixed source",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-i",
+      "long_form": "--in-place",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "make changes to files in place",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--global-config",
+      "takes_argument": true,
+      "argument_name": "filename",
+      "argument_details": null,
+      "description": "path to a global pep8 config file; if this file does not exist then this is ignored (default: /home/trahloc/.config/pep8)",
+      "default": "/home/trahloc/.config/pep8",
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--ignore-local-config",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "don't look for and apply local config files; if not passed, defaults are updated with any config files in the project's root directory",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-r",
+      "long_form": "--recursive",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "run recursively over directories; must be used with --in-place or --diff",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-j",
+      "long_form": "--jobs",
+      "takes_argument": true,
+      "argument_name": "n",
+      "argument_details": null,
+      "description": "number of parallel jobs; match CPU count if value is less than 1",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-p",
+      "long_form": "--pep8-passes",
+      "takes_argument": true,
+      "argument_name": "n",
+      "argument_details": null,
+      "description": "maximum number of additional pep8 passes (default: infinite)",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-a",
+      "long_form": "--aggressive",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "enable non-whitespace changes; multiple -a result in more aggressive changes",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--experimental",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "enable experimental fixes",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--exclude",
+      "takes_argument": true,
+      "argument_name": "globs",
+      "argument_details": null,
+      "description": "exclude file/directory names that match these comma-separated globs",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--list-fixes",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "list codes for fixes; used by --ignore and --select",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--ignore",
+      "takes_argument": true,
+      "argument_name": "errors",
+      "argument_details": null,
+      "description": "do not fix these errors/warnings (default: E226,E24,W50,W690)",
+      "default": "E226,E24,W50,W690",
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--select",
+      "takes_argument": true,
+      "argument_name": "errors",
+      "argument_details": null,
+      "description": "fix only these errors/warnings (e.g. E4,W)",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--max-line-length",
+      "takes_argument": true,
+      "argument_name": "n",
+      "argument_details": null,
+      "description": "set maximum allowed line length (default: 79)",
+      "default": 79,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--line-range",
+      "takes_argument": true,
+      "argument_name": [
+        "line",
+        "line"
+      ],
+      "argument_details": null,
+      "description": "only fix errors found within this inclusive range of line numbers (e.g. 1 99); line numbers are indexed at 1",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--range",
+      "takes_argument": true,
+      "argument_name": [
+        "line",
+        "line"
+      ],
+      "argument_details": null,
+      "description": "only fix errors found within this inclusive range of line numbers (e.g. 1 99); line numbers are indexed at 1",
+      "default": null,
+      "hidden": true
+    },
+    {
+      "short_form": null,
+      "long_form": "--hang-closing",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "hang-closing option passed to pycodestyle",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--exit-code",
+      "takes_argument": false,
+      "argument_name": null,
+      "argument_details": null,
+      "description": "change to behavior of exit code. default behavior of return value, 0 is no differences, 1 is error exit. return 2 when add this option. 2 is exists differences.",
+      "default": false,
+      "hidden": false
+    }
+  ],
+  "arguments": [
+    {
+      "name": "files",
+      "description": "files to format or '-' for standard in",
+      "required": false,
+      "variadic": true
+    }
+  ],
+  "subcommands": [],
+  "metadata": {
+    "ground_truth_crc": "0x6A2A7DFF",
+    "file_status": "populated"
+  }
+}

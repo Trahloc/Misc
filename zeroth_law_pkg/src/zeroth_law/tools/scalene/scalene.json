@@ -1,0 +1,13 @@
+{
+  "command_sequence": [
+    "scalene"
+  ],
+  "description": "",
+  "usage": "",
+  "options": [],
+  "arguments": [],
+  "subcommands": [],
+  "metadata": {
+    "ground_truth_crc": "0x00000000"
+  }
+}

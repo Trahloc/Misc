@@ -1,0 +1,85 @@
+import pytest
+import yaml
+from pathlib import Path
+import sys
+from zeroth_law.dev_scripts.tool_discovery import get_existing_tool_dirs, get_potential_managed_tools, load_tools_config
+
+# Assuming tool_discovery.py is now in src/zeroth_law/dev_scripts/
+# Add the src directory to the path to allow importing the discovery script
+_TEST_DIR = Path(__file__).parent.resolve()
+_SRC_DIR = _TEST_DIR.parent.parent / "src"
+sys.path.insert(0, str(_SRC_DIR))
+
+# --- Configuration ---
+# Constants can be derived from the imported script or kept simple
+WORKSPACE_ROOT = _TEST_DIR.parent  # Assuming tests/ is one level down from workspace root
+TOOLS_DIR = WORKSPACE_ROOT / "src" / "zeroth_law" / "tools"
+GENERATION_SCRIPT = WORKSPACE_ROOT / "src" / "zeroth_law" / "dev_scripts" / "generate_baseline_files.py"
+MANAGED_TOOLS_YAML = WORKSPACE_ROOT / "src" / "zeroth_law" / "managed_tools.yaml"
+
+
+# --- Test for Unknown Tools ---
+def test_check_for_new_tools():
+    """Check for discovered tools that are neither managed nor excluded."""
+    print("\nRunning tool discovery check...")
+    potential_tools = get_potential_managed_tools()
+    if not potential_tools:
+        pytest.skip("Tool discovery failed or found no potential tools.")
+
+    config = load_tools_config()
+    known_managed_tools = set(config.get("managed_tools", []))
+    # We don't need existing_tool_dirs for this specific check anymore
+    # Check is potential vs (managed + excluded)
+
+    # Calculate unknown tools
+    unknown_tools = potential_tools - known_managed_tools
+    # Note: excluded tools were already filtered out by get_potential_managed_tools
+
+    if unknown_tools:
+        error_msg = "\n--------------------------------------------------\n" f"Newly discovered potential tools found: {sorted(list(unknown_tools))}\n" "These executables exist in the environment bin directory but are neither\n" f"explicitly excluded nor listed as managed in {MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}.\n" "\nAction Required: For each listed executable, research it and update managed_tools.yaml:\n" "  - If it's a tool ZLT should manage, add its name to the 'managed_tools' list.\n" "  - If it's cruft/helper/unwanted, add its name to the 'excluded_executables' list.\n" "--------------------------------------------------"
+        pytest.fail(error_msg, pytrace=False)
+    else:
+        print("No new potential tools found. managed_tools.yaml is up-to-date with discovered non-excluded executables.")
+        assert True  # Explicit pass
+
+
+# --- Test for Orphan Directories (Optional but good sanity check) ---
+def test_no_orphan_tool_directories():
+    """
+    Verify that all directories in the tools directory correspond to
+    tools listed as managed in managed_tools.yaml.
+    """
+    if not TOOLS_DIR.is_dir():
+        pytest.skip(f"Base tools directory not found: {TOOLS_DIR}")
+        return
+
+    existing_tool_dirs = get_existing_tool_dirs()
+    config = load_tools_config()
+    known_managed_tools = set(config.get("managed_tools", []))
+
+    # Find dirs that exist but aren't listed as managed
+    orphan_dirs = existing_tool_dirs - known_managed_tools
+
+    if orphan_dirs:
+        orphan_list = ", ".join(sorted(list(orphan_dirs)))
+        error_message = f"Orphan tool directories found in '{TOOLS_DIR.relative_to(WORKSPACE_ROOT)}' that are not listed in 'managed_tools' in {MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}: [{orphan_list}]. " f"Please investigate and decide whether to remove these directories or add the corresponding tool name(s) to the 'managed_tools' list in the YAML config."
+        pytest.fail(error_message, pytrace=False)
+    else:
+        print("No orphan tool directories found.")
+        assert True  # Explicit pass
+
+
+# --- Removed test_tool_directories_and_baselines_exist --- #
+# This functionality is now split into:
+# 1. test_check_for_new_tools (above) - Detects tools needing categorization.
+# 2. test_json_baseline_exists (new file) - Checks if categorized tools have baselines.
+
+# Check for orphan tool directories (exist on disk but not in managed list)
+orphan_dirs = existing_tool_dirs - known_managed_tools
+orphan_list = ", ".join(sorted(o.name for o in orphan_dirs))
+assert not orphan_dirs, f"Found orphan tool directories not in 'managed_tools' config " f"({MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}):\n" f"  [{orphan_list}]\n" f"Action Required: Add tool(s) to config or delete directories."
+
+# Check for newly added potential tools (in managed list but dir doesn't exist)
+new_potential_tools = known_managed_tools - existing_tool_dirs
+new_list = ", ".join(sorted(n.name for n in new_potential_tools))
+assert not new_potential_tools, f"Managed tools listed in config but directory missing:\n" f"  [{new_list}]\n" f"Action Required: Create the tool directory/directories or remove from config."

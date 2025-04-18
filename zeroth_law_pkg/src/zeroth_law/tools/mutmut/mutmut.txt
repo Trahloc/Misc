@@ -1,0 +1,13 @@
+Usage: mutmut [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  apply
+  browse
+  print-time-estimates
+  results
+  run
+  show
+  tests-for-mutant

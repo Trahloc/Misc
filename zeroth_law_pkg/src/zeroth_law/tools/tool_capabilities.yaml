@@ -1,0 +1,58 @@
+# src/zeroth_law/tools/tool_capabilities.yaml
+# Defines the functional roles (capabilities) of known tools for ZLT orchestration.
+# This file is used by ZLT to determine which tools can perform a specific action
+# (e.g., finding all tools with the 'Formatter' capability for the 'zlt format' action).
+#
+# Tool ID (matches directory name and tool_index.json key)
+# Capabilities are based on the matrix provided on YYYY-MM-DD.
+# Potential capability values include:
+#   Formatter, Linter, Complexity Analyzer, Fuzzer, Security Analyzer,
+#   Type Checker, Test Runner, Code Coverage, Static Analyzer, Dead Code Finder,
+#   CI Integration, Exit Code Support, JSON/XML Output
+
+ruff:
+  - Formatter
+  - Linter
+  # - Complexity Analyzer # Not explicitly listed for Ruff, though some rules might overlap
+  # - Fuzzer
+  - Security Analyzer
+  # - Type Checker
+  # - Test Runner
+  # - Code Coverage
+  - Static Analyzer
+  - Dead Code Finder
+  - CI Integration
+  - Exit Code Support
+  - JSON/XML Output
+
+black:
+  - Formatter
+  # - Linter
+  # - Complexity Analyzer
+  # - Fuzzer
+  # - Security Analyzer
+  # - Type Checker
+  # - Test Runner
+  # - Code Coverage
+  # - Static Analyzer
+  # - Dead Code Finder
+  - CI Integration
+  - Exit Code Support
+  - JSON/XML Output
+
+pylint:
+  # - Formatter
+  - Linter
+  - Complexity Analyzer
+  # - Fuzzer
+  - Security Analyzer # Some checkers might qualify
+  # - Type Checker
+  # - Test Runner
+  # - Code Coverage
+  - Static Analyzer
+  - Dead Code Finder
+  - CI Integration
+  - Exit Code Support
+  - JSON/XML Output
+
+# --- Add other tools below as needed ---

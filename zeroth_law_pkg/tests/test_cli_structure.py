@@ -1,6 +1,7 @@
 # FILE: tests/test_cli_structure.py
 """Tests for the structure and definition of the CLI commands and options."""
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -46,59 +47,58 @@ def test_cli_root_options():
     assert params["color"].opts == ["--color"]
 
 
-def test_audit_command_exists():
-    """Verify the audit command exists within the cli group."""
-    assert "audit" in cli_module.cli_group.commands
-    assert isinstance(cli_module.cli_group.commands["audit"], click.Command)
-
-
-def test_audit_command_options():
-    """Verify expected options and arguments on the audit command."""
-    audit_cmd = cli_module.cli_group.commands["audit"]
-    params = get_command_params(audit_cmd)
-
-    assert "paths" in params
-    assert "config_path" in params
-    assert "recursive" in params
-
-    # Check types/properties
-    assert isinstance(params["paths"], click.Argument)
-    assert params["paths"].nargs == -1  # Expects 0 or more paths
-    assert isinstance(params["config_path"], click.Option)
-    assert params["config_path"].opts == ["-c", "--config"]
-    assert isinstance(params["recursive"], click.Option)
-    assert params["recursive"].opts == ["-r", "--recursive"]
-    assert params["recursive"].is_flag
+# Remove obsolete tests for the old 'audit' command
+# def test_audit_command_exists():
+#     """Verify the audit command exists within the cli group."""
+#     assert "audit" in cli_module.cli_group.commands
+#
+#
+# def test_audit_command_options():
+#     """Verify expected options and arguments on the audit command."""
+#     audit_cmd = cli_module.cli_group.commands["audit"]
+#     params = get_command_params(audit_cmd)
+#
+#     # Check options
+#     assert "config" in params
+#     assert "recursive" in params
+#
+#     # Check argument
+#     assert "paths" in params
+#     assert params["paths"].nargs == -1 # Corresponds to '*'
 
 
 def test_install_hook_command_exists():
     """Verify the install-git-hook command exists."""
+    importlib.reload(cli_module)
     assert "install-git-hook" in cli_module.cli_group.commands
     assert isinstance(cli_module.cli_group.commands["install-git-hook"], click.Command)
 
 
 def test_install_hook_options():
     """Verify options for install-git-hook command."""
+    importlib.reload(cli_module)
     cmd = cli_module.cli_group.commands["install-git-hook"]
     params = get_command_params(cmd)
     assert "git_root" in params
     assert params["git_root"].opts == ["--git-root"]
-    assert params["git_root"].default == "."
+    assert params["git_root"].default is None
 
 
 def test_restore_hooks_command_exists():
     """Verify the restore-git-hooks command exists."""
+    importlib.reload(cli_module)
     assert "restore-git-hooks" in cli_module.cli_group.commands
     assert isinstance(cli_module.cli_group.commands["restore-git-hooks"], click.Command)
 
 
 def test_restore_hooks_options():
     """Verify options for restore-git-hooks command."""
+    importlib.reload(cli_module)
     cmd = cli_module.cli_group.commands["restore-git-hooks"]
     params = get_command_params(cmd)
     assert "git_root" in params
     assert params["git_root"].opts == ["--git-root"]
-    assert params["git_root"].default == "."
+    assert params["git_root"].default is None
 
 
 # <<< ZEROTH LAW FOOTER >>>

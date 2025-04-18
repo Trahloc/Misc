@@ -1,6 +1,7 @@
 # FILE: tests/test_cli_option_validation.py
 """Tests to verify that each CLI option can be invoked properly."""
 
+import importlib
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -49,6 +50,11 @@ def get_command_options(command):
 def test_cli_group_option_invocation(option):
     """Test that each root CLI option can be invoked."""
     runner = CliRunner()
+
+    # Reload module to ensure commands are available
+    importlib.reload(cli_module)
+
+    # Mock the underlying function if needed to prevent side effects
 
     # For --version, it will exit immediately showing version
     if option == "--version":
@@ -111,12 +117,23 @@ def test_install_hook_option_invocation(option, value):
     """Test that each install-git-hook command option can be invoked."""
     runner = CliRunner()
 
+    # Reload module to ensure commands are available
+    importlib.reload(cli_module)
+
     # Mock relevant functions to prevent actual operation
     with (
         patch.object(Path, "is_dir", return_value=True),
         patch("src.zeroth_law.git_utils.generate_custom_hook_script", return_value="#!/bin/bash\n"),
         patch.object(Path, "mkdir"),
         patch.object(Path, "open"),
+        # Add mocks for other Path methods used in install_git_hook_script
+        patch.object(Path, "exists", return_value=False),  # Assume hook doesn't exist initially
+        patch.object(Path, "is_symlink", return_value=False),
+        patch.object(Path, "read_text", return_value=""),
+        patch.object(Path, "rename"),
+        patch.object(Path, "stat", return_value=type("obj", (object,), {"st_mode": 0o755})()),  # Mock stat().st_mode
+        patch.object(Path, "chmod"),
+        patch.object(Path, "unlink"),
     ):
         # Build command arguments
         args = ["install-git-hook"]
@@ -142,6 +159,9 @@ def test_install_hook_option_invocation(option, value):
 def test_restore_hooks_option_invocation(option, value):
     """Test that each restore-git-hooks command option can be invoked."""
     runner = CliRunner()
+
+    # Reload module to ensure commands are available
+    importlib.reload(cli_module)
 
     # Mock relevant functions to prevent actual operation
     with (

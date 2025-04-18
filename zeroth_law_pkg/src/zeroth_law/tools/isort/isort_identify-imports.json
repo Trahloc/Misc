@@ -1,0 +1,14 @@
+{
+  "command_sequence": [
+    "isort_identify-imports"
+  ],
+  "description": "",
+  "usage": null,
+  "options": [],
+  "arguments": [],
+  "subcommands": [],
+  "metadata": {
+    "file_status": "skeleton",
+    "ground_truth_crc": ""
+  }
+}

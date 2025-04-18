@@ -1,0 +1,305 @@
+{
+  "command_sequence": [
+    "bandit"
+  ],
+  "description": "A Python source code security analyzer",
+  "usage": "bandit [-h] [-r] [-a {file,vuln}] [-n CONTEXT_LINES] [-c CONFIG_FILE] [-p PROFILE] [-t TESTS] [-s SKIPS] [-l | --severity-level {all,low,medium,high}] [-i | --confidence-level {all,low,medium,high}] [-f {csv,custom,html,json,screen,txt,xml,yaml}] [--msg-template MSG_TEMPLATE] [-o [OUTPUT_FILE]] [-v] [-d] [-q] [--ignore-nosec] [-x EXCLUDED_PATHS] [-b BASELINE] [--ini INI_PATH] [--exit-zero] [--version] [targets ...]",
+  "options": [
+    {
+      "short_form": "-h",
+      "long_form": "--help",
+      "takes_argument": false,
+      "argument_name": null,
+      "description": "show this help message and exit",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-r",
+      "long_form": "--recursive",
+      "takes_argument": false,
+      "description": "find and process files in subdirectories",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-a",
+      "long_form": "--aggregate",
+      "takes_argument": true,
+      "argument_name": "{file,vuln}",
+      "argument_details": {
+        "type": "choice",
+        "choices": [
+          "file",
+          "vuln"
+        ]
+      },
+      "description": "aggregate output by vulnerability (default) or by filename",
+      "default": "vuln",
+      "hidden": false
+    },
+    {
+      "short_form": "-n",
+      "long_form": "--number",
+      "takes_argument": true,
+      "argument_name": "CONTEXT_LINES",
+      "argument_details": {
+        "type": "int"
+      },
+      "description": "maximum number of code lines to output for each issue",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-c",
+      "long_form": "--configfile",
+      "takes_argument": true,
+      "argument_name": "CONFIG_FILE",
+      "argument_details": {
+        "type": "path"
+      },
+      "description": "optional config file to use for selecting plugins and overriding defaults",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-p",
+      "long_form": "--profile",
+      "takes_argument": true,
+      "argument_name": "PROFILE",
+      "description": "profile to use (defaults to executing all tests)",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-t",
+      "long_form": "--tests",
+      "takes_argument": true,
+      "argument_name": "TESTS",
+      "argument_details": {
+        "type": "comma-separated list"
+      },
+      "description": "comma-separated list of test IDs to run",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-s",
+      "long_form": "--skip",
+      "takes_argument": true,
+      "argument_name": "SKIPS",
+      "argument_details": {
+        "type": "comma-separated list"
+      },
+      "description": "comma-separated list of test IDs to skip",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-l",
+      "long_form": "--level",
+      "takes_argument": false,
+      "description": "report only issues of a given severity level or higher (-l for LOW, -ll for MEDIUM, -lll for HIGH)",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--severity-level",
+      "takes_argument": true,
+      "argument_name": "{all,low,medium,high}",
+      "argument_details": {
+        "type": "choice",
+        "choices": [
+          "all",
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      "description": "report only issues of a given severity level or higher. \"all\" and \"low\" are likely to produce the same results, but it is possible for rules to be undefined which will not be listed in \"low\".",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-i",
+      "long_form": "--confidence",
+      "takes_argument": false,
+      "description": "report only issues of a given confidence level or higher (-i for LOW, -ii for MEDIUM, -iii for HIGH)",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--confidence-level",
+      "takes_argument": true,
+      "argument_name": "{all,low,medium,high}",
+      "argument_details": {
+        "type": "choice",
+        "choices": [
+          "all",
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      "description": "report only issues of a given confidence level or higher. \"all\" and \"low\" are likely to produce the same results, but it is possible for rules to be undefined which will not be listed in \"low\".",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-f",
+      "long_form": "--format",
+      "takes_argument": true,
+      "argument_name": "{csv,custom,html,json,screen,txt,xml,yaml}",
+      "argument_details": {
+        "type": "choice",
+        "choices": [
+          "csv",
+          "custom",
+          "html",
+          "json",
+          "screen",
+          "txt",
+          "xml",
+          "yaml"
+        ]
+      },
+      "description": "specify output format",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--msg-template",
+      "takes_argument": true,
+      "argument_name": "MSG_TEMPLATE",
+      "description": "specify output message template (only usable with --format custom), see CUSTOM FORMAT section for list of available values",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-o",
+      "long_form": "--output",
+      "takes_argument": true,
+      "argument_name": "OUTPUT_FILE",
+      "argument_details": {
+        "type": "path",
+        "nargs": "?"
+      },
+      "description": "write report to filename",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": "-v",
+      "long_form": "--verbose",
+      "takes_argument": false,
+      "description": "output extra information like excluded and included files",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-d",
+      "long_form": "--debug",
+      "takes_argument": false,
+      "description": "turn on debug mode",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-q",
+      "long_form": "--quiet",
+      "takes_argument": false,
+      "description": "only show output in the case of an error",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--silent",
+      "takes_argument": false,
+      "description": "only show output in the case of an error",
+      "default": false,
+      "hidden": true
+    },
+    {
+      "short_form": null,
+      "long_form": "--ignore-nosec",
+      "takes_argument": false,
+      "description": "do not skip lines with # nosec comments",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": "-x",
+      "long_form": "--exclude",
+      "takes_argument": true,
+      "argument_name": "EXCLUDED_PATHS",
+      "argument_details": {
+        "type": "comma-separated list",
+        "glob_patterns_supported": true
+      },
+      "description": "comma-separated list of paths (glob patterns supported) to exclude from scan (note that these are in addition to the excluded paths provided in the config file)",
+      "default": ".svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,*.egg",
+      "hidden": false
+    },
+    {
+      "short_form": "-b",
+      "long_form": "--baseline",
+      "takes_argument": true,
+      "argument_name": "BASELINE",
+      "argument_details": {
+        "type": "path",
+        "file_formats": [
+          "json"
+        ]
+      },
+      "description": "path of a baseline report to compare against (only JSON-formatted files are accepted)",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--ini",
+      "takes_argument": true,
+      "argument_name": "INI_PATH",
+      "argument_details": {
+        "type": "path",
+        "expected_filename": ".bandit"
+      },
+      "description": "path to a .bandit file that supplies command line arguments",
+      "default": null,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--exit-zero",
+      "takes_argument": false,
+      "description": "exit with 0, even with results found",
+      "default": false,
+      "hidden": false
+    },
+    {
+      "short_form": null,
+      "long_form": "--version",
+      "takes_argument": false,
+      "description": "show program's version number and exit",
+      "default": false,
+      "hidden": false
+    }
+  ],
+  "arguments": [
+    {
+      "name": "targets",
+      "description": "source file(s) or directory(s) to be tested",
+      "required": false,
+      "variadic": true
+    }
+  ],
+  "subcommands": [],
+  "metadata": {
+    "ground_truth_crc": "0xACBBE473",
+    "file_status": "populated"
+  }
+}
