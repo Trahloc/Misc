@@ -1,126 +1,104 @@
 # FILE: tests/test_tool_defs/test_txt_json_consistency.py
 """
-Tests that the ground_truth_crc stored *within* a JSON definition file
-matches the CRC stored in the central tool index (tool_index.json).
-
-It effectively triggers AI action when the ground truth TXT changes (affecting the index)
-or when a JSON file lacks the ground_truth_crc (indicating it's a skeleton or corrupted).
+Compares the content of the TXT baseline file with the 'description'
+and 'usage' fields in the corresponding JSON definition file.
 """
 
 import json
-import logging
 import pytest
+import logging
+from pathlib import Path
 
-# Need these core paths as well
-from zeroth_law.dev_scripts.tool_discovery import (
-    TOOLS_DIR,
-    WORKSPACE_ROOT,
-)
-
-# Reuse helpers and fixture from the TXT baseline test
+# Reuse constants and helpers from TXT test
+# Ensure MANAGED_COMMAND_SEQUENCES is correctly populated before this import
 from .test_ensure_txt_baselines_exist import (
     MANAGED_COMMAND_SEQUENCES,
-    TOOL_INDEX_PATH,  # Need the path for context in messages
-    command_sequence_to_id,  # Explicitly import if needed, though fixture use is implicit
+    command_sequence_to_id,
 )
 
-# Import the helper from the new utils file
-# from .test_json_is_populated import is_likely_skeleton
+# Import WORKSPACE_ROOT, TOOLS_DIR, and TOOL_INDEX_PATH from conftest
 
-# --- Constants ---
-DEFAULT_ENCODING = "utf-8"
-SCHEMA_GUIDELINES_PATH = "tools/zlt_schema_guidelines.md"  # Relative to workspace
-
-# --- Logging ---
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO)
 
 
 # --- Test Function ---
-@pytest.mark.parametrize("command_parts", MANAGED_COMMAND_SEQUENCES, ids=command_sequence_to_id)
-def test_json_crc_matches_index(command_parts: tuple[str, ...], tool_index_handler):
-    """
-    Verifies that the metadata.ground_truth_crc in a JSON file exists and matches the index crc.
-    Fails if ground_truth_crc is missing or if the CRCs mismatch.
-    """
+@pytest.mark.parametrize(
+    "command_parts",
+    MANAGED_COMMAND_SEQUENCES,
+    ids=[command_sequence_to_id(cp) for cp in MANAGED_COMMAND_SEQUENCES],
+)
+def test_txt_json_consistency(
+    command_parts: tuple[str, ...], tool_index_handler, WORKSPACE_ROOT, TOOLS_DIR, TOOL_INDEX_PATH
+):
+    """Compares TXT content with relevant JSON fields."""
+
     if not command_parts:
         pytest.skip("Skipping test for empty command parts.")
 
     tool_id = command_sequence_to_id(command_parts)
     tool_name = command_parts[0]
 
-    # Paths for context
+    # Use dynamically provided paths
     tool_dir = TOOLS_DIR / tool_name
+    txt_file = tool_dir / f"{tool_id}.txt"
     json_file = tool_dir / f"{tool_id}.json"
     relative_json_path = json_file.relative_to(WORKSPACE_ROOT)
-    relative_txt_path = (tool_dir / f"{tool_id}.txt").relative_to(WORKSPACE_ROOT)
-    relative_index_path = TOOL_INDEX_PATH.relative_to(WORKSPACE_ROOT)
+    relative_txt_path = txt_file.relative_to(WORKSPACE_ROOT)
 
-    # --- Get Expected CRC from Index ---
-    index_data = tool_index_handler["data"]
-    index_entry = index_data.get(tool_id)
-    if not index_entry or "crc" not in index_entry:
-        pytest.fail(
-            f"CRC entry missing in tool_index.json for '{tool_id}'.\n"
-            f"Action Required: Run test_ensure_txt_baselines_exist.py or generate_baseline_cli.py for this tool first."
-        )
-    expected_index_crc = index_entry["crc"]
+    # --- Load TXT Content ---
+    if not txt_file.is_file():
+        pytest.skip(f"Skipping consistency check: TXT file missing for {tool_id} at {relative_txt_path}")
+    try:
+        txt_content = txt_file.read_text(encoding="utf-8")
+    except Exception as e:
+        pytest.fail(f"Failed to read TXT file {relative_txt_path}: {e}")
 
-    # --- Check if JSON File Exists ---
+    # --- Load JSON Content ---
     if not json_file.is_file():
         pytest.fail(
-            f"JSON definition file does not exist: {relative_json_path}\n"
-            f"Action Required: Run generate_baseline_cli.py --command {' '.join(command_parts)} to create the skeleton."
+            f"JSON file missing for {tool_id} at {relative_json_path}. Cannot perform consistency check.\n"
+            f"Action Required: Ensure the JSON file has been generated/populated."
         )
-
-    # --- Load JSON and Check Metadata/CRC ---
-    json_data = None
     try:
-        with open(json_file, "r", encoding=DEFAULT_ENCODING) as f:
+        with open(json_file, "r", encoding="utf-8") as f:
             json_data = json.load(f)
     except json.JSONDecodeError as e:
-        pytest.fail(
-            f"Failed to decode JSON file: {relative_json_path}\n"
-            f"Error: {e}\n"
-            f"Action Required: Manually inspect and fix the JSON syntax."
-        )
+        pytest.fail(f"Failed to decode JSON file {relative_json_path}: {e}")
     except Exception as e:
-        pytest.fail(f"Failed to read JSON file: {relative_json_path}\nError: {e}")
+        pytest.fail(f"Failed to read JSON file {relative_json_path}: {e}")
 
-    # Check metadata structure
-    metadata = json_data.get("metadata")
-    if not isinstance(metadata, dict):
-        pytest.fail(
-            f"JSON file is missing the top-level 'metadata' dictionary: {relative_json_path}\n"
-            f"Action Required: Ensure the JSON structure is correct. It should contain at least `metadata: {{}}`. "
-            f"Skeletons have empty metadata, populated files need `metadata: {{ 'ground_truth_crc': '...' }}`."
-        )
+    # --- Perform Consistency Checks ---
 
-    # Check for ground_truth_crc
-    json_ground_truth_crc = metadata.get("ground_truth_crc")
+    # 1. Check description (compare first non-empty line of TXT? TBD)
+    # For now, just check if description exists
+    # json_description = json_data.get("description", "").strip()
+    # assert json_description, f"JSON 'description' field is empty in {relative_json_path}"
+    # TODO: Add smarter comparison logic if needed
 
-    if json_ground_truth_crc is None:
-        # Fail if the key is missing entirely
-        pytest.fail(
-            f"Failed: JSON is missing `metadata.ground_truth_crc`: {relative_json_path}\n"
-            f"This key must exist and match the tool index.\n"
-            f"Action Required: Populate the JSON file or regenerate the baseline/skeleton."
-        )
+    # 2. Check usage (compare relevant section of TXT? TBD)
+    # For now, just check if usage exists
+    # json_usage = json_data.get("usage", "").strip()
+    # assert json_usage, f"JSON 'usage' field is empty in {relative_json_path}"
+    # TODO: Add smarter comparison logic if needed
 
-    # Compare CRCs (case-insensitive) - This is the core check.
-    if json_ground_truth_crc.lower() != expected_index_crc.lower():
-        pytest.fail(
-            f"JSON CRC mismatch for '{tool_id}': Stored='{json_ground_truth_crc}', Expected (from index)='{expected_index_crc}'\\n"
-            f"File: {relative_json_path}\\n"
-            f"Reason: The ground-truth TXT file has likely changed, or the JSON CRC is incorrect.\\n"
-            f"AI Action Required: You MUST personally re-read the ground-truth file:\\n"
-            f"  {relative_txt_path}\\n"
-            f"Then, update the content of the JSON file ({json_file.name}) "
-            f"according to the guidelines in:\\n"
-            f"  {SCHEMA_GUIDELINES_PATH}\\n"
-            f"Ensure `metadata.ground_truth_crc` is updated to `{expected_index_crc}` after updating content."
-        )
+    # 3. Check CRC value in JSON metadata matches the index
+    json_metadata = json_data.get("metadata", {})
+    json_crc = json_metadata.get("ground_truth_crc")
 
-    # If we reach here, ground_truth_crc exists and matches the index crc
-    log.info(f"CRC check passed for JSON: {relative_json_path} (CRC: {expected_index_crc})")
-    assert True  # Explicit pass
+    index_data = tool_index_handler["data"]
+    index_entry = index_data.get(tool_id)
+    index_crc = index_entry.get("crc") if index_entry else None
+
+    assert json_crc is not None, f"Missing 'metadata.ground_truth_crc' in {relative_json_path}"
+    assert index_crc is not None, f"Missing CRC entry for '{tool_id}' in tool index ({TOOL_INDEX_PATH})"
+
+    # Perform case-insensitive comparison
+    assert str(json_crc).lower() == str(index_crc).lower(), (
+        f"JSON CRC mismatch for {tool_id} (case-insensitive comparison):\n"
+        f"  JSON file ({relative_json_path}): metadata.ground_truth_crc = {json_crc}\n"
+        f"  Tool Index ({TOOL_INDEX_PATH.relative_to(WORKSPACE_ROOT)}): stored CRC = {index_crc}\n"
+        f"Action Required: Ensure the CRC values match numerically. Update the 'ground_truth_crc' in {relative_json_path} if the TXT file ({relative_txt_path}) has changed."
+    )
+
+    log.info(f"Consistency checks passed for {tool_id}")

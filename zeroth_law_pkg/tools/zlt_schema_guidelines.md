@@ -33,7 +33,8 @@ The root of the JSON object should represent a single command or subcommand. It 
 
 ### 2. `description` (Required)
    - Usually found near the top of the help output, often as the first paragraph(s) before usage or options sections.
-   - Capture the primary purpose of the command/subcommand. Concatenate multi-line descriptions into a single string with newline characters (`\\n`) preserved.
+   - Capture the primary purpose of the command/subcommand. Concatenate multi-line descriptions into a single string with newline characters (`\n`) preserved.
+   - **Sanitization:** If the description contains characters that have special meaning in JSON strings (like `\`), sanitize them appropriately (e.g., remove them if they are part of an example and not essential, or replace `\` with `\\` if the literal backslash is necessary). **Avoid** adding unnecessary escape characters that were not present or intended in the original help text.
 
 ### 3. `usage` (Optional)
    - Look for lines explicitly starting with "Usage:" or similar.

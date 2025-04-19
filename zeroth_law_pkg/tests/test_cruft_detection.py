@@ -56,7 +56,13 @@ KNOWN_GOOD_PATTERNS = {
     "src/zeroth_law/tool_mapping.yaml",  # Allow specific config
     "src/zeroth_law/tools/**",  # Allow everything under tools
     "src/zeroth_law/dev_scripts/**",  # Allow everything under dev_scripts
-    # Add other specific non-code files or patterns here if needed
+    "src/zeroth_law/managed_tools.yaml",
+    "tools/",
+    "tools/tool_index.json",
+    "tools/zlt_schema_guidelines.md",
+    "tmp",
+    "uv.lock",
+    # Add other known files/directories here
 }
 
 # --- Helper ---
@@ -124,7 +130,9 @@ def test_no_unexpected_files_in_repo():
         # Check status relative to HEAD (committed state)
         cmd_status = ["git", "status", "--porcelain", str(structure_file_rel_path)]
         print(f"\nChecking git status for: {structure_file_rel_path}")
-        result_status = subprocess.run(cmd_status, capture_output=True, text=True, check=True, cwd=WORKSPACE_ROOT, env=os.environ)
+        result_status = subprocess.run(
+            cmd_status, capture_output=True, text=True, check=True, cwd=WORKSPACE_ROOT, env=os.environ
+        )
         if result_status.stdout.strip():  # If output is not empty, file has changes
             status_lines = result_status.stdout.strip()
             # print(f"INFO: Uncommitted changes detected for {structure_file_rel_path}:\n  {status_lines}", file=sys.stderr)
@@ -135,7 +143,12 @@ def test_no_unexpected_files_in_repo():
             #                             cwd=WORKSPACE_ROOT, env=os.environ)
             # print(f"INFO: 'git add' completed for {structure_file_rel_path}.")
             # Fail the test with the prioritized message
-            pytest.fail(f"Low Priority: The structure data file '{structure_file_rel_path}' has uncommitted changes:\n" f"  {status_lines}\n" f"This test requires a clean, committed structure file to be reliable. " f"Please ensure other tests pass, then commit changes to this file.")
+            pytest.fail(
+                f"Low Priority: The structure data file '{structure_file_rel_path}' has uncommitted changes:\n"
+                f"  {status_lines}\n"
+                f"This test requires a clean, committed structure file to be reliable. "
+                f"Please ensure other tests pass, then commit changes to this file."
+            )
         else:
             print(f"'{structure_file_rel_path}' is clean according to git status.")
 
@@ -149,7 +162,10 @@ def test_no_unexpected_files_in_repo():
             file=sys.stderr,
         )
         print(f"Stderr: {e.stderr}", file=sys.stderr)
-        assert not mock_print.called, f"Script printed '{message}'. Should silently proceed, " f"but result might be based on stale data if file exists."
+        assert not mock_print.called, (
+            f"Script printed '{message}'. Should silently proceed, "
+            f"but result might be based on stale data if file exists."
+        )
     except Exception as e:
         # Catch other potential errors during the status check
         pytest.fail(f"Unexpected error checking git status for {structure_file_rel_path}: {e}")
@@ -178,7 +194,8 @@ def test_no_unexpected_files_in_repo():
         # If the structure file doesn't exist, we can't know expected source files.
         # Depending on policy, you might fail here, or just rely on KNOWN_GOOD_PATTERNS
         print(
-            f"Warning: Structure data file not found at {STRUCTURE_DATA_PATH}. " "Cruft detection will rely solely on KNOWN_GOOD_PATTERNS.",
+            f"Warning: Structure data file not found at {STRUCTURE_DATA_PATH}. "
+            "Cruft detection will rely solely on KNOWN_GOOD_PATTERNS.",
             file=sys.stderr,
         )
         # pytest.fail(f"Structure data file not found: {STRUCTURE_DATA_PATH}") # Option to fail
@@ -209,6 +226,13 @@ def test_no_unexpected_files_in_repo():
     # 5. Fail if unexpected files are found
     if unexpected_files:
         file_list = "\n - ".join(sorted(list(unexpected_files)))
-        pytest.fail("Found unexpected files tracked by git that are not defined in " f"{STRUCTURE_DATA_PATH.name} or listed in the test's KNOWN_GOOD_PATTERNS:\n" f" - {file_list}\n" "Please investigate these files. Add them to KNOWN_GOOD_PATTERNS in " f"{Path(__file__).name} if they should be allowed, ensure they are included " f"in {STRUCTURE_DATA_PATH.name} if they are source code, or remove them if they are cruft.")
+        pytest.fail(
+            "Found unexpected files tracked by git that are not defined in "
+            f"{STRUCTURE_DATA_PATH.name} or listed in the test's KNOWN_GOOD_PATTERNS:\n"
+            f" - {file_list}\n"
+            "Please investigate these files. Add them to KNOWN_GOOD_PATTERNS in "
+            f"{Path(__file__).name} if they should be allowed, ensure they are included "
+            f"in {STRUCTURE_DATA_PATH.name} if they are source code, or remove them if they are cruft."
+        )
     else:
         print("No unexpected tracked files found.")

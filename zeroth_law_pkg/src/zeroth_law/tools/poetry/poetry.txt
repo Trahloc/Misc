@@ -29,4 +29,3 @@ Help:
   You can also display the commands for a specific namespace:
   
     poetry list test
-  

@@ -2,12 +2,64 @@
   "command_sequence": [
     "isort-identify-imports"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Get all import definitions from a given file.",
+  "usage": "isort-identify-imports [-h] [--top-only] [--follow-links] [--unique | --packages | --modules | --attributes] files [files ...]",
+  "options": {
+    "-h": {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit",
+      "takes_value": false
+    },
+    "--top-only": {
+      "short": null,
+      "long": "--top-only",
+      "description": "Only identify imports that occur in before functions or classes.",
+      "takes_value": false
+    },
+    "--follow-links": {
+      "short": null,
+      "long": "--follow-links",
+      "description": "Tells isort to follow symlinks that are encountered when running recursively.",
+      "takes_value": false
+    },
+    "--unique": {
+      "short": null,
+      "long": "--unique",
+      "description": "If true, isort will only identify unique imports.",
+      "takes_value": false
+    },
+    "--packages": {
+      "short": null,
+      "long": "--packages",
+      "description": "If true, isort will only identify the unique top level modules imported.",
+      "takes_value": false
+    },
+    "--modules": {
+      "short": null,
+      "long": "--modules",
+      "description": "If true, isort will only identify the unique modules imported.",
+      "takes_value": false
+    },
+    "--attributes": {
+      "short": null,
+      "long": "--attributes",
+      "description": "If true, isort will only identify the unique attributes imported.",
+      "takes_value": false
+    }
+  },
+  "arguments": {
+    "files": {
+      "name": "files",
+      "description": "One or more Python source files that need their imports sorted.",
+      "is_required": true,
+      "is_variadic": true
+    }
+  },
+  "notes": [
+    "Use `-` as the first argument to represent stdin."
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "ground_truth_crc": "0xBA808EAA"
   }
 }

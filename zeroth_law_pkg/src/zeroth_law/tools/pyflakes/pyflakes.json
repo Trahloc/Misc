@@ -1,13 +1,36 @@
 {
-  "command_sequence": [
+  "tool_id": "pyflakes",
+  "command": [
     "pyflakes"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Check Python source files for errors",
+  "usage": [
+    {
+      "format": "pyflakes [-h] [-V] [path ...]"
+    }
+  ],
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit"
+    },
+    {
+      "short": "-V",
+      "long": "--version",
+      "description": "show program's version number and exit"
+    }
+  ],
+  "arguments": [
+    {
+      "name": "path",
+      "description": "Path(s) of Python file(s) to check. STDIN if not given.",
+      "optional": true,
+      "nargs": "*"
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x11B74AC5"
   }
 }

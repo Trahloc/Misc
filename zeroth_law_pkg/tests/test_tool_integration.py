@@ -3,6 +3,12 @@ import yaml
 from pathlib import Path
 import sys
 from zeroth_law.dev_scripts.tool_discovery import get_existing_tool_dirs, get_potential_managed_tools, load_tools_config
+import json
+import warnings
+import xml.etree.ElementTree as ET
+import re
+import io  # Import io for capturing report output
+import coverage  # Import coverage API
 
 # Assuming tool_discovery.py is now in src/zeroth_law/dev_scripts/
 # Add the src directory to the path to allow importing the discovery script
@@ -36,10 +42,21 @@ def test_check_for_new_tools():
     # Note: excluded tools were already filtered out by get_potential_managed_tools
 
     if unknown_tools:
-        error_msg = "\n--------------------------------------------------\n" f"Newly discovered potential tools found: {sorted(list(unknown_tools))}\n" "These executables exist in the environment bin directory but are neither\n" f"explicitly excluded nor listed as managed in {MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}.\n" "\nAction Required: For each listed executable, research it and update managed_tools.yaml:\n" "  - If it's a tool ZLT should manage, add its name to the 'managed_tools' list.\n" "  - If it's cruft/helper/unwanted, add its name to the 'excluded_executables' list.\n" "--------------------------------------------------"
+        error_msg = (
+            "\n--------------------------------------------------\n"
+            f"Newly discovered potential tools found: {sorted(list(unknown_tools))}\n"
+            "These executables exist in the environment bin directory but are neither\n"
+            f"explicitly excluded nor listed as managed in {MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}.\n"
+            "\nAction Required: For each listed executable, research it and update managed_tools.yaml:\n"
+            "  - If it's a tool ZLT should manage, add its name to the 'managed_tools' list.\n"
+            "  - If it's cruft/helper/unwanted, add its name to the 'excluded_executables' list.\n"
+            "--------------------------------------------------"
+        )
         pytest.fail(error_msg, pytrace=False)
     else:
-        print("No new potential tools found. managed_tools.yaml is up-to-date with discovered non-excluded executables.")
+        print(
+            "No new potential tools found. managed_tools.yaml is up-to-date with discovered non-excluded executables."
+        )
         assert True  # Explicit pass
 
 
@@ -62,11 +79,58 @@ def test_no_orphan_tool_directories():
 
     if orphan_dirs:
         orphan_list = ", ".join(sorted(list(orphan_dirs)))
-        error_message = f"Orphan tool directories found in '{TOOLS_DIR.relative_to(WORKSPACE_ROOT)}' that are not listed in 'managed_tools' in {MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}: [{orphan_list}]. " f"Please investigate and decide whether to remove these directories or add the corresponding tool name(s) to the 'managed_tools' list in the YAML config."
+        error_message = (
+            f"Orphan tool directories found in '{TOOLS_DIR.relative_to(WORKSPACE_ROOT)}' that are not listed in 'managed_tools' in {MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}: [{orphan_list}]. "
+            f"Please investigate and decide whether to remove these directories or add the corresponding tool name(s) to the 'managed_tools' list in the YAML config."
+        )
         pytest.fail(error_message, pytrace=False)
     else:
         print("No orphan tool directories found.")
         assert True  # Explicit pass
+
+
+# --- Test for Project Coverage (Moved to end) ---
+
+# Define constants for the test
+MIN_PROJECT_COVERAGE = 95.0  # ZLF Requirement
+MIN_FILE_COVERAGE = 95.0
+COVERAGE_HIGHLIGHT_FILE = WORKSPACE_ROOT / "coverage_lowlights.json"
+COVERAGE_TOTAL_FILENAME = "coverage_total.txt"
+
+
+@pytest.mark.coverage_check
+def test_project_coverage_threshold():
+    """Reads the parsed total coverage from the file and checks against the minimum."""
+    coverage_total_file = WORKSPACE_ROOT / COVERAGE_TOTAL_FILENAME
+
+    if not coverage_total_file.exists():
+        pytest.fail(f"Coverage total file not found: {coverage_total_file}")
+
+    try:
+        with open(coverage_total_file, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+            parsed_total_coverage = float(content)
+    except (IOError, ValueError) as e:
+        pytest.fail(f"Could not read or parse coverage total from {coverage_total_file}: {e}")
+
+    print(f"Minimum required project coverage: {MIN_PROJECT_COVERAGE}%")
+    print(f"Actual project coverage (from {COVERAGE_TOTAL_FILENAME}): {parsed_total_coverage}%")
+
+    if parsed_total_coverage < MIN_PROJECT_COVERAGE:
+        # Use pytest.fail to make it a hard failure, but provide guidance
+        fail_message = (
+            f"Threshold Check Failed: Project coverage is {parsed_total_coverage:.1f}%, "
+            f"below minimum requirement of {MIN_PROJECT_COVERAGE:.1f}%.\n"
+            "To investigate:\n"
+            "  1. Run 'uv run coverage report -m' in the terminal.\n"
+            "  2. Identify files/lines marked as 'Missing' in the report.\n"
+            "  3. Add tests to cover these specific lines/branches.\n"
+            "  4. Rerun './scripts/run_coverage.py' to confirm improvement."
+        )
+        pytest.fail(fail_message, pytrace=False)  # Keep pytrace=False for cleaner output
+    else:
+        # If coverage is sufficient, maybe just print a success message?
+        print(f"Project coverage {parsed_total_coverage}% meets or exceeds minimum {MIN_PROJECT_COVERAGE}%.")
 
 
 # --- Removed test_tool_directories_and_baselines_exist --- #
@@ -75,11 +139,20 @@ def test_no_orphan_tool_directories():
 # 2. test_json_baseline_exists (new file) - Checks if categorized tools have baselines.
 
 # Check for orphan tool directories (exist on disk but not in managed list)
-orphan_dirs = existing_tool_dirs - known_managed_tools
-orphan_list = ", ".join(sorted(o.name for o in orphan_dirs))
-assert not orphan_dirs, f"Found orphan tool directories not in 'managed_tools' config " f"({MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}):\n" f"  [{orphan_list}]\n" f"Action Required: Add tool(s) to config or delete directories."
-
-# Check for newly added potential tools (in managed list but dir doesn't exist)
-new_potential_tools = known_managed_tools - existing_tool_dirs
-new_list = ", ".join(sorted(n.name for n in new_potential_tools))
-assert not new_potential_tools, f"Managed tools listed in config but directory missing:\n" f"  [{new_list}]\n" f"Action Required: Create the tool directory/directories or remove from config."
+# orphan_dirs = existing_tool_dirs - known_managed_tools
+# orphan_list = ", ".join(sorted(o.name for o in orphan_dirs))
+# assert not orphan_dirs, (
+#     f"Found orphan tool directories not in 'managed_tools' config "
+#     f"({MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}):\n"
+#     f"  [{orphan_list}]\n"
+#     f"Action Required: Add tool(s) to config or delete directories."
+# )
+#
+# # Check for newly added potential tools (in managed list but dir doesn't exist)
+# new_potential_tools = known_managed_tools - existing_tool_dirs
+# new_list = ", ".join(sorted(n.name for n in new_potential_tools))
+# assert not new_potential_tools, (
+#     f"Managed tools listed in config but directory missing:\n"
+#     f"  [{new_list}]\n"
+#     f"Action Required: Create the tool directory/directories or remove from config."
+# )

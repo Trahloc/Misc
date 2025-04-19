@@ -2,12 +2,36 @@
   "command_sequence": [
     "bandit-baseline"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Bandit Baseline - Generates Bandit results compared to a baseline",
+  "usage": "bandit-baseline [-h] [-f {txt,html,json}] targets [targets ...]",
+  "options": {
+    "-h": {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit",
+      "takes_value": false
+    },
+    "-f": {
+      "short": "-f",
+      "long": null,
+      "description": "specify output format",
+      "takes_value": true,
+      "value_name": "{txt,html,json}"
+    }
+  },
+  "arguments": {
+    "targets": {
+      "name": "targets",
+      "description": "source file(s) or directory(s) to be tested",
+      "is_required": true,
+      "is_variadic": true
+    }
+  },
+  "subcommands": {},
+  "notes": [
+    "Additional Bandit arguments such as severity filtering (-ll) can be added and will be passed to Bandit."
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "ground_truth_crc": "0x2A2C3E5E"
   }
 }

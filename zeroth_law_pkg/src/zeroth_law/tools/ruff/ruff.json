@@ -3,7 +3,6 @@
     "tool_name": "Ruff",
     "description": "An extremely fast Python linter and code formatter.",
     "version_pin": "latest",
-    "file_status": "populated",
     "ground_truth_crc": "0xae0936d1"
   },
   "schema_version": "0.1",

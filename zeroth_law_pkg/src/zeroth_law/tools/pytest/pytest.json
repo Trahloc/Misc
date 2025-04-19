@@ -1,13 +1,191 @@
 {
-  "command_sequence": [
+  "tool_id": "pytest",
+  "command": [
     "pytest"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "The pytest framework makes it easy to write small tests, yet scales to support complex functional testing.",
+  "usage": [
+    {
+      "format": "pytest [options] [file_or_dir] [...]"
+    }
+  ],
+  "options": [
+    {
+      "short": "-k",
+      "metavar": "EXPRESSION",
+      "description": "Only run tests which match the given substring expression."
+    },
+    {
+      "short": "-m",
+      "metavar": "MARKEXPR",
+      "description": "Only run tests matching given mark expression."
+    },
+    {
+      "long": "--markers",
+      "description": "Show markers (builtin, plugin and per-project ones)."
+    },
+    {
+      "short": "-x",
+      "long": "--exitfirst",
+      "description": "Exit instantly on first error or failed test."
+    },
+    {
+      "long": "--fixtures",
+      "aliases": [
+        "--funcargs"
+      ],
+      "description": "Show available fixtures."
+    },
+    {
+      "long": "--pdb",
+      "description": "Start the interactive Python debugger on errors or KeyboardInterrupt."
+    },
+    {
+      "long": "--capture",
+      "metavar": "method",
+      "description": "Per-test capturing method: one of fd|sys|no|tee-sys."
+    },
+    {
+      "short": "-s",
+      "description": "Shortcut for --capture=no."
+    },
+    {
+      "long": "--lf",
+      "aliases": [
+        "--last-failed"
+      ],
+      "description": "Rerun only the tests that failed at the last run."
+    },
+    {
+      "long": "--ff",
+      "aliases": [
+        "--failed-first"
+      ],
+      "description": "Run all tests, but run the last failures first."
+    },
+    {
+      "long": "--cache-clear",
+      "description": "Remove all cache contents at start of test run."
+    },
+    {
+      "long": "--durations",
+      "metavar": "N",
+      "description": "Show N slowest setup/test durations (N=0 for all)."
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "Increase verbosity."
+    },
+    {
+      "short": "-q",
+      "long": "--quiet",
+      "description": "Decrease verbosity."
+    },
+    {
+      "short": "-r",
+      "metavar": "chars",
+      "description": "Show extra test summary info as specified by chars."
+    },
+    {
+      "short": "-l",
+      "long": "--showlocals",
+      "description": "Show locals in tracebacks."
+    },
+    {
+      "long": "--tb",
+      "metavar": "style",
+      "description": "Traceback print mode (auto/long/short/line/native/no)."
+    },
+    {
+      "long": "--color",
+      "metavar": "color",
+      "description": "Color terminal output (yes/no/auto)."
+    },
+    {
+      "long": "--junit-xml",
+      "metavar": "path",
+      "description": "Create junit-xml style report file at given path."
+    },
+    {
+      "short": "-W",
+      "long": "--pythonwarnings",
+      "metavar": "PYTHONWARNINGS",
+      "description": "Set which warnings to report."
+    },
+    {
+      "long": "--maxfail",
+      "metavar": "num",
+      "description": "Exit after first num failures or errors."
+    },
+    {
+      "short": "-c",
+      "long": "--config-file",
+      "metavar": "FILE",
+      "description": "Load configuration from FILE."
+    },
+    {
+      "long": "--rootdir",
+      "metavar": "ROOTDIR",
+      "description": "Define root directory for tests."
+    },
+    {
+      "long": "--collect-only",
+      "aliases": [
+        "--co"
+      ],
+      "description": "Only collect tests, don't execute them."
+    },
+    {
+      "long": "--ignore",
+      "metavar": "path",
+      "description": "Ignore path during collection (multi-allowed)."
+    },
+    {
+      "long": "--import-mode",
+      "metavar": "{prepend,append,importlib}",
+      "description": "Import mode for test modules."
+    },
+    {
+      "long": "--doctest-modules",
+      "description": "Run doctests in all .py modules."
+    },
+    {
+      "short": "-V",
+      "long": "--version",
+      "description": "Display pytest version and information about plugins."
+    },
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Show help message and configuration info."
+    },
+    {
+      "short": "-p",
+      "metavar": "name",
+      "description": "Early-load given plugin module name or entry point."
+    },
+    {
+      "long": "--cov",
+      "metavar": "[SOURCE]",
+      "description": "Path or package name to measure coverage during execution."
+    },
+    {
+      "long": "--cov-report",
+      "metavar": "TYPE",
+      "description": "Type of coverage report to generate."
+    }
+  ],
+  "arguments": [
+    {
+      "name": "file_or_dir",
+      "description": "Files or directories to run tests from.",
+      "optional": true,
+      "nargs": "*"
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x4BB955CB"
   }
 }

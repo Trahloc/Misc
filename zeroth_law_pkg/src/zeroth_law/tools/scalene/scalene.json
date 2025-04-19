@@ -1,13 +1,117 @@
 {
-  "command_sequence": [
+  "tool_id": "scalene",
+  "command": [
     "scalene"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "A high-precision CPU and memory profiler.",
+  "usage": [
+    {
+      "format": "scalene [options] your_program.py [--- --your_program_args]"
+    },
+    {
+      "format": "python3 -m scalene [options] your_program.py [--- --your_program_args]"
+    }
+  ],
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit"
+    },
+    {
+      "long": "--version",
+      "description": "prints the version number and exits"
+    },
+    {
+      "long": "--outfile",
+      "metavar": "OUTFILE",
+      "description": "file to hold profiler output (default: stdout)"
+    },
+    {
+      "long": "--html",
+      "description": "output as HTML"
+    },
+    {
+      "long": "--json",
+      "description": "output as JSON"
+    },
+    {
+      "long": "--cli",
+      "description": "forces use of the command-line"
+    },
+    {
+      "long": "--web",
+      "description": "opens a web tab to view the profile (saved as 'profile.html')"
+    },
+    {
+      "long": "--viewer",
+      "description": "opens the Scalene web UI."
+    },
+    {
+      "long": "--profile-interval",
+      "metavar": "PROFILE_INTERVAL",
+      "description": "output profiles every so many seconds (default: inf)"
+    },
+    {
+      "long": "--cpu",
+      "description": "profile CPU time (default: True)"
+    },
+    {
+      "long": "--gpu",
+      "description": "profile GPU time and memory (default: True)"
+    },
+    {
+      "long": "--memory",
+      "description": "profile memory (default: True)"
+    },
+    {
+      "long": "--profile-all",
+      "description": "profile all executed code, not just the target program"
+    },
+    {
+      "long": "--profile-only",
+      "metavar": "PROFILE_ONLY",
+      "description": "profile only code in filenames that contain the given strings"
+    },
+    {
+      "long": "--profile-exclude",
+      "metavar": "PROFILE_EXCLUDE",
+      "description": "do not profile code in filenames that contain the given strings"
+    },
+    {
+      "long": "--cpu-percent-threshold",
+      "metavar": "CPU_PERCENT_THRESHOLD",
+      "description": "only report profiles with at least this percent of CPU time"
+    },
+    {
+      "long": "--malloc-threshold",
+      "metavar": "MALLOC_THRESHOLD",
+      "description": "only report profiles with at least this many allocations"
+    },
+    {
+      "long": "--on",
+      "description": "start with profiling on (default)"
+    },
+    {
+      "long": "--off",
+      "description": "start with profiling off"
+    }
+  ],
+  "arguments": [
+    {
+      "name": "your_program.py",
+      "description": "The Python program to profile.",
+      "optional": false
+    },
+    {
+      "name": "--your_program_args",
+      "description": "Arguments to pass to the profiled program.",
+      "optional": true,
+      "nargs": "*"
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x51BD1994"
   }
 }

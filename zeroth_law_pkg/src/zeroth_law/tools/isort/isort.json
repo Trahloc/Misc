@@ -2,12 +2,687 @@
   "command_sequence": [
     "isort"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Sort Python import definitions alphabetically within logical sections.",
+  "usage": "isort [OPTIONS] [files ...]",
+  "subcommands": {},
+  "options": {
+    "-h": {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit",
+      "takes_value": false
+    },
+    "-V": {
+      "short": "-V",
+      "long": "--version",
+      "description": "Displays the currently installed version of isort.",
+      "takes_value": false
+    },
+    "--vn": {
+      "short": null,
+      "long": "--version-number",
+      "description": "Returns just the current version number without the logo",
+      "takes_value": false
+    },
+    "-v": {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "Shows verbose output...",
+      "takes_value": false
+    },
+    "--only-modified": {
+      "short": null,
+      "long": "--only-modified",
+      "aliases": [
+        "--om"
+      ],
+      "description": "Suppresses verbose output for non-modified files.",
+      "takes_value": false
+    },
+    "--dedup-headings": {
+      "short": null,
+      "long": "--dedup-headings",
+      "description": "Tells isort to only show an identical custom import heading comment once...",
+      "takes_value": false
+    },
+    "-q": {
+      "short": "-q",
+      "long": "--quiet",
+      "description": "Shows extra quiet output, only errors are outputted.",
+      "takes_value": false
+    },
+    "-d": {
+      "short": "-d",
+      "long": "--stdout",
+      "description": "Force resulting output to stdout, instead of in-place.",
+      "takes_value": false
+    },
+    "--overwrite-in-place": {
+      "short": null,
+      "long": "--overwrite-in-place",
+      "description": "Tells isort to overwrite in place using the same file handle...",
+      "takes_value": false
+    },
+    "--show-config": {
+      "short": null,
+      "long": "--show-config",
+      "description": "See isort's determined config, as well as sources of config options.",
+      "takes_value": false
+    },
+    "--show-files": {
+      "short": null,
+      "long": "--show-files",
+      "description": "See the files isort will be run against...",
+      "takes_value": false
+    },
+    "--df": {
+      "short": "--df",
+      "long": "--diff",
+      "description": "Prints a diff of all the changes isort would make...",
+      "takes_value": false
+    },
+    "-c": {
+      "short": "-c",
+      "long": "--check-only",
+      "aliases": [
+        "--check"
+      ],
+      "description": "Checks the file for unsorted / unformatted imports...",
+      "takes_value": false
+    },
+    "--ws": {
+      "short": "--ws",
+      "long": "--ignore-whitespace",
+      "description": "Tells isort to ignore whitespace differences when --check-only is being used.",
+      "takes_value": false
+    },
+    "--sp": {
+      "short": "--sp",
+      "long": "--settings-path",
+      "aliases": [
+        "--settings-file",
+        "--settings"
+      ],
+      "description": "Explicitly set the settings path or file...",
+      "takes_value": true,
+      "value_name": "SETTINGS_PATH"
+    },
+    "--cr": {
+      "short": "--cr",
+      "long": "--config-root",
+      "description": "Explicitly set the config root for resolving all configs...",
+      "takes_value": true,
+      "value_name": "CONFIG_ROOT"
+    },
+    "--resolve-all-configs": {
+      "short": null,
+      "long": "--resolve-all-configs",
+      "description": "Tells isort to resolve the configs for all sub-directories...",
+      "takes_value": false
+    },
+    "--profile": {
+      "short": null,
+      "long": "--profile",
+      "description": "Base profile type to use for configuration (black, django, etc.).",
+      "takes_value": true,
+      "value_name": "PROFILE"
+    },
+    "--old-finders": {
+      "short": null,
+      "long": "--old-finders",
+      "aliases": [
+        "--magic-placement"
+      ],
+      "description": "Use the old deprecated finder logic...",
+      "takes_value": false
+    },
+    "-j": {
+      "short": "-j",
+      "long": "--jobs",
+      "description": "Number of files to process in parallel. Negative value means use number of CPUs.",
+      "takes_value": true,
+      "is_optional_value": true,
+      "value_name": "JOBS"
+    },
+    "--ac": {
+      "short": "--ac",
+      "long": "--atomic",
+      "description": "Ensures the output doesn't save if the resulting file contains syntax errors.",
+      "takes_value": false
+    },
+    "--interactive": {
+      "short": null,
+      "long": "--interactive",
+      "description": "Tells isort to apply changes interactively.",
+      "takes_value": false
+    },
+    "--format-error": {
+      "short": null,
+      "long": "--format-error",
+      "description": "Override the format used to print errors.",
+      "takes_value": true,
+      "value_name": "FORMAT_ERROR"
+    },
+    "--format-success": {
+      "short": null,
+      "long": "--format-success",
+      "description": "Override the format used to print success.",
+      "takes_value": true,
+      "value_name": "FORMAT_SUCCESS"
+    },
+    "--srx": {
+      "short": "--srx",
+      "long": "--sort-reexports",
+      "description": "Automatically sort all re-exports (module level __all__ collections)",
+      "takes_value": false
+    },
+    "--filter-files": {
+      "short": null,
+      "long": "--filter-files",
+      "description": "Tells isort to filter files even when they are explicitly passed in...",
+      "takes_value": false
+    },
+    "-s": {
+      "short": "-s",
+      "long": "--skip",
+      "description": "Files that isort should skip over...",
+      "takes_value": true,
+      "value_name": "SKIP"
+    },
+    "--extend-skip": {
+      "short": null,
+      "long": "--extend-skip",
+      "description": "Extends --skip to add additional files that isort should skip over.",
+      "takes_value": true,
+      "value_name": "EXTEND_SKIP"
+    },
+    "--sg": {
+      "short": "--sg",
+      "long": "--skip-glob",
+      "description": "Files that isort should skip over (glob pattern).",
+      "takes_value": true,
+      "value_name": "SKIP_GLOB"
+    },
+    "--extend-skip-glob": {
+      "short": null,
+      "long": "--extend-skip-glob",
+      "description": "Additional files that isort should skip over (extending --skip-glob).",
+      "takes_value": true,
+      "value_name": "EXTEND_SKIP_GLOB"
+    },
+    "--gitignore": {
+      "short": null,
+      "long": "--gitignore",
+      "aliases": [
+        "--skip-gitignore"
+      ],
+      "description": "Treat project as a git repository and ignore files listed in .gitignore...",
+      "takes_value": false
+    },
+    "--ext": {
+      "short": "--ext",
+      "long": "--extension",
+      "aliases": [
+        "--supported-extension"
+      ],
+      "description": "Specifies what extensions isort can be run against.",
+      "takes_value": true,
+      "value_name": "SUPPORTED_EXTENSIONS"
+    },
+    "--blocked-extension": {
+      "short": null,
+      "long": "--blocked-extension",
+      "description": "Specifies what extensions isort can never be run against.",
+      "takes_value": true,
+      "value_name": "BLOCKED_EXTENSIONS"
+    },
+    "--dont-follow-links": {
+      "short": null,
+      "long": "--dont-follow-links",
+      "description": "Tells isort not to follow symlinks...",
+      "takes_value": false
+    },
+    "--filename": {
+      "short": null,
+      "long": "--filename",
+      "description": "Provide the filename associated with a stream.",
+      "takes_value": true,
+      "value_name": "FILENAME"
+    },
+    "--allow-root": {
+      "short": null,
+      "long": "--allow-root",
+      "description": "Tells isort not to treat / specially...",
+      "takes_value": false
+    },
+    "-a": {
+      "short": "-a",
+      "long": "--add-import",
+      "description": "Adds the specified import line to all files...",
+      "takes_value": true,
+      "value_name": "ADD_IMPORTS"
+    },
+    "--append": {
+      "short": null,
+      "long": "--append",
+      "aliases": [
+        "--append-only"
+      ],
+      "description": "Only adds the imports specified in --add-import if the file contains existing imports.",
+      "takes_value": false
+    },
+    "--af": {
+      "short": "--af",
+      "long": "--force-adds",
+      "description": "Forces import adds even if the original file is empty.",
+      "takes_value": false
+    },
+    "--rm": {
+      "short": "--rm",
+      "long": "--remove-import",
+      "description": "Removes the specified import from all files.",
+      "takes_value": true,
+      "value_name": "REMOVE_IMPORTS"
+    },
+    "--float-to-top": {
+      "short": null,
+      "long": "--float-to-top",
+      "description": "Causes all non-indented imports to float to the top of the file...",
+      "takes_value": false
+    },
+    "--dont-float-to-top": {
+      "short": null,
+      "long": "--dont-float-to-top",
+      "description": "Forces --float-to-top setting off.",
+      "takes_value": false
+    },
+    "--ca": {
+      "short": "--ca",
+      "long": "--combine-as",
+      "description": "Combines as imports on the same line.",
+      "takes_value": false
+    },
+    "--cs": {
+      "short": "--cs",
+      "long": "--combine-star",
+      "description": "Ensures that if a star import is present, nothing else is imported...",
+      "takes_value": false
+    },
+    "-e": {
+      "short": "-e",
+      "long": "--balanced",
+      "description": "Balances wrapping to produce the most consistent line length possible",
+      "takes_value": false
+    },
+    "--ff": {
+      "short": "--ff",
+      "long": "--from-first",
+      "description": "Switches the typical ordering preference, showing from imports first...",
+      "takes_value": false
+    },
+    "--fgw": {
+      "short": "--fgw",
+      "long": "--force-grid-wrap",
+      "description": "Force number of from imports ... to be grid wrapped regardless of line length.",
+      "takes_value": true,
+      "is_optional_value": true,
+      "value_name": "FORCE_GRID_WRAP"
+    },
+    "-i": {
+      "short": "-i",
+      "long": "--indent",
+      "description": "String to place for indents defaults to \" \" (4 spaces).",
+      "takes_value": true,
+      "value_name": "INDENT"
+    },
+    "--lbi": {
+      "short": null,
+      "long": "--lines-before-imports",
+      "description": "Lines before imports.",
+      "takes_value": true,
+      "value_name": "LINES_BEFORE_IMPORTS"
+    },
+    "--lai": {
+      "short": null,
+      "long": "--lines-after-imports",
+      "description": "Lines after imports.",
+      "takes_value": true,
+      "value_name": "LINES_AFTER_IMPORTS"
+    },
+    "--lbt": {
+      "short": null,
+      "long": "--lines-between-types",
+      "description": "Lines between types.",
+      "takes_value": true,
+      "value_name": "LINES_BETWEEN_TYPES"
+    },
+    "--le": {
+      "short": "--le",
+      "long": "--line-ending",
+      "description": "Forces line endings to the specified value...",
+      "takes_value": true,
+      "value_name": "LINE_ENDING"
+    },
+    "--ls": {
+      "short": "--ls",
+      "long": "--length-sort",
+      "description": "Sort imports by their string length.",
+      "takes_value": false
+    },
+    "--lss": {
+      "short": "--lss",
+      "long": "--length-sort-straight",
+      "description": "Sort straight imports by their string length.",
+      "takes_value": false
+    },
+    "-m": {
+      "short": "-m",
+      "long": "--multi-line",
+      "description": "Multi line output mode (0-grid, 1-vertical, etc.).",
+      "takes_value": true,
+      "value_name": "MODE"
+    },
+    "-n": {
+      "short": "-n",
+      "long": "--ensure-newline-before-comments",
+      "description": "Inserts a blank line before a comment following an import.",
+      "takes_value": false
+    },
+    "--nis": {
+      "short": null,
+      "long": "--no-inline-sort",
+      "description": "Leaves `from` imports with multiple imports 'as-is'...",
+      "takes_value": false
+    },
+    "--ot": {
+      "short": "--ot",
+      "long": "--order-by-type",
+      "description": "Order imports by type...",
+      "takes_value": false
+    },
+    "--dt": {
+      "short": "--dt",
+      "long": "--dont-order-by-type",
+      "description": "Don't order imports by type...",
+      "takes_value": false
+    },
+    "--rr": {
+      "short": "--rr",
+      "long": "--reverse-relative",
+      "description": "Reverse order of relative imports.",
+      "takes_value": false
+    },
+    "--reverse-sort": {
+      "short": null,
+      "long": "--reverse-sort",
+      "description": "Reverses the ordering of imports.",
+      "takes_value": false
+    },
+    "--sort-order": {
+      "short": null,
+      "long": "--sort-order",
+      "description": "Specify sorting function (natural or native).",
+      "takes_value": true,
+      "value_name": "SORT_ORDER"
+    },
+    "--sl": {
+      "short": "--sl",
+      "long": "--force-single-line-imports",
+      "description": "Forces all from imports to appear on their own line",
+      "takes_value": false
+    },
+    "--nsl": {
+      "short": null,
+      "long": "--single-line-exclusions",
+      "description": "One or more modules to exclude from the single line rule.",
+      "takes_value": true,
+      "value_name": "SINGLE_LINE_EXCLUSIONS"
+    },
+    "--tc": {
+      "short": "--tc",
+      "long": "--trailing-comma",
+      "description": "Includes a trailing comma on multi line imports...",
+      "takes_value": false
+    },
+    "--up": {
+      "short": "--up",
+      "long": "--use-parentheses",
+      "description": "Use parentheses for line continuation on length limit instead of slashes.",
+      "takes_value": false
+    },
+    "-l": {
+      "short": "-l",
+      "long": "--line-length",
+      "aliases": [
+        "-w",
+        "--line-width"
+      ],
+      "description": "The max length of an import line (used for wrapping).",
+      "takes_value": true,
+      "value_name": "LINE_LENGTH"
+    },
+    "--wl": {
+      "short": null,
+      "long": "--wrap-length",
+      "description": "Specifies how long lines that are wrapped should be.",
+      "takes_value": true,
+      "value_name": "WRAP_LENGTH"
+    },
+    "--case-sensitive": {
+      "short": null,
+      "long": "--case-sensitive",
+      "description": "Tells isort to include case sensitivity when sorting imports.",
+      "takes_value": false
+    },
+    "--remove-redundant-aliases": {
+      "short": null,
+      "long": "--remove-redundant-aliases",
+      "description": "Tells isort to remove redundant aliases...",
+      "takes_value": false
+    },
+    "--honor-noqa": {
+      "short": null,
+      "long": "--honor-noqa",
+      "description": "Tells isort to honor noqa comments to enforce skipping those comments.",
+      "takes_value": false
+    },
+    "--treat-comment-as-code": {
+      "short": null,
+      "long": "--treat-comment-as-code",
+      "description": "Tells isort to treat the specified single line comments(s) as code...",
+      "takes_value": true,
+      "value_name": "TREAT_COMMENTS_AS_CODE"
+    },
+    "--treat-all-comment-as-code": {
+      "short": null,
+      "long": "--treat-all-comment-as-code",
+      "description": "Tells isort to treat all single line comments as code...",
+      "takes_value": false
+    },
+    "--formatter": {
+      "short": null,
+      "long": "--formatter",
+      "description": "Specify the formatter to use when processing Python code.",
+      "takes_value": true,
+      "value_name": "FORMATTER"
+    },
+    "--color": {
+      "short": null,
+      "long": "--color",
+      "description": "Tells isort to use color in terminal output.",
+      "takes_value": false
+    },
+    "--ext-format": {
+      "short": null,
+      "long": "--ext-format",
+      "description": "Tells isort to format the given files according to the specified extension.",
+      "takes_value": true,
+      "value_name": "EXT_FORMAT"
+    },
+    "--star-first": {
+      "short": null,
+      "long": "--star-first",
+      "description": "Forces star imports to be placed sorted alphabetically...",
+      "takes_value": false
+    },
+    "--split-on-trailing-comma": {
+      "short": null,
+      "long": "--split-on-trailing-comma",
+      "description": "Split imports list that ends with a trailing comma.",
+      "takes_value": false
+    },
+    "--sd": {
+      "short": "--sd",
+      "long": "--default-section",
+      "description": "Set the default section for imports (default FUTURE).",
+      "takes_value": true,
+      "value_name": "DEFAULT_SECTION"
+    },
+    "--only-sections": {
+      "short": null,
+      "long": "--only-sections",
+      "description": "Causes imports to be sorted based on their sections like STDLIB, THIRDPARTY, etc...",
+      "takes_value": false
+    },
+    "--ds": {
+      "short": null,
+      "long": "--no-sections",
+      "description": "Put all imports into the same section separated by blank lines",
+      "takes_value": false
+    },
+    "--fas": {
+      "short": null,
+      "long": "--force-alphabetical-sort",
+      "description": "Force all imports to be sorted alphabetically.",
+      "takes_value": false
+    },
+    "--fss": {
+      "short": null,
+      "long": "--force-sort-within-sections",
+      "description": "Force imports to be sorted alphabetically within normal sections...",
+      "takes_value": false
+    },
+    "--hcss": {
+      "short": null,
+      "long": "--honor-comment-indentation",
+      "description": "Honor indentation of comments that are attached to imports.",
+      "takes_value": false
+    },
+    "--srss": {
+      "short": null,
+      "long": "--sort-relative-in-force-sorted-sections",
+      "description": "Sort relative imports an independent section above all other imports...",
+      "takes_value": false
+    },
+    "--fass": {
+      "short": null,
+      "long": "--force-alphabetical-sort-within-sections",
+      "description": "Force imports to be sorted alphabetically within sections...",
+      "takes_value": false
+    },
+    "-t": {
+      "short": "-t",
+      "long": "--force-to-top",
+      "description": "Force specific imports to the top of their appropriate section.",
+      "takes_value": true,
+      "value_name": "FORCE_TO_TOP"
+    },
+    "--combine-straight-imports": {
+      "short": null,
+      "long": "--combine-straight-imports",
+      "description": "Combines all straight imports of the same section...",
+      "takes_value": false
+    },
+    "--nlb": {
+      "short": null,
+      "long": "--no-lines-before",
+      "description": "Sections which should not be split with previous by empty lines.",
+      "takes_value": true,
+      "value_name": "NO_LINES_BEFORE"
+    },
+    "--src": {
+      "short": null,
+      "long": "--src",
+      "aliases": [
+        "--src-path"
+      ],
+      "description": "Add an explicitly defined source path...",
+      "takes_value": true,
+      "value_name": "SRC_PATHS"
+    },
+    "-b": {
+      "short": "-b",
+      "long": "--known-standard-library",
+      "description": "Force isort to recognize a module as part of Python's standard library.",
+      "takes_value": true,
+      "value_name": "KNOWN_STANDARD_LIBRARY"
+    },
+    "--extra-builtin": {
+      "short": null,
+      "long": "--extra-standard-library",
+      "description": "Extra modules to be included in the list of ones Python ships with.",
+      "takes_value": true,
+      "value_name": "EXTRA_STANDARD_LIBRARY"
+    },
+    "-f": {
+      "short": "-f",
+      "long": "--known-future-library",
+      "description": "Force isort to recognize a module as part of Python's future libraries.",
+      "takes_value": true,
+      "value_name": "KNOWN_FUTURE_LIBRARY"
+    },
+    "-o": {
+      "short": "-o",
+      "long": "--known-third-party",
+      "description": "Force isort to recognize a module as being part of a third party library.",
+      "takes_value": true,
+      "value_name": "KNOWN_THIRD_PARTY"
+    },
+    "-p": {
+      "short": "-p",
+      "long": "--known-first-party",
+      "description": "Force isort to recognize a module as being part of the current python project.",
+      "takes_value": true,
+      "value_name": "KNOWN_FIRST_PARTY"
+    },
+    "--known-local-folder": {
+      "short": null,
+      "long": "--known-local-folder",
+      "description": "Force isort to recognize a module as being part of the current python project.",
+      "takes_value": true,
+      "value_name": "KNOWN_LOCAL_FOLDER"
+    },
+    "--virtual-env": {
+      "short": null,
+      "long": "--virtual-env",
+      "description": "Virtual environment to use for determining whether a package is third-party.",
+      "takes_value": true,
+      "value_name": "VIRTUAL_ENV"
+    },
+    "--conda-env": {
+      "short": null,
+      "long": "--conda-env",
+      "description": "Conda environment to use for determining whether a package is third-party.",
+      "takes_value": true,
+      "value_name": "CONDA_ENV"
+    },
+    "--py": {
+      "short": null,
+      "long": "--python-version",
+      "description": "Tells isort to set the known standard library based on the specified Python version.",
+      "takes_value": true,
+      "value_name": "VERSION"
+    }
+  },
+  "arguments": {
+    "files": {
+      "name": "files",
+      "description": "One or more Python source files/directories or stdin (-)",
+      "is_required": false,
+      "is_variadic": true
+    }
+  },
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "ground_truth_crc": "0x3736B0EA"
   }
 }

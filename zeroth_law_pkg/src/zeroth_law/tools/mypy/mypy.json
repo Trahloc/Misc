@@ -2,12 +2,487 @@
   "command_sequence": [
     "mypy"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Mypy is a program that will type check your Python code.",
+  "usage": "mypy [-h] [-v] [-V] [more options] [-m MODULE] [-p PACKAGE] [-c PROGRAM_TEXT] [files ...]",
+  "options": {
+    "--enable-incomplete-feature": {
+      "short": null,
+      "long": "--enable-incomplete-feature",
+      "description": "Enable support of incomplete/experimental features...",
+      "takes_value": true,
+      "value_name": "{InlineTypedDict,PreciseTupleTypes}"
+    },
+    "-h": {
+      "short": "-h",
+      "long": "--help",
+      "description": "Show this help message and exit",
+      "takes_value": false
+    },
+    "-v": {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "More verbose messages",
+      "takes_value": false
+    },
+    "-V": {
+      "short": "-V",
+      "long": "--version",
+      "description": "Show program's version number and exit",
+      "takes_value": false
+    },
+    "-O": {
+      "short": "-O",
+      "long": "--output",
+      "description": "Set a custom output format",
+      "takes_value": true,
+      "value_name": "FORMAT"
+    },
+    "--config-file": {
+      "short": null,
+      "long": "--config-file",
+      "description": "Configuration file... (defaults to mypy.ini, .mypy.ini, pyproject.toml, setup.cfg)",
+      "takes_value": true,
+      "value_name": "CONFIG_FILE"
+    },
+    "--warn-unused-configs": {
+      "short": null,
+      "long": "--warn-unused-configs",
+      "description": "Warn about unused '[mypy-<pattern>]' or '[[tool.mypy.overrides]]' config sections",
+      "takes_value": false
+    },
+    "--no-namespace-packages": {
+      "short": null,
+      "long": "--no-namespace-packages",
+      "description": "Disable support for namespace packages (PEP 420)...",
+      "takes_value": false
+    },
+    "--ignore-missing-imports": {
+      "short": null,
+      "long": "--ignore-missing-imports",
+      "description": "Silently ignore imports of missing modules",
+      "takes_value": false
+    },
+    "--follow-untyped-imports": {
+      "short": null,
+      "long": "--follow-untyped-imports",
+      "description": "Typecheck modules without stubs or py.typed marker",
+      "takes_value": false
+    },
+    "--follow-imports": {
+      "short": null,
+      "long": "--follow-imports",
+      "description": "How to treat imports (default normal)",
+      "takes_value": true,
+      "value_name": "{normal,silent,skip,error}"
+    },
+    "--python-executable": {
+      "short": null,
+      "long": "--python-executable",
+      "description": "Python executable used for finding PEP 561 compliant installed packages and stubs",
+      "takes_value": true,
+      "value_name": "EXECUTABLE"
+    },
+    "--no-site-packages": {
+      "short": null,
+      "long": "--no-site-packages",
+      "description": "Do not search for installed PEP 561 compliant packages",
+      "takes_value": false
+    },
+    "--no-silence-site-packages": {
+      "short": null,
+      "long": "--no-silence-site-packages",
+      "description": "Do not silence errors in PEP 561 compliant installed packages",
+      "takes_value": false
+    },
+    "--junit-format": {
+      "short": null,
+      "long": "--junit-format",
+      "description": "If --junit-xml is set, specifies format...",
+      "takes_value": true,
+      "value_name": "{global,per_file}"
+    },
+    "--python-version": {
+      "short": null,
+      "long": "--python-version",
+      "description": "Type check code assuming it will be running on Python x.y",
+      "takes_value": true,
+      "value_name": "x.y"
+    },
+    "--platform": {
+      "short": null,
+      "long": "--platform",
+      "description": "Type check special-cased code for the given OS platform (defaults to sys.platform)",
+      "takes_value": true,
+      "value_name": "PLATFORM"
+    },
+    "--always-true": {
+      "short": null,
+      "long": "--always-true",
+      "description": "Additional variable to be considered True (may be repeated)",
+      "takes_value": true,
+      "value_name": "NAME"
+    },
+    "--always-false": {
+      "short": null,
+      "long": "--always-false",
+      "description": "Additional variable to be considered False (may be repeated)",
+      "takes_value": true,
+      "value_name": "NAME"
+    },
+    "--disallow-any-expr": {
+      "short": null,
+      "long": "--disallow-any-expr",
+      "description": "Disallow all expressions that have type Any",
+      "takes_value": false
+    },
+    "--disallow-any-decorated": {
+      "short": null,
+      "long": "--disallow-any-decorated",
+      "description": "Disallow functions that have Any in their signature after decorator transformation",
+      "takes_value": false
+    },
+    "--disallow-any-explicit": {
+      "short": null,
+      "long": "--disallow-any-explicit",
+      "description": "Disallow explicit Any in type positions",
+      "takes_value": false
+    },
+    "--disallow-any-generics": {
+      "short": null,
+      "long": "--disallow-any-generics",
+      "description": "Disallow usage of generic types that do not specify explicit type parameters",
+      "takes_value": false
+    },
+    "--disallow-any-unimported": {
+      "short": null,
+      "long": "--disallow-any-unimported",
+      "description": "Disallow Any types resulting from unfollowed imports",
+      "takes_value": false
+    },
+    "--disallow-subclassing-any": {
+      "short": null,
+      "long": "--disallow-subclassing-any",
+      "description": "Disallow subclassing values of type 'Any' when defining classes",
+      "takes_value": false
+    },
+    "--disallow-untyped-calls": {
+      "short": null,
+      "long": "--disallow-untyped-calls",
+      "description": "Disallow calling functions without type annotations from functions with type annotations",
+      "takes_value": false
+    },
+    "--untyped-calls-exclude": {
+      "short": null,
+      "long": "--untyped-calls-exclude",
+      "description": "Disable --disallow-untyped-calls for functions/methods from specific module/package/class",
+      "takes_value": true,
+      "value_name": "MODULE"
+    },
+    "--disallow-untyped-defs": {
+      "short": null,
+      "long": "--disallow-untyped-defs",
+      "description": "Disallow defining functions without type annotations or with incomplete type annotations",
+      "takes_value": false
+    },
+    "--disallow-incomplete-defs": {
+      "short": null,
+      "long": "--disallow-incomplete-defs",
+      "description": "Disallow defining functions with incomplete type annotations",
+      "takes_value": false
+    },
+    "--check-untyped-defs": {
+      "short": null,
+      "long": "--check-untyped-defs",
+      "description": "Type check the interior of functions without type annotations",
+      "takes_value": false
+    },
+    "--disallow-untyped-decorators": {
+      "short": null,
+      "long": "--disallow-untyped-decorators",
+      "description": "Disallow decorating typed functions with untyped decorators",
+      "takes_value": false
+    },
+    "--implicit-optional": {
+      "short": null,
+      "long": "--implicit-optional",
+      "description": "Assume arguments with default values of None are Optional",
+      "takes_value": false
+    },
+    "--no-strict-optional": {
+      "short": null,
+      "long": "--no-strict-optional",
+      "description": "Disable strict Optional checks",
+      "takes_value": false
+    },
+    "--warn-redundant-casts": {
+      "short": null,
+      "long": "--warn-redundant-casts",
+      "description": "Warn about casting an expression to its inferred type",
+      "takes_value": false
+    },
+    "--warn-unused-ignores": {
+      "short": null,
+      "long": "--warn-unused-ignores",
+      "description": "Warn about unneeded '# type: ignore' comments",
+      "takes_value": false
+    },
+    "--no-warn-no-return": {
+      "short": null,
+      "long": "--no-warn-no-return",
+      "description": "Do not warn about functions that end without returning",
+      "takes_value": false
+    },
+    "--warn-return-any": {
+      "short": null,
+      "long": "--warn-return-any",
+      "description": "Warn about returning values of type Any from non-Any typed functions",
+      "takes_value": false
+    },
+    "--warn-unreachable": {
+      "short": null,
+      "long": "--warn-unreachable",
+      "description": "Warn about statements or expressions inferred to be unreachable",
+      "takes_value": false
+    },
+    "--report-deprecated-as-note": {
+      "short": null,
+      "long": "--report-deprecated-as-note",
+      "description": "Report importing or using deprecated features as notes instead of errors",
+      "takes_value": false
+    },
+    "--allow-untyped-globals": {
+      "short": null,
+      "long": "--allow-untyped-globals",
+      "description": "Suppress toplevel errors caused by missing annotations",
+      "takes_value": false
+    },
+    "--allow-redefinition": {
+      "short": null,
+      "long": "--allow-redefinition",
+      "description": "Allow unconditional variable redefinition with a new type",
+      "takes_value": false
+    },
+    "--no-implicit-reexport": {
+      "short": null,
+      "long": "--no-implicit-reexport",
+      "description": "Treat imports as private unless aliased",
+      "takes_value": false
+    },
+    "--strict-equality": {
+      "short": null,
+      "long": "--strict-equality",
+      "description": "Prohibit equality, identity, and container checks for non-overlapping types",
+      "takes_value": false
+    },
+    "--strict-bytes": {
+      "short": null,
+      "long": "--strict-bytes",
+      "description": "Disable treating bytearray and memoryview as subtypes of bytes",
+      "takes_value": false
+    },
+    "--extra-checks": {
+      "short": null,
+      "long": "--extra-checks",
+      "description": "Enable additional checks that are technically correct but may be impractical...",
+      "takes_value": false
+    },
+    "--strict": {
+      "short": null,
+      "long": "--strict",
+      "description": "Strict mode; enables many other strictness flags.",
+      "takes_value": false
+    },
+    "--disable-error-code": {
+      "short": null,
+      "long": "--disable-error-code",
+      "description": "Disable a specific error code",
+      "takes_value": true,
+      "value_name": "NAME"
+    },
+    "--enable-error-code": {
+      "short": null,
+      "long": "--enable-error-code",
+      "description": "Enable a specific error code",
+      "takes_value": true,
+      "value_name": "NAME"
+    },
+    "--show-error-context": {
+      "short": null,
+      "long": "--show-error-context",
+      "description": "Precede errors with \"note:\" messages explaining context",
+      "takes_value": false
+    },
+    "--show-column-numbers": {
+      "short": null,
+      "long": "--show-column-numbers",
+      "description": "Show column numbers in error messages",
+      "takes_value": false
+    },
+    "--show-error-end": {
+      "short": null,
+      "long": "--show-error-end",
+      "description": "Show end line/end column numbers in error messages...",
+      "takes_value": false
+    },
+    "--hide-error-codes": {
+      "short": null,
+      "long": "--hide-error-codes",
+      "description": "Hide error codes in error messages",
+      "takes_value": false
+    },
+    "--show-error-code-links": {
+      "short": null,
+      "long": "--show-error-code-links",
+      "description": "Show links to error code documentation",
+      "takes_value": false
+    },
+    "--pretty": {
+      "short": null,
+      "long": "--pretty",
+      "description": "Use visually nicer output in error messages...",
+      "takes_value": false
+    },
+    "--no-color-output": {
+      "short": null,
+      "long": "--no-color-output",
+      "description": "Do not colorize error messages",
+      "takes_value": false
+    },
+    "--no-error-summary": {
+      "short": null,
+      "long": "--no-error-summary",
+      "description": "Do not show error stats summary",
+      "takes_value": false
+    },
+    "--show-absolute-path": {
+      "short": null,
+      "long": "--show-absolute-path",
+      "description": "Show absolute paths to files",
+      "takes_value": false
+    },
+    "--no-incremental": {
+      "short": null,
+      "long": "--no-incremental",
+      "description": "Disable module cache",
+      "takes_value": false
+    },
+    "--cache-dir": {
+      "short": null,
+      "long": "--cache-dir",
+      "description": "Store module cache info in the given folder... (defaults to '.mypy_cache')",
+      "takes_value": true,
+      "value_name": "DIR"
+    },
+    "--sqlite-cache": {
+      "short": null,
+      "long": "--sqlite-cache",
+      "description": "Use a sqlite database to store the cache",
+      "takes_value": false
+    },
+    "--cache-fine-grained": {
+      "short": null,
+      "long": "--cache-fine-grained",
+      "description": "Include fine-grained dependency information in the cache for the mypy daemon",
+      "takes_value": false
+    },
+    "--skip-version-check": {
+      "short": null,
+      "long": "--skip-version-check",
+      "description": "Allow using cache written by older mypy version",
+      "takes_value": false
+    },
+    "--skip-cache-mtime-checks": {
+      "short": null,
+      "long": "--skip-cache-mtime-checks",
+      "description": "Skip cache internal consistency checks based on mtime",
+      "takes_value": false
+    },
+    "--pdb": {
+      "short": null,
+      "long": "--pdb",
+      "description": "Invoke pdb on fatal error",
+      "takes_value": false
+    },
+    "--show-traceback": {
+      "short": null,
+      "long": "--show-traceback",
+      "aliases": [
+        "--tb"
+      ],
+      "description": "Show traceback on fatal error",
+      "takes_value": false
+    },
+    "--raise-exceptions": {
+      "short": null,
+      "long": "--raise-exceptions",
+      "description": "Raise exception on fatal error",
+      "takes_value": false
+    },
+    "--custom-typing-module": {
+      "short": null,
+      "long": "--custom-typing-module",
+      "description": "Use a custom typing module",
+      "takes_value": true,
+      "value_name": "MODULE"
+    },
+    "--old-type-inference": {
+      "short": null,
+      "long": "--old-type-inference",
+      "description": "Disable new experimental type inference algorithm",
+      "takes_value": false
+    },
+    "--custom-typeshed-dir": {
+      "short": null,
+      "long": "--custom-typeshed-dir",
+      "description": "Use the custom typeshed in DIR",
+      "takes_value": true,
+      "value_name": "DIR"
+    },
+    "--warn-incomplete-stub": {
+      "short": null,
+      "long": "--warn-incomplete-stub",
+      "description": "Warn if missing type annotation in typeshed...",
+      "takes_value": false
+    },
+    "--shadow-file": {
+      "short": null,
+      "long": "--shadow-file",
+      "description": "When encountering SOURCE_FILE, read and type check the contents of SHADOW_FILE instead.",
+      "takes_value": true,
+      "value_name": "SOURCE_FILE SHADOW_FILE"
+    },
+    "-m": {
+      "short": "-m",
+      "long": "--module",
+      "description": "Type-check module; can repeat for more modules.",
+      "takes_value": true,
+      "value_name": "MODULE"
+    },
+    "-p": {
+      "short": "-p",
+      "long": "--package",
+      "description": "Type-check package recursively; can be repeated.",
+      "takes_value": true,
+      "value_name": "PACKAGE"
+    },
+    "-c": {
+      "short": "-c",
+      "long": "--command",
+      "description": "Type-check program passed in as string.",
+      "takes_value": true,
+      "value_name": "PROGRAM_TEXT"
+    }
+  },
+  "arguments": {
+    "files": {
+      "name": "files",
+      "description": "Files or directories to type check.",
+      "is_required": false,
+      "is_variadic": true
+    }
+  },
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x4D4CC23B"
   }
 }

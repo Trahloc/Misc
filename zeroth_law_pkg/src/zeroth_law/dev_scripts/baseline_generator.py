@@ -10,7 +10,7 @@ import sys
 import time
 from enum import Enum, auto
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 
 # --- Add project root to path for sibling imports ---
 try:
@@ -28,14 +28,17 @@ except NameError:
 
 # --- Import project modules ---
 try:
-    from src.zeroth_law.dev_scripts.capture_txt_tty_output import capture_tty_output
+    from src.zeroth_law.dev_scripts.capture_txt_tty_output import capture_tty_output as default_capture_tty_output
     from src.zeroth_law.lib.crc import calculate_crc32 as calculate_hex_crc32
     from src.zeroth_law.dev_scripts.tool_index_utils import (
-        load_tool_index,
-        save_tool_index,
+        load_tool_index as default_load_tool_index,
+        save_tool_index as default_save_tool_index,
         TOOLS_DIR_ROOT,  # Import constant
     )
-    from src.zeroth_law.dev_scripts.baseline_writers import write_ground_truth_txt, ensure_skeleton_json_exists
+    from src.zeroth_law.dev_scripts.baseline_writers import (
+        write_ground_truth_txt as default_write_ground_truth_txt,
+        ensure_skeleton_json_exists as default_ensure_skeleton_json_exists,
+    )
 except ImportError as e:
     print(f"Error importing modules. Check PYTHONPATH and file locations. Details: {e}", file=sys.stderr)
     # Optionally, re-raise or define dummy functions if needed for basic loading
@@ -102,7 +105,15 @@ def derive_tool_and_id(original_command_list: List[str]) -> Tuple[str, str]:
 # --- Core Generation/Verification Logic ---
 
 
-def generate_or_verify_baseline(command_str: str) -> BaselineStatus:
+def generate_or_verify_baseline(
+    command_str: str,
+    # Add dependencies as arguments with defaults
+    load_tool_index_func: Callable = default_load_tool_index,
+    save_tool_index_func: Callable = default_save_tool_index,
+    capture_tty_output_func: Callable = default_capture_tty_output,
+    write_ground_truth_txt_func: Callable = default_write_ground_truth_txt,
+    ensure_skeleton_json_exists_func: Callable = default_ensure_skeleton_json_exists,
+) -> BaselineStatus:
     """Orchestrates the baseline generation/verification for a single command."""
     log.info(f"--- Processing command: '{command_str}' ---")
 
@@ -127,12 +138,13 @@ def generate_or_verify_baseline(command_str: str) -> BaselineStatus:
     command_to_execute_str = f"{command_str} --help | cat"
     log.info(f"Executing: {command_to_execute_str}")
     try:
-        # Use a direct command list for capture_tty_output if it expects that
-        # Assuming capture_tty_output handles shell execution if needed
         capture_cmd_list = ["sh", "-c", command_to_execute_str]
-        output_bytes, exit_code = capture_tty_output(capture_cmd_list)
+        # Use the injected function
+        output_bytes, exit_code = capture_tty_output_func(capture_cmd_list)
         if exit_code != 0:
-            log.warning(f"Capture command for '{command_str}' exited with code {exit_code}. Output may be incomplete or error message.")
+            log.warning(
+                f"Capture command for '{command_str}' exited with code {exit_code}. Output may be incomplete or error message."
+            )
         log.info(f"Captured {len(output_bytes)} bytes for '{tool_id}'.")
     except Exception as e:
         log.exception(f"Failed to capture output for '{command_to_execute_str}': {e}")
@@ -156,7 +168,8 @@ def generate_or_verify_baseline(command_str: str) -> BaselineStatus:
 
     # 3. Load Index
     try:
-        index_data = load_tool_index()  # Returns empty dict on error/not found
+        # Use the injected function
+        index_data = load_tool_index_func()
         existing_index_entry = index_data.get(tool_id)
         existing_index_crc = None
         if existing_index_entry and isinstance(existing_index_entry, dict):
@@ -173,8 +186,8 @@ def generate_or_verify_baseline(command_str: str) -> BaselineStatus:
     # 5. Action based on Comparison
     if crc_match:
         log.info(f"CRC match for '{tool_id}'. Baseline TXT is up-to-date.")
-        # Still ensure skeleton exists, but don't need to pass CRC as it's linked via index
-        skel_success = ensure_skeleton_json_exists(tool_dir, tool_id, original_command_list)
+        # Use the injected function
+        skel_success = ensure_skeleton_json_exists_func(tool_dir, tool_id, original_command_list)
         if not skel_success:
             log.warning(f"Although TXT is up-to-date, failed to ensure skeleton JSON exists for '{tool_id}'.")
             # Decide if this should be a failure state or just a warning.
@@ -182,12 +195,15 @@ def generate_or_verify_baseline(command_str: str) -> BaselineStatus:
         return BaselineStatus.UP_TO_DATE
     else:
         if existing_index_crc:
-            log.info(f"CRC mismatch for '{tool_id}' (Index: {existing_index_crc}, New: {new_crc}). Updating baseline...")
+            log.info(
+                f"CRC mismatch for '{tool_id}' (Index: {existing_index_crc}, New: {new_crc}). Updating baseline..."
+            )
         else:
             log.info(f"New tool '{tool_id}'. Creating baseline...")
 
         # Write TXT (Overwrite)
-        if not write_ground_truth_txt(tool_dir, tool_id, output_string):
+        # Use the injected function
+        if not write_ground_truth_txt_func(tool_dir, tool_id, output_string):
             log.error(f"Failed to write ground truth TXT for '{tool_id}'. Aborting update.")
             return BaselineStatus.FAILED_WRITE_TXT
 
@@ -199,15 +215,17 @@ def generate_or_verify_baseline(command_str: str) -> BaselineStatus:
 
         # Save Index
         try:
-            save_tool_index(index_data)
+            # Use the injected function
+            save_tool_index_func(index_data)
             log.info(f"Successfully updated index for '{tool_id}' with CRC {new_crc}.")
         except Exception as e:
             log.error(f"Failed to save updated index after writing TXT for '{tool_id}': {e}")
             # TXT is written, but index is inconsistent!
             return BaselineStatus.FAILED_SAVE_INDEX
 
-        # Ensure Skeleton JSON (passing the new CRC is no longer needed)
-        skel_success = ensure_skeleton_json_exists(tool_dir, tool_id, original_command_list)
+        # Ensure Skeleton JSON
+        # Use the injected function
+        skel_success = ensure_skeleton_json_exists_func(tool_dir, tool_id, original_command_list)
         if not skel_success:
             log.error(f"Failed to write skeleton JSON for '{tool_id}' after updating TXT and index.")
             # TXT and Index are updated, but skeleton failed. This is still problematic.

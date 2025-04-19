@@ -1,13 +1,79 @@
 {
-  "command_sequence": [
+  "tool_id": "pyproject-build",
+  "command": [
     "pyproject-build"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
+  "description": "A simple, correct Python build frontend.",
+  "usage": [
+    {
+      "format": "pyproject-build [options] [srcdir]"
+    }
+  ],
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Show this help message and exit."
+    },
+    {
+      "short": "-V",
+      "long": "--version",
+      "description": "Show program's version number and exit."
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "Increase verbosity."
+    },
+    {
+      "short": "-s",
+      "long": "--sdist",
+      "description": "Build a source distribution (disables the default behavior)."
+    },
+    {
+      "short": "-w",
+      "long": "--wheel",
+      "description": "Build a wheel (disables the default behavior)."
+    },
+    {
+      "short": "-o",
+      "long": "--outdir",
+      "metavar": "PATH",
+      "description": "Output directory (defaults to {srcdir}/dist)."
+    },
+    {
+      "short": "-x",
+      "long": "--skip-dependency-check",
+      "description": "Do not check that build dependencies are installed."
+    },
+    {
+      "short": "-n",
+      "long": "--no-isolation",
+      "description": "Disable building the project in an isolated virtual environment."
+    },
+    {
+      "long": "--installer",
+      "metavar": "{pip,uv}",
+      "description": "Python package installer to use (defaults to pip)."
+    },
+    {
+      "short": "-C",
+      "long": "--config-setting",
+      "metavar": "KEY[=VALUE]",
+      "description": "Settings to pass to the backend."
+    }
+  ],
+  "arguments": [
+    {
+      "name": "srcdir",
+      "description": "Source directory (defaults to current directory).",
+      "optional": true,
+      "nargs": "?"
+    }
+  ],
   "subcommands": [],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x91EE1A8E"
   }
 }

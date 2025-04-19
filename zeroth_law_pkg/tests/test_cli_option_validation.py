@@ -5,6 +5,8 @@ import importlib
 import sys
 from pathlib import Path
 from unittest.mock import patch
+import os
+import subprocess
 
 import pytest
 from click.testing import CliRunner
@@ -108,45 +110,56 @@ def test_audit_option_invocation(option, value):
 
 # Test the install-git-hook command options
 @pytest.mark.parametrize(
-    "option,value",
+    "option,value_placeholder",
     [
-        ("--git-root", "."),  # Provide a default value
+        ("--git-root", "USE_TMP_PATH"),
+        (None, None),  # Test auto-detection
     ],
 )
-def test_install_hook_option_invocation(option, value):
+def test_install_hook_option_invocation(option, value_placeholder, tmp_path):
     """Test that each install-git-hook command option can be invoked."""
     runner = CliRunner()
 
-    # Reload module to ensure commands are available
-    importlib.reload(cli_module)
+    # Create a dummy .git directory and a dummy pyproject.toml
+    git_root_dir = tmp_path
+    (git_root_dir / ".git").mkdir()
+    (git_root_dir / "pyproject.toml").touch()  # Create dummy project file
+    # Initialize a git repository in the temporary directory
+    subprocess.run(["git", "init"], cwd=git_root_dir, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"], cwd=git_root_dir, capture_output=True, check=True
+    )
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=git_root_dir, capture_output=True, check=True)
+    subprocess.run(["git", "add", "pyproject.toml"], cwd=git_root_dir, capture_output=True, check=True)
+    subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=git_root_dir, capture_output=True, check=True)
 
-    # Mock relevant functions to prevent actual operation
-    with (
-        patch.object(Path, "is_dir", return_value=True),
-        patch("src.zeroth_law.git_utils.generate_custom_hook_script", return_value="#!/bin/bash\n"),
-        patch.object(Path, "mkdir"),
-        patch.object(Path, "open"),
-        # Add mocks for other Path methods used in install_git_hook_script
-        patch.object(Path, "exists", return_value=False),  # Assume hook doesn't exist initially
-        patch.object(Path, "is_symlink", return_value=False),
-        patch.object(Path, "read_text", return_value=""),
-        patch.object(Path, "rename"),
-        patch.object(Path, "stat", return_value=type("obj", (object,), {"st_mode": 0o755})()),  # Mock stat().st_mode
-        patch.object(Path, "chmod"),
-        patch.object(Path, "unlink"),
-    ):
-        # Build command arguments
-        args = ["install-git-hook"]
-        if option:
+    # Determine args based on parametrization
+    args = ["install-git-hook"]
+    if option == "--git-root":
+        if value_placeholder == "USE_TMP_PATH":
             args.append(option)
-        if value:
-            args.append(value)
+            args.append(str(git_root_dir))
 
-        result = runner.invoke(cli_group, args)
-        assert result.exit_code in (
-            0,
-            1,
-        ), f"Install hook command option {option} failed with exit code {result.exit_code}: {result.output}"
+    # For the case where --git-root is not provided, change CWD for CliRunner
+    current_cwd = Path.cwd()
+    # Change CWD only if testing auto-detection based on CWD
+    run_dir = git_root_dir if option is None else current_cwd
+    os.chdir(run_dir)
+    try:
+        print(f"\nRunning: cli_group {args} in CWD={Path.cwd()}")
+        result = runner.invoke(cli_group, args, catch_exceptions=False)
+    finally:
+        os.chdir(current_cwd)  # Change back CWD
+
+    # Check exit code
+    assert result.exit_code in (
+        0,
+        1,
+    ), f"Install hook command option {option} failed with exit code {result.exit_code}: {result.output}"
+
+    # Assert hook file was created
+    hook_path = git_root_dir / ".git" / "hooks" / "pre-commit"
+    assert hook_path.is_file(), f"Hook file was not created at {hook_path}"
 
 
 # Test the restore-git-hooks command options
@@ -161,7 +174,7 @@ def test_restore_hooks_option_invocation(option, value):
     runner = CliRunner()
 
     # Reload module to ensure commands are available
-    importlib.reload(cli_module)
+    # importlib.reload(cli_module) # Might not be needed if module scope is fine
 
     # Mock relevant functions to prevent actual operation
     with (

@@ -2,12 +2,50 @@
   "command_sequence": [
     "mutmut"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Mutation testing tool for Python.",
+  "usage": "mutmut [OPTIONS] COMMAND [ARGS]...",
+  "options": {
+    "--help": {
+      "short": null,
+      "long": "--help",
+      "description": "Show this message and exit.",
+      "takes_value": false
+    }
+  },
+  "arguments": {},
+  "subcommands": {
+    "apply": {
+      "name": "apply",
+      "summary": "Apply specified mutants."
+    },
+    "browse": {
+      "name": "browse",
+      "summary": "Browse mutants in a browser."
+    },
+    "print-time-estimates": {
+      "name": "print-time-estimates",
+      "summary": "Print time estimates for mutation testing phases."
+    },
+    "results": {
+      "name": "results",
+      "summary": "Show mutation testing results."
+    },
+    "run": {
+      "name": "run",
+      "summary": "Run mutation testing."
+    },
+    "show": {
+      "name": "show",
+      "summary": "Show specified mutants."
+    },
+    "tests-for-mutant": {
+      "name": "tests-for-mutant",
+      "summary": "Identify tests covering a specific mutant."
+    }
+  },
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x43DB6A8D",
+    "notes": "Uses subcommands"
   }
 }

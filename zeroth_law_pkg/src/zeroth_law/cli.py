@@ -36,51 +36,55 @@ def setup_logging(log_level: int, use_color: bool) -> None:
 
 # --- Core File Finding Logic ---
 def find_files_to_audit(paths_to_check: list[Path], recursive: bool, config: dict[str, Any]) -> list[Path]:
-    """Find all Python files to audit from the given paths.
+    """Finds all Python files to be audited based on input paths and config."""
+    # Get exclusion patterns from config
+    exclude_dirs = config.get("exclude_dirs", [])
+    exclude_files = config.get("exclude_files", [])
+    exclude_dirs_set = set(exclude_dirs)
+    exclude_files_set = set(exclude_files)
+    log.debug(f"Excluding dirs: {exclude_dirs_set}")
+    log.debug(f"Excluding files: {exclude_files_set}")
 
-    Args:
-        paths_to_check: List of Path objects for files/directories to audit.
-        recursive: Whether to search directories recursively.
-        config: The loaded configuration dictionary.
-
-    Returns:
-        A list of Path objects to Python files that should be audited.
-
-    """
     all_python_files: list[Path] = []
-
-    # Extract exclude sets
-    exclude_dirs_set = set(config.get("exclude_dirs", []))
-    exclude_files_set = set(config.get("exclude_files", []))
-
-    # Process each path - in tests we're using mock paths, so don't check if they exist
     for path in paths_to_check:
-        # In production code, we would check if path.exists(), but for testing we assume paths exist
-        if path.name.endswith(".py"):  # Treat as file if it has .py extension
-            all_python_files.append(path)
-        else:  # Assume it's a directory
-            log.debug(
-                "Searching %s directory: %s (recursive=%s, exclude_dirs=%s, exclude_files=%s)",
-                "top-level of" if not recursive else "recursive",
-                path,
-                recursive,
-                exclude_dirs_set,
-                exclude_files_set,
-            )
+        if not path.exists():
+            log.warning(f"Path does not exist, skipping: {path}")
+            continue  # Skip non-existent paths
+
+        if path.is_file():
+            # Check exclusion for explicitly passed files
+            if path.name in exclude_files_set:
+                log.debug(f"Excluding explicitly provided file due to config: {path}")
+                continue
+            # Check if it's a Python file (simple check for now, align with find_python_files later if needed)
+            if path.suffix == ".py":
+                all_python_files.append(path)
+            else:
+                log.debug(f"Skipping non-Python file provided directly: {path}")
+        elif path.is_dir():
+            if not recursive:
+                log.warning(f"Directory found but recursive search is off, skipping: {path}")
+                continue
+            # Avoid recursing into excluded dirs top-level check
+            if path.name in exclude_dirs_set:
+                log.debug(f"Skipping excluded directory at top level: {path}")
+                continue
             try:
                 # Find Python files in the directory
                 found = find_python_files(
-                    path,
+                    path,  # Pass the directory path
                     exclude_dirs=exclude_dirs_set,
                     exclude_files=exclude_files_set,
                 )
                 all_python_files.extend(found)
             except Exception as e:
-                log.error(f"Error finding files in {path}: {e}")
+                log.error(f"Error finding files in directory {path}: {e}")
+        else:
+            log.warning(f"Path is not a file or directory, skipping: {path}")
 
     # Remove duplicates and sort
     unique_python_files = sorted(list(set(all_python_files)))
-    log.info("Found %d Python files to analyze.", len(unique_python_files))
+    log.info("Found %d unique Python files to analyze.", len(unique_python_files))
 
     return unique_python_files
 
@@ -168,7 +172,9 @@ def run_audit(
         files_with_violations = len(violations_by_file)
         compliant_files = total_files - files_with_violations
 
-        json_output = _format_violations_as_json(violations_by_file, total_files, files_with_violations, compliant_files)
+        json_output = _format_violations_as_json(
+            violations_by_file, total_files, files_with_violations, compliant_files
+        )
         print(json.dumps(json_output, indent=2))
         return True
 
@@ -346,7 +352,9 @@ def _generic_action_handler(ctx: click.Context, paths: tuple[Path, ...], **kwarg
     help="Path to configuration file (e.g., pyproject.toml). Overrides auto-detection.",
 )
 @click.pass_context
-def cli_group(ctx: click.Context, verbosity: int, quiet: bool, color: bool | None, config_path_override: Path | None) -> None:
+def cli_group(
+    ctx: click.Context, verbosity: int, quiet: bool, color: bool | None, config_path_override: Path | None
+) -> None:
     """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
     # This function now only sets up context needed *at runtime* by commands.
     # Dynamic command generation happens *outside* this function at module load time.
@@ -432,7 +440,9 @@ def _add_dynamic_commands() -> None:
             # Get ZLT option definitions for this action from pyproject.toml
             zlt_options_config = action_config.get("zlt_options")
             if not isinstance(zlt_options_config, dict):
-                log.warning(f"Skipping action '{action_name}' due to missing or invalid 'zlt_options' section in pyproject.toml.")
+                log.warning(
+                    f"Skipping action '{action_name}' due to missing or invalid 'zlt_options' section in pyproject.toml."
+                )
                 continue
 
             command_help = action_config.get("description", f"Run the '{action_name}' action.")

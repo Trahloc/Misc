@@ -1,13 +1,47 @@
 {
-  "command_sequence": [
+  "tool_id": "py-spy",
+  "command": [
     "py-spy"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
+  "description": "Sampling profiler for Python programs",
+  "usage": [
+    {
+      "format": "py-spy <SUBCOMMAND>"
+    }
+  ],
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Print help information"
+    },
+    {
+      "short": "-V",
+      "long": "--version",
+      "description": "Print version information"
+    }
+  ],
   "arguments": [],
-  "subcommands": [],
+  "subcommands": [
+    {
+      "name": "record",
+      "description": "Records stack trace information to a flamegraph, speedscope or raw file"
+    },
+    {
+      "name": "top",
+      "description": "Displays a top like view of functions consuming CPU"
+    },
+    {
+      "name": "dump",
+      "description": "Dumps stack traces for a target program to stdout"
+    },
+    {
+      "name": "help",
+      "description": "Print this message or the help of the given subcommand(s)"
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0xDC4DE986"
   }
 }

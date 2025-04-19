@@ -44,6 +44,7 @@ excluded_executables:
   - coverage-3 # Likely alias
   - coverage-3.13 # Specific version alias
   - coverage3 # Old alias
+  - deactivate
   - pip
   - pip-3 # Likely alias
   - pip-3.13 # Specific version alias
@@ -55,15 +56,24 @@ excluded_executables:
   - wheel
   # Known non-user-facing tools or internal helpers
   - blackd # Black daemon
+  - doesitcache
+  - dul-receive-pack
+  - dul-upload-pack
+  - dulwich
   - dmypy # MyPy daemon
   - f2py # Fortran wrapper
+  - findpython
+  - generate-baselines
   - get_gprof # Debugging util
   - get_objgraph # Debugging util
   - mypyc # MyPy compiler
   - normalizer # Internal?
   - numpy-config # NumPy utility
   - pbr # Python Build Reasonableness tool
+  - pbs-install
+  - py
   - py.test # Old pytest alias
+  - pydoc
   - pylint-config # Pylint utility
   - pyreverse # Pylint utility
   - python_config # Example sometimes present
@@ -72,11 +82,14 @@ excluded_executables:
   - symilar # Pylint utility
   - undill # Dill helper
   # Other installed CLIs we aren't managing via ZLT baselines (yet?)
+  - httpx
   - hypothesis # Primarily a library
   - identify-cli # Unknown
+  - keyring
   - markdown-it # Markdown tool
   - nltk # NLP toolkit CLI
   - nodeenv # Node.js env tool
+  - pkginfo
   - pycodestyle # Covered by ruff
   # pyflakes # Managed, removed from exclude
   - pygmentize # Syntax highlighter CLI

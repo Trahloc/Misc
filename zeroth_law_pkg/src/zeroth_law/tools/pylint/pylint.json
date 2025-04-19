@@ -1,13 +1,120 @@
 {
-  "command_sequence": [
+  "tool_id": "pylint",
+  "command": [
     "pylint"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "A static code analysis tool for Python.",
+  "usage": [
+    {
+      "format": "pylint [options] <module_or_package>..."
+    }
+  ],
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Show this help message and exit."
+    },
+    {
+      "long": "--rcfile",
+      "metavar": "RCFILE",
+      "description": "Specify a configuration file to load."
+    },
+    {
+      "long": "--output",
+      "metavar": "OUTPUT",
+      "description": "Specify an output file."
+    },
+    {
+      "long": "--help-msg",
+      "metavar": "HELP_MSG",
+      "description": "Display a help message for the given message id and exit."
+    },
+    {
+      "long": "--list-msgs",
+      "description": "Display a list of all pylint's messages."
+    },
+    {
+      "long": "--generate-rcfile",
+      "description": "Generate a sample configuration file."
+    },
+    {
+      "short": "-E",
+      "long": "--errors-only",
+      "description": "In error mode, messages with a category besides ERROR or FATAL are suppressed."
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "In verbose mode, extra non-checker-related info will be displayed."
+    },
+    {
+      "long": "--ignore",
+      "metavar": "<file>[,<file>...]",
+      "description": "Files or directories to be skipped. They should be base names, not paths."
+    },
+    {
+      "long": "--ignore-patterns",
+      "metavar": "<pattern>[,<pattern>...]",
+      "description": "Files or directories matching the regular expression patterns are skipped."
+    },
+    {
+      "long": "--load-plugins",
+      "metavar": "<modules>",
+      "description": "List of plugins (as comma separated values of python module names) to load."
+    },
+    {
+      "long": "--fail-under",
+      "metavar": "<score>",
+      "description": "Specify a score threshold under which the program will exit with error."
+    },
+    {
+      "short": "-j",
+      "long": "--jobs",
+      "metavar": "<n-processes>",
+      "description": "Use multiple processes to speed up Pylint."
+    },
+    {
+      "short": "-f",
+      "long": "--output-format",
+      "metavar": "<format>",
+      "description": "Set the output format (e.g., 'text', 'json', 'colorized')."
+    },
+    {
+      "short": "-r",
+      "long": "--reports",
+      "metavar": "<y or n>",
+      "description": "Tells whether to display a full report or only the messages."
+    },
+    {
+      "short": "-s",
+      "long": "--score",
+      "metavar": "<y or n>",
+      "description": "Activate the evaluation score."
+    },
+    {
+      "short": "-e",
+      "long": "--enable",
+      "metavar": "<msg ids>",
+      "description": "Enable the message, report, category or checker with the given id(s)."
+    },
+    {
+      "short": "-d",
+      "long": "--disable",
+      "metavar": "<msg ids>",
+      "description": "Disable the message, report, category or checker with the given id(s)."
+    }
+  ],
+  "arguments": [
+    {
+      "name": "module_or_package",
+      "description": "Python module(s) or package(s) to analyze.",
+      "optional": false,
+      "nargs": "+"
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x4BC767DB"
   }
 }

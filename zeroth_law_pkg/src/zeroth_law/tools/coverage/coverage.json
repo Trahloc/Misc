@@ -2,12 +2,61 @@
   "command_sequence": [
     "coverage"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Coverage.py - Measure, collect, and report on code coverage in Python programs.",
+  "usage": "coverage <command> [options] [args]",
+  "options": {},
+  "arguments": {},
+  "subcommands": {
+    "annotate": {
+      "name": "annotate",
+      "summary": "Annotate source files with execution information."
+    },
+    "combine": {
+      "name": "combine",
+      "summary": "Combine a number of data files."
+    },
+    "debug": {
+      "name": "debug",
+      "summary": "Display information about the internals of coverage.py"
+    },
+    "erase": {
+      "name": "erase",
+      "summary": "Erase previously collected coverage data."
+    },
+    "help": {
+      "name": "help",
+      "summary": "Get help on using coverage.py."
+    },
+    "html": {
+      "name": "html",
+      "summary": "Create an HTML report."
+    },
+    "json": {
+      "name": "json",
+      "summary": "Create a JSON report of coverage results."
+    },
+    "lcov": {
+      "name": "lcov",
+      "summary": "Create an LCOV report of coverage results."
+    },
+    "report": {
+      "name": "report",
+      "summary": "Report coverage stats on modules."
+    },
+    "run": {
+      "name": "run",
+      "summary": "Run a Python program and measure code execution."
+    },
+    "xml": {
+      "name": "xml",
+      "summary": "Create an XML report of coverage results."
+    }
+  },
+  "notes": [
+    "Use \"coverage help <command>\" for detailed help on any command.",
+    "Full documentation is at https://coverage.readthedocs.io/en/7.8.0"
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "ground_truth_crc": "0x891C20F3"
   }
 }

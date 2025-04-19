@@ -2,12 +2,110 @@
   "command_sequence": [
     "pipdeptree"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
+  "description": "Dependency tree of the installed python packages",
+  "usage": "pipdeptree [-h] [-v] [-w [{silence,suppress,fail}]] [--python PYTHON] [--path PATH] [-p P] [-e P] [-l | -u] [-f] [--encoding E] [-a] [-d D] [-r] [--license] [-j | --json-tree | --mermaid | --graph-output FMT]",
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit"
+    },
+    {
+      "short": "-v",
+      "long": "--version",
+      "description": "show program's version number and exit"
+    },
+    {
+      "short": "-w",
+      "long": "--warn",
+      "metavar": "[{silence,suppress,fail}]",
+      "description": "warning control"
+    },
+    {
+      "long": "--python",
+      "metavar": "PYTHON",
+      "description": "Python interpreter to inspect."
+    },
+    {
+      "long": "--path",
+      "metavar": "PATH",
+      "description": "Restrict package lookup path."
+    },
+    {
+      "short": "-p",
+      "long": "--packages",
+      "metavar": "P",
+      "description": "comma separated list of packages to show."
+    },
+    {
+      "short": "-e",
+      "long": "--exclude",
+      "metavar": "P",
+      "description": "comma separated list of packages to not show."
+    },
+    {
+      "short": "-l",
+      "long": "--local-only",
+      "description": "do not show globally installed packages."
+    },
+    {
+      "short": "-u",
+      "long": "--user-only",
+      "description": "only show installations in the user site dir."
+    },
+    {
+      "short": "-f",
+      "long": "--freeze",
+      "description": "print names so as to write freeze files"
+    },
+    {
+      "long": "--encoding",
+      "metavar": "E",
+      "description": "the encoding to use when writing to the output"
+    },
+    {
+      "short": "-a",
+      "long": "--all",
+      "description": "list all deps at top level"
+    },
+    {
+      "short": "-d",
+      "long": "--depth",
+      "metavar": "D",
+      "description": "limit the depth of the tree"
+    },
+    {
+      "short": "-r",
+      "long": "--reverse",
+      "description": "render the dependency tree in the reverse fashion"
+    },
+    {
+      "long": "--license",
+      "description": "list the license(s) of a package"
+    },
+    {
+      "short": "-j",
+      "long": "--json",
+      "description": "raw JSON output"
+    },
+    {
+      "long": "--json-tree",
+      "description": "nested JSON mimics the text format layout"
+    },
+    {
+      "long": "--mermaid",
+      "description": "https://mermaid.js.org flow diagram output"
+    },
+    {
+      "long": "--graph-output",
+      "metavar": "FMT",
+      "description": "Graphviz rendering output format"
+    }
+  ],
   "arguments": [],
-  "subcommands": [],
+  "subcommands": {},
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x34985295"
   }
 }

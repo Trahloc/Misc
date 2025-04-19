@@ -1,13 +1,93 @@
 {
-  "command_sequence": [
+  "tool_id": "safety",
+  "command": [
     "safety"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
+  "description": "Vulnerability Scanning for Secure Python Development",
+  "usage": [
+    {
+      "format": "safety [OPTIONS] COMMAND [ARGS]..."
+    }
+  ],
+  "options": [
+    {
+      "long": "--stage",
+      "description": "Assign a development lifecycle stage to your scan (default: development)."
+    },
+    {
+      "long": "--key",
+      "description": "API key required for cicd or production stage scans."
+    },
+    {
+      "long": "--proxy-host",
+      "description": "Specify a proxy host for network communications."
+    },
+    {
+      "long": "--proxy-port",
+      "description": "Set the proxy port (default: 80). Requires --proxy-host."
+    },
+    {
+      "long": "--proxy-protocol",
+      "description": "Choose the proxy protocol (default: https). Requires --proxy-host."
+    },
+    {
+      "long": "--disable-optional-telemetry",
+      "description": "Opt-out of sending optional telemetry data."
+    },
+    {
+      "long": "--debug",
+      "description": "Enable debug mode for detailed output."
+    },
+    {
+      "long": "--version",
+      "description": "Show the version and exit."
+    },
+    {
+      "long": "--help",
+      "description": "Show this message and exit."
+    }
+  ],
   "arguments": [],
-  "subcommands": [],
+  "subcommands": [
+    {
+      "name": "auth",
+      "description": "Authenticate Safety CLI to perform scans."
+    },
+    {
+      "name": "scan",
+      "description": "Scans a Python project directory."
+    },
+    {
+      "name": "alert",
+      "description": "[deprecated] Create GitHub pull requests or issues using a `safety check` json report file."
+    },
+    {
+      "name": "check",
+      "description": "[deprecated] Find vulnerabilities at target files or environments."
+    },
+    {
+      "name": "check-updates",
+      "description": "Check for version updates to Safety CLI."
+    },
+    {
+      "name": "configure",
+      "description": "Set up global configurations for Safety CLI."
+    },
+    {
+      "name": "generate",
+      "description": "Generate a boilerplate Safety CLI policy file."
+    },
+    {
+      "name": "license",
+      "description": "[deprecated] Find licenses at target files or environments."
+    },
+    {
+      "name": "validate",
+      "description": "Verify that a local policy file is valid."
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x5A5AD14E"
   }
 }

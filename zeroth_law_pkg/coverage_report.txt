@@ -1,0 +1,24 @@
+Name                                                  Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------------------
+src/zeroth_law/action_runner.py                         120    120     0%   4-278
+src/zeroth_law/analyzer/__init__.py                       1      1     0%   4
+src/zeroth_law/analyzer/python/__init__.py                1      1     0%   4
+src/zeroth_law/analyzer/python/analyzer.py              104    104     0%   7-248
+src/zeroth_law/analyzer/python/analyzer_refactor.py     119    119     0%   9-336
+src/zeroth_law/analyzer/python/ast_utils.py              28     28     0%   4-66
+src/zeroth_law/analyzer/python/complexity.py             45     45     0%   7-157
+src/zeroth_law/analyzer/python/docstrings.py             60     60     0%   4-125
+src/zeroth_law/analyzer/python/line_counts.py            69     69     0%   4-151
+src/zeroth_law/analyzer/python/parameters.py             28     28     0%   4-73
+src/zeroth_law/analyzer/python/statements.py             57     57     0%   4-168
+src/zeroth_law/cli.py                                   311    311     0%   4-629
+src/zeroth_law/config_defaults.py                         2      2     0%   8-11
+src/zeroth_law/config_loader.py                         143    143     0%   11-301
+src/zeroth_law/config_validation.py                      46     46     0%   7-124
+src/zeroth_law/file_finder.py                            26     26     0%   9-109
+src/zeroth_law/git_utils.py                              77     77     0%   4-309
+src/zeroth_law/path_utils.py                             15     15     0%   4-32
+-----------------------------------------------------------------------------------
+TOTAL                                                  1252   1252     0%
+
+2 files skipped due to complete coverage.

@@ -2,12 +2,50 @@
   "command_sequence": [
     "bandit-config-generator"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "Bandit Config Generator - This tool is used to generate an optional profile. The profile may be used to include or skip tests and override values for plugins.",
+  "usage": "bandit-config-generator [-h] [--show-defaults] [-o OUTPUT_FILE] [-t TESTS] [-s SKIPS]",
+  "options": {
+    "-h": {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit",
+      "takes_value": false
+    },
+    "--show-defaults": {
+      "short": null,
+      "long": "--show-defaults",
+      "description": "show the default settings values for each plugin but do not output a profile",
+      "takes_value": false
+    },
+    "-o": {
+      "short": "-o",
+      "long": "--out",
+      "description": "output file to save profile",
+      "takes_value": true,
+      "value_name": "OUTPUT_FILE"
+    },
+    "-t": {
+      "short": "-t",
+      "long": "--tests",
+      "description": "list of test names to run",
+      "takes_value": true,
+      "value_name": "TESTS"
+    },
+    "-s": {
+      "short": "-s",
+      "long": "--skip",
+      "description": "list of test names to skip",
+      "takes_value": true,
+      "value_name": "SKIPS"
+    }
+  },
+  "arguments": {},
+  "notes": [
+    "When used to store an output profile, this tool will output a template that includes all plugins and their default settings.",
+    "Any settings which aren't being overridden can be safely removed from the profile and default values will be used.",
+    "Bandit will prefer settings from the profile over the built in values."
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "ground_truth_crc": "0x9EAE605C"
   }
 }

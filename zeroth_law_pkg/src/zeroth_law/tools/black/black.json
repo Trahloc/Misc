@@ -2,12 +2,185 @@
   "command_sequence": [
     "black"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
-  "arguments": [],
-  "subcommands": [],
+  "description": "The uncompromising code formatter.",
+  "usage": "black [OPTIONS] SRC ...",
+  "options": {
+    "-c": {
+      "short": "-c",
+      "long": "--code",
+      "description": "Format the code passed in as a string.",
+      "takes_value": true,
+      "value_name": "TEXT"
+    },
+    "-l": {
+      "short": "-l",
+      "long": "--line-length",
+      "description": "How many characters per line to allow. [default: 88]",
+      "takes_value": true,
+      "value_name": "INTEGER"
+    },
+    "-t": {
+      "short": "-t",
+      "long": "--target-version",
+      "description": "Python versions that should be supported by Black's output...",
+      "takes_value": true,
+      "value_name": "[py33|...|py313]"
+    },
+    "--pyi": {
+      "short": null,
+      "long": "--pyi",
+      "description": "Format all input files like typing stubs regardless of file extension.",
+      "takes_value": false
+    },
+    "--ipynb": {
+      "short": null,
+      "long": "--ipynb",
+      "description": "Format all input files like Jupyter Notebooks regardless of file extension.",
+      "takes_value": false
+    },
+    "-x": {
+      "short": "-x",
+      "long": "--skip-source-first-line",
+      "description": "Skip the first line of the source code.",
+      "takes_value": false
+    },
+    "-S": {
+      "short": "-S",
+      "long": "--skip-string-normalization",
+      "description": "Don't normalize string quotes or prefixes.",
+      "takes_value": false
+    },
+    "-C": {
+      "short": "-C",
+      "long": "--skip-magic-trailing-comma",
+      "description": "Don't use trailing commas as a reason to split lines.",
+      "takes_value": false
+    },
+    "--preview": {
+      "short": null,
+      "long": "--preview",
+      "description": "Enable potentially disruptive style changes...",
+      "takes_value": false
+    },
+    "--unstable": {
+      "short": null,
+      "long": "--unstable",
+      "description": "Enable potentially disruptive style changes that have known bugs... Implies --preview.",
+      "takes_value": false
+    },
+    "--check": {
+      "short": null,
+      "long": "--check",
+      "description": "Don't write the files back, just return the status...",
+      "takes_value": false
+    },
+    "--diff": {
+      "short": null,
+      "long": "--diff",
+      "description": "Don't write the files back, just output a diff...",
+      "takes_value": false
+    },
+    "--color": {
+      "short": null,
+      "long": "--color",
+      "description": "Show colored diff. Only applies when --diff is given.",
+      "takes_value": false
+    },
+    "--no-color": {
+      "short": null,
+      "long": "--no-color",
+      "description": "Do not show colored diff. Only applies when --diff is given.",
+      "takes_value": false
+    },
+    "--fast": {
+      "short": null,
+      "long": "--fast",
+      "description": "Turns off AST safety check after formatting.",
+      "takes_value": false
+    },
+    "--safe": {
+      "short": null,
+      "long": "--safe",
+      "description": "Explicitly enables AST safety check. [default: --safe]",
+      "takes_value": false
+    },
+    "--exclude": {
+      "short": null,
+      "long": "--exclude",
+      "description": "A regular expression that matches files and directories that should be excluded... [default: /.../].",
+      "takes_value": true,
+      "value_name": "TEXT"
+    },
+    "--extend-exclude": {
+      "short": null,
+      "long": "--extend-exclude",
+      "description": "Like --exclude, but adds additional files and directories on top of the default values...",
+      "takes_value": true,
+      "value_name": "TEXT"
+    },
+    "--force-exclude": {
+      "short": null,
+      "long": "--force-exclude",
+      "description": "Like --exclude, but files matching this regex will be excluded even when passed explicitly...",
+      "takes_value": true,
+      "value_name": "TEXT"
+    },
+    "--include": {
+      "short": null,
+      "long": "--include",
+      "description": "A regular expression that matches files and directories that should be included... [default: (.pyi?|.ipynb)$]",
+      "takes_value": true,
+      "value_name": "TEXT"
+    },
+    "-W": {
+      "short": "-W",
+      "long": "--workers",
+      "description": "Controls the number of parallel workers... Defaults to the number of CPUs.",
+      "takes_value": true,
+      "value_name": "INTEGER RANGE [x>=1]"
+    },
+    "-q": {
+      "short": "-q",
+      "long": "--quiet",
+      "description": "Stop emitting all non-critical output.",
+      "takes_value": false
+    },
+    "-v": {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "Emit messages about files that were not changed or were ignored...",
+      "takes_value": false
+    },
+    "--version": {
+      "short": null,
+      "long": "--version",
+      "description": "Show the version and exit.",
+      "takes_value": false
+    },
+    "--config": {
+      "short": null,
+      "long": "--config",
+      "description": "Read configuration options from a configuration file.",
+      "takes_value": true,
+      "value_name": "FILE"
+    },
+    "-h": {
+      "short": "-h",
+      "long": "--help",
+      "description": "Show this message and exit.",
+      "takes_value": false
+    }
+  },
+  "arguments": {
+    "SRC": {
+      "name": "SRC",
+      "description": "Source code file(s) or directory(s) to format.",
+      "is_required": true,
+      "is_variadic": true
+    }
+  },
+  "subcommands": {},
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "ground_truth_crc": "0xF83E45B7"
   }
 }

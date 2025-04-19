@@ -1,13 +1,150 @@
 {
-  "command_sequence": [
+  "tool_id": "poetry",
+  "command": [
     "poetry"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
+  "description": "Poetry helps you declare, manage and install dependencies of Python projects, ensuring you have the right stack everywhere.",
+  "usage": [
+    {
+      "format": "poetry [options] <command> [<args>]..."
+    }
+  ],
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Display help for the given command. When no command is given display help for the list command."
+    },
+    {
+      "short": "-q",
+      "long": "--quiet",
+      "description": "Do not output any message."
+    },
+    {
+      "short": "-V",
+      "long": "--version",
+      "description": "Display this application version."
+    },
+    {
+      "long": "--ansi",
+      "description": "Force ANSI output."
+    },
+    {
+      "long": "--no-ansi",
+      "description": "Disable ANSI output."
+    },
+    {
+      "short": "-n",
+      "long": "--no-interaction",
+      "description": "Do not ask any interactive question."
+    },
+    {
+      "long": "--no-plugins",
+      "description": "Disables plugins."
+    },
+    {
+      "long": "--no-cache",
+      "description": "Disables Poetry source caches."
+    },
+    {
+      "short": "-P",
+      "long": "--project",
+      "metavar": "PROJECT",
+      "description": "Specify another path as the project root."
+    },
+    {
+      "short": "-C",
+      "long": "--directory",
+      "metavar": "DIRECTORY",
+      "description": "The working directory for the Poetry command."
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug."
+    }
+  ],
   "arguments": [],
-  "subcommands": [],
+  "subcommands": [
+    {
+      "name": "about",
+      "description": "Shows information about Poetry."
+    },
+    {
+      "name": "add",
+      "description": "Adds dependency to pyproject.toml and installs it."
+    },
+    {
+      "name": "build",
+      "description": "Builds a package, as a wheel and a source distribution."
+    },
+    {
+      "name": "check",
+      "description": "Checks the validity of the pyproject.toml file."
+    },
+    {
+      "name": "config",
+      "description": "Manages configuration settings."
+    },
+    {
+      "name": "export",
+      "description": "Exports the lock file to alternative formats."
+    },
+    {
+      "name": "init",
+      "description": "Creates a basic pyproject.toml file in current directory."
+    },
+    {
+      "name": "install",
+      "description": "Installs the project dependencies."
+    },
+    {
+      "name": "list",
+      "description": "Lists commands."
+    },
+    {
+      "name": "lock",
+      "description": "Locks the project dependencies."
+    },
+    {
+      "name": "new",
+      "description": "Creates a new Python project at <path>."
+    },
+    {
+      "name": "publish",
+      "description": "Publishes a package to a remote repository."
+    },
+    {
+      "name": "remove",
+      "description": "Removes a package from the project dependencies."
+    },
+    {
+      "name": "run",
+      "description": "Runs a command in the project's virtual environment."
+    },
+    {
+      "name": "search",
+      "description": "Searches for packages on remote repositories."
+    },
+    {
+      "name": "shell",
+      "description": "Spawns a shell within the project's virtual environment."
+    },
+    {
+      "name": "show",
+      "description": "Shows information about packages."
+    },
+    {
+      "name": "update",
+      "description": "Updates the project dependencies to the latest versions."
+    },
+    {
+      "name": "version",
+      "description": "Shows the version of the project or bumps it when a valid bump rule is provided."
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0xB37A33E2"
   }
 }

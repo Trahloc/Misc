@@ -1,13 +1,171 @@
 {
-  "command_sequence": [
+  "tool_id": "uv",
+  "command": [
     "uv"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
+  "description": "An extremely fast Python package manager.",
+  "usage": [
+    {
+      "format": "uv [OPTIONS] <COMMAND>"
+    }
+  ],
+  "options": [
+    {
+      "short": "-n",
+      "long": "--no-cache",
+      "description": "Avoid reading from or writing to the cache."
+    },
+    {
+      "long": "--cache-dir",
+      "metavar": "CACHE_DIR",
+      "description": "Path to the cache directory."
+    },
+    {
+      "long": "--managed-python",
+      "description": "Require use of uv-managed Python versions."
+    },
+    {
+      "long": "--no-managed-python",
+      "description": "Disable use of uv-managed Python versions."
+    },
+    {
+      "long": "--no-python-downloads",
+      "description": "Disable automatic downloads of Python."
+    },
+    {
+      "short": "-q",
+      "long": "--quiet",
+      "description": "Use quiet output."
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "description": "Use verbose output."
+    },
+    {
+      "long": "--color",
+      "metavar": "COLOR_CHOICE",
+      "description": "Control the use of color in output [auto, always, never]."
+    },
+    {
+      "long": "--native-tls",
+      "description": "Load TLS certificates from the platform's native certificate store."
+    },
+    {
+      "long": "--offline",
+      "description": "Disable network access."
+    },
+    {
+      "long": "--no-progress",
+      "description": "Hide all progress outputs."
+    },
+    {
+      "long": "--directory",
+      "metavar": "DIRECTORY",
+      "description": "Change to the given directory prior to running the command."
+    },
+    {
+      "long": "--project",
+      "metavar": "PROJECT",
+      "description": "Run the command within the given project directory."
+    },
+    {
+      "long": "--config-file",
+      "metavar": "CONFIG_FILE",
+      "description": "The path to a uv.toml file to use for configuration."
+    },
+    {
+      "long": "--no-config",
+      "description": "Avoid discovering configuration files (pyproject.toml, uv.toml)."
+    },
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Display the concise help for this command."
+    },
+    {
+      "short": "-V",
+      "long": "--version",
+      "description": "Display the uv version."
+    }
+  ],
   "arguments": [],
-  "subcommands": [],
+  "subcommands": [
+    {
+      "name": "run",
+      "description": "Run a command or script"
+    },
+    {
+      "name": "init",
+      "description": "Create a new project"
+    },
+    {
+      "name": "add",
+      "description": "Add dependencies to the project"
+    },
+    {
+      "name": "remove",
+      "description": "Remove dependencies from the project"
+    },
+    {
+      "name": "sync",
+      "description": "Update the project's environment"
+    },
+    {
+      "name": "lock",
+      "description": "Update the project's lockfile"
+    },
+    {
+      "name": "export",
+      "description": "Export the project's lockfile to an alternate format"
+    },
+    {
+      "name": "tree",
+      "description": "Display the project's dependency tree"
+    },
+    {
+      "name": "tool",
+      "description": "Run and install commands provided by Python packages"
+    },
+    {
+      "name": "python",
+      "description": "Manage Python versions and installations"
+    },
+    {
+      "name": "pip",
+      "description": "Manage Python packages with a pip-compatible interface"
+    },
+    {
+      "name": "venv",
+      "description": "Create a virtual environment"
+    },
+    {
+      "name": "build",
+      "description": "Build Python packages into source distributions and wheels"
+    },
+    {
+      "name": "publish",
+      "description": "Upload distributions to an index"
+    },
+    {
+      "name": "cache",
+      "description": "Manage uv's cache"
+    },
+    {
+      "name": "self",
+      "description": "Manage the uv executable"
+    },
+    {
+      "name": "version",
+      "description": "Display uv's version"
+    },
+    {
+      "name": "help",
+      "description": "Display documentation for a command"
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0xEBC10CFA"
   }
 }

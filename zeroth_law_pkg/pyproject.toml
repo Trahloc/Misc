@@ -121,7 +121,7 @@ show-fixes = true
 # extend-fixable = ["B", "RUF100"]
 
 # Same as Black.
-line-length = 9999 # set to 140 when moved to main branch
+line-length = 120 # set to 140 when moved to main branch
 
 # Assume Python 3.13
 target-version = "py313"
@@ -223,6 +223,7 @@ ignore = [
     "F821", # ignored during dev
     "F401", # ignored during dev
     "E402", # ignored during dev
+    "F541", # ignored during dev
 ]
 
 # Ignore specific rules per file/directory
@@ -291,17 +292,21 @@ MD007 = { ul-indent = 4 } # Set unordered list indentation to 4 spaces
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+# Restore original addopts
 addopts = "-ra -q --cov=src/zeroth_law --cov-report=term-missing"
+# Add pythonpath so pytest finds the src directory
+pythonpath = ["src"]
 testpaths = ["tests"]
 cache_dir = "/run/user/1000/python/pytest"
-
-[tool.coverage.run]
-parallel = true
-branch = false
-source = ["src/zeroth_law"]
-omit = [
-    "src/zeroth_law/__main__.py", # If a CLI entry point is added
+markers = [
+    "coverage_check: mark test as a coverage check meta-test, run separately",
 ]
+
+# --- Coverage Configuration (Optional: Fine-tuning) ---
+[tool.coverage.run]
+# branch = true # Temporarily commented out again
+# parallel = true # Temporarily commented out again
+source = ["src"] # Specify source directory for coverage
 
 [tool.coverage.report]
 #fail_under = 90 # Uncomment and adjust threshold later

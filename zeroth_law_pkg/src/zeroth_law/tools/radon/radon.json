@@ -1,13 +1,47 @@
 {
-  "command_sequence": [
+  "tool_id": "radon",
+  "command": [
     "radon"
   ],
-  "description": "",
-  "usage": "",
-  "options": [],
+  "description": "Radon is a Python tool that computes various code metrics from source code.",
+  "usage": [
+    {
+      "format": "radon [-h] [-v] {cc,raw,mi,hal} ..."
+    }
+  ],
+  "options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "show this help message and exit"
+    },
+    {
+      "short": "-v",
+      "long": "--version",
+      "description": "show program's version number and exit"
+    }
+  ],
   "arguments": [],
-  "subcommands": [],
+  "subcommands": [
+    {
+      "name": "cc",
+      "description": "Analyze the given Python modules and compute Cyclomatic Complexity (CC)."
+    },
+    {
+      "name": "raw",
+      "description": "Analyze the given Python modules and compute raw metrics."
+    },
+    {
+      "name": "mi",
+      "description": "Analyze the given Python modules and compute the Maintainability Index."
+    },
+    {
+      "name": "hal",
+      "description": "Analyze the given Python modules and compute their Halstead metrics."
+    }
+  ],
   "metadata": {
-    "ground_truth_crc": "0x00000000"
+    "file_status": "populated",
+    "ground_truth_crc": "0x825609B9"
   }
 }
