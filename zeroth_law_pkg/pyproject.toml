@@ -18,62 +18,81 @@ classifiers = [ # Optional: Add classifiers for PyPI
 
 # Runtime Dependencies
 dependencies = [
-    "structlog",
-    "pydantic",
-    "xdg",       # For XDG Base Directory Specification adherence
-    "click",
+    "autopep8",
+    "bandit",
     "black",
+    "click",
+    "coverage",
+    "deptry",
+    "flake8",
+    "isort",
+    "jsonschema",
+    "mutmut",
+    "mypy",
+    "pipdeptree",
+    "poetry",
+    "pre-commit",
+    "py-spy",
+    "pydantic",
+    "pyflakes",
+    "pylint",
+    "pytest",
+    "toml",
     "pyyaml",
+    "radon",
+    "ruff",       # Base command only
+    "safety",
+    "scalene",
+    "structlog",
+    "vulture",
+    "xdg",        # For XDG Base Directory Specification adherence
+    "zeroth-law",
 ]
 
 # Optional Dependencies (for development, testing, etc.)
 [project.optional-dependencies]
 dev = [
-    # Testing
+    "pytest>=8.0",        # Testing framework
+    "pytest-cov",         # Coverage reporting for pytest
+    "pytest-mock",        # Mocking utilities for pytest
+    "pytest-xdist",       # Parallel test execution
+    "pytest-randomly",    # Randomize test order
+    "black>=24.0",        # Code formatter
+    "flake8>=7.0",        # Linter (style guide enforcement)
+    "mypy>=1.8",          # Static type checker
+    "ruff>=0.4.0",        # Fast linter and formatter
+    "pre-commit>=3.6",    # Framework for managing pre-commit hooks
+    "pydocstyle>=6.0",    # Docstring style checker (added)
+    "yamllint>=1.26",     # YAML linter (added)
+    "types-setuptools",   # Type hints for setuptools
+    "types-requests",     # Type hints for requests
+    "build",              # Build package
+    "twine",              # Upload package to PyPI
+    "tox>=4.0",           # Test automation tool
+    "coverage>=7.0",      # Code coverage measurement
+    "jsonschema>=4.0",    # JSON schema validation
+    "pyyaml",             # YAML parser
+    "requests",           # HTTP library (for potential integrations)
+    "uv>=0.2.0",          # Extremely fast Python package installer and resolver
+]
+
+test = [
     "pytest",
-    "pytest-mock",
     "pytest-cov",
-    "ruff",
-    "coverage",
-    "mypy",
-    "types-pyyaml",
-    "toml",
-
-    # Duplication Check (Targeted Use)
-    "pylint", # Ensure version supports Python 3.13 robustly
-
-    # Git Hooks Manager
-    "pre-commit",
-
-    # Optional Tools
-    "autoinit", # If used for __init__.py management
-
-    # Types (Ensure these match versions used)
-    "types-setuptools", # Align with installed version
-
-    # --- Other necessary dev tools (Uncommented) --- #
-    "autopep8",
-    "pyflakes",
-    "hypothesis",
-    "bandit",
-    "radon",
-    "mutmut",
-    "vulture",
-    "py-spy",
-    "scalene",
-    "build",      # Needed for pyproject-build script
-    "pipdeptree",
-    "deptry",
-    "safety",
-    "flake8",     # Although ruff covers much, might be needed for specific checks/tests
-    "poetry",     # Added to ensure it's available if tests check for it
+    "pytest-mock",
+    "pytest-xdist",      # For parallel testing
+    # "pytest-randomly",   # Randomize test order
+    "pytest-dependency", # Manage test dependencies
 ]
 
 # Scripts / Entry Points
 [project.scripts]
 zeroth-law = "zeroth_law.cli:cli_group"
 zlt = "zeroth_law.cli:cli_group"                                           # Add zlt alias
-generate-baselines = "zeroth_law.dev_scripts.generate_baseline_files:main"
+generate-baselines = "zeroth_law.dev_scripts.generate_baseline_cli:main"  # Corrected script name
+sync-dev = "zeroth_law.dev_scripts.sync_dev:main"                          # New script for sync + editable install
+fix-json-whitespace = "zeroth_law.dev_scripts.fix_json_whitespace:main"      # Script to fix JSON trailing whitespace
+fix-json-schema = "zeroth_law.dev_scripts.fix_json_schema:main"          # Script to fix JSON schema structure
 
 # --- Build System (Required by PEP 517) ---
 [build-system]
@@ -81,6 +100,13 @@ requires = [
     "setuptools>=61.0",
 ] # Or another build backend like hatchling, flit_core
 build-backend = "setuptools.build_meta"
+
+# --- UV Configuration --- NOTE: Prettier (Node.js) Requirement ---
+# This project uses Prettier (via npm/npx) for JSON formatting.
+# Ensure Node.js (LTS) is installed: https://nodejs.org/
+# Run `npm install` in the project root to install Prettier locally (uses package.json).
+# -------------------------------------------------------------
+# Removed [tool.uv.dev-dependencies] section
 
 # --- Existing Tool Configurations (Keep As Is) --- #
 
@@ -108,7 +134,113 @@ max_statements = 50
 # Project root path also implicitly defines the project directory name for validation.
 project_root = "../zeroth_law_pkg/"
 git_root = ".."
+
+# --- ZLT Tool Whitelist/Blacklist ---
+[tool.zeroth-law.tools]
+# Commands explicitly managed by Zeroth Law Tool (baselines generated)
+whitelist = [
+    "bandit",
+    "black",
+    "coverage",
+    "deptry",
+    "flake8",
+    "isort",
+    "mypy",
+    "pipdeptree",
+    "pre-commit",
+    "py-spy",
+    "pydocstyle",
+    "pyflakes",
+    "pylint",
+    "pytest",
+    "radon",
+    "ruff",
+    "safety",
+    "scalene",
+    "vulture",
+    "yamllint",
+    "zeroth-law", # The tool itself
+]
+
+# Commands found in the environment but intentionally ignored by ZLT
+blacklist = [
+    # Common system/env tools
+    "python",
+    "python3",
+    "python3.13",
+    "pip",
+    "pip3",
+    "activate", # Virtualenv activate script
+    "activate.csh", # Virtualenv activate script (csh)
+    "activate.fish", # Virtualenv activate script (fish)
+    "Activate.ps1", # Virtualenv activate script (powershell)
+    "f2py", # numpy Fortran wrapper
+    "wheel", # Build tool often present
+
+    # Dev script helpers (not primary tools)
+    "fix-json-schema",
+    "fix-json-whitespace",
+    "generate-baselines",
+    "regenerate-index",
+    "sync-dev",
+    "update-json-crc", # Assuming update_json_crc_tool.py is the actual script
+
+    # Linters/Formatters often used via pre-commit
+    "autopep8", # Often run via pre-commit or other means
+    "autoinit", # Optional __init__.py generator
+
+    # Build/Distribution related
+    "build",
+    "pyproject-build", # PEP 517 build frontend
+
+    # Test helpers
+    "pytest-bisect-tests",
+
+    # Poetry specific (if installed globally or managed separately)
+    "poetry",
+
+    # Recently added via dependencies (to unblock tests)
+    "chardetect",
+    "docutils",
+    "rst2html",
+    "rst2html4",
+    "rst2html5",
+    "rst2latex",
+    "rst2man",
+    "rst2odt",
+    "rst2pseudoxml",
+    "rst2s5",
+    "rst2xetex",
+    "rst2xml",
+    "tox",
+    "twine",
+    "uvx",
+    "safety_check", # Add deprecated command
+]
+
 # ----------------------------------------- #
+
+# Add pytest configuration section
+[tool.pytest.ini_options]
+addopts = [
+    "--color=yes",
+    "--log-format='%(levelname)s:%(name)s:%(message)s'", # Use single quotes inside double for TOML
+    "--log-level=WARNING",
+    #    "--cov=src/zeroth_law",
+    #    "--cov-report=term-missing",
+    #    "-n", "auto",
+]
+testpaths = ["tests"]
+# Add the markers list INSIDE this section
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "needs_network: marks tests that require network access",
+    "skip_in_ci: marks tests to be skipped in CI environments",
+    "wip: marks tests as work-in-progress",
+    "coverage_check: marks tests related to coverage checks"
+]
+# python_files = "tests.py test_*.py *_test.py" # Example if needed
 
 [tool.ruff]
 # Allow fixing errors automatically.
@@ -224,6 +356,7 @@ ignore = [
     "F401", # ignored during dev
     "E402", # ignored during dev
     "F541", # ignored during dev
+    "F811", # ignored during dev
 ]
 
 # Ignore specific rules per file/directory
@@ -290,18 +423,6 @@ jobs = 0                                                           # Use all ava
 [tool.markdownlint]
 MD007 = { ul-indent = 4 } # Set unordered list indentation to 4 spaces
 
-[tool.pytest.ini_options]
-minversion = "6.0"
-# Restore original addopts
-addopts = "-ra -q --cov=src/zeroth_law --cov-report=term-missing"
-# Add pythonpath so pytest finds the src directory
-pythonpath = ["src"]
-testpaths = ["tests"]
-cache_dir = "/run/user/1000/python/pytest"
-markers = [
-    "coverage_check: mark test as a coverage check meta-test, run separately",
-]
-
 # --- Coverage Configuration (Optional: Fine-tuning) ---
 [tool.coverage.run]
 # branch = true # Temporarily commented out again
@@ -309,6 +430,13 @@ markers = [
 source = ["src"] # Specify source directory for coverage
 
 [tool.coverage.report]
+# Whitelist: Explicit list of command sequences managed by ZLT
+# Whitelist: Explicit list of command sequences managed by ZLT
+# Whitelist: Explicit list of command sequences managed by ZLT
 #fail_under = 90 # Uncomment and adjust threshold later
 show_missing = true
 skip_covered = true
+
+[tool.zeroth-law.actions.format.zlt_options.check]
+type = "flag"
+description = "Run in check mode (don't modify files)."
