@@ -1,0 +1,9 @@
+{
+    "name": "zeroth-law-pkg-dev-tools",
+    "version": "1.0.0",
+    "description": "Node.js dev tools for the zeroth-law Python project",
+    "private": true,
+    "devDependencies": {
+        "prettier": "^3.3.2"
+    }
+}
