@@ -1,0 +1,186 @@
+{
+  "command": "radon",
+  "subcommand": "cc",
+  "description": "Analyze cyclomatic complexity.",
+  "usage": "radon cc [-h] [-n <str>] [-x <str>] [-s] [-a] [-e <str>] [-i <str>] [-o <str>] [-j] [--no-assert] [--show-closures] [--total-average] [--xml] [--md] [--codeclimate] [-O <str>] [--include-ipynb] [--ipynb-cells] paths [paths ...]",
+  "arguments": [
+    {
+      "name": "paths",
+      "description": "The paths where to find modules or packages to analyze. More than one path is allowed.",
+      "required": true,
+      "nargs": "+"
+    }
+  ],
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--min",
+      "aliases": [
+        "-n"
+      ],
+      "description": "The minimum complexity to display (default to A).",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--max",
+      "aliases": [
+        "-x"
+      ],
+      "description": "The maximum complexity to display (default to F).",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--show-complexity",
+      "aliases": [
+        "-s"
+      ],
+      "description": "Whether or not to show the actual complexity score together with the A-F rank. Default to False.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--average",
+      "aliases": [
+        "-a"
+      ],
+      "description": "If True, at the end of the analysis display the average complexity. Default to False.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--exclude",
+      "aliases": [
+        "-e"
+      ],
+      "description": "Exclude files only when their path matches one of these glob patterns. Usually needs quoting at the command line.",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore",
+      "aliases": [
+        "-i"
+      ],
+      "description": "Ignore directories when their name matches one of these glob patterns: radon won't even descend into them. By default, hidden directories (starting with '.') are ignored.",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--order",
+      "aliases": [
+        "-o"
+      ],
+      "description": "The ordering function. Can be SCORE, LINES or ALPHA.",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--json",
+      "aliases": [
+        "-j"
+      ],
+      "description": "Format results in JSON.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--no-assert",
+      "aliases": [],
+      "description": "Do not count `assert` statements when computing complexity.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--show-closures",
+      "aliases": [],
+      "description": "Add closures/inner classes to the output.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--total-average",
+      "aliases": [],
+      "description": "Like `-a, --average`, but it is not influenced by `min` and `max`. Every analyzed block is counted, no matter whether it is displayed or not.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--xml",
+      "aliases": [],
+      "description": "Format results in XML (compatible with CCM).",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--md",
+      "aliases": [],
+      "description": "Format results in Markdown.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--codeclimate",
+      "aliases": [],
+      "description": "Format results for Code Climate.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--output-file",
+      "aliases": [
+        "-O"
+      ],
+      "description": "The output file (default to stdout).",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--include-ipynb",
+      "aliases": [],
+      "description": "Include IPython Notebook files",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ipynb-cells",
+      "aliases": [],
+      "description": "Include reports for individual IPYNB cells",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    }
+  ],
+  "subcommands_detail": {},
+  "metadata": {
+    "ground_truth_crc": "0x8DD6EDCD",
+    "tool_name": "radon",
+    "command_name": "cc"
+  }
+}

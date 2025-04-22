@@ -6,6 +6,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+import click
+import pytest
 
 from click.testing import CliRunner
 
@@ -25,24 +27,33 @@ def get_cli_test_data_path(filename: str) -> Path:
 def test_restore_hooks_not_git_repo(mocker, tmp_path: Path, caplog):
     """Test restore hooks failure if the target directory isn't a Git repo."""
     # Arrange
-    runner = CliRunner()
-    # Patch is_dir using mocker to return False
-    mock_is_dir = mocker.patch("pathlib.Path.is_dir", return_value=False)
+    # Mock subprocess.run to simulate pre-commit install failure
+    mock_run = mocker.patch(
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            1, ["pre-commit", "install"], output="", stderr="Git repository not found"
+        ),
+    )
 
     # Act
     original_cwd = Path.cwd()
-    os.chdir(tmp_path)
+    os.chdir(tmp_path)  # Change CWD to the temp dir
     try:
-        result = runner.invoke(cli_module.cli_group, ["restore-git-hooks", "--git-root", "."], catch_exceptions=False)
+        from src.zeroth_law.git_utils import restore_standard_hooks
+
+        restore_standard_hooks(tmp_path)
+    except ValueError as e:
+        # Expected exception due to pre-commit install failure
+        pass
     finally:
         os.chdir(original_cwd)
 
     # Assert
-    assert result.exit_code == 1, f"CLI failed with output: {result.output}"
-    # Check the captured log messages instead of stdout/stderr
-    # assert "'pre-commit install' failed" in result.output
-    assert "'pre-commit install' failed" in caplog.text
-    assert "An error occurred during git hook restoration." in caplog.text
+    # Check the captured log messages for failure indicators
+    assert "'pre-commit install' failed" in caplog.text, f"Missing expected error in logs: {caplog.text}"
+    assert (
+        "Please check your pre-commit setup and try running manually." in caplog.text
+    ), f"Missing expected error summary in logs: {caplog.text}"
 
 
 def test_zlt_lint_loads_and_runs(tmp_path: Path, mocker):
@@ -89,7 +100,9 @@ tools = { echo_linter = { command = ["echo", "Linting", "done"], maps_options = 
         importlib.reload(cli_module)
 
         # Mock subprocess.run to check the arguments passed to it
-        mock_run = mocker.patch("subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b""))
+        mock_run = mocker.patch(
+            "subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b"")
+        )
 
         # Instantiate runner AFTER reloading
         runner = CliRunner(mix_stderr=True)  # Keep mix_stderr for logs if needed

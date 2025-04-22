@@ -1,292 +1,326 @@
 {
-  "command_sequence": [
-    "flake8"
-  ],
+  "command": "flake8",
+  "subcommand": null,
   "description": "Flake8 is a python tool that glues together pycodestyle, pyflakes, mccabe, and third-party plugins to check the style and quality of some python code.",
   "usage": "flake8 [options] file file ...",
-  "options": {
-    "-h": {
-      "short": "-h",
-      "long": "--help",
-      "description": "show this help message and exit",
-      "takes_value": false
-    },
-    "-v": {
-      "short": "-v",
-      "long": "--verbose",
-      "description": "Print more information... This option is repeatable...",
-      "takes_value": false
-    },
-    "--output-file": {
-      "short": null,
-      "long": "--output-file",
-      "description": "Redirect report to a file.",
-      "takes_value": true,
-      "value_name": "OUTPUT_FILE"
-    },
-    "--append-config": {
-      "short": null,
-      "long": "--append-config",
-      "description": "Provide extra config files to parse...",
-      "takes_value": true,
-      "value_name": "APPEND_CONFIG"
-    },
-    "--config": {
-      "short": null,
-      "long": "--config",
-      "description": "Path to the config file that will be the authoritative config source...",
-      "takes_value": true,
-      "value_name": "CONFIG"
-    },
-    "--isolated": {
-      "short": null,
-      "long": "--isolated",
-      "description": "Ignore all configuration files.",
-      "takes_value": false
-    },
-    "--enable-extensions": {
-      "short": null,
-      "long": "--enable-extensions",
-      "description": "Enable plugins and extensions that are otherwise disabled by default",
-      "takes_value": true,
-      "value_name": "ENABLE_EXTENSIONS"
-    },
-    "--require-plugins": {
-      "short": null,
-      "long": "--require-plugins",
-      "description": "Require specific plugins to be installed before running",
-      "takes_value": true,
-      "value_name": "REQUIRE_PLUGINS"
-    },
-    "--version": {
-      "short": null,
-      "long": "--version",
-      "description": "show program's version number and exit",
-      "takes_value": false
-    },
-    "-q": {
-      "short": "-q",
-      "long": "--quiet",
-      "description": "Report only file names, or nothing. This option is repeatable.",
-      "takes_value": false
-    },
-    "--color": {
-      "short": null,
-      "long": "--color",
-      "description": "Whether to use color in output. Defaults to `auto`.",
-      "takes_value": true,
-      "value_name": "{auto,always,never}"
-    },
-    "--count": {
-      "short": null,
-      "long": "--count",
-      "description": "Print total number of errors to standard output...",
-      "takes_value": false
-    },
-    "--exclude": {
-      "short": null,
-      "long": "--exclude",
-      "description": "Comma-separated list of files or directories to exclude. (Default: [...])",
-      "takes_value": true,
-      "value_name": "patterns"
-    },
-    "--extend-exclude": {
-      "short": null,
-      "long": "--extend-exclude",
-      "description": "Comma-separated list of files or directories to add to the list of excluded ones.",
-      "takes_value": true,
-      "value_name": "patterns"
-    },
-    "--filename": {
-      "short": null,
-      "long": "--filename",
-      "description": "Only check for filenames matching the patterns... (Default: ['*.py'])",
-      "takes_value": true,
-      "value_name": "patterns"
-    },
-    "--stdin-display-name": {
-      "short": null,
-      "long": "--stdin-display-name",
-      "description": "The name used when reporting errors from code passed via stdin... (Default: stdin)",
-      "takes_value": true,
-      "value_name": "STDIN_DISPLAY_NAME"
-    },
-    "--format": {
-      "short": null,
-      "long": "--format",
-      "description": "Format errors according to the chosen formatter... (Default: default)",
-      "takes_value": true,
-      "value_name": "format"
-    },
-    "--hang-closing": {
-      "short": null,
-      "long": "--hang-closing",
-      "description": "Hang closing bracket instead of matching indentation...",
-      "takes_value": false
-    },
-    "--ignore": {
-      "short": null,
-      "long": "--ignore",
-      "description": "Comma-separated list of error codes to ignore... (Default: E121,E123,E126,E226,E24,E704,W503,W504)",
-      "takes_value": true,
-      "value_name": "errors"
-    },
-    "--extend-ignore": {
-      "short": null,
-      "long": "--extend-ignore",
-      "description": "Comma-separated list of error codes to add to the list of ignored ones.",
-      "takes_value": true,
-      "value_name": "errors"
-    },
-    "--per-file-ignores": {
-      "short": null,
-      "long": "--per-file-ignores",
-      "description": "A pairing of filenames and violation codes...",
-      "takes_value": true,
-      "value_name": "PER_FILE_IGNORES"
-    },
-    "--max-line-length": {
-      "short": null,
-      "long": "--max-line-length",
-      "description": "Maximum allowed line length... (Default: 79)",
-      "takes_value": true,
-      "value_name": "n"
-    },
-    "--max-doc-length": {
-      "short": null,
-      "long": "--max-doc-length",
-      "description": "Maximum allowed doc line length... (Default: None)",
-      "takes_value": true,
-      "value_name": "n"
-    },
-    "--indent-size": {
-      "short": null,
-      "long": "--indent-size",
-      "description": "Number of spaces used for indentation (Default: 4)",
-      "takes_value": true,
-      "value_name": "n"
-    },
-    "--select": {
-      "short": null,
-      "long": "--select",
-      "description": "Limit the reported error codes to codes prefix-matched by this list...",
-      "takes_value": true,
-      "value_name": "errors"
-    },
-    "--extend-select": {
-      "short": null,
-      "long": "--extend-select",
-      "description": "Add additional error codes to the default `--select`...",
-      "takes_value": true,
-      "value_name": "errors"
-    },
-    "--disable-noqa": {
-      "short": null,
-      "long": "--disable-noqa",
-      "description": "Disable the effect of \"# noqa\"...",
-      "takes_value": false
-    },
-    "--show-source": {
-      "short": null,
-      "long": "--show-source",
-      "description": "Show the source generate each error or warning.",
-      "takes_value": false
-    },
-    "--no-show-source": {
-      "short": null,
-      "long": "--no-show-source",
-      "description": "Negate --show-source",
-      "takes_value": false
-    },
-    "--statistics": {
-      "short": null,
-      "long": "--statistics",
-      "description": "Count errors.",
-      "takes_value": false
-    },
-    "--exit-zero": {
-      "short": null,
-      "long": "--exit-zero",
-      "description": "Exit with status code \"0\" even if there are errors.",
-      "takes_value": false
-    },
-    "-j": {
-      "short": "-j",
-      "long": "--jobs",
-      "description": "Number of subprocesses to use... (Default: auto)",
-      "takes_value": true,
-      "value_name": "JOBS"
-    },
-    "--tee": {
-      "short": null,
-      "long": "--tee",
-      "description": "Write to stdout and output-file.",
-      "takes_value": false
-    },
-    "--benchmark": {
-      "short": null,
-      "long": "--benchmark",
-      "description": "Print benchmark information about this run of Flake8",
-      "takes_value": false
-    },
-    "--bug-report": {
-      "short": null,
-      "long": "--bug-report",
-      "description": "Print information necessary when preparing a bug report",
-      "takes_value": false
-    },
-    "--max-complexity": {
-      "short": null,
-      "long": "--max-complexity",
-      "description": "[mccabe] McCabe complexity threshold",
-      "takes_value": true,
-      "value_name": "MAX_COMPLEXITY"
-    },
-    "--builtins": {
-      "short": null,
-      "long": "--builtins",
-      "description": "[pyflakes] define more built-ins, comma separated",
-      "takes_value": true,
-      "value_name": "BUILTINS"
-    },
-    "--doctests": {
-      "short": null,
-      "long": "--doctests",
-      "description": "[pyflakes] also check syntax of the doctests",
-      "takes_value": false
-    },
-    "--radon-max-cc": {
-      "short": null,
-      "long": "--radon-max-cc",
-      "description": "[radon] Radon complexity threshold",
-      "takes_value": true,
-      "value_name": "RADON_MAX_CC"
-    },
-    "--radon-no-assert": {
-      "short": null,
-      "long": "--radon-no-assert",
-      "description": "[radon] Radon will ignore assert statements",
-      "takes_value": false
-    },
-    "--radon-show-closures": {
-      "short": null,
-      "long": "--radon-show-closures",
-      "description": "[radon] Add closures/inner classes to the output",
-      "takes_value": false
+  "arguments": [
+    {
+      "name": "file",
+      "description": "Files or directories to check.",
+      "required": false,
+      "nargs": "*"
     }
-  },
-  "arguments": {
-    "filename": {
-      "name": "filename",
-      "description": "File(s) or directory(s) to check.",
-      "is_required": true,
-      "is_variadic": true
-    }
-  },
-  "notes": [
-    "Installed plugins: mccabe: 0.7.0, pycodestyle: 2.13.0, pyflakes: 3.3.2, radon: 6.0.1"
   ],
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
+      "description": "Print more information... This option is repeatable...",
+      "argument": null,
+      "required": false,
+      "allow_multiple": true
+    },
+    {
+      "name": "--output-file",
+      "aliases": [],
+      "description": "Redirect report to a file.",
+      "argument": "OUTPUT_FILE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--append-config",
+      "aliases": [],
+      "description": "Provide extra config files to parse...",
+      "argument": "APPEND_CONFIG",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--config",
+      "aliases": [],
+      "description": "Path to the config file that will be the authoritative config source...",
+      "argument": "CONFIG",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--isolated",
+      "aliases": [],
+      "description": "Ignore all configuration files.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--enable-extensions",
+      "aliases": [],
+      "description": "Enable plugins and extensions that are otherwise disabled by default",
+      "argument": "ENABLE_EXTENSIONS",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--require-plugins",
+      "aliases": [],
+      "description": "Require specific plugins to be installed before running",
+      "argument": "REQUIRE_PLUGINS",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--version",
+      "aliases": [],
+      "description": "show program's version number and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--quiet",
+      "aliases": [
+        "-q"
+      ],
+      "description": "Report only file names, or nothing. This option is repeatable.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": true
+    },
+    {
+      "name": "--color",
+      "aliases": [],
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "argument": "{auto,always,never}",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--count",
+      "aliases": [],
+      "description": "Print total number of errors to standard output...",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--exclude",
+      "aliases": [],
+      "description": "Comma-separated list of files or directories to exclude. (Default: [...])",
+      "argument": "patterns",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--extend-exclude",
+      "aliases": [],
+      "description": "Comma-separated list of files or directories to add to the list of excluded ones.",
+      "argument": "patterns",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--filename",
+      "aliases": [],
+      "description": "Only check for filenames matching the patterns... (Default: ['*.py'])",
+      "argument": "patterns",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--stdin-display-name",
+      "aliases": [],
+      "description": "The name used when reporting errors from code passed via stdin... (Default: stdin)",
+      "argument": "STDIN_DISPLAY_NAME",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--format",
+      "aliases": [],
+      "description": "Format errors according to the chosen formatter... (Default: default)",
+      "argument": "format",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--hang-closing",
+      "aliases": [],
+      "description": "Hang closing bracket instead of matching indentation...",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore",
+      "aliases": [],
+      "description": "Comma-separated list of error codes to ignore... (Default: E121,E123,E126,E226,E24,E704,W503,W504)",
+      "argument": "errors",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--extend-ignore",
+      "aliases": [],
+      "description": "Comma-separated list of error codes to add to the list of ignored ones.",
+      "argument": "errors",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--per-file-ignores",
+      "aliases": [],
+      "description": "A pairing of filenames and violation codes...",
+      "argument": "PER_FILE_IGNORES",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--max-line-length",
+      "aliases": [],
+      "description": "Maximum allowed line length... (Default: 79)",
+      "argument": "n",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--max-doc-length",
+      "aliases": [],
+      "description": "Maximum allowed doc line length... (Default: None)",
+      "argument": "n",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--indent-size",
+      "aliases": [],
+      "description": "Number of spaces used for indentation (Default: 4)",
+      "argument": "n",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--select",
+      "aliases": [],
+      "description": "Limit the reported error codes to codes prefix-matched by this list...",
+      "argument": "errors",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--extend-select",
+      "aliases": [],
+      "description": "Add additional error codes to the default `--select`...",
+      "argument": "errors",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--disable-noqa",
+      "aliases": [],
+      "description": "Disable the effect of \"# noqa\"...",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--show-source",
+      "aliases": [],
+      "description": "Show the source generate each error or warning.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--no-show-source",
+      "aliases": [],
+      "description": "Negate --show-source",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--statistics",
+      "aliases": [],
+      "description": "Count errors.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--exit-zero",
+      "aliases": [],
+      "description": "Exit with status code \"0\" even if there are errors.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--jobs",
+      "aliases": [
+        "-j"
+      ],
+      "description": "Number of subprocesses to use... (Default: auto)",
+      "argument": "JOBS",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--tee",
+      "aliases": [],
+      "description": "Write to stdout and output-file.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--benchmark",
+      "aliases": [],
+      "description": "Print benchmark information about this run of Flake8",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--bug-report",
+      "aliases": [],
+      "description": "Print information necessary when preparing a bug report",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--max-complexity",
+      "aliases": [],
+      "description": "[mccabe] McCabe complexity threshold",
+      "argument": "MAX_COMPLEXITY",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--builtins",
+      "aliases": [],
+      "description": "[pyflakes] define more built-ins, comma separated",
+      "argument": "BUILTINS",
+      "required": false,
+      "allow_multiple": false
+    }
+  ],
+  "subcommands_detail": {},
   "metadata": {
-    "ground_truth_crc": "0x87ACFCE1"
+    "ground_truth_crc": "0x87ACFCE1",
+    "tool_name": "flake8",
+    "command_name": "flake8"
   }
 }

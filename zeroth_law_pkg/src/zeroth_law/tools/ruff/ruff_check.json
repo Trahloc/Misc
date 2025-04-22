@@ -1,0 +1,314 @@
+{
+  "arguments": [
+    {
+      "default": ".",
+      "description": "List of files or directories to check",
+      "name": "FILES",
+      "nargs": "*",
+      "required": false
+    }
+  ],
+  "command": "ruff",
+  "description": "(Placeholder description for ruff_check)",
+  "metadata": {
+    "command_name": "check",
+    "description": "Run Ruff on the given files or directories",
+    "ground_truth_crc": "0x41897CFC",
+    "schema_version": "1.0",
+    "tool_name": "Ruff"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "description": "Apply fixes to resolve lint violations. Use `--no-fix` to disable or `--unsafe-fixes` to include unsafe fixes",
+      "name": "--fix",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Include fixes that may not retain the original intent of the code. Use `--no-unsafe-fixes` to disable",
+      "name": "--unsafe-fixes",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Show an enumeration of all fixed lint violations. Use `--no-show-fixes` to disable",
+      "name": "--show-fixes",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Avoid writing any fixed files back; instead, output a diff for each changed file to stdout, and exit 0 if there are no diffs. Implies `--fix-only`",
+      "name": "--diff",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-w"
+      ],
+      "description": "Run in watch mode by re-running whenever files change",
+      "name": "--watch",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Apply fixes to resolve lint violations, but don't report on, or exit non-zero for, leftover violations. Implies `--fix`. Use `--no-fix-only` to disable or `--unsafe-fixes` to include unsafe fixes",
+      "name": "--fix-only",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Ignore any `# noqa` comments",
+      "name": "--ignore-noqa",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "OUTPUT_FORMAT",
+      "description": "Output serialization format for violations. The default serialization format is \"full\" [env: RUFF_OUTPUT_FORMAT=] [possible values: concise, full, json, json-lines, junit, grouped, github, gitlab, pylint, rdjson, azure, sarif]",
+      "name": "--output-format",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-o"
+      ],
+      "argument": "OUTPUT_FILE",
+      "description": "Specify file to write the linter output to (default: stdout) [env: RUFF_OUTPUT_FILE=]",
+      "name": "--output-file",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "TARGET_VERSION",
+      "description": "The minimum Python version that should be supported [possible values: py37, py38, py39, py310, py311, py312, py313]",
+      "name": "--target-version",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Enable preview mode; checks will include unstable rules and fixes. Use `--no-preview` to disable",
+      "name": "--preview",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "EXTENSION",
+      "description": "List of mappings from file extension to language (one of `python`, `ipynb`, `pyi`). For example, to treat `.ipy` files as IPython notebooks, use `--extension ipy:ipynb`",
+      "name": "--extension",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Show counts for every rule with at least one violation",
+      "name": "--statistics",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Enable automatic additions of `noqa` directives to failing lines",
+      "name": "--add-noqa",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "See the files Ruff will be run against with the current settings",
+      "name": "--show-files",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "See the settings Ruff will use to lint a given Python file",
+      "name": "--show-settings",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "description": "Print help",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RULE_CODE",
+      "description": "Comma-separated list of rule codes to enable (or ALL, to enable all rules)",
+      "group": "Rule selection",
+      "name": "--select",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RULE_CODE",
+      "description": "Comma-separated list of rule codes to disable",
+      "group": "Rule selection",
+      "name": "--ignore",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RULE_CODE",
+      "description": "Like --select, but adds additional rule codes on top of those already specified",
+      "group": "Rule selection",
+      "name": "--extend-select",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PER_FILE_IGNORES",
+      "description": "List of mappings from file pattern to code to exclude",
+      "group": "Rule selection",
+      "name": "--per-file-ignores",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "EXTEND_PER_FILE_IGNORES",
+      "description": "Like `--per-file-ignores`, but adds additional ignores on top of those already specified",
+      "group": "Rule selection",
+      "name": "--extend-per-file-ignores",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RULE_CODE",
+      "description": "List of rule codes to treat as eligible for fix. Only applicable when fix itself is enabled (e.g., via `--fix`)",
+      "group": "Rule selection",
+      "name": "--fixable",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RULE_CODE",
+      "description": "List of rule codes to treat as ineligible for fix. Only applicable when fix itself is enabled (e.g., via `--fix`)",
+      "group": "Rule selection",
+      "name": "--unfixable",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RULE_CODE",
+      "description": "Like --fixable, but adds additional rule codes on top of those already specified",
+      "group": "Rule selection",
+      "name": "--extend-fixable",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "FILE_PATTERN",
+      "description": "List of paths, used to omit files and/or directories from analysis",
+      "group": "File selection",
+      "name": "--exclude",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "FILE_PATTERN",
+      "description": "Like --exclude, but adds additional files and directories on top of those already excluded",
+      "group": "File selection",
+      "name": "--extend-exclude",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Respect file exclusions via `.gitignore` and other standard ignore files. Use `--no-respect-gitignore` to disable",
+      "group": "File selection",
+      "name": "--respect-gitignore",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Enforce exclusions, even for paths passed to Ruff directly on the command-line. Use `--no-force-exclude` to disable",
+      "group": "File selection",
+      "name": "--force-exclude",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-n"
+      ],
+      "description": "Disable cache reads [env: RUFF_NO_CACHE=]",
+      "group": "Miscellaneous",
+      "name": "--no-cache",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "CACHE_DIR",
+      "description": "Path to the cache directory [env: RUFF_CACHE_DIR=/run/user/1000/ruff]",
+      "group": "Miscellaneous",
+      "name": "--cache-dir",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "STDIN_FILENAME",
+      "description": "The name of the file when passing it through stdin",
+      "group": "Miscellaneous",
+      "name": "--stdin-filename",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-e"
+      ],
+      "description": "Exit with status code \"0\", even upon detecting lint violations",
+      "group": "Miscellaneous",
+      "name": "--exit-zero",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Exit with a non-zero status code if any files were modified via fix, even if no lint violations remain",
+      "group": "Miscellaneous",
+      "name": "--exit-non-zero-on-fix",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-v"
+      ],
+      "description": "Enable verbose logging",
+      "group": "Log levels",
+      "name": "--verbose",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-q"
+      ],
+      "description": "Print diagnostics, but nothing else",
+      "group": "Log levels",
+      "name": "--quiet",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-s"
+      ],
+      "description": "Disable all logging (but still exit with status code \"1\" upon detecting diagnostics)",
+      "group": "Log levels",
+      "name": "--silent",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "CONFIG_OPTION",
+      "description": "Either a path to a TOML configuration file (`pyproject.toml` or `ruff.toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might find in a `ruff.toml` configuration file) overriding a specific configuration option. Overrides of individual settings using this option always take precedence over all configuration files, including configuration files that were also specified using `--config`",
+      "group": "Global options",
+      "name": "--config",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "description": "Ignore all configuration files",
+      "group": "Global options",
+      "name": "--isolated",
+      "required": false
+    }
+  ],
+  "subcommand": "check",
+  "subcommands_detail": {},
+  "usage": "ruff check [OPTIONS] [FILES]..."
+}

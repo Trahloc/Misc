@@ -1,0 +1,91 @@
+{
+  "arguments": [
+    {
+      "description": "Optional list of modules to include in the report.",
+      "name": "modules",
+      "nargs": "*",
+      "required": false
+    }
+  ],
+  "command": "coverage",
+  "description": "Generate an LCOV report of coverage results.",
+  "metadata": {
+    "command_name": "lcov",
+    "ground_truth_crc": "0xABE46127",
+    "schema_version": "1.0",
+    "tool_name": "coverage"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "argument": "INFILE",
+      "description": "Read coverage data for report generation from this file. Defaults to '.coverage'. [env: COVERAGE_FILE]",
+      "name": "--data-file",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "MIN",
+      "description": "Exit with a status of 2 if the total coverage is less than MIN.",
+      "name": "--fail-under",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-i"
+      ],
+      "argument": null,
+      "description": "Ignore errors while reading source files.",
+      "name": "--ignore-errors",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Include only files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--include",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Omit files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--omit",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-q"
+      ],
+      "argument": null,
+      "description": "Don't print messages about what is happening.",
+      "name": "--quiet",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "OPTS",
+      "description": "Debug options, separated by commas. [env: COVERAGE_DEBUG]",
+      "name": "--debug",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "Get help on this command.",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RCFILE",
+      "description": "Specify configuration file. By default '.coveragerc', 'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried. [env: COVERAGE_RCFILE]",
+      "name": "--rcfile",
+      "required": false
+    }
+  ],
+  "subcommand": "lcov",
+  "usage": "coverage lcov [options] [modules]"
+}

@@ -1,0 +1,166 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Zeroth Law Tool Definition",
+    "description": "Schema for validating the structure of individual tool definition JSON files.",
+    "type": "object",
+    "properties": {
+        "command": {
+            "description": "The base command name (e.g., 'ruff', 'pytest').",
+            "type": "string"
+        },
+        "subcommand": {
+            "description": "The specific subcommand, if applicable (e.g., 'check' for 'ruff'). Optional.",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "description": {
+            "description": "A brief description of the tool or subcommand's purpose.",
+            "type": "string"
+        },
+        "usage": {
+            "description": "A summary of how to use the command, typically derived from --help.",
+            "type": "string"
+        },
+        "options": {
+            "description": "An array of objects describing the command-line options.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The primary name of the option (e.g., '--verbose')."
+                    },
+                    "aliases": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Alternative names (e.g., '-v')."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description of the option's effect."
+                    },
+                    "argument": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Name/placeholder for the option's argument (e.g., 'FILE'). Null if no argument."
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "description": "Whether the option is required."
+                    },
+                    "default": {
+                        "description": "The default value if the option is not provided.",
+                        "type": [
+                            "string",
+                            "number",
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "allow_multiple": {
+                        "type": "boolean",
+                        "description": "Whether the option can be specified multiple times."
+                    }
+                },
+                "required": [
+                    "name",
+                    "description"
+                ]
+            }
+        },
+        "arguments": {
+            "description": "An array of objects describing positional arguments.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name or placeholder for the argument (e.g., 'input_files')."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description of the argument."
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "description": "Whether the argument is required."
+                    },
+                    "nargs": {
+                        "type": [
+                            "string",
+                            "integer"
+                        ],
+                        "description": "Number of arguments expected (e.g., '*', '+', '?', 1, 2)."
+                    }
+                },
+                "required": [
+                    "name",
+                    "description"
+                ]
+            }
+        },
+        "subcommands_detail": {
+            "description": "Details about subcommands if this definition represents a base command.",
+            "type": "object",
+            "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                    "type": "object",
+                    "properties": {
+                        "description": {
+                            "type": "string",
+                            "description": "Description of the subcommand."
+                        },
+                        "json_definition": {
+                            "type": "string",
+                            "description": "Relative path to the subcommand's JSON definition file."
+                        }
+                    },
+                    "required": [
+                        "description",
+                        "json_definition"
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "metadata": {
+            "description": "Metadata about the definition file itself.",
+            "type": "object",
+            "properties": {
+                "ground_truth_crc": {
+                    "description": "Hex CRC32 checksum of the corresponding TXT baseline file. Managed by tooling.",
+                    "type": "string",
+                    "pattern": "^0x[0-9a-fA-F]{8}$"
+                },
+                "updated_timestamp": {
+                    "description": "Timestamp when the JSON file was last updated (manual or script).",
+                    "type": "number"
+                },
+                "checked_timestamp": {
+                    "description": "Timestamp when the tool index last verified this file's CRC.",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "ground_truth_crc"
+            ]
+        }
+    },
+    "required": [
+        "command",
+        "description",
+        "usage",
+        "options",
+        "arguments",
+        "metadata"
+    ],
+    "additionalProperties": false
+}

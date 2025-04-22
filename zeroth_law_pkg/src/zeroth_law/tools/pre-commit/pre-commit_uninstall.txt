@@ -1,0 +1,9 @@
+usage: pre-commit uninstall [-h] [--color {auto,always,never}] [-c CONFIG]
+                            [-t {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}]
+
+options:
+  -h, --help            show this help message and exit
+  --color {auto,always,never}
+                        Whether to use color in output. Defaults to `auto`.
+  -c, --config CONFIG   Path to alternate config file
+  -t, --hook-type {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}

@@ -1,0 +1,93 @@
+{
+    "arguments": [],
+    "command": "py-spy",
+    "description": "Dumps stack traces for a target program to stdout",
+    "metadata": {
+        "command_name": "dump",
+        "ground_truth_crc": "0x4C300294",
+        "schema_version": "1.0",
+        "tool_name": "py-spy"
+    },
+    "options": [
+        {
+            "aliases": [
+                "-p"
+            ],
+            "argument": "pid",
+            "description": "PID of a running python program to spy on",
+            "name": "--pid",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-c"
+            ],
+            "argument": "core",
+            "description": "Filename of coredump to display python stack traces from",
+            "name": "--core",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "Show full Python filenames, instead of shortening to show only the package part",
+            "name": "--full-filenames",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-l"
+            ],
+            "argument": null,
+            "description": "Show local variables for each frame. Passing multiple times (-ll) increases verbosity",
+            "name": "--locals",
+            "required": false,
+            "allow_multiple": true
+        },
+        {
+            "aliases": [
+                "-j"
+            ],
+            "argument": null,
+            "description": "Format output as JSON",
+            "name": "--json",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-s"
+            ],
+            "argument": null,
+            "description": "Profile subprocesses of the original process",
+            "name": "--subprocesses",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-n"
+            ],
+            "argument": null,
+            "description": "Collect stack traces from native extensions written in Cython, C or C++",
+            "name": "--native",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "Don't pause the python process when collecting samples. Setting this option will reduce the performance impact of sampling, but may lead to inaccurate results",
+            "name": "--nonblocking",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-h"
+            ],
+            "argument": null,
+            "description": "Print help information",
+            "name": "--help",
+            "required": false
+        }
+    ],
+    "subcommand": "dump",
+    "usage": "py-spy dump [OPTIONS]"
+}

@@ -1,0 +1,22 @@
+{
+  "arguments": [],
+  "command": "mutmut",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "browse",
+    "ground_truth_crc": "0x6261AD55",
+    "schema_version": "1.0",
+    "tool_name": "mutmut"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Show this message and exit.",
+      "name": "--help",
+      "required": false
+    }
+  ],
+  "subcommand": "browse",
+  "usage": "mutmut browse [OPTIONS]"
+}

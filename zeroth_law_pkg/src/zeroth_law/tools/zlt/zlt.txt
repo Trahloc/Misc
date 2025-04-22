@@ -1,0 +1,18 @@
+Usage: zlt [OPTIONS] COMMAND [ARGS]...
+
+  Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality.
+
+Options:
+  --version             Show the version and exit.
+  -v, --verbose         Increase verbosity: -v for INFO, -vv for DEBUG.
+                        [0<=x<=2]
+  -q, --quiet           Suppress all output except errors.
+  --color / --no-color  Enable/disable colored logging output.
+  -c, --config FILE     Path to configuration file (e.g., pyproject.toml).
+                        Overrides auto-detection.
+  -h, --help            Show this message and exit.
+
+Commands:
+  format             Run the 'format' action.
+  install-git-hook   Installs the custom ZLT pre-commit hook for...
+  restore-git-hooks  Restores standard pre-commit hooks, removing the ZLT...

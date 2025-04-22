@@ -1,0 +1,49 @@
+{
+  "arguments": [],
+  "command": "safety",
+  "description": "Authenticate Safety CLI to perform scans.",
+  "metadata": {
+    "command_name": "auth",
+    "ground_truth_crc": "0xC1E1E2B5",
+    "schema_version": "1.0",
+    "tool_name": "safety"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Install completion for the current shell.",
+      "name": "--install-completion",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show completion for the current shell, to copy it or customize the installation.",
+      "name": "--show-completion",
+      "required": false
+    }
+  ],
+  "subcommand": "auth",
+  "subcommands_detail": {
+    "login": {
+      "description": "Authenticate with Safety CLI to perform scans.",
+      "json_definition": "./login.json"
+    },
+    "logout": {
+      "description": "Log out from the current Safety CLI session.",
+      "json_definition": "./logout.json"
+    },
+    "register": {
+      "description": "Create a new user account for the safetycli.com service.",
+      "json_definition": "./register.json"
+    },
+    "status": {
+      "description": "Show the current authentication status.",
+      "json_definition": "./status.json"
+    }
+  },
+  "usage": "safety [GLOBAL-OPTIONS] auth [OPTIONS] COMMAND [ARGS]..."
+}

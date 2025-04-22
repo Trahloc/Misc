@@ -1,0 +1,21 @@
+{
+  "command": "ruff",
+  "subcommand": "format",
+  "description": "Run the Ruff formatter on the given files or directories",
+  "usage": "ruff format [OPTIONS] [FILES]...",
+  "options": [],
+  "arguments": [
+    {
+      "name": "FILES",
+      "description": "List of files or directories to format [default: .]",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0x4E31BD8A",
+    "schema_version": "1.0",
+    "tool_name": "ruff",
+    "command_name": "format"
+  }
+}

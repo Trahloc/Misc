@@ -1,0 +1,71 @@
+{
+  "arguments": [],
+  "command": "pre-commit",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "autoupdate",
+    "ground_truth_crc": "0xB7345F24",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "show this help message and exit",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "argument": "CONFIG",
+      "description": "Path to alternate config file",
+      "name": "--config",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Update to the bleeding edge of `HEAD` instead of the latest tagged version (the default behavior).",
+      "name": "--bleeding-edge",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Store \"frozen\" hashes in `rev` instead of tag names",
+      "name": "--freeze",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": true,
+      "argument": "REPO",
+      "description": "Only update this repository -- may be specified multiple times.",
+      "name": "--repo",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-j"
+      ],
+      "argument": "JOBS",
+      "description": "Number of threads to use. (default 1).",
+      "name": "--jobs",
+      "required": false
+    }
+  ],
+  "subcommand": "autoupdate",
+  "usage": "pre-commit autoupdate [-h] [--color {auto,always,never}] [-c CONFIG] [--bleeding-edge] [--freeze] [--repo REPO] [-j JOBS]"
+}

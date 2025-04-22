@@ -1,134 +1,182 @@
 {
-  "command_sequence": [
-    "deptry"
-  ],
+  "command": "deptry",
+  "subcommand": null,
   "description": "Find dependency issues in your Python project.",
   "usage": "deptry [OPTIONS] ROOT...",
-  "options": {
-    "-v": {
-      "short": "-v",
-      "long": "--verbose",
-      "description": "Boolean flag for verbosity...",
-      "takes_value": false
-    },
-    "--config": {
-      "short": null,
-      "long": "--config",
-      "description": "Path to the pyproject.toml file to read configuration from.",
-      "takes_value": true,
-      "value_name": "PATH"
-    },
-    "--no-ansi": {
-      "short": null,
-      "long": "--no-ansi",
-      "description": "Disable ANSI characters in terminal output.",
-      "takes_value": false
-    },
-    "-i": {
-      "short": "-i",
-      "long": "--ignore",
-      "description": "A comma-separated list of error codes to ignore...",
-      "takes_value": true,
-      "value_name": "TUPLE"
-    },
-    "-pri": {
-      "short": "-pri",
-      "long": "--per-rule-ignores",
-      "description": "A comma-separated mapping of packages or modules to be ignored per error code...",
-      "takes_value": true,
-      "value_name": "MAPPING"
-    },
-    "-e": {
-      "short": "-e",
-      "long": "--exclude",
-      "description": "A regular expression for directories or files... [default: venv, \\.venv, \\.direnv, tests, \\.git, setup\\.py]",
-      "takes_value": true,
-      "value_name": "TEXT"
-    },
-    "-ee": {
-      "short": "-ee",
-      "long": "--extend-exclude",
-      "description": "Like --exclude, but adds additional files and directories...",
-      "takes_value": true,
-      "value_name": "TEXT"
-    },
-    "-nb": {
-      "short": "-nb",
-      "long": "--ignore-notebooks",
-      "description": "Boolean flag to specify if notebooks should be ignored while scanning for imports.",
-      "takes_value": false
-    },
-    "--version": {
-      "short": null,
-      "long": "--version",
-      "description": "Display the current version and exit.",
-      "takes_value": false
-    },
-    "-rf": {
-      "short": "-rf",
-      "long": "--requirements-files",
-      "description": ".txt files to scan for dependencies... [default: requirements.txt]",
-      "takes_value": true,
-      "value_name": "TUPLE"
-    },
-    "-rfd": {
-      "short": "-rfd",
-      "long": "--requirements-files-dev",
-      "description": ".txt files to scan for additional development dependencies... [default: dev-requirements.txt, requirements-dev.txt]",
-      "takes_value": true,
-      "value_name": "TUPLE"
-    },
-    "-kf": {
-      "short": "-kf",
-      "long": "--known-first-party",
-      "description": "Modules to consider as first party ones.",
-      "takes_value": true,
-      "value_name": "TEXT"
-    },
-    "-o": {
-      "short": "-o",
-      "long": "--json-output",
-      "description": "If specified, a summary of the dependency issues found will be written...",
-      "takes_value": true,
-      "value_name": "TEXT"
-    },
-    "-pmnm": {
-      "short": "-pmnm",
-      "long": "--package-module-name-map",
-      "description": "Manually defined module names belonging to packages...",
-      "takes_value": true,
-      "value_name": "MAPPING"
-    },
-    "-ddg": {
-      "short": "-ddg",
-      "long": "--pep621-dev-dependency-groups",
-      "description": "For projects that use PEP621... specify which groups under [project.optional-dependencies]... should be considered development dependencies.",
-      "takes_value": true,
-      "value_name": "TUPLE"
-    },
-    "--experimental-namespace-package": {
-      "short": null,
-      "long": "--experimental-namespace-package",
-      "description": "Enable experimental support for namespace package (PEP 420)...",
-      "takes_value": false
-    },
-    "--help": {
-      "short": null,
-      "long": "--help",
-      "description": "Show this message and exit.",
-      "takes_value": false
-    }
-  },
-  "arguments": {
-    "ROOT": {
+  "arguments": [
+    {
       "name": "ROOT",
       "description": "Path(s) to the root directory(s) of the project to be scanned.",
-      "is_required": true,
-      "is_variadic": true
+      "required": true,
+      "nargs": "+"
     }
-  },
-  "subcommands": {},
+  ],
+  "options": [
+    {
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
+      "description": "Boolean flag for verbosity...",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--config",
+      "aliases": [],
+      "description": "Path to the pyproject.toml file to read configuration from.",
+      "argument": "PATH",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--no-ansi",
+      "aliases": [],
+      "description": "Disable ANSI characters in terminal output.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore",
+      "aliases": [
+        "-i"
+      ],
+      "description": "A comma-separated list of error codes to ignore...",
+      "argument": "TUPLE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--per-rule-ignores",
+      "aliases": [
+        "-pri"
+      ],
+      "description": "A comma-separated mapping of packages or modules to be ignored per error code...",
+      "argument": "MAPPING",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--exclude",
+      "aliases": [
+        "-e"
+      ],
+      "description": "A regular expression for directories or files... [default: venv, .venv, .direnv, tests, .git, setup.py]",
+      "argument": "TEXT",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--extend-exclude",
+      "aliases": [
+        "-ee"
+      ],
+      "description": "Like --exclude, but adds additional files and directories...",
+      "argument": "TEXT",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore-notebooks",
+      "aliases": [
+        "-nb"
+      ],
+      "description": "Boolean flag to specify if notebooks should be ignored while scanning for imports.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--version",
+      "aliases": [],
+      "description": "Display the current version and exit.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--requirements-files",
+      "aliases": [
+        "-rf"
+      ],
+      "description": ".txt files to scan for dependencies... [default: requirements.txt]",
+      "argument": "TUPLE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--requirements-files-dev",
+      "aliases": [
+        "-rfd"
+      ],
+      "description": ".txt files to scan for additional development dependencies... [default: dev-requirements.txt, requirements-dev.txt]",
+      "argument": "TUPLE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--known-first-party",
+      "aliases": [
+        "-kf"
+      ],
+      "description": "Modules to consider as first party ones.",
+      "argument": "TEXT",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--json-output",
+      "aliases": [
+        "-o"
+      ],
+      "description": "If specified, a summary of the dependency issues found will be written...",
+      "argument": "TEXT",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--package-module-name-map",
+      "aliases": [
+        "-pmnm"
+      ],
+      "description": "Manually defined module names belonging to packages...",
+      "argument": "MAPPING",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--pep621-dev-dependency-groups",
+      "aliases": [
+        "-ddg"
+      ],
+      "description": "For projects that use PEP621... specify which groups under [project.optional-dependencies]... should be considered development dependencies.",
+      "argument": "TUPLE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--experimental-namespace-package",
+      "aliases": [],
+      "description": "Enable experimental support for namespace package (PEP 420)...",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--help",
+      "aliases": [],
+      "description": "Show this message and exit.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    }
+  ],
+  "subcommands_detail": {},
   "metadata": {
-    "ground_truth_crc": "0x7DEC14BC"
+    "ground_truth_crc": "0x7DEC14BC",
+    "tool_name": "deptry",
+    "command_name": "deptry"
   }
 }

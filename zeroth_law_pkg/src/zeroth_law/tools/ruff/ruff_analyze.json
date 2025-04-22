@@ -1,0 +1,75 @@
+{
+    "arguments": [],
+    "command": "ruff",
+    "description": "Run analysis over Python source code",
+    "metadata": {
+        "command_name": "analyze",
+        "ground_truth_crc": "0x3B6300DB",
+        "schema_version": "1.0",
+        "tool_name": "ruff"
+    },
+    "options": [
+        {
+            "aliases": [
+                "-h"
+            ],
+            "argument": null,
+            "description": "Print help",
+            "name": "--help",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-v"
+            ],
+            "argument": null,
+            "description": "Enable verbose logging",
+            "name": "--verbose",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-q"
+            ],
+            "argument": null,
+            "description": "Print diagnostics, but nothing else",
+            "name": "--quiet",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-s"
+            ],
+            "argument": null,
+            "description": "Disable all logging (but still exit with status code \"1\" upon detecting diagnostics)",
+            "name": "--silent",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "CONFIG_OPTION",
+            "description": "Either a path to a TOML configuration file (`pyproject.toml` or `ruff.toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might find in a `ruff.toml` configuration file) overriding a specific configuration option. Overrides of individual settings using this option always take precedence over all configuration files, including configuration files that were also specified using `--config`",
+            "name": "--config",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "Ignore all configuration files",
+            "name": "--isolated",
+            "required": false
+        }
+    ],
+    "subcommand": "analyze",
+    "subcommands_detail": {
+        "graph": {
+            "description": "Generate a map of Python file dependencies or dependents",
+            "json_definition": "./graph.json"
+        },
+        "help": {
+            "description": "Print this message or the help of the given subcommand(s)",
+            "json_definition": "./help.json"
+        }
+    },
+    "usage": "ruff analyze [OPTIONS] <COMMAND>"
+}

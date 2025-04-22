@@ -1,0 +1,47 @@
+{
+  "arguments": [
+    {
+      "description": "The version number or the rule to update the version.",
+      "name": "version",
+      "nargs": "?",
+      "required": false
+    }
+  ],
+  "command": "poetry",
+  "description": "Shows the version of the project or bumps it when a valid bump rule is provided.",
+  "metadata": {
+    "command_name": "version",
+    "ground_truth_crc": "0xFCAAE6CD",
+    "tool_name": "poetry"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-s"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Output the version number only",
+      "name": "--short",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Do not update pyproject.toml file",
+      "name": "--dry-run",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Increment the phase of the current version",
+      "name": "--next-phase",
+      "required": false
+    }
+  ],
+  "subcommand": "version",
+  "usage": "version [options] [--] [<version>]"
+}

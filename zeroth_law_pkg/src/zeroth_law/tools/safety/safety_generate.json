@@ -1,0 +1,40 @@
+{
+  "arguments": [
+    {
+      "description": "The name of the file type to generate. Valid values: policy_file",
+      "name": "NAME",
+      "nargs": "1",
+      "required": true
+    }
+  ],
+  "command": "safety",
+  "description": "Generate a boilerplate Safety CLI policy file for customized security policies.",
+  "metadata": {
+    "command_name": "generate",
+    "tool_name": "safety",
+    "schema_version": "1.0",
+    "ground_truth_txt": "",
+    "skeleton_json": "",
+    "ground_truth_crc": "0x527D5F16"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "PATH",
+      "description": "The path where the generated file will be saved (default: current directory).",
+      "name": "--path",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show this message and exit.",
+      "name": "--help",
+      "required": false
+    }
+  ],
+  "subcommand": "generate",
+  "usage": "safety generate [OPTIONS] NAME"
+}

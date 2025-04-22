@@ -1,0 +1,194 @@
+{
+  "arguments": [],
+  "command": "poetry",
+  "description": "Installs the project dependencies.",
+  "metadata": {
+    "command_name": "install",
+    "ground_truth_crc": "0xAC914396",
+    "schema_version": "1.0",
+    "tool_name": "poetry"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "argument": "WITHOUT",
+      "description": "The dependency groups to ignore. (multiple values allowed)",
+      "name": "--without",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "WITH",
+      "description": "The optional dependency groups to include. (multiple values allowed)",
+      "name": "--with",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "ONLY",
+      "description": "The only dependency groups to include. (multiple values allowed)",
+      "name": "--only",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Synchronize the environment with the locked packages and the specified groups. (Deprecated)",
+      "name": "--sync",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Do not install the root package (the current project).",
+      "name": "--no-root",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Do not install any directory path dependencies; useful to install dependencies without source code, e.g. for caching of Docker layers)",
+      "name": "--no-directory",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Output the operations but do not execute anything (implicitly enables --verbose).",
+      "name": "--dry-run",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-E"
+      ],
+      "argument": "EXTRAS",
+      "description": "Extra sets of dependencies to install. (multiple values allowed)",
+      "name": "--extras",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Install all extra dependencies.",
+      "name": "--all-extras",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Install dependencies from all groups.",
+      "name": "--all-groups",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Exclude all dependencies.",
+      "name": "--only-root",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Compile Python source files to bytecode.",
+      "name": "--compile",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "Display help for the given command. When no command is given display help for the list command.",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-q"
+      ],
+      "argument": null,
+      "description": "Do not output any message.",
+      "name": "--quiet",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-V"
+      ],
+      "argument": null,
+      "description": "Display this application version.",
+      "name": "--version",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Force ANSI output.",
+      "name": "--ansi",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Disable ANSI output.",
+      "name": "--no-ansi",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-n"
+      ],
+      "argument": null,
+      "description": "Do not ask any interactive question.",
+      "name": "--no-interaction",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Disables plugins.",
+      "name": "--no-plugins",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Disables Poetry source caches.",
+      "name": "--no-cache",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-P"
+      ],
+      "argument": "PROJECT",
+      "description": "Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory.",
+      "name": "--project",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-C"
+      ],
+      "argument": "DIRECTORY",
+      "description": "The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.",
+      "name": "--directory",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-v",
+        "-vv",
+        "-vvv"
+      ],
+      "argument": null,
+      "description": "Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.",
+      "name": "--verbose",
+      "required": false
+    }
+  ],
+  "subcommand": "install",
+  "usage": "install [options]"
+}

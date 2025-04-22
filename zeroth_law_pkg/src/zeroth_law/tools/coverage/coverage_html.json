@@ -1,0 +1,149 @@
+{
+  "arguments": [
+    {
+      "description": "Optional list of modules to include in the report.",
+      "name": "modules",
+      "nargs": "*",
+      "required": false
+    }
+  ],
+  "command": "coverage",
+  "description": "Create an HTML report of the coverage of the files. Each file gets its own page, with the source decorated to show executed, excluded, and missed lines.",
+  "metadata": {
+    "command_name": "html",
+    "ground_truth_crc": "0x549A9276",
+    "schema_version": "1.0",
+    "tool_name": "coverage"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "argument": "REGEX1,REGEX2,...",
+      "description": "Only display data from lines covered in the given contexts. Accepts Python regexes, which must be quoted.",
+      "name": "--contexts",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-d"
+      ],
+      "argument": "DIR",
+      "description": "Write the output files to DIR.",
+      "name": "--directory",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "INFILE",
+      "description": "Read coverage data for report generation from this file. Defaults to '.coverage'. [env: COVERAGE_FILE]",
+      "name": "--data-file",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "MIN",
+      "description": "Exit with a status of 2 if the total coverage is less than MIN.",
+      "name": "--fail-under",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-i"
+      ],
+      "argument": null,
+      "description": "Ignore errors while reading source files.",
+      "name": "--ignore-errors",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Include only files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--include",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Omit files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--omit",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "N",
+      "description": "Number of digits after the decimal point to display for reported coverage percentages.",
+      "name": "--precision",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-q"
+      ],
+      "argument": null,
+      "description": "Don't print messages about what is happening.",
+      "name": "--quiet",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Show contexts for covered lines.",
+      "name": "--show-contexts",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Skip files with 100% coverage.",
+      "name": "--skip-covered",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Disable --skip-covered.",
+      "name": "--no-skip-covered",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Skip files with no code.",
+      "name": "--skip-empty",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "TITLE",
+      "description": "A text string to use as the title on the HTML.",
+      "name": "--title",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "OPTS",
+      "description": "Debug options, separated by commas. [env: COVERAGE_DEBUG]",
+      "name": "--debug",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "Get help on this command.",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RCFILE",
+      "description": "Specify configuration file. By default '.coveragerc', 'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried. [env: COVERAGE_RCFILE]",
+      "name": "--rcfile",
+      "required": false
+    }
+  ],
+  "subcommand": "html",
+  "usage": "coverage html [options] [modules]"
+}

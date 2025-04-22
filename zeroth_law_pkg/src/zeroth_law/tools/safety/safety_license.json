@@ -1,0 +1,84 @@
+{
+  "arguments": [],
+  "command": "safety",
+  "description": "[deprecated] Find licenses at target files or environments. This command will be replaced by safety scan, and will be unsupported beyond 1 May 2024.",
+  "metadata": {
+    "command_name": "license",
+    "ground_truth_crc": "0x6596E697",
+    "schema_version": "1.0",
+    "tool_name": "safety"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Specify a proxy host for network communications.",
+      "name": "--proxy-host",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Set the proxy port (default: 80).",
+      "name": "--proxy-port",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Choose the proxy protocol (default: https).",
+      "name": "--proxy-protocol",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "The API key required for cicd stage or production stage scans.",
+      "name": "--key",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Path to a local license database. Default: empty",
+      "name": "--db",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-o"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "(No description provided in table)",
+      "name": "--output",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Whether license database file should be cached. Default: 0 seconds",
+      "name": "--cache",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-r"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Read input from one (or multiple) requirement files. Default: empty",
+      "name": "--file",
+      "required": false
+    }
+  ],
+  "subcommand": "license",
+  "subcommands_detail": {},
+  "usage": "safety license [OPTIONS]"
+}

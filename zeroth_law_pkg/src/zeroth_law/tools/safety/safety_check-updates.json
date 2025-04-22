@@ -1,0 +1,15 @@
+{
+  "description": "Check for version updates to Safety CLI. Example: safety check-updates",
+  "usage": "safety check-updates [OPTIONS]",
+  "arguments": [],
+  "options": [],
+  "metadata": {
+    "schema_version": "1.0",
+    "tool_name": "safety",
+    "command_name": "check-updates",
+    "ground_truth_crc": "0x45BE4628"
+  },
+  "command": "safety",
+  "subcommand": "check-updates",
+  "subcommands_detail": {}
+}

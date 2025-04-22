@@ -1,13 +1,13 @@
 {
-  "command_sequence": [
-    "isort_identify-imports"
-  ],
-  "description": "",
-  "usage": null,
+  "command": "isort",
+  "subcommand": "identify-imports",
+  "description": "(Placeholder description for isort_identify-imports)",
+  "usage": "isort identify-imports [OPTIONS]",
   "options": [],
   "arguments": [],
-  "subcommands": [],
   "metadata": {
-    "ground_truth_crc": ""
+    "ground_truth_crc": "0x00000000",
+    "tool_name": "isort",
+    "command_name": "identify-imports"
   }
 }

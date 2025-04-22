@@ -1,0 +1,21 @@
+{
+  "description": "Report coverage statistics on modules.",
+  "usage": "coverage report [options] [modules]",
+  "options": [],
+  "arguments": [
+    {
+      "name": "modules",
+      "description": "Modules to include in report (optional).",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0x938B6C25",
+    "schema_version": "1.0",
+    "tool_name": "coverage",
+    "command_name": "report"
+  },
+  "command": "coverage",
+  "subcommand": "report"
+}

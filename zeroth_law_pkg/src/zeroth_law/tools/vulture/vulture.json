@@ -1,72 +1,106 @@
 {
-  "tool_id": "vulture",
-  "command": [
-    "vulture"
-  ],
+  "command": "vulture",
+  "subcommand": null,
   "description": "Finds unused Python code.",
-  "usage": [
+  "usage": "vulture [options] [PATH ...]",
+  "arguments": [
     {
-      "format": "vulture [options] [PATH ...]"
+      "name": "PATH",
+      "description": "Paths may be Python files or directories. For each directory Vulture analyzes all contained *.py files.",
+      "required": false,
+      "nargs": "*"
     }
   ],
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
-      "description": "show this help message and exit"
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--exclude",
-      "metavar": "PATTERNS",
-      "description": "Comma-separated list of path patterns to ignore."
+      "name": "--exclude",
+      "aliases": [],
+      "description": "Comma-separated list of path patterns to ignore (e.g., \"*settings.py,docs,*/test_*.py,venv\"). Patterns may contain glob wildcards (*, ?, [abc], [!abc]). A PATTERN without glob wildcards is treated as *PATTERN*. Patterns are matched against absolute paths.",
+      "argument": "PATTERNS",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--ignore-decorators",
-      "metavar": "PATTERNS",
-      "description": "Comma-separated list of decorators. Functions/classes using these are ignored."
+      "name": "--ignore-decorators",
+      "aliases": [],
+      "description": "Comma-separated list of decorators. Functions and classes using these decorators are ignored (e.g., \"@app.route,@require_*\"). Patterns may contain glob wildcards (*, ?, [abc], [!abc]).",
+      "argument": "PATTERNS",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--ignore-names",
-      "metavar": "PATTERNS",
-      "description": "Comma-separated list of names to ignore."
+      "name": "--ignore-names",
+      "aliases": [],
+      "description": "Comma-separated list of names to ignore (e.g., \"visit_*,do_*\"). Patterns may contain glob wildcards (*, ?, [abc], [!abc]).",
+      "argument": "PATTERNS",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--make-whitelist",
-      "description": "Report unused code in a format that can be added to a whitelist module."
+      "name": "--make-whitelist",
+      "aliases": [],
+      "description": "Report unused code in a format that can be added to a whitelist module.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--min-confidence",
-      "metavar": "MIN_CONFIDENCE",
-      "description": "Minimum confidence (0-100) for code to be reported as unused."
+      "name": "--min-confidence",
+      "aliases": [],
+      "description": "Minimum confidence (between 0 and 100) for code to be reported as unused.",
+      "argument": "MIN_CONFIDENCE",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--sort-by-size",
-      "description": "Sort unused functions and classes by their lines of code."
+      "name": "--sort-by-size",
+      "aliases": [],
+      "description": "Sort unused functions and classes by their lines of code.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--config",
-      "metavar": "CONFIG",
-      "description": "Path to pyproject.toml config file."
+      "name": "--config",
+      "aliases": [],
+      "description": "Path to pyproject.toml config file.",
+      "argument": "CONFIG",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-v",
-      "long": "--verbose"
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
+      "description": "Enable verbose logging.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--version",
-      "description": "show program's version number and exit"
+      "name": "--version",
+      "aliases": [],
+      "description": "show program's version number and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
   ],
-  "arguments": [
-    {
-      "name": "PATH",
-      "description": "Paths may be Python files or directories.",
-      "optional": true,
-      "nargs": "*"
-    }
-  ],
+  "subcommands_detail": {},
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0xE007FA0B"
+    "ground_truth_crc": "0xE007FA0B",
+    "tool_name": "vulture",
+    "command_name": "vulture"
   }
 }

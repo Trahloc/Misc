@@ -1,121 +1,122 @@
 {
-  "metadata": {
-    "tool_name": "Ruff",
-    "description": "An extremely fast Python linter and code formatter.",
-    "version_pin": "latest",
-    "ground_truth_crc": "0xae0936d1"
-  },
-  "schema_version": "0.1",
-  "command_sequence": [
-    "ruff"
-  ],
+  "command": "ruff",
+  "subcommand": null,
+  "description": "Ruff: An extremely fast Python linter and code formatter.",
   "usage": "ruff [OPTIONS] <COMMAND>",
-  "summary": "An extremely fast Python linter and code formatter.",
+  "arguments": [],
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
       "description": "Print help.",
-      "required": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-V",
-      "long": "--version",
+      "name": "--version",
+      "aliases": [
+        "-V"
+      ],
       "description": "Print version.",
-      "required": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-v",
-      "long": "--verbose",
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
       "description": "Enable verbose logging.",
-      "required": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-q",
-      "long": "--quiet",
-      "description": "Enable quiet mode.",
-      "required": false
+      "name": "--quiet",
+      "aliases": [
+        "-q"
+      ],
+      "description": "Print diagnostics, but nothing else.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-s",
-      "long": "--silent",
-      "description": "Enable silent mode.",
-      "required": false
+      "name": "--silent",
+      "aliases": [
+        "-s"
+      ],
+      "description": "Disable all logging (but still exit with status code \"1\" upon detecting diagnostics).",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": null,
-      "long": "--config",
-      "description": "Path to a configuration file (ruff.toml or pyproject.toml).",
-      "arg_hint": "FILE",
-      "required": false
+      "name": "--config",
+      "aliases": [],
+      "description": "Either a path to a TOML configuration file (`pyproject.toml` or `ruff.toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might find in a `ruff.toml` configuration file) overriding a specific configuration option. Overrides of individual settings using this option always take precedence over all configuration files, including configuration files that were also specified using `--config\".",
+      "argument": "CONFIG_OPTION",
+      "required": false,
+      "allow_multiple": true
     },
     {
-      "short": null,
-      "long": "--isolated",
+      "name": "--isolated",
+      "aliases": [],
       "description": "Ignore all configuration files.",
-      "required": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
   ],
-  "subcommands": [
-    {
-      "name": "check",
-      "summary": "Run Ruff on the given files or directories (default).",
-      "description": "Checks Python files for linting errors.",
-      "usage": "ruff check [OPTIONS] [FILES]..."
+  "subcommands_detail": {
+    "check": {
+      "description": "Run Ruff on the given files or directories",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_check.json"
     },
-    {
-      "name": "rule",
-      "summary": "Explain a rule (or all rules).",
-      "description": "Provides detailed explanations for specific Ruff rules.",
-      "usage": "ruff rule [RULE]"
+    "rule": {
+      "description": "Explain a rule (or all rules)",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_rule.json"
     },
-    {
-      "name": "config",
-      "summary": "List or describe the available configuration options.",
-      "description": "Displays available configuration settings for Ruff.",
-      "usage": "ruff config"
+    "config": {
+      "description": "List or describe the available configuration options",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_config.json"
     },
-    {
-      "name": "linter",
-      "summary": "List all supported upstream linters.",
-      "description": "Shows the linters Ruff integrates with (e.g., Flake8, PyLint).",
-      "usage": "ruff linter"
+    "linter": {
+      "description": "List all supported upstream linters",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_linter.json"
     },
-    {
-      "name": "clean",
-      "summary": "Clear any caches used by Ruff.",
-      "description": "Removes cached results to ensure fresh analysis.",
-      "usage": "ruff clean"
+    "clean": {
+      "description": "Clear any caches in the current directory and any subdirectories",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_clean.json"
     },
-    {
-      "name": "format",
-      "summary": "Run the Ruff formatter on the given files or directories.",
-      "description": "Formats Python code according to configured style.",
-      "usage": "ruff format [OPTIONS] [FILES]..."
+    "format": {
+      "description": "Run the Ruff formatter on the given files or directories",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_format.json"
     },
-    {
-      "name": "server",
-      "summary": "Run the Ruff language server.",
-      "description": "Starts the language server protocol (LSP) for editor integration.",
-      "usage": "ruff server [OPTIONS]"
+    "server": {
+      "description": "Run the language server",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_server.json"
     },
-    {
-      "name": "analyze",
-      "summary": "Analyze Python code",
-      "description": "Analyzes Python code for complexity and maintainability.",
-      "usage": "ruff analyze [OPTIONS] [FILES]..."
+    "analyze": {
+      "description": "Run analysis over Python source code",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_analyze.json"
     },
-    {
-      "name": "version",
-      "summary": "Show version information.",
-      "description": "Displays the installed Ruff version.",
-      "usage": "ruff version"
+    "version": {
+      "description": "Display Ruff's version",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_version.json"
     },
-    {
-      "name": "help",
-      "summary": "Print this message or the help of the given subcommand(s).",
-      "description": "Displays help information for Ruff or specific subcommands.",
-      "usage": "ruff help [COMMAND]"
+    "help": {
+      "description": "Print this message or the help of the given subcommand(s)",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_help.json"
     }
-  ]
+  },
+  "metadata": {
+    "ground_truth_crc": "0xAE0936D1",
+    "tool_name": "ruff",
+    "command_name": "ruff"
+  }
 }

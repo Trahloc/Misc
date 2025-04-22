@@ -1,0 +1,158 @@
+{
+    "command": "pydocstyle",
+    "subcommand": null,
+    "description": "Python docstring style checker.",
+    "usage": "pydocstyle [options] [<file|dir>...]",
+    "options": [
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "show program's version number and exit",
+            "name": "--version",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-h"
+            ],
+            "argument": null,
+            "description": "show this help message and exit",
+            "name": "--help",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-e"
+            ],
+            "argument": null,
+            "description": "show explanation of each error",
+            "name": "--explain",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-s"
+            ],
+            "argument": null,
+            "description": "show source for each error",
+            "name": "--source",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-d"
+            ],
+            "argument": null,
+            "description": "print debug information",
+            "name": "--debug",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-v"
+            ],
+            "argument": null,
+            "description": "print status information",
+            "name": "--verbose",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "print total number of errors to stdout",
+            "name": "--count",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "path",
+            "description": "use given config file and disable config discovery",
+            "name": "--config",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "pattern",
+            "description": "check only files that exactly match <pattern> regular expression; default is --match='(?!test_).*.py' which matches files that don't start with 'test_' but end with '.py'",
+            "name": "--match",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "pattern",
+            "description": "search only dirs that exactly match <pattern> regular expression; default is --match-dir='[^.].*', which matches all dirs that don't start with a dot",
+            "name": "--match-dir",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "decorators",
+            "description": "ignore any functions or methods that are decorated by a function with a name fitting the <decorators> regular expression; default is --ignore-decorators='' which does not ignore any decorated functions.",
+            "name": "--ignore-decorators",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "property-decorators",
+            "description": "consider any method decorated with one of these decorators as a property, and consequently allow a docstring which is not in imperative mood; default is --property-decorators='property,cached_property,functools.cached_property'",
+            "name": "--property-decorators",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "codes",
+            "description": "choose the basic list of checked errors by specifying which errors to check for (with a list of comma-separated error codes or prefixes). for example: --select=D101,D2",
+            "name": "--select",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "codes",
+            "description": "choose the basic list of checked errors by specifying which errors to ignore out of all of the available error codes (with a list of comma-separated error codes or prefixes). for example: --ignore=D101,D2",
+            "name": "--ignore",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "name",
+            "description": "choose the basic list of checked errors by specifying an existing convention. Possible conventions: pep257, numpy, google.",
+            "name": "--convention",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "codes",
+            "description": "add extra error codes to check to the basic list of errors previously set by --select, --ignore or --convention.",
+            "name": "--add-select",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "codes",
+            "description": "ignore extra error codes by removing them from the basic list previously set by --select, --ignore or --convention.",
+            "name": "--add-ignore",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "ignore __init__ methods which only have a self param.",
+            "name": "--ignore-self-only-init",
+            "required": false
+        }
+    ],
+    "arguments": [
+        {
+            "name": "<file|dir>",
+            "description": "File or directory to check.",
+            "required": false,
+            "nargs": "*"
+        }
+    ],
+    "metadata": {
+        "ground_truth_crc": "0x57340659",
+        "schema_version": "1.0",
+        "tool_name": "pydocstyle",
+        "command_name": "pydocstyle"
+    }
+}

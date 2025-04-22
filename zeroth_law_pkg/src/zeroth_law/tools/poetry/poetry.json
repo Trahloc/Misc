@@ -1,150 +1,194 @@
 {
-  "tool_id": "poetry",
-  "command": [
-    "poetry"
-  ],
+  "command": "poetry",
+  "subcommand": null,
   "description": "Poetry helps you declare, manage and install dependencies of Python projects, ensuring you have the right stack everywhere.",
-  "usage": [
-    {
-      "format": "poetry [options] <command> [<args>]..."
-    }
-  ],
+  "usage": "poetry [options] <command> [<args>]...",
+  "arguments": [],
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
-      "description": "Display help for the given command. When no command is given display help for the list command."
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "Display help for the given command. When no command is given display help for the list command.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-q",
-      "long": "--quiet",
-      "description": "Do not output any message."
+      "name": "--quiet",
+      "aliases": [
+        "-q"
+      ],
+      "description": "Do not output any message.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-V",
-      "long": "--version",
-      "description": "Display this application version."
+      "name": "--version",
+      "aliases": [
+        "-V"
+      ],
+      "description": "Display this application version.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--ansi",
-      "description": "Force ANSI output."
+      "name": "--ansi",
+      "aliases": [],
+      "description": "Force ANSI output.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--no-ansi",
-      "description": "Disable ANSI output."
+      "name": "--no-ansi",
+      "aliases": [],
+      "description": "Disable ANSI output.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-n",
-      "long": "--no-interaction",
-      "description": "Do not ask any interactive question."
+      "name": "--no-interaction",
+      "aliases": [
+        "-n"
+      ],
+      "description": "Do not ask any interactive question.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--no-plugins",
-      "description": "Disables plugins."
+      "name": "--no-plugins",
+      "aliases": [],
+      "description": "Disables plugins.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--no-cache",
-      "description": "Disables Poetry source caches."
+      "name": "--no-cache",
+      "aliases": [],
+      "description": "Disables Poetry source caches.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-P",
-      "long": "--project",
-      "metavar": "PROJECT",
-      "description": "Specify another path as the project root."
+      "name": "--project",
+      "aliases": [
+        "-P"
+      ],
+      "description": "Specify another path as the project root.",
+      "argument": "PROJECT",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-C",
-      "long": "--directory",
-      "metavar": "DIRECTORY",
-      "description": "The working directory for the Poetry command."
+      "name": "--directory",
+      "aliases": [
+        "-C"
+      ],
+      "description": "The working directory for the Poetry command.",
+      "argument": "DIRECTORY",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-v",
-      "long": "--verbose",
-      "description": "Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug."
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
+      "description": "Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": true
     }
   ],
-  "arguments": [],
-  "subcommands": [
-    {
-      "name": "about",
-      "description": "Shows information about Poetry."
+  "subcommands_detail": {
+    "about": {
+      "description": "Shows information about Poetry.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_about.json"
     },
-    {
-      "name": "add",
-      "description": "Adds dependency to pyproject.toml and installs it."
+    "add": {
+      "description": "Adds dependency to pyproject.toml and installs it.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_add.json"
     },
-    {
-      "name": "build",
-      "description": "Builds a package, as a wheel and a source distribution."
+    "build": {
+      "description": "Builds a package, as a wheel and a source distribution.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_build.json"
     },
-    {
-      "name": "check",
-      "description": "Checks the validity of the pyproject.toml file."
+    "check": {
+      "description": "Checks the validity of the pyproject.toml file.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_check.json"
     },
-    {
-      "name": "config",
-      "description": "Manages configuration settings."
+    "config": {
+      "description": "Manages configuration settings.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_config.json"
     },
-    {
-      "name": "export",
-      "description": "Exports the lock file to alternative formats."
+    "export": {
+      "description": "Exports the lock file to alternative formats.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_export.json"
     },
-    {
-      "name": "init",
-      "description": "Creates a basic pyproject.toml file in current directory."
+    "init": {
+      "description": "Creates a basic pyproject.toml file in current directory.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_init.json"
     },
-    {
-      "name": "install",
-      "description": "Installs the project dependencies."
+    "install": {
+      "description": "Installs the project dependencies.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_install.json"
     },
-    {
-      "name": "list",
-      "description": "Lists commands."
+    "list": {
+      "description": "Lists commands.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_list.json"
     },
-    {
-      "name": "lock",
-      "description": "Locks the project dependencies."
+    "lock": {
+      "description": "Locks the project dependencies.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_lock.json"
     },
-    {
-      "name": "new",
-      "description": "Creates a new Python project at <path>."
+    "new": {
+      "description": "Creates a new Python project at <path>.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_new.json"
     },
-    {
-      "name": "publish",
-      "description": "Publishes a package to a remote repository."
+    "publish": {
+      "description": "Publishes a package to a remote repository.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_publish.json"
     },
-    {
-      "name": "remove",
-      "description": "Removes a package from the project dependencies."
+    "remove": {
+      "description": "Removes a package from the project dependencies.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_remove.json"
     },
-    {
-      "name": "run",
-      "description": "Runs a command in the project's virtual environment."
+    "run": {
+      "description": "Runs a command in the project's virtual environment.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_run.json"
     },
-    {
-      "name": "search",
-      "description": "Searches for packages on remote repositories."
+    "search": {
+      "description": "Searches for packages on remote repositories.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_search.json"
     },
-    {
-      "name": "shell",
-      "description": "Spawns a shell within the project's virtual environment."
+    "shell": {
+      "description": "Spawns a shell within the project's virtual environment.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_shell.json"
     },
-    {
-      "name": "show",
-      "description": "Shows information about packages."
+    "show": {
+      "description": "Shows information about packages.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_show.json"
     },
-    {
-      "name": "update",
-      "description": "Updates the project dependencies to the latest versions."
+    "update": {
+      "description": "Updates the project dependencies to the latest versions.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_update.json"
     },
-    {
-      "name": "version",
-      "description": "Shows the version of the project or bumps it when a valid bump rule is provided."
+    "version": {
+      "description": "Shows the version of the project or bumps it when a valid bump rule is provided.",
+      "json_definition": "src/zeroth_law/tools/poetry/poetry_version.json"
     }
-  ],
+  },
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0xB37A33E2"
+    "ground_truth_crc": "0xDE061514",
+    "tool_name": "poetry",
+    "command_name": "poetry"
   }
 }

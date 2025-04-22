@@ -1,0 +1,14 @@
+{
+  "command": "poetry",
+  "subcommand": "init",
+  "description": "Creates a basic pyproject.toml file in the current directory.",
+  "usage": "init [options]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0xE154A986",
+    "schema_version": "1.0",
+    "tool_name": "poetry",
+    "command_name": "init"
+  }
+}

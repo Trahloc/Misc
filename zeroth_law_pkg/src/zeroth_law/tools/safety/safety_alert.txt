@@ -1,0 +1,125 @@
+
+ \[deprecated] Create GitHub pull requests or GitHub issues using a `safety     
+ check` json report file. Being replaced by newer features.                     
+ Example: safety alert --check-report your-report.json --key API_KEY github-pr  
+ --repo my-org/my-repo --token github-token                                     
+                                                                                
+ Usage: safety alert [OPTIONS] COMMAND [ARGS]...                                
+                                                                                
+                                    Commands                                    
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃              ┃                                                               ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ github-issue │                                                               │
+│              │ Create a GitHub Issue for any vulnerabilities found using     │
+│              │ PyUp's remediation data.                                      │
+│              │                                                               │
+│              │ Normally, this is run by a GitHub action. If you're running   │
+│              │ this manually, ensure that your local repo is up to date and  │
+│              │ on HEAD - otherwise you'll see strange results.               │
+│              │                                                               │
+│              │ Args:                                                         │
+│              │     obj (Any): The Click context object containing report     │
+│              │ data.                                                         │
+│              │     repo (str): The GitHub repository path.                   │
+│              │     token (str): The GitHub Access Token.                     │
+│              │     base_url (Optional): Custom base URL for GitHub           │
+│              │ Enterprise, if applicable.                                    │
+│              │                                                               │
+├──────────────┼───────────────────────────────────────────────────────────────┤
+│ github-pr    │                                                               │
+│              │ Create a GitHub PR to fix any vulnerabilities using Safety's  │
+│              │ remediation data.                                             │
+│              │                                                               │
+│              │ This is usually run by a GitHub action. If you're running     │
+│              │ this manually, ensure that your local repo is up to date and  │
+│              │ on HEAD - otherwise you'll see strange results.               │
+│              │                                                               │
+│              │ Args:                                                         │
+│              │     obj (Any): The Click context object containing report     │
+│              │ data.                                                         │
+│              │     repo (str): The GitHub repository path.                   │
+│              │     token (str): The GitHub Access Token.                     │
+│              │     base_url (Optional): Custom base URL for GitHub           │
+│              │ Enterprise, if applicable.                                    │
+│              │                                                               │
+└──────────────┴───────────────────────────────────────────────────────────────┘
+                                    Options                                     
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                    ┃                                                         ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--check-report'] │ JSON output of Safety Check to work with.               │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ ['--key']          │ API Key for safetycli.com's vulnerability database. Can │
+│                    │ be set as SAFETY_API_KEY environment variable.          │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ ['--policy-file']  │ Define the policy file to be used                       │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ ['--help']         │ Show this message and exit.                             │
+└────────────────────┴─────────────────────────────────────────────────────────┘
+
+                                 Global-Options                                 
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                  ┃                                           ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--stage']                      │ Assign a development lifecycle stage to   │
+│                                  │ your scan (default: development).         │
+│                                  │                                           │
+│                                  │ This labels the scan and its findings in  │
+│                                  │ Safety Platform with this stage.          │
+│                                  │                                           │
+│                                  │ Example: safety --stage production scan   │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--key']                        │ The API key required for cicd stage or    │
+│                                  │ production stage scans.                   │
+│                                  │                                           │
+│                                  │ For development stage scans unset the API │
+│                                  │ key and authenticate using safety auth.   │
+│                                  │                                           │
+│                                  │ Tip: the API key can also be set using    │
+│                                  │ the environment variable: SAFETY_API_KEY  │
+│                                  │                                           │
+│                                  │ Example: safety --key API_KEY --stage     │
+│                                  │ cicd scan                                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-host']                 │ Specify a proxy host for network          │
+│                                  │ communications.                           │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-port']                 │ Set the proxy port (default: 80).         │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+│                                  │                                           │
+│                                  │  Requires: [ proxy_host ]                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-protocol']             │ Choose the proxy protocol (default:       │
+│                                  │ https).                                   │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+│                                  │                                           │
+│                                  │  Requires: [ proxy_host ]                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--disable-optional-telemetry'] │ Opt-out of sending optional telemetry     │
+│                                  │ data. Anonymized telemetry data will      │
+│                                  │ remain.                                   │
+│                                  │                                           │
+│                                  │ Example: safety                           │
+│                                  │ --disable-optional-telemetry scan         │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--debug']                      │ Enable debug mode for detailed output.    │
+│                                  │                                           │
+│                                  │ Example: safety --debug scan              │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--version']                    │ Show the version and exit.                │
+└──────────────────────────────────┴───────────────────────────────────────────┘
+

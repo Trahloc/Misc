@@ -1,47 +1,52 @@
 {
-  "tool_id": "py-spy",
-  "command": [
-    "py-spy"
-  ],
+  "command": "py-spy",
+  "subcommand": null,
   "description": "Sampling profiler for Python programs",
-  "usage": [
-    {
-      "format": "py-spy <SUBCOMMAND>"
-    }
-  ],
+  "usage": "py-spy <SUBCOMMAND>",
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
-      "description": "Print help information"
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "Print help information",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-V",
-      "long": "--version",
-      "description": "Print version information"
+      "name": "--version",
+      "aliases": [
+        "-V"
+      ],
+      "description": "Print version information",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
   ],
   "arguments": [],
-  "subcommands": [
-    {
-      "name": "record",
-      "description": "Records stack trace information to a flamegraph, speedscope or raw file"
+  "subcommands_detail": {
+    "record": {
+      "description": "Records stack trace information to a flamegraph, speedscope or raw file",
+      "json_definition": "src/zeroth_law/tools/py-spy/py-spy_record.json"
     },
-    {
-      "name": "top",
-      "description": "Displays a top like view of functions consuming CPU"
+    "top": {
+      "description": "Displays a top like view of functions consuming CPU",
+      "json_definition": "src/zeroth_law/tools/py-spy/py-spy_top.json"
     },
-    {
-      "name": "dump",
-      "description": "Dumps stack traces for a target program to stdout"
+    "dump": {
+      "description": "Dumps stack traces for a target program to stdout",
+      "json_definition": "src/zeroth_law/tools/py-spy/py-spy_dump.json"
     },
-    {
-      "name": "help",
-      "description": "Print this message or the help of the given subcommand(s)"
+    "help": {
+      "description": "Print this message or the help of the given subcommand(s)",
+      "json_definition": "src/zeroth_law/tools/py-spy/py-spy_help.json"
     }
-  ],
+  },
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0xDC4DE986"
+    "ground_truth_crc": "0xDC4DE986",
+    "tool_name": "py-spy",
+    "command_name": "py-spy"
   }
 }

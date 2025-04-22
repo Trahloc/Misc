@@ -1,0 +1,62 @@
+{
+  "arguments": [],
+  "command": "poetry",
+  "description": "Builds a package, as a tarball and a wheel by default.",
+  "metadata": {
+    "command_name": "build",
+    "ground_truth_crc": "0x114A1F6E",
+    "tool_name": "poetry"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-f"
+      ],
+      "allow_multiple": false,
+      "argument": "FORMAT",
+      "description": "Limit the format to either sdist or wheel.",
+      "name": "--format",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Clean output directory before building.",
+      "name": "--clean",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-l"
+      ],
+      "allow_multiple": false,
+      "argument": "LOCAL-VERSION",
+      "description": "Add or replace a local version label to the build. (Deprecated)",
+      "name": "--local-version",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-o"
+      ],
+      "allow_multiple": false,
+      "argument": "OUTPUT",
+      "description": "Set output directory for build artifacts. Default is `dist`. [default: \"dist\"]",
+      "name": "--output",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "allow_multiple": true,
+      "argument": "CONFIG-SETTINGS",
+      "description": "Provide config settings that should be passed to backend in <key>=<value> format. (multiple values allowed)",
+      "name": "--config-settings",
+      "required": false
+    }
+  ],
+  "subcommand": "build",
+  "usage": "build [options]"
+}

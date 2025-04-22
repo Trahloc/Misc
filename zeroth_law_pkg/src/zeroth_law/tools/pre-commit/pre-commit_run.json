@@ -1,0 +1,192 @@
+{
+  "arguments": [
+    {
+      "description": "A single hook-id to run",
+      "name": "hook",
+      "nargs": "?",
+      "required": false
+    }
+  ],
+  "command": "pre-commit",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "run",
+    "ground_truth_crc": "0x91532B5B",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "show this help message and exit",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "argument": "CONFIG",
+      "description": "Path to alternate config file",
+      "name": "--config",
+      "required": false
+    },
+    {
+      "aliases": [
+        "--verbose",
+        "-v"
+      ],
+      "argument": null,
+      "description": "",
+      "name": "--verbose",
+      "required": false
+    },
+    {
+      "aliases": [
+        "--all-files",
+        "-a"
+      ],
+      "argument": null,
+      "description": "Run on all the files in the repo.",
+      "name": "--all-files",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "[FILES ...]",
+      "description": "Specific filenames to run hooks on.",
+      "name": "--files",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "When hooks fail, run `git diff` directly afterward.",
+      "name": "--show-diff-on-failure",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "{commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg,manual}",
+      "description": "The stage during which the hook is fired. One of commit-msg, post-checkout, post-commit, post-merge, post-rewrite, pre-commit, pre-merge-commit, pre-push, pre-rebase, prepare-commit-msg, manual",
+      "name": "--hook-stage",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "REMOTE_BRANCH",
+      "description": "Remote branch ref used by `git push`.",
+      "name": "--remote-branch",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "LOCAL_BRANCH",
+      "description": "Local branch ref used by `git push`.",
+      "name": "--local-branch",
+      "required": false
+    },
+    {
+      "aliases": [
+        "--source",
+        "-s"
+      ],
+      "argument": "FROM_REF",
+      "description": "(for usage with `--to-ref`) -- this option represents the original ref in a `from_ref...to_ref` diff expression. For `pre-push` hooks, this represents the branch you are pushing to. For `post-checkout` hooks, this represents the branch that was previously checked out.",
+      "name": "--from-ref",
+      "required": false
+    },
+    {
+      "aliases": [
+        "--origin",
+        "-o"
+      ],
+      "argument": "TO_REF",
+      "description": "(for usage with `--from-ref`) -- this option represents the destination ref in a `from_ref...to_ref` diff expression. For `pre-push` hooks, this represents the branch being pushed. For `post-checkout` hooks, this represents the branch that is now checked out.",
+      "name": "--to-ref",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PRE_REBASE_UPSTREAM",
+      "description": "The upstream from which the series was forked.",
+      "name": "--pre-rebase-upstream",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PRE_REBASE_BRANCH",
+      "description": "The branch being rebased, and is not set when rebasing the current branch.",
+      "name": "--pre-rebase-branch",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "COMMIT_MSG_FILENAME",
+      "description": "Filename to check when running during `commit-msg`",
+      "name": "--commit-msg-filename",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PREPARE_COMMIT_MESSAGE_SOURCE",
+      "description": "Source of the commit message (typically the second argument to .git/hooks/prepare-commit-msg)",
+      "name": "--prepare-commit-message-source",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "COMMIT_OBJECT_NAME",
+      "description": "Commit object name (typically the third argument to .git/hooks/prepare-commit-msg)",
+      "name": "--commit-object-name",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "REMOTE_NAME",
+      "description": "Remote name used by `git push`.",
+      "name": "--remote-name",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "REMOTE_URL",
+      "description": "Remote url used by `git push`.",
+      "name": "--remote-url",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "CHECKOUT_TYPE",
+      "description": "Indicates whether the checkout was a branch checkout (changing branches, flag=1) or a file checkout (retrieving a file from the index, flag=0).",
+      "name": "--checkout-type",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "IS_SQUASH_MERGE",
+      "description": "During a post-merge hook, indicates whether the merge was a squash merge",
+      "name": "--is-squash-merge",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "REWRITE_COMMAND",
+      "description": "During a post-rewrite hook, specifies the command that invoked the rewrite",
+      "name": "--rewrite-command",
+      "required": false
+    }
+  ],
+  "subcommand": "run",
+  "usage": "pre-commit run [-h] [--color {auto,always,never}] [-c CONFIG] [--verbose] [--all-files | --files [FILES ...]] [--show-diff-on-failure] [--hook-stage {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg,manual}] [--remote-branch REMOTE_BRANCH] [--local-branch LOCAL_BRANCH] [--from-ref FROM_REF] [--to-ref TO_REF] [--pre-rebase-upstream PRE_REBASE_UPSTREAM] [--pre-rebase-branch PRE_REBASE_BRANCH] [--commit-msg-filename COMMIT_MSG_FILENAME] [--prepare-commit-message-source PREPARE_COMMIT_MESSAGE_SOURCE] [--commit-object-name COMMIT_OBJECT_NAME] [--remote-name REMOTE_NAME] [--remote-url REMOTE_URL] [--checkout-type CHECKOUT_TYPE] [--is-squash-merge IS_SQUASH_MERGE] [--rewrite-command REWRITE_COMMAND] [hook]"
+}

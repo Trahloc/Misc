@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "tool_name": "Ruff",
+    "command_name": "clean",
+    "description": "Clear any caches in the current directory and any subdirectories",
+    "ground_truth_crc": "0x2C216C81",
+    "schema_version": "1.0"
+  },
+  "usage": "ruff clean [OPTIONS]",
+  "arguments": [],
+  "options": [],
+  "command": "ruff",
+  "subcommand": "clean",
+  "description": "(Placeholder description for ruff_clean)"
+}

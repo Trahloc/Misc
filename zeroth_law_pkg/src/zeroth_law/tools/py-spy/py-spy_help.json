@@ -1,0 +1,15 @@
+{
+  "description": "(Placeholder description for py-spy help)",
+  "usage": "py-spy help",
+  "arguments": [],
+  "options": [],
+  "metadata": {
+    "schema_version": "1.0",
+    "tool_name": "py-spy",
+    "command_name": "help",
+    "ground_truth_crc": "0x00000000"
+  },
+  "command": "py-spy",
+  "subcommand": "help",
+  "subcommands_detail": {}
+}

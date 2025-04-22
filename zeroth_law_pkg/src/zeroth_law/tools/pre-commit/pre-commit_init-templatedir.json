@@ -1,0 +1,63 @@
+{
+  "arguments": [
+    {
+      "description": "The directory in which to write the hook script.",
+      "name": "directory",
+      "nargs": "1",
+      "required": true
+    }
+  ],
+  "command": "pre-commit",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "init-templatedir",
+    "ground_truth_crc": "0x0D6217CE",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "show this help message and exit",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "argument": "CONFIG",
+      "description": "Path to alternate config file",
+      "name": "--config",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Assume cloned repos should have a `pre-commit` config.",
+      "name": "--no-allow-missing-config",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-t"
+      ],
+      "argument": "{commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}",
+      "description": "",
+      "name": "--hook-type",
+      "required": false
+    }
+  ],
+  "subcommand": "init-templatedir",
+  "usage": "pre-commit init-templatedir [-h] [--color {auto,always,never}] [-c CONFIG] [--no-allow-missing-config] [-t {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}] directory"
+}

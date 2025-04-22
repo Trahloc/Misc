@@ -1,0 +1,23 @@
+py-spy-top 
+Displays a top like view of functions consuming CPU
+
+USAGE:
+    py-spy top [OPTIONS] [python_program]...
+
+ARGS:
+    <python_program>...    commandline of a python program to run
+
+OPTIONS:
+    -p, --pid <pid>          PID of a running python program to spy on
+    -r, --rate <rate>        The number of samples to collect per second [default: 100]
+    -s, --subprocesses       Profile subprocesses of the original process
+        --full-filenames     Show full Python filenames, instead of shortening to show only the
+                             package part
+    -g, --gil                Only include traces that are holding on to the GIL
+    -i, --idle               Include stack traces for idle threads
+        --delay <seconds>    Delay between 'top' refreshes. [default: 1.0]
+    -n, --native             Collect stack traces from native extensions written in Cython, C or C++
+        --nonblocking        Don't pause the python process when collecting samples. Setting this
+                             option will reduce the performance impact of sampling, but may lead to
+                             inaccurate results
+    -h, --help               Print help information

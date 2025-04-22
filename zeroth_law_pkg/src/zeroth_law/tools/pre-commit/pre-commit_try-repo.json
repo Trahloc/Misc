@@ -1,0 +1,99 @@
+{
+  "arguments": [
+    {
+      "description": "Repository to source hooks from.",
+      "name": "repo",
+      "nargs": "1",
+      "required": true
+    },
+    {
+      "description": "A single hook-id to run",
+      "name": "hook",
+      "nargs": "?",
+      "required": false
+    }
+  ],
+  "command": "pre-commit",
+  "description": "Try a repo's hooks on the current directory.",
+  "metadata": {
+    "command_name": "try-repo",
+    "ground_truth_crc": "0x9CC8C825",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "allow_multiple": false,
+      "argument": "CONFIG",
+      "description": "Path to alternate config file",
+      "name": "--config",
+      "required": false
+    },
+    {
+      "aliases": [
+        "--rev"
+      ],
+      "allow_multiple": false,
+      "argument": "REF",
+      "description": "Manually select a rev to run against, otherwise the `HEAD` revision will be used.",
+      "name": "--ref",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-v"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "(No description provided)",
+      "name": "--verbose",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-a"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Run on all the files in the repo.",
+      "name": "--all-files",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "[FILES ...]",
+      "description": "Specific filenames to run hooks on.",
+      "name": "--files",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "When hooks fail, run `git diff` directly afterward.",
+      "name": "--show-diff-on-failure",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "{commit-msg,...,manual}",
+      "description": "The stage during which the hook is fired.",
+      "name": "--hook-stage",
+      "required": false
+    }
+  ],
+  "subcommand": "try-repo",
+  "usage": "pre-commit try-repo [-h] [--color {auto,always,never}] [-c CONFIG] [--ref REF] [--verbose] [--all-files | --files [FILES ...]] [--show-diff-on-failure] [--hook-stage {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg,manual}] [--remote-branch REMOTE_BRANCH] [--local-branch LOCAL_BRANCH] [--from-ref FROM_REF] [--to-ref TO_REF] [--pre-rebase-upstream PRE_REBASE_UPSTREAM] [--pre-rebase-branch PRE_REBASE_BRANCH] [--commit-msg-filename COMMIT_MSG_FILENAME] [--prepare-commit-message-source PREPARE_COMMIT_MESSAGE_SOURCE] [--commit-object-name COMMIT_OBJECT_NAME] [--remote-name REMOTE_NAME] [--remote-url REMOTE_URL] [--checkout-type CHECKOUT_TYPE] [--is-squash-merge IS_SQUASH_MERGE] [--rewrite-command REWRITE_COMMAND] repo [hook]"
+}

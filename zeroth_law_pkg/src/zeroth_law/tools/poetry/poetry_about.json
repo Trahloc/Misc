@@ -1,0 +1,14 @@
+{
+  "command": "poetry",
+  "subcommand": "about",
+  "description": "Shows information about Poetry.",
+  "usage": "about [options]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0x762BB2B1",
+    "schema_version": "1.0",
+    "tool_name": "poetry",
+    "command_name": "about"
+  }
+}

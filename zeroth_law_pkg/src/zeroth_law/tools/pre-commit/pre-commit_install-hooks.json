@@ -1,0 +1,14 @@
+{
+  "command": "pre-commit",
+  "subcommand": "install-hooks",
+  "description": "Install hooks for the current repository based on the configuration.",
+  "usage": "pre-commit install-hooks [-h] [--color {auto,always,never}] [-c CONFIG]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0x26DA5290",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit",
+    "command_name": "install-hooks"
+  }
+}

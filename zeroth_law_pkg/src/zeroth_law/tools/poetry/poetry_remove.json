@@ -1,0 +1,20 @@
+{
+  "command": "poetry",
+  "subcommand": "remove",
+  "description": "Removes a package from the project dependencies.",
+  "usage": "remove [options] [--] <packages>...",
+  "options": [],
+  "arguments": [
+    {
+      "name": "packages",
+      "description": "The packages to remove.",
+      "required": true
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0x585916E1",
+    "schema_version": "1.0",
+    "tool_name": "poetry",
+    "command_name": "remove"
+  }
+}

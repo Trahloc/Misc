@@ -1,0 +1,20 @@
+{
+  "command": "coverage",
+  "subcommand": "debug",
+  "description": "Display information about the internals of coverage.py, for diagnosing problems. Topics are: 'data' to show a summary of the collected data; 'sys' to show installation information; 'config' to show the configuration; 'premain' to show what is calling coverage; 'pybehave' to show internal flags describing Python behavior.",
+  "usage": "coverage debug <topic>",
+  "options": [],
+  "arguments": [
+    {
+      "name": "topic",
+      "description": "The topic to debug. One of: 'data', 'sys', 'config', 'premain', 'pybehave'.",
+      "required": true
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xA6AA4E9D",
+    "schema_version": "1.0",
+    "tool_name": "coverage",
+    "command_name": "debug"
+  }
+}

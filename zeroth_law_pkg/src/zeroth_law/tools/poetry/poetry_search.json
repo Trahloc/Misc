@@ -1,0 +1,21 @@
+{
+  "command": "poetry",
+  "subcommand": "search",
+  "description": "Searches for packages on remote repositories.",
+  "usage": "search [options] [--] <tokens>...",
+  "options": [],
+  "arguments": [
+    {
+      "name": "tokens",
+      "description": "The tokens to search for.",
+      "required": true,
+      "nargs": "+"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xC82AD518",
+    "schema_version": "1.0",
+    "tool_name": "poetry",
+    "command_name": "search"
+  }
+}

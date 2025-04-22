@@ -1,0 +1,20 @@
+{
+  "command": "mutmut",
+  "subcommand": "show",
+  "description": "Show details for a specific mutant.",
+  "usage": "mutmut show [OPTIONS] MUTANT_NAME",
+  "options": [],
+  "arguments": [
+    {
+      "name": "MUTANT_NAME",
+      "description": "The name or ID of the mutant to show.",
+      "required": true
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0x1BDA752B",
+    "schema_version": "1.0",
+    "tool_name": "mutmut",
+    "command_name": "show"
+  }
+}

@@ -1,111 +1,191 @@
 {
-  "command_sequence": [
-    "pipdeptree"
-  ],
+  "command": "pipdeptree",
+  "subcommand": null,
   "description": "Dependency tree of the installed python packages",
   "usage": "pipdeptree [-h] [-v] [-w [{silence,suppress,fail}]] [--python PYTHON] [--path PATH] [-p P] [-e P] [-l | -u] [-f] [--encoding E] [-a] [-d D] [-r] [--license] [-j | --json-tree | --mermaid | --graph-output FMT]",
+  "arguments": [],
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
-      "description": "show this help message and exit"
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-v",
-      "long": "--version",
-      "description": "show program's version number and exit"
+      "name": "--version",
+      "aliases": [
+        "-v"
+      ],
+      "description": "show program's version number and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-w",
-      "long": "--warn",
-      "metavar": "[{silence,suppress,fail}]",
-      "description": "warning control"
+      "name": "--warn",
+      "aliases": [
+        "-w"
+      ],
+      "description": "warning control",
+      "argument": "[{silence,suppress,fail}]",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--python",
-      "metavar": "PYTHON",
-      "description": "Python interpreter to inspect."
+      "name": "--python",
+      "aliases": [],
+      "description": "Python interpreter to inspect.",
+      "argument": "PYTHON",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--path",
-      "metavar": "PATH",
-      "description": "Restrict package lookup path."
+      "name": "--path",
+      "aliases": [],
+      "description": "Restrict package lookup path.",
+      "argument": "PATH",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-p",
-      "long": "--packages",
-      "metavar": "P",
-      "description": "comma separated list of packages to show."
+      "name": "--packages",
+      "aliases": [
+        "-p"
+      ],
+      "description": "comma separated list of packages to show.",
+      "argument": "P",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-e",
-      "long": "--exclude",
-      "metavar": "P",
-      "description": "comma separated list of packages to not show."
+      "name": "--exclude",
+      "aliases": [
+        "-e"
+      ],
+      "description": "comma separated list of packages to not show.",
+      "argument": "P",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-l",
-      "long": "--local-only",
-      "description": "do not show globally installed packages."
+      "name": "--local-only",
+      "aliases": [
+        "-l"
+      ],
+      "description": "do not show globally installed packages.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-u",
-      "long": "--user-only",
-      "description": "only show installations in the user site dir."
+      "name": "--user-only",
+      "aliases": [
+        "-u"
+      ],
+      "description": "only show installations in the user site dir.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-f",
-      "long": "--freeze",
-      "description": "print names so as to write freeze files"
+      "name": "--freeze",
+      "aliases": [
+        "-f"
+      ],
+      "description": "print names so as to write freeze files",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--encoding",
-      "metavar": "E",
-      "description": "the encoding to use when writing to the output"
+      "name": "--encoding",
+      "aliases": [],
+      "description": "the encoding to use when writing to the output",
+      "argument": "E",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-a",
-      "long": "--all",
-      "description": "list all deps at top level"
+      "name": "--all",
+      "aliases": [
+        "-a"
+      ],
+      "description": "list all deps at top level",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-d",
-      "long": "--depth",
-      "metavar": "D",
-      "description": "limit the depth of the tree"
+      "name": "--depth",
+      "aliases": [
+        "-d"
+      ],
+      "description": "limit the depth of the tree",
+      "argument": "D",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-r",
-      "long": "--reverse",
-      "description": "render the dependency tree in the reverse fashion"
+      "name": "--reverse",
+      "aliases": [
+        "-r"
+      ],
+      "description": "render the dependency tree in the reverse fashion",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--license",
-      "description": "list the license(s) of a package"
+      "name": "--license",
+      "aliases": [],
+      "description": "list the license(s) of a package",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-j",
-      "long": "--json",
-      "description": "raw JSON output"
+      "name": "--json",
+      "aliases": [
+        "-j"
+      ],
+      "description": "raw JSON output",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--json-tree",
-      "description": "nested JSON mimics the text format layout"
+      "name": "--json-tree",
+      "aliases": [],
+      "description": "nested JSON mimics the text format layout",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--mermaid",
-      "description": "https://mermaid.js.org flow diagram output"
+      "name": "--mermaid",
+      "aliases": [],
+      "description": "https://mermaid.js.org flow diagram output",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--graph-output",
-      "metavar": "FMT",
-      "description": "Graphviz rendering output format"
+      "name": "--graph-output",
+      "aliases": [],
+      "description": "Graphviz rendering output format",
+      "argument": "FMT",
+      "required": false,
+      "allow_multiple": false
     }
   ],
-  "arguments": [],
-  "subcommands": {},
+  "subcommands_detail": {},
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0x34985295"
+    "ground_truth_crc": "0x34985295",
+    "tool_name": "pipdeptree",
+    "command_name": "pipdeptree"
   }
 }

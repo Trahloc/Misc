@@ -1,0 +1,136 @@
+{
+  "command": "radon",
+  "subcommand": "mi",
+  "description": "The maintainability index (MI) is a compound metric, with the primary aim being to determine how easy it will be to maintain a particular body of code.",
+  "usage": "radon mi [-h] [-n <str>] [-x <str>] [-m] [-e <str>] [-i <str>] [-s] [-j] [--sort] [-O <str>] [--include-ipynb] [--ipynb-cells] paths [paths ...]",
+  "arguments": [
+    {
+      "name": "paths",
+      "description": "The paths where to find modules or packages to analyze. More than one path is allowed.",
+      "required": true,
+      "nargs": "+"
+    }
+  ],
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--min",
+      "aliases": [
+        "-n"
+      ],
+      "description": "The minimum MI to display (default to A).",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--max",
+      "aliases": [
+        "-x"
+      ],
+      "description": "The maximum MI to display (default to C).",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--multi",
+      "aliases": [
+        "-m"
+      ],
+      "description": "If given, multiline strings are not counted as comments.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--exclude",
+      "aliases": [
+        "-e"
+      ],
+      "description": "Exclude files only when their path matches one of these glob patterns. Usually needs quoting at the command line.",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore",
+      "aliases": [
+        "-i"
+      ],
+      "description": "Ignore directories when their name matches one of these glob patterns: radon won't even descend into them. By default, hidden directories (starting with '.') are ignored.",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--show",
+      "aliases": [
+        "-s"
+      ],
+      "description": "If given, the actual MI value is shown in results.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--json",
+      "aliases": [
+        "-j"
+      ],
+      "description": "Format results in JSON.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--sort",
+      "aliases": [],
+      "description": "If given, results are sorted in ascending order.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--output-file",
+      "aliases": [
+        "-O"
+      ],
+      "description": "The output file (default to stdout).",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--include-ipynb",
+      "aliases": [],
+      "description": "Include IPython Notebook files",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ipynb-cells",
+      "aliases": [],
+      "description": "Include reports for individual IPYNB cells",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    }
+  ],
+  "subcommands_detail": {},
+  "metadata": {
+    "ground_truth_crc": "0x5A768993",
+    "tool_name": "radon",
+    "command_name": "mi"
+  }
+}

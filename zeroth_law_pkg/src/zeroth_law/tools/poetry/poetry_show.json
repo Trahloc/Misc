@@ -1,0 +1,111 @@
+{
+  "arguments": [
+    {
+      "description": "The package to inspect",
+      "name": "package",
+      "nargs": "?",
+      "required": false
+    }
+  ],
+  "command": "poetry",
+  "description": "Shows information about packages.",
+  "metadata": {
+    "command_name": "show",
+    "ground_truth_crc": "0x61C4B97C",
+    "tool_name": "poetry"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": true,
+      "argument": "WITHOUT",
+      "description": "The dependency groups to ignore. (multiple values allowed)",
+      "name": "--without",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": true,
+      "argument": "WITH",
+      "description": "The optional dependency groups to include. (multiple values allowed)",
+      "name": "--with",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": true,
+      "argument": "ONLY",
+      "description": "The only dependency groups to include. (multiple values allowed)",
+      "name": "--only",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-t"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "List the dependencies as a tree.",
+      "name": "--tree",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "When showing the full list, or a --tree for a single package, display whether they are a direct dependency or required by other packages",
+      "name": "--why",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-l"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show the latest version.",
+      "name": "--latest",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-o"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show the latest version but only for packages that are outdated.",
+      "name": "--outdated",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-a"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show all packages (even those not compatible with current system).",
+      "name": "--all",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-T"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show only top-level dependencies.",
+      "name": "--top-level",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Do not truncate the output based on the terminal width.",
+      "name": "--no-truncate",
+      "required": false
+    }
+  ],
+  "subcommand": "show",
+  "usage": "show [options] [--] [<package>]"
+}

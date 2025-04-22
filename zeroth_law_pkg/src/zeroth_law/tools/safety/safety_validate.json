@@ -1,0 +1,46 @@
+{
+  "arguments": [
+    {
+      "description": "The name of the file type to validate. Valid values are: policy_file",
+      "name": "NAME",
+      "nargs": "1",
+      "required": true
+    },
+    {
+      "description": "Optional version argument (purpose unclear from TXT)",
+      "name": "VERSION",
+      "nargs": "?",
+      "required": false
+    }
+  ],
+  "command": "safety",
+  "description": "Verify that a local policy file is valid. NAME is the name of the file type to validate. Valid values are: policy_file",
+  "metadata": {
+    "command_name": "validate",
+    "ground_truth_crc": "0xBFA477F1",
+    "ground_truth_txt": "",
+    "schema_version": "1.0",
+    "skeleton_json": "",
+    "tool_name": "safety"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Path where the generated file will be saved. Default: current directory",
+      "name": "--path",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show this message and exit.",
+      "name": "--help",
+      "required": false
+    }
+  ],
+  "subcommand": "validate",
+  "usage": "safety validate [OPTIONS] NAME [VERSION]"
+}

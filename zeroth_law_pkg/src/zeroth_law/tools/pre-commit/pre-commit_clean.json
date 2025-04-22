@@ -1,0 +1,31 @@
+{
+  "arguments": [],
+  "command": "pre-commit",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "clean",
+    "ground_truth_crc": "0x0D40F6CA",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "show this help message and exit",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    }
+  ],
+  "subcommand": "clean",
+  "usage": "pre-commit clean [-h] [--color {auto,always,never}]"
+}

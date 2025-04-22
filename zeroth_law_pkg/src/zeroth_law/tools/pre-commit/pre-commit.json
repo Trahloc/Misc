@@ -1,91 +1,96 @@
 {
-  "tool_id": "pre-commit",
-  "command": [
-    "pre-commit"
-  ],
+  "command": "pre-commit",
+  "subcommand": null,
   "description": "A framework for managing and maintaining multi-language pre-commit hooks.",
-  "usage": [
-    {
-      "format": "pre-commit [options] <command> [<args>]..."
-    }
-  ],
+  "usage": "pre-commit [options] <command> [<args>]...",
+  "arguments": [],
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
-      "description": "show this help message and exit"
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-V",
-      "long": "--version",
-      "description": "show program's version number and exit"
+      "name": "--version",
+      "aliases": [
+        "-V"
+      ],
+      "description": "show program's version number and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
   ],
-  "arguments": [],
-  "subcommands": [
-    {
-      "name": "autoupdate",
-      "description": "Auto-update pre-commit config to the latest repos' versions."
+  "subcommands_detail": {
+    "autoupdate": {
+      "description": "Auto-update pre-commit config to the latest repos' versions.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_autoupdate.json"
     },
-    {
-      "name": "clean",
-      "description": "Clean out pre-commit files."
+    "clean": {
+      "description": "Clean out pre-commit files.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_clean.json"
     },
-    {
-      "name": "gc",
-      "description": "Clean unused cached repos."
+    "gc": {
+      "description": "Clean unused cached repos.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_gc.json"
     },
-    {
-      "name": "init-templatedir",
-      "description": "Install hook script in a directory intended for use with `git config init.templateDir`."
+    "init-templatedir": {
+      "description": "Install hook script in a directory intended for use with `git config init.templateDir`.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_init-templatedir.json"
     },
-    {
-      "name": "install",
-      "description": "Install the pre-commit script."
+    "install": {
+      "description": "Install the pre-commit script.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_install.json"
     },
-    {
-      "name": "install-hooks",
-      "description": "Install hook environments for all environments in the config file."
+    "install-hooks": {
+      "description": "Install hook environments for all environments in the config file.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_install-hooks.json"
     },
-    {
-      "name": "migrate-config",
-      "description": "Migrate list configuration to new map configuration."
+    "migrate-config": {
+      "description": "Migrate list configuration to new map configuration.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_migrate-config.json"
     },
-    {
-      "name": "run",
-      "description": "Run hooks."
+    "run": {
+      "description": "Run hooks.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_run.json"
     },
-    {
-      "name": "sample-config",
-      "description": "Produce a sample .pre-commit-config.yaml file"
+    "sample-config": {
+      "description": "Produce a sample .pre-commit-config.yaml file",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_sample-config.json"
     },
-    {
-      "name": "try-repo",
-      "description": "Try the hooks in a repository, useful for developing new hooks."
+    "try-repo": {
+      "description": "Try the hooks in a repository, useful for developing new hooks.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_try-repo.json"
     },
-    {
-      "name": "uninstall",
-      "description": "Uninstall the pre-commit script."
+    "uninstall": {
+      "description": "Uninstall the pre-commit script.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_uninstall.json"
     },
-    {
-      "name": "validate-config",
-      "description": "Validate .pre-commit-config.yaml files"
+    "validate-config": {
+      "description": "Validate .pre-commit-config.yaml files",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_validate-config.json"
     },
-    {
-      "name": "validate-manifest",
-      "description": "Validate .pre-commit-hooks.yaml files"
+    "validate-manifest": {
+      "description": "Validate .pre-commit-hooks.yaml files",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_validate-manifest.json"
     },
-    {
-      "name": "help",
-      "description": "Show help for a specific command."
+    "help": {
+      "description": "Show help for a specific command.",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_help.json"
     },
-    {
-      "name": "hook-impl",
-      "description": ""
+    "hook-impl": {
+      "description": "",
+      "json_definition": "src/zeroth_law/tools/pre-commit/pre-commit_hook-impl.json"
     }
-  ],
+  },
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0x426124A0"
+    "ground_truth_crc": "0x426124A0",
+    "tool_name": "pre-commit",
+    "command_name": "pre-commit"
   }
 }

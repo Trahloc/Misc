@@ -1,0 +1,27 @@
+{
+  "command": "poetry",
+  "subcommand": "config",
+  "description": "Manages configuration settings.",
+  "usage": "config [options] [--] [<key> [<value>...]]",
+  "options": [],
+  "arguments": [
+    {
+      "name": "key",
+      "description": "Setting key.",
+      "required": false,
+      "nargs": "?"
+    },
+    {
+      "name": "value",
+      "description": "Setting value.",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0x38ACE07F",
+    "schema_version": "1.0",
+    "tool_name": "poetry",
+    "command_name": "config"
+  }
+}

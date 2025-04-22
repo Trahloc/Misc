@@ -1,0 +1,97 @@
+{
+    "arguments": [
+        {
+            "name": "FILE_OR_DIR",
+            "description": "files to check",
+            "required": false,
+            "nargs": "*"
+        }
+    ],
+    "command": "yamllint",
+    "description": "A linter for YAML files. yamllint does not only check for syntax validity, but for weirdnesses like key repetition and cosmetic problems such as lines length, trailing spaces, indentation, etc.",
+    "metadata": {
+        "ground_truth_crc": "0x77351DE5",
+        "schema_version": "1.0",
+        "tool_name": "yamllint",
+        "command_name": "yamllint"
+    },
+    "options": [
+        {
+            "aliases": [
+                "-h"
+            ],
+            "argument": null,
+            "description": "show this help message and exit",
+            "name": "--help",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "read from standard input",
+            "name": "-",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-c"
+            ],
+            "argument": "CONFIG_FILE",
+            "description": "path to a custom configuration",
+            "name": "--config-file",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-d"
+            ],
+            "argument": "CONFIG_DATA",
+            "description": "custom configuration (as YAML source)",
+            "name": "--config-data",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "list files to lint and exit",
+            "name": "--list-files",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-f"
+            ],
+            "argument": "{parsable,standard,colored,github,auto}",
+            "description": "format for parsing output",
+            "name": "--format",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-s"
+            ],
+            "argument": null,
+            "description": "return non-zero exit code on warnings as well as errors",
+            "name": "--strict",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "output only error level problems",
+            "name": "--no-warnings",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-v"
+            ],
+            "argument": null,
+            "description": "show program's version number and exit",
+            "name": "--version",
+            "required": false
+        }
+    ],
+    "subcommand": null,
+    "usage": "yamllint [-h] [-] [-c CONFIG_FILE | -d CONFIG_DATA] [--list-files] [-f {parsable,standard,colored,github,auto}] [-s] [--no-warnings] [-v] [FILE_OR_DIR ...]"
+}

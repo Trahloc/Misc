@@ -1,51 +1,52 @@
 {
-  "command_sequence": [
-    "mutmut"
-  ],
+  "command": "mutmut",
+  "subcommand": null,
   "description": "Mutation testing tool for Python.",
   "usage": "mutmut [OPTIONS] COMMAND [ARGS]...",
-  "options": {
-    "--help": {
-      "short": null,
-      "long": "--help",
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [],
       "description": "Show this message and exit.",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
-  },
-  "arguments": {},
-  "subcommands": {
+  ],
+  "arguments": [],
+  "subcommands_detail": {
     "apply": {
-      "name": "apply",
-      "summary": "Apply specified mutants."
+      "description": "Apply specified mutants.",
+      "json_definition": "src/zeroth_law/tools/mutmut/mutmut_apply.json"
     },
     "browse": {
-      "name": "browse",
-      "summary": "Browse mutants in a browser."
+      "description": "Browse mutants in a browser.",
+      "json_definition": "src/zeroth_law/tools/mutmut/mutmut_browse.json"
     },
     "print-time-estimates": {
-      "name": "print-time-estimates",
-      "summary": "Print time estimates for mutation testing phases."
+      "description": "Print time estimates for mutation testing phases.",
+      "json_definition": "src/zeroth_law/tools/mutmut/mutmut_print-time-estimates.json"
     },
     "results": {
-      "name": "results",
-      "summary": "Show mutation testing results."
+      "description": "Show mutation testing results.",
+      "json_definition": "src/zeroth_law/tools/mutmut/mutmut_results.json"
     },
     "run": {
-      "name": "run",
-      "summary": "Run mutation testing."
+      "description": "Run mutation testing.",
+      "json_definition": "src/zeroth_law/tools/mutmut/mutmut_run.json"
     },
     "show": {
-      "name": "show",
-      "summary": "Show specified mutants."
+      "description": "Show specified mutants.",
+      "json_definition": "src/zeroth_law/tools/mutmut/mutmut_show.json"
     },
     "tests-for-mutant": {
-      "name": "tests-for-mutant",
-      "summary": "Identify tests covering a specific mutant."
+      "description": "Identify tests covering a specific mutant.",
+      "json_definition": "src/zeroth_law/tools/mutmut/mutmut_tests-for-mutant.json"
     }
   },
   "metadata": {
-    "file_status": "populated",
     "ground_truth_crc": "0x43DB6A8D",
-    "notes": "Uses subcommands"
+    "tool_name": "mutmut",
+    "command_name": "mutmut"
   }
 }

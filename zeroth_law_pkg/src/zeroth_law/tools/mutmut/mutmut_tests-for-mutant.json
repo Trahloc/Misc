@@ -1,0 +1,29 @@
+{
+  "arguments": [
+    {
+      "description": "Name of the mutant.",
+      "name": "MUTANT_NAME",
+      "nargs": "1",
+      "required": true
+    }
+  ],
+  "command": "mutmut",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "tests-for-mutant",
+    "ground_truth_crc": "0x46051973",
+    "schema_version": "1.0",
+    "tool_name": "mutmut"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Show this message and exit.",
+      "name": "--help",
+      "required": false
+    }
+  ],
+  "subcommand": "tests-for-mutant",
+  "usage": "mutmut tests-for-mutant [OPTIONS] MUTANT_NAME"
+}

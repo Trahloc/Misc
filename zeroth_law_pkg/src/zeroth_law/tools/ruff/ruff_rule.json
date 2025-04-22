@@ -1,0 +1,21 @@
+{
+    "metadata": {
+        "tool_name": "Ruff",
+        "command_name": "rule",
+        "ground_truth_crc": "0xC35ED592",
+        "schema_version": "1.0"
+    },
+    "description": "Explain a rule (or all rules). Provides detailed explanations for specific Ruff rules.",
+    "usage": "ruff rule [OPTIONS] <RULE|--all>",
+    "arguments": [
+        {
+            "name": "RULE",
+            "description": "Rule to explain",
+            "required": false,
+            "nargs": "?"
+        }
+    ],
+    "options": [],
+    "command": "ruff",
+    "subcommand": "rule"
+}

@@ -1,0 +1,45 @@
+{
+  "arguments": [
+    {
+      "description": "Optional command name to get specific help.",
+      "name": "command",
+      "nargs": "?",
+      "required": false
+    }
+  ],
+  "command": "coverage",
+  "description": "Describe how to use coverage.py",
+  "metadata": {
+    "command_name": "help",
+    "ground_truth_crc": "0xABF9FB74",
+    "schema_version": "1.0",
+    "tool_name": "coverage"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "argument": "OPTS",
+      "description": "Debug options, separated by commas. [env: COVERAGE_DEBUG]",
+      "name": "--debug",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "Get help on this command.",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RCFILE",
+      "description": "Specify configuration file. By default '.coveragerc', 'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried. [env: COVERAGE_RCFILE]",
+      "name": "--rcfile",
+      "required": false
+    }
+  ],
+  "subcommand": "help",
+  "usage": "coverage help [command]"
+}

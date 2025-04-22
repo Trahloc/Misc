@@ -1,0 +1,8 @@
+Usage: zlt restore-git-hooks [OPTIONS]
+
+  Restores standard pre-commit hooks, removing the ZLT dispatcher.
+
+Options:
+  --git-root DIRECTORY  Path to the Git repository root (auto-detected if not
+                        specified).
+  -h, --help            Show this message and exit.

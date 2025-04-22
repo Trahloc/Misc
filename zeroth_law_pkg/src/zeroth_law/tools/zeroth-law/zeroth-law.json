@@ -1,0 +1,14 @@
+{
+  "arguments": [],
+  "command": "zeroth-law",
+  "description": "(Placeholder description for zeroth-law)",
+  "metadata": {
+    "command_name": "zeroth-law",
+    "ground_truth_crc": "0xB032F5C2",
+    "schema_version": "1.0",
+    "tool_name": "zeroth-law"
+  },
+  "options": [],
+  "subcommand": null,
+  "usage": "zeroth-law  [OPTIONS]"
+}

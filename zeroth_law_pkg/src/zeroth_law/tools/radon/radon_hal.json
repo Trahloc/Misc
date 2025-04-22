@@ -1,0 +1,98 @@
+{
+  "command": "radon",
+  "subcommand": "hal",
+  "description": "The Halstead metrics are a series of measurements meant to quantitatively measure the complexity of code, including the difficulty a programmer would have in writing it.",
+  "usage": "radon hal [-h] [-e <str>] [-i <str>] [-j] [-f] [-O <str>] [--include-ipynb] [--ipynb-cells] paths [paths ...]",
+  "arguments": [
+    {
+      "name": "paths",
+      "description": "The paths where to find modules or packages to analyze. More than one path is allowed.",
+      "required": true,
+      "nargs": "+"
+    }
+  ],
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--exclude",
+      "aliases": [
+        "-e"
+      ],
+      "description": "Exclude files only when their path matches one of these glob patterns. Usually needs quoting at the command line.",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore",
+      "aliases": [
+        "-i"
+      ],
+      "description": "Ignore directories when their name matches one of these glob patterns: radon won't even descend into them. By default, hidden directories (starting with '.') are ignored.",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--json",
+      "aliases": [
+        "-j"
+      ],
+      "description": "Format results in JSON.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--functions",
+      "aliases": [
+        "-f"
+      ],
+      "description": "Analyze files by top-level functions instead of as a whole.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--output-file",
+      "aliases": [
+        "-O"
+      ],
+      "description": "The output file (default to stdout).",
+      "argument": "<str>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--include-ipynb",
+      "aliases": [],
+      "description": "Include IPython Notebook files",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ipynb-cells",
+      "aliases": [],
+      "description": "Include reports for individual IPYNB cells",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    }
+  ],
+  "subcommands_detail": {},
+  "metadata": {
+    "ground_truth_crc": "0xE565006D",
+    "tool_name": "radon",
+    "command_name": "hal"
+  }
+}

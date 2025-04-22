@@ -1,0 +1,84 @@
+{
+  "arguments": [
+    {
+      "description": "Optional list of modules to annotate.",
+      "name": "modules",
+      "nargs": "*",
+      "required": false
+    }
+  ],
+  "command": "coverage",
+  "description": "Make annotated copies of the given files, marking statements that are executed with > and statements that are missed with !.",
+  "metadata": {
+    "command_name": "annotate",
+    "ground_truth_crc": "0xD717A5E4",
+    "schema_version": "1.0",
+    "tool_name": "coverage"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-d"
+      ],
+      "argument": "DIR",
+      "description": "Write the output files to DIR.",
+      "name": "--directory",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "INFILE",
+      "description": "Read coverage data for report generation from this file. Defaults to '.coverage'. [env: COVERAGE_FILE]",
+      "name": "--data-file",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-i"
+      ],
+      "argument": null,
+      "description": "Ignore errors while reading source files.",
+      "name": "--ignore-errors",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Include only files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--include",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Omit files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--omit",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "OPTS",
+      "description": "Debug options, separated by commas. [env: COVERAGE_DEBUG]",
+      "name": "--debug",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "Get help on this command.",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RCFILE",
+      "description": "Specify configuration file. By default '.coveragerc', 'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried. [env: COVERAGE_RCFILE]",
+      "name": "--rcfile",
+      "required": false
+    }
+  ],
+  "subcommand": "annotate",
+  "usage": "coverage annotate [options] [modules]"
+}

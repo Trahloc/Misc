@@ -1,0 +1,22 @@
+{
+  "description": "Displays a top like view of functions consuming CPU",
+  "usage": "py-spy top [OPTIONS] [python_program]...",
+  "options": [],
+  "arguments": [
+    {
+      "name": "python_program",
+      "description": "commandline of a python program to run",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "schema_version": "1.0",
+    "tool_name": "py-spy",
+    "command_name": "top",
+    "ground_truth_crc": "0xA53954FF"
+  },
+  "command": "py-spy",
+  "subcommand": "top",
+  "subcommands_detail": {}
+}

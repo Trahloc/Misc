@@ -1,0 +1,143 @@
+{
+  "arguments": [
+    {
+      "description": "Python file to run and measure.",
+      "name": "pyfile",
+      "nargs": "1",
+      "required": true
+    },
+    {
+      "description": "Optional arguments passed to the pyfile.",
+      "name": "program options",
+      "nargs": "*",
+      "required": false
+    }
+  ],
+  "command": "coverage",
+  "description": "Run a Python program, measuring code execution.",
+  "metadata": {
+    "command_name": "run",
+    "ground_truth_crc": "0x0775CE81",
+    "schema_version": "1.0",
+    "tool_name": "coverage"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-a"
+      ],
+      "argument": null,
+      "description": "Append coverage data to .coverage, otherwise it starts clean each time.",
+      "name": "--append",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Measure branch coverage in addition to statement coverage.",
+      "name": "--branch",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "LIBS",
+      "description": "Properly measure code using a concurrency library. Valid values are: eventlet, gevent, greenlet, multiprocessing, thread, or a comma-list of them.",
+      "name": "--concurrency",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "LABEL",
+      "description": "The context label to record for this coverage run.",
+      "name": "--context",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "OUTFILE",
+      "description": "Write the recorded coverage data to this file. Defaults to '.coverage'. [env: COVERAGE_FILE]",
+      "name": "--data-file",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Include only files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--include",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-m"
+      ],
+      "argument": null,
+      "description": "<pyfile> is an importable Python module, not a script path, to be run as 'python -m' would run it.",
+      "name": "--module",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PAT1,PAT2,...",
+      "description": "Omit files whose paths match one of these patterns. Accepts shell-style wildcards, which must be quoted.",
+      "name": "--omit",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-L"
+      ],
+      "argument": null,
+      "description": "Measure coverage even inside the Python installed library, which isn't done by default.",
+      "name": "--pylib",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-p"
+      ],
+      "argument": null,
+      "description": "Append the machine name, process id and random number to the data file name to simplify collecting data from many processes.",
+      "name": "--parallel-mode",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "SRC1,SRC2,...",
+      "description": "A list of directories or importable names of code to measure.",
+      "name": "--source",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Use the slower Python trace function core.",
+      "name": "--timid",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "OPTS",
+      "description": "Debug options, separated by commas. [env: COVERAGE_DEBUG]",
+      "name": "--debug",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "Get help on this command.",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "RCFILE",
+      "description": "Specify configuration file. By default '.coveragerc', 'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried. [env: COVERAGE_RCFILE]",
+      "name": "--rcfile",
+      "required": false
+    }
+  ],
+  "subcommand": "run",
+  "usage": "coverage run [options] <pyfile> [program options]"
+}

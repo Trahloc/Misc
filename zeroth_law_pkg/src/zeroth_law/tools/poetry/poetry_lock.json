@@ -1,0 +1,14 @@
+{
+  "command": "poetry",
+  "subcommand": "lock",
+  "description": "Locks the project dependencies.",
+  "usage": "lock [options]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0xA8D330D0",
+    "schema_version": "1.0",
+    "tool_name": "poetry",
+    "command_name": "lock"
+  }
+}

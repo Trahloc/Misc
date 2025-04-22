@@ -1,0 +1,88 @@
+{
+  "command": "jsonschema",
+  "subcommand": null,
+  "description": "JSON Schema Validation CLI",
+  "usage": "jsonschema [-h] [-i INSTANCES] [-F ERROR_FORMAT] [-o {plain,pretty}] [-V VALIDATOR] [--base-uri BASE_URI] [--version] schema",
+  "arguments": [
+    {
+      "name": "schema",
+      "description": "the path to a JSON Schema to validate with (i.e. schema.json)",
+      "required": true,
+      "nargs": 1
+    }
+  ],
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--instance",
+      "aliases": [
+        "-i"
+      ],
+      "description": "a path to a JSON instance (i.e. filename.json) to validate (may be specified multiple times). If no instances are provided via this option, one will be expected on standard input.",
+      "argument": "INSTANCES",
+      "required": false,
+      "allow_multiple": true
+    },
+    {
+      "name": "--error-format",
+      "aliases": [
+        "-F"
+      ],
+      "description": "the format to use for each validation error message, specified in a form suitable for str.format. This string will be passed one formatted object named 'error' for each ValidationError. Only provide this option when using --output=plain, which is the default. If this argument is unprovided and --output=plain is used, a simple default representation will be used.",
+      "argument": "ERROR_FORMAT",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--output",
+      "aliases": [
+        "-o"
+      ],
+      "description": "an output format to use. 'plain' (default) will produce minimal text with one line for each error, while 'pretty' will produce more detailed human-readable output on multiple lines.",
+      "argument": "{plain,pretty}",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--validator",
+      "aliases": [
+        "-V"
+      ],
+      "description": "the fully qualified object name of a validator to use, or, for validators that are registered with jsonschema, simply the name of the class.",
+      "argument": "VALIDATOR",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--base-uri",
+      "aliases": [],
+      "description": "a base URI to assign to the provided schema, even if it does not declare one (via e.g. $id). This option can be used if you wish to resolve relative references to a particular URI (or local path)",
+      "argument": "BASE_URI",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--version",
+      "aliases": [],
+      "description": "show program's version number and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    }
+  ],
+  "subcommands_detail": {},
+  "metadata": {
+    "ground_truth_crc": "0x08DD5625",
+    "tool_name": "jsonschema",
+    "command_name": "jsonschema"
+  }
+}

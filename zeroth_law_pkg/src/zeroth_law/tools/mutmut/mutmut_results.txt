@@ -1,0 +1,5 @@
+Usage: mutmut results [OPTIONS]
+
+Options:
+  --all BOOLEAN
+  --help         Show this message and exit.

@@ -1,120 +1,504 @@
 {
-  "tool_id": "pylint",
-  "command": [
-    "pylint"
-  ],
-  "description": "A static code analysis tool for Python.",
-  "usage": [
+  "command": "pylint",
+  "subcommand": null,
+  "description": "Pylint: Python code static analysis.",
+  "usage": "pylint [options] [files_or_modules...]",
+  "arguments": [
     {
-      "format": "pylint [options] <module_or_package>..."
+      "name": "files_or_modules",
+      "description": "Files or modules to analyze.",
+      "required": false,
+      "nargs": "*"
     }
   ],
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
-      "description": "Show this help message and exit."
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--rcfile",
-      "metavar": "RCFILE",
-      "description": "Specify a configuration file to load."
+      "name": "--rcfile",
+      "aliases": [],
+      "description": "Specify a configuration file to load.",
+      "argument": "RCFILE",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--output",
-      "metavar": "OUTPUT",
-      "description": "Specify an output file."
+      "name": "--output",
+      "aliases": [],
+      "description": "Specify an output file.",
+      "argument": "OUTPUT",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--help-msg",
-      "metavar": "HELP_MSG",
-      "description": "Display a help message for the given message id and exit."
+      "name": "--help-msg",
+      "aliases": [],
+      "description": "Display a help message for the given message id and exit. The value may be a comma separated list of message ids.",
+      "argument": "HELP_MSG",
+      "required": false,
+      "allow_multiple": true
     },
     {
-      "long": "--list-msgs",
-      "description": "Display a list of all pylint's messages."
+      "name": "--list-msgs",
+      "aliases": [],
+      "description": "Display a list of all pylint's messages divided by whether they are emittable with the given interpreter.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--generate-rcfile",
-      "description": "Generate a sample configuration file."
+      "name": "--list-msgs-enabled",
+      "aliases": [],
+      "description": "Display a list of what messages are enabled, disabled and non-emittable with the given configuration.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-E",
-      "long": "--errors-only",
-      "description": "In error mode, messages with a category besides ERROR or FATAL are suppressed."
+      "name": "--list-groups",
+      "aliases": [],
+      "description": "List pylint's message groups.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-v",
-      "long": "--verbose",
-      "description": "In verbose mode, extra non-checker-related info will be displayed."
+      "name": "--list-conf-levels",
+      "aliases": [],
+      "description": "Generate pylint's confidence levels.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--ignore",
-      "metavar": "<file>[,<file>...]",
-      "description": "Files or directories to be skipped. They should be base names, not paths."
+      "name": "--list-extensions",
+      "aliases": [],
+      "description": "List available extensions.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--ignore-patterns",
-      "metavar": "<pattern>[,<pattern>...]",
-      "description": "Files or directories matching the regular expression patterns are skipped."
+      "name": "--full-documentation",
+      "aliases": [],
+      "description": "Generate pylint's full documentation.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--load-plugins",
-      "metavar": "<modules>",
-      "description": "List of plugins (as comma separated values of python module names) to load."
+      "name": "--generate-rcfile",
+      "aliases": [],
+      "description": "Generate a sample configuration file according to the current configuration. You can put other options before this one to get them in the generated configuration.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--fail-under",
-      "metavar": "<score>",
-      "description": "Specify a score threshold under which the program will exit with error."
+      "name": "--generate-toml-config",
+      "aliases": [],
+      "description": "Generate a sample configuration file according to the current configuration. You can put other options before this one to get them in the generated configuration. The config is in the .toml format.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-j",
-      "long": "--jobs",
-      "metavar": "<n-processes>",
-      "description": "Use multiple processes to speed up Pylint."
+      "name": "--long-help",
+      "aliases": [],
+      "description": "Show more verbose help.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-f",
-      "long": "--output-format",
-      "metavar": "<format>",
-      "description": "Set the output format (e.g., 'text', 'json', 'colorized')."
+      "name": "--init-hook",
+      "aliases": [],
+      "description": "Python code to execute, usually for sys.path manipulation such as pygtk.require().",
+      "argument": "INIT_HOOK",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-r",
-      "long": "--reports",
-      "metavar": "<y or n>",
-      "description": "Tells whether to display a full report or only the messages."
+      "name": "--errors-only",
+      "aliases": [
+        "-E"
+      ],
+      "description": "In error mode, messages with a category besides ERROR or FATAL are suppressed, and no reports are done by default. Error mode is compatible with disabling specific errors.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-s",
-      "long": "--score",
-      "metavar": "<y or n>",
-      "description": "Activate the evaluation score."
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
+      "description": "In verbose mode, extra non-checker-related info will be displayed.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-e",
-      "long": "--enable",
-      "metavar": "<msg ids>",
-      "description": "Enable the message, report, category or checker with the given id(s)."
+      "name": "--enable-all-extensions",
+      "aliases": [],
+      "description": "Load and enable all available extensions. Use --list-extensions to see a list all available extensions.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-d",
-      "long": "--disable",
-      "metavar": "<msg ids>",
-      "description": "Disable the message, report, category or checker with the given id(s)."
+      "name": "--ignore",
+      "aliases": [],
+      "description": "Files or directories to be skipped. They should be base names, not paths. (default: ('CVS',))",
+      "argument": "<file>[,<file>...]",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore-patterns",
+      "aliases": [],
+      "description": "Files or directories matching the regular expression patterns are skipped. The regex matches against base names, not paths. The default value ignores Emacs file locks (default: (re.compile('^\\.#'),))",
+      "argument": "<pattern>[,<pattern>...]",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore-paths",
+      "aliases": [],
+      "description": "Add files or directories matching the regular expressions patterns to the ignore-list. The regex matches against paths and can be in Posix or Windows format. Because '\\\\' represents the directory delimiter on Windows systems, it can't be used as an escape character. (default: [])",
+      "argument": "<pattern>[,<pattern>...]",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--persistent",
+      "aliases": [],
+      "description": "Pickle collected data for later comparisons. (default: True)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--load-plugins",
+      "aliases": [],
+      "description": "List of plugins (as comma separated values of python module names) to load, usually to register additional checkers. (default: ())",
+      "argument": "<modules>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--fail-under",
+      "aliases": [],
+      "description": "Specify a score threshold under which the program will exit with error. (default: 10)",
+      "argument": "<score>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--fail-on",
+      "aliases": [],
+      "description": "Return non-zero exit code if any of these messages/categories are detected, even if score is above --fail-under value. Syntax same as enable. Messages specified are enabled, while categories only check already-enabled messages. (default: )",
+      "argument": "<msg ids>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--jobs",
+      "aliases": [
+        "-j"
+      ],
+      "description": "Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the number of processors available to use, and will cap the count on Windows to avoid hangs. (default: 1)",
+      "argument": "<n-processes>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--limit-inference-results",
+      "aliases": [],
+      "description": "Control the amount of potential inferred values when inferring a single object. This can help the performance when dealing with large functions or complex, nested conditions. (default: 100)",
+      "argument": "<number-of-results>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--extension-pkg-allow-list",
+      "aliases": [],
+      "description": "A comma-separated list of package or module names from where C extensions may be loaded. Extensions are loading into the active Python interpreter and may run arbitrary code. (default: [])",
+      "argument": "<pkg[,pkg]>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--extension-pkg-whitelist",
+      "aliases": [],
+      "description": "A comma-separated list of package or module names from where C extensions may be loaded. Extensions are loading into the active Python interpreter and may run arbitrary code. (This is an alternative name to extension-pkg-allow-list for backward compatibility.) (default: [])",
+      "argument": "<pkg[,pkg]>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--suggestion-mode",
+      "aliases": [],
+      "description": "When enabled, pylint would attempt to guess common misconfiguration and emit user-friendly hints instead of false-positive error messages. (default: True)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--exit-zero",
+      "aliases": [],
+      "description": "Always return a 0 (non-error) status code, even if lint errors are found. This is primarily useful in continuous integration scripts. (default: False)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--from-stdin",
+      "aliases": [],
+      "description": "Interpret the stdin as a python script, whose filename needs to be passed as the module_or_package argument. (default: False)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--source-roots",
+      "aliases": [],
+      "description": "Add paths to the list of the source roots. Supports globbing patterns. The source root is an absolute path or a path relative to the current working directory used to determine a package namespace for modules located under the source root. (default: ())",
+      "argument": "<path>[,<path>...]",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--recursive",
+      "aliases": [],
+      "description": "Discover python modules and packages in the file system subtree. (default: False)",
+      "argument": "<yn>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--py-version",
+      "aliases": [],
+      "description": "Minimum Python version to use for version dependent checks. Will default to the version used to run pylint. (default: (3, 13))",
+      "argument": "<py_version>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignored-modules",
+      "aliases": [],
+      "description": "List of module names for which member attributes should not be checked and will not be imported (useful for modules/projects where namespaces are manipulated during runtime and thus existing member attributes cannot be deduced by static analysis). It supports qualified module names, as well as Unix pattern matching. (default: ())",
+      "argument": "<module names>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--analyse-fallback-blocks",
+      "aliases": [],
+      "description": "Analyse import fallback blocks. This can be used to support both Python 2 and 3 compatible code, which means that the block might have code that exists only in one or another interpreter, leading to false positives when analysed. (default: False)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--clear-cache-post-run",
+      "aliases": [],
+      "description": "Clear in-memory caches upon conclusion of linting. Useful if running pylint in a server-like mode. (default: False)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--prefer-stubs",
+      "aliases": [],
+      "description": "Resolve imports to .pyi stubs if available. May reduce no-member messages and increase not-an-iterable messages. (default: False)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--output-format",
+      "aliases": [
+        "-f"
+      ],
+      "description": "Set the output format. Available formats are: 'text', 'parseable', 'colorized', 'json2' (improved json format), 'json' (old json format), msvs (visual studio) and 'github' (GitHub actions). You can also give a reporter class, e.g. mypackage.mymodule.MyReporterClass.",
+      "argument": "<format>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--reports",
+      "aliases": [
+        "-r"
+      ],
+      "description": "Tells whether to display a full report or only the messages. (default: False)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--evaluation",
+      "aliases": [],
+      "description": "Python expression which should return a score less than or equal to 10. You have access to the variables 'fatal', 'error', 'warning', 'refactor', 'convention', and 'info' which contain the number of messages in each category, as well as 'statement' which is the total number of statements analyzed. This score is used by the global evaluation report (RP0004). (default: max(0, 0 if fatal else 10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)))",
+      "argument": "<python_expression>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--score",
+      "aliases": [
+        "-s"
+      ],
+      "description": "Activate the evaluation score. (default: True)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--msg-template",
+      "aliases": [],
+      "description": "Template used to display messages. This is a python new-style format string used to format the message information. See doc for all details. (default: )",
+      "argument": "<template>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--confidence",
+      "aliases": [],
+      "description": "Only show warnings with the listed confidence levels. Leave empty to show all. Valid levels: HIGH, CONTROL_FLOW, INFERENCE, INFERENCE_FAILURE, UNDEFINED. (default: ['HIGH', 'CONTROL_FLOW', 'INFERENCE', 'INFERENCE_FAILURE', 'UNDEFINED'])",
+      "argument": "<levels>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--enable",
+      "aliases": [
+        "-e"
+      ],
+      "description": "Enable the message, report, category or checker with the given id(s). You can either give multiple identifier separated by comma (,) or put this option multiple time (only on the command line, not in the configuration file where it should appear only once). See also the \"--disable\" option for examples.",
+      "argument": "<msg ids>",
+      "required": false,
+      "allow_multiple": true
+    },
+    {
+      "name": "--disable",
+      "aliases": [
+        "-d"
+      ],
+      "description": "Disable the message, report, category or checker with the given id(s). You can either give multiple identifiers separated by comma (,) or put this option multiple times (only on the command line, not in the configuration file where it should appear only once). You can also use \"--disable=all\" to disable everything first and then re-enable specific checks. For example, if you want to run only the similarities checker, you can use \"--disable=all --enable=similarities\". If you want to run only the classes checker, but have no Warning level messages displayed, use \"--disable=all --enable=classes --disable=W\".",
+      "argument": "<msg ids>",
+      "required": false,
+      "allow_multiple": true
+    },
+    {
+      "name": "--ignore-on-opaque-inference",
+      "aliases": [],
+      "description": "This flag controls whether pylint should warn about no-member and similar checks whenever an opaque object is returned when inferring. The inference can return multiple potential results while evaluating a Python object, but some branches might not be evaluated, which results in partial inference. In that case, it might be useful to still emit no-member and other checks for the rest of the inferred objects. (default: True)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--mixin-class-rgx",
+      "aliases": [],
+      "description": "Regex pattern to define which classes are considered mixins. (default: .*[Mm]ixin)",
+      "argument": "<regexp>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore-mixin-members",
+      "aliases": [],
+      "description": "Tells whether missing members accessed in mixin class should be ignored. A class is considered mixin if its name matches the mixin-class-rgx option. (default: True)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignored-checks-for-mixins",
+      "aliases": [],
+      "description": "List of symbolic message names to ignore for Mixin members. (default: ['no-member', 'not-async-context-manager', 'not-context-manager', 'attribute-defined-outside-init'])",
+      "argument": "<list of messages names>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignore-none",
+      "aliases": [],
+      "description": "Tells whether to warn about missing members when the owner of the attribute is inferred to be None. (default: True)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--ignored-classes",
+      "aliases": [],
+      "description": "List of class names for which member attributes should not be checked (useful for classes with dynamically set attributes). This supports the use of qualified names. (default: ('optparse.Values', 'thread._local', '_thread._local', 'argparse.Namespace'))",
+      "argument": "<members names>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--generated-members",
+      "aliases": [],
+      "description": "List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger E1101 when accessed. Python regular expressions are accepted. (default: ())",
+      "argument": "<members names>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--contextmanager-decorators",
+      "aliases": [],
+      "description": "List of decorators that produce context managers, such as contextlib.contextmanager. Add to this list to register other decorators that produce valid context managers. (default: ['contextlib.contextmanager'])",
+      "argument": "<decorator names>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--missing-member-hint-distance",
+      "aliases": [],
+      "description": "The minimum edit distance a name should have in order to be considered a similar match for a missing member name. (default: 1)",
+      "argument": "<member hint edit distance>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--missing-member-max-choices",
+      "aliases": [],
+      "description": "The total number of similar names Pylint should display as hints for a missing member name. (default: 1)",
+      "argument": "<member hint max choices>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--missing-member-hint",
+      "aliases": [],
+      "description": "Show suggestions for attributes marked as missing. (default: True)",
+      "argument": "<y or n>",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--signature-mutators",
+      "aliases": [],
+      "description": "List of decorators that change the signature of the decorated function.",
+      "argument": "<decorator names>",
+      "required": false,
+      "allow_multiple": false
     }
   ],
-  "arguments": [
-    {
-      "name": "module_or_package",
-      "description": "Python module(s) or package(s) to analyze.",
-      "optional": false,
-      "nargs": "+"
-    }
-  ],
+  "subcommands_detail": {},
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0x4BC767DB"
+    "ground_truth_crc": "0x239DCAA8",
+    "tool_name": "pylint",
+    "command_name": "pylint"
   }
 }

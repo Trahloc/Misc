@@ -1,0 +1,68 @@
+{
+    "arguments": [
+        {
+            "description": "Positional arguments for the hook implementation.",
+            "name": "rest",
+            "nargs": "*",
+            "required": false
+        }
+    ],
+    "command": "pre-commit",
+    "description": "(No description provided in --help)",
+    "metadata": {
+        "command_name": "hook-impl",
+        "ground_truth_crc": "0x062D74BA",
+        "schema_version": "1.0",
+        "tool_name": "pre-commit"
+    },
+    "options": [
+        {
+            "aliases": [
+                "-h"
+            ],
+            "argument": null,
+            "description": "show this help message and exit",
+            "name": "--help",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "{auto,always,never}",
+            "description": "Whether to use color in output. Defaults to `auto`.",
+            "name": "--color",
+            "required": false
+        },
+        {
+            "aliases": [
+                "-c"
+            ],
+            "argument": "CONFIG",
+            "description": "Path to alternate config file",
+            "name": "--config",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "HOOK_TYPE",
+            "description": "",
+            "name": "--hook-type",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": "HOOK_DIR",
+            "description": "",
+            "name": "--hook-dir",
+            "required": false
+        },
+        {
+            "aliases": [],
+            "argument": null,
+            "description": "",
+            "name": "--skip-on-missing-config",
+            "required": false
+        }
+    ],
+    "subcommand": "hook-impl",
+    "usage": "pre-commit hook-impl [-h] [--color {auto,always,never}] [-c CONFIG] [--hook-type HOOK_TYPE] [--hook-dir HOOK_DIR] [--skip-on-missing-config] ..."
+}

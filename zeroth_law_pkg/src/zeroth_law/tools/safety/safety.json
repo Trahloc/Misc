@@ -1,93 +1,126 @@
 {
-  "tool_id": "safety",
-  "command": [
-    "safety"
-  ],
-  "description": "Vulnerability Scanning for Secure Python Development",
-  "usage": [
-    {
-      "format": "safety [OPTIONS] COMMAND [ARGS]..."
-    }
-  ],
+  "command": "safety",
+  "subcommand": null,
+  "description": "Safety CLI 3 - Vulnerability Scanning for Secure Python Development. Leverage the most comprehensive vulnerability data available to secure your projects against vulnerable and malicious packages.",
+  "usage": "safety [OPTIONS] COMMAND [ARGS]...",
+  "arguments": [],
   "options": [
     {
-      "long": "--stage",
-      "description": "Assign a development lifecycle stage to your scan (default: development)."
+      "name": "--stage",
+      "aliases": [],
+      "description": "Assign a development lifecycle stage to your scan (default: development). This labels the scan and its findings in Safety Platform with this stage.",
+      "argument": "STAGE",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--key",
-      "description": "API key required for cicd or production stage scans."
+      "name": "--key",
+      "aliases": [],
+      "description": "The API key required for cicd stage or production stage scans. For development stage scans unset the API key and authenticate using safety auth. Tip: can also be set using the environment variable SAFETY_API_KEY.",
+      "argument": "API_KEY",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--proxy-host",
-      "description": "Specify a proxy host for network communications."
+      "name": "--proxy-host",
+      "aliases": [],
+      "description": "Specify a proxy host for network communications. Note: proxy details can be set globally in a config file (see safety configure --help).",
+      "argument": "HOST",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--proxy-port",
-      "description": "Set the proxy port (default: 80). Requires --proxy-host."
+      "name": "--proxy-port",
+      "aliases": [],
+      "description": "Set the proxy port (default: 80). Requires --proxy-host. Note: proxy details can be set globally.",
+      "argument": "PORT",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--proxy-protocol",
-      "description": "Choose the proxy protocol (default: https). Requires --proxy-host."
+      "name": "--proxy-protocol",
+      "aliases": [],
+      "description": "Choose the proxy protocol (default: https). Requires --proxy-host. Note: proxy details can be set globally.",
+      "argument": "PROTOCOL",
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--disable-optional-telemetry",
-      "description": "Opt-out of sending optional telemetry data."
+      "name": "--disable-optional-telemetry",
+      "aliases": [],
+      "description": "Opt-out of sending optional telemetry data. Anonymized telemetry data will remain.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--debug",
-      "description": "Enable debug mode for detailed output."
+      "name": "--debug",
+      "aliases": [],
+      "description": "Enable debug mode for detailed output.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--version",
-      "description": "Show the version and exit."
+      "name": "--version",
+      "aliases": [],
+      "description": "Show the version and exit.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "long": "--help",
-      "description": "Show this message and exit."
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "Show help message and exit.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
   ],
-  "arguments": [],
-  "subcommands": [
-    {
-      "name": "auth",
-      "description": "Authenticate Safety CLI to perform scans."
+  "subcommands_detail": {
+    "auth": {
+      "description": "Authenticate Safety CLI to perform scans. Your default browser will automatically open to https://platform.safetycli.com.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_auth.json"
     },
-    {
-      "name": "scan",
-      "description": "Scans a Python project directory."
+    "scan": {
+      "description": "Scans a Python project directory.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_scan.json"
     },
-    {
-      "name": "alert",
-      "description": "[deprecated] Create GitHub pull requests or issues using a `safety check` json report file."
+    "alert": {
+      "description": "[deprecated] Create GitHub pull requests or GitHub issues using a `safety check` json report file. Being replaced by newer features.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_alert.json"
     },
-    {
-      "name": "check",
-      "description": "[deprecated] Find vulnerabilities at target files or environments."
+    "check": {
+      "description": "[deprecated] Find vulnerabilities at target files or environments. Now replaced by safety scan, and will be unsupported beyond 1 May 2024.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_check.json"
     },
-    {
-      "name": "check-updates",
-      "description": "Check for version updates to Safety CLI."
+    "check-updates": {
+      "description": "Check for version updates to Safety CLI.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_check-updates.json"
     },
-    {
-      "name": "configure",
-      "description": "Set up global configurations for Safety CLI."
+    "configure": {
+      "description": "Set up global configurations for Safety CLI, including proxy settings and organization details.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_configure.json"
     },
-    {
-      "name": "generate",
-      "description": "Generate a boilerplate Safety CLI policy file."
+    "generate": {
+      "description": "Generate a boilerplate Safety CLI policy file for customized security policies. Note: Safety Platform policies will override any local policy files found.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_generate.json"
     },
-    {
-      "name": "license",
-      "description": "[deprecated] Find licenses at target files or environments."
+    "license": {
+      "description": "[deprecated] Find licenses at target files or environments. This command will be replaced by safety scan, and will be unsupported beyond 1 May 2024.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_license.json"
     },
-    {
-      "name": "validate",
-      "description": "Verify that a local policy file is valid."
+    "validate": {
+      "description": "Verify that a local policy file is valid. NAME is the name of the file type to validate. Valid values are: policy_file.",
+      "json_definition": "src/zeroth_law/tools/safety/safety_validate.json"
     }
-  ],
+  },
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0x5A5AD14E"
+    "ground_truth_crc": "0x5A5AD14E",
+    "tool_name": "safety",
+    "command_name": "safety"
   }
 }

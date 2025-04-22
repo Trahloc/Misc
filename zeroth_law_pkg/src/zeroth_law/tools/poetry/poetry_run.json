@@ -1,0 +1,13 @@
+{
+  "command": "poetry",
+  "subcommand": "run",
+  "description": "(Placeholder description for poetry_run)",
+  "usage": "poetry run [OPTIONS]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0x00000000",
+    "tool_name": "poetry",
+    "command_name": "run"
+  }
+}

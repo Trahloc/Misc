@@ -1,0 +1,31 @@
+usage: radon mi [-h] [-n <str>] [-x <str>] [-m] [-e <str>] [-i <str>] [-s]
+                [-j] [--sort] [-O <str>] [--include-ipynb] [--ipynb-cells]
+                paths [paths ...]
+
+The maintainability index (MI) is a compound metric, with the primary aim
+being to determine how easy it will be to maintain a particular body of code.
+
+positional arguments:
+  paths                 The paths where to find modules or packages to
+                        analyze. More than one path is allowed.
+
+options:
+  -h, --help            show this help message and exit
+  -n, --min <str>       The minimum MI to display (default to A).
+  -x, --max <str>       The maximum MI to display (default to C).
+  -m, --multi           If given, multiline strings are not counted as
+                        comments.
+  -e, --exclude <str>   Exclude files only when their path matches one of
+                        these glob patterns. Usually needs quoting at the
+                        command line.
+  -i, --ignore <str>    Ignore directories when their name matches one of
+                        these glob patterns: radon won't even descend into
+                        them. By default, hidden directories (starting with
+                        '.') are ignored.
+  -s, --show            If given, the actual MI value is shown in results.
+  -j, --json            Format results in JSON.
+  --sort                If given, results are sorted in ascending order.
+  -O, --output-file <str>
+                        The output file (default to stdout).
+  --include-ipynb       Include IPython Notebook files
+  --ipynb-cells         Include reports for individual IPYNB cells

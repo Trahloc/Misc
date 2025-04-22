@@ -1,0 +1,20 @@
+{
+  "command": "ruff",
+  "subcommand": "config",
+  "description": "List or describe the available configuration options",
+  "usage": "ruff config [OPTIONS] [OPTION]",
+  "options": [],
+  "arguments": [
+    {
+      "name": "OPTION",
+      "description": "Config key to show",
+      "required": false
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xD1B1C1AA",
+    "schema_version": "1.0",
+    "tool_name": "ruff",
+    "command_name": "config"
+  }
+}

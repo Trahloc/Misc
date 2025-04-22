@@ -1,152 +1,201 @@
 {
-  "command_sequence": [
-    "autopep8"
-  ],
+  "command": "autopep8",
+  "subcommand": null,
   "description": "Automatically formats Python code to conform to the PEP 8 style guide.",
   "usage": "autopep8 [-h] [--version] [-v] [-d] [-i] [--global-config filename] [--ignore-local-config] [-r] [-j n] [-p n] [-a] [--experimental] [--exclude globs] [--list-fixes] [--ignore errors] [--select errors] [--max-line-length n] [--line-range line line] [--hang-closing] [--exit-code] [files ...]",
-  "options": {
-    "-h": {
-      "short": "-h",
-      "long": "--help",
+  "arguments": [
+    {
+      "name": "files",
+      "description": "files to format or '-' for standard in",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
       "description": "show this help message and exit",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "--version": {
-      "short": null,
-      "long": "--version",
+    {
+      "name": "--version",
+      "aliases": [],
       "description": "show program's version number and exit",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "-v": {
-      "short": "-v",
-      "long": "--verbose",
+    {
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
       "description": "print verbose messages; multiple -v result in more verbose messages",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": true
     },
-    "-d": {
-      "short": "-d",
-      "long": "--diff",
+    {
+      "name": "--diff",
+      "aliases": [
+        "-d"
+      ],
       "description": "print the diff for the fixed source",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "-i": {
-      "short": "-i",
-      "long": "--in-place",
+    {
+      "name": "--in-place",
+      "aliases": [
+        "-i"
+      ],
       "description": "make changes to files in place",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "--global-config": {
-      "short": null,
-      "long": "--global-config",
+    {
+      "name": "--global-config",
+      "aliases": [],
+      "argument": "filename",
       "description": "path to a global pep8 config file; if this file does not exist then this is ignored (default: /home/trahloc/.config/pep8)",
-      "takes_value": true,
-      "value_name": "filename"
+      "required": false,
+      "allow_multiple": false
     },
-    "--ignore-local-config": {
-      "short": null,
-      "long": "--ignore-local-config",
+    {
+      "name": "--ignore-local-config",
+      "aliases": [],
       "description": "don't look for and apply local config files; if not passed, defaults are updated with any config files in the project's root directory",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "-r": {
-      "short": "-r",
-      "long": "--recursive",
+    {
+      "name": "--recursive",
+      "aliases": [
+        "-r"
+      ],
       "description": "run recursively over directories; must be used with --in-place or --diff",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "-j": {
-      "short": "-j",
-      "long": "--jobs",
+    {
+      "name": "--jobs",
+      "aliases": [
+        "-j"
+      ],
+      "argument": "n",
       "description": "number of parallel jobs; match CPU count if value is less than 1",
-      "takes_value": true,
-      "value_name": "n"
+      "required": false,
+      "allow_multiple": false
     },
-    "-p": {
-      "short": "-p",
-      "long": "--pep8-passes",
+    {
+      "name": "--pep8-passes",
+      "aliases": [
+        "-p"
+      ],
+      "argument": "n",
       "description": "maximum number of additional pep8 passes (default: infinite)",
-      "takes_value": true,
-      "value_name": "n"
+      "required": false,
+      "allow_multiple": false
     },
-    "-a": {
-      "short": "-a",
-      "long": "--aggressive",
+    {
+      "name": "--aggressive",
+      "aliases": [
+        "-a"
+      ],
       "description": "enable non-whitespace changes; multiple -a result in more aggressive changes",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": true
     },
-    "--experimental": {
-      "short": null,
-      "long": "--experimental",
+    {
+      "name": "--experimental",
+      "aliases": [],
       "description": "enable experimental fixes",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "--exclude": {
-      "short": null,
-      "long": "--exclude",
+    {
+      "name": "--exclude",
+      "aliases": [],
+      "argument": "globs",
       "description": "exclude file/directory names that match these comma-separated globs",
-      "takes_value": true,
-      "value_name": "globs"
+      "required": false,
+      "allow_multiple": false
     },
-    "--list-fixes": {
-      "short": null,
-      "long": "--list-fixes",
+    {
+      "name": "--list-fixes",
+      "aliases": [],
       "description": "list codes for fixes; used by --ignore and --select",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "--ignore": {
-      "short": null,
-      "long": "--ignore",
+    {
+      "name": "--ignore",
+      "aliases": [],
+      "argument": "errors",
       "description": "do not fix these errors/warnings (default: E226,E24,W50,W690)",
-      "takes_value": true,
-      "value_name": "errors"
+      "required": false,
+      "allow_multiple": false
     },
-    "--select": {
-      "short": null,
-      "long": "--select",
+    {
+      "name": "--select",
+      "aliases": [],
+      "argument": "errors",
       "description": "fix only these errors/warnings (e.g. E4,W)",
-      "takes_value": true,
-      "value_name": "errors"
+      "required": false,
+      "allow_multiple": false
     },
-    "--max-line-length": {
-      "short": null,
-      "long": "--max-line-length",
+    {
+      "name": "--max-line-length",
+      "aliases": [],
+      "argument": "n",
       "description": "set maximum allowed line length (default: 79)",
-      "takes_value": true,
-      "value_name": "n"
+      "required": false,
+      "allow_multiple": false
     },
-    "--line-range": {
-      "short": null,
-      "long": "--line-range",
+    {
+      "name": "--line-range",
       "aliases": [
         "--range"
       ],
+      "argument": "line line",
       "description": "only fix errors found within this inclusive range of line numbers (e.g. 1 99); line numbers are indexed at 1",
-      "takes_value": true,
-      "value_name": "line line"
+      "required": false,
+      "nargs": 2,
+      "allow_multiple": false
     },
-    "--hang-closing": {
-      "short": null,
-      "long": "--hang-closing",
+    {
+      "name": "--hang-closing",
+      "aliases": [],
       "description": "hang-closing option passed to pycodestyle",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "--exit-code": {
-      "short": null,
-      "long": "--exit-code",
+    {
+      "name": "--exit-code",
+      "aliases": [],
       "description": "change to behavior of exit code. default behavior of return value, 0 is no differences, 1 is error exit. return 2 when add this option. 2 is exists differences.",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
-  },
-  "arguments": {
-    "files": {
-      "name": "files",
-      "description": "files to format or '-' for standard in",
-      "is_required": false,
-      "is_variadic": true
-    }
-  },
-  "subcommands": {},
+  ],
+  "subcommands_detail": {},
   "metadata": {
-    "ground_truth_crc": "0x1FBFC363"
+    "ground_truth_crc": "0x1FBFC363",
+    "tool_name": "autopep8",
+    "command_name": "autopep8"
   }
 }

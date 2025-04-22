@@ -1,0 +1,16 @@
+{
+  "arguments": [],
+  "command": "ruff",
+  "description": "(Placeholder description for ruff_linter)",
+  "metadata": {
+    "command_name": "linter",
+    "description": "List all supported upstream linters. Shows the linters Ruff integrates with (e.g., Flake8, PyLint).",
+    "ground_truth_crc": "0x880A548D",
+    "schema_version": "1.0",
+    "tool_name": "Ruff"
+  },
+  "options": [],
+  "subcommand": "linter",
+  "subcommands_detail": {},
+  "usage": "ruff linter [OPTIONS]"
+}

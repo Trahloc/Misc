@@ -1,0 +1,21 @@
+{
+  "command": "pre-commit",
+  "subcommand": "validate-config",
+  "description": "Validate the pre-commit configuration.",
+  "usage": "pre-commit validate-config [-h] [--color {auto,always,never}] [filenames ...]",
+  "options": [],
+  "arguments": [
+    {
+      "name": "filenames",
+      "description": "Configuration files to validate.",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xA0DB903B",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit",
+    "command_name": "validate-config"
+  }
+}

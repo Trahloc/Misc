@@ -1,0 +1,21 @@
+{
+  "description": "(No description provided in help text)",
+  "usage": "mutmut print-time-estimates [OPTIONS] [MUTANT_NAMES]...",
+  "options": [],
+  "arguments": [
+    {
+      "name": "MUTANT_NAMES",
+      "description": "(No description provided in help text)",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0x7E256336",
+    "schema_version": "1.0",
+    "tool_name": "mutmut",
+    "command_name": "print-time-estimates"
+  },
+  "command": "mutmut",
+  "subcommand": "print-time-estimates"
+}

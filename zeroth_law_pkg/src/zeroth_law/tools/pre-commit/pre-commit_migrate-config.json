@@ -1,0 +1,32 @@
+{
+  "arguments": [],
+  "command": "pre-commit",
+  "description": "Migrate list configuration to new map configuration.",
+  "metadata": {
+    "command_name": "migrate-config",
+    "ground_truth_crc": "0x39447523",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "allow_multiple": false,
+      "argument": "CONFIG",
+      "description": "Path to alternate config file",
+      "name": "--config",
+      "required": false
+    }
+  ],
+  "subcommand": "migrate-config",
+  "usage": "pre-commit migrate-config [-h] [--color {auto,always,never}] [-c CONFIG]"
+}

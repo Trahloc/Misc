@@ -1,0 +1,125 @@
+{
+  "arguments": [
+    {
+      "description": "The packages to add.",
+      "name": "name",
+      "nargs": "+",
+      "required": true
+    }
+  ],
+  "command": "poetry",
+  "description": "Adds a new dependency to pyproject.toml and installs it.",
+  "metadata": {
+    "command_name": "add",
+    "ground_truth_crc": "0xA318C6A3",
+    "tool_name": "poetry"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-G"
+      ],
+      "allow_multiple": false,
+      "argument": "GROUP",
+      "description": "The group to add the dependency to. [default: \"main\"]",
+      "name": "--group",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-D"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Add as a development dependency. (shortcut for '-G dev')",
+      "name": "--dev",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-e"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Add vcs/path dependencies as editable.",
+      "name": "--editable",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-E"
+      ],
+      "allow_multiple": true,
+      "argument": "EXTRAS",
+      "description": "Extras to activate for the dependency. (multiple values allowed)",
+      "name": "--extras",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "OPTIONAL",
+      "description": "Add as an optional dependency to an extra.",
+      "name": "--optional",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "PYTHON",
+      "description": "Python version for which the dependency must be installed.",
+      "name": "--python",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "PLATFORM",
+      "description": "Platforms for which the dependency must be installed.",
+      "name": "--platform",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "MARKERS",
+      "description": "Environment markers which describe when the dependency should be installed.",
+      "name": "--markers",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "SOURCE",
+      "description": "Name of the source to use to install the package.",
+      "name": "--source",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Accept prereleases.",
+      "name": "--allow-prereleases",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Output the operations but do not execute anything (implicitly enables --verbose).",
+      "name": "--dry-run",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Do not perform operations (only update the lockfile).",
+      "name": "--lock",
+      "required": false
+    }
+  ],
+  "subcommand": "add",
+  "usage": "add [options] [--] <name>..."
+}

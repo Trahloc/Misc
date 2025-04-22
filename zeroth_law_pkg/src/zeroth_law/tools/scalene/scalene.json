@@ -1,117 +1,255 @@
 {
-  "tool_id": "scalene",
-  "command": [
-    "scalene"
-  ],
-  "description": "A high-precision CPU and memory profiler.",
-  "usage": [
-    {
-      "format": "scalene [options] your_program.py [--- --your_program_args]"
-    },
-    {
-      "format": "python3 -m scalene [options] your_program.py [--- --your_program_args]"
-    }
-  ],
-  "options": [
-    {
-      "short": "-h",
-      "long": "--help",
-      "description": "show this help message and exit"
-    },
-    {
-      "long": "--version",
-      "description": "prints the version number and exits"
-    },
-    {
-      "long": "--outfile",
-      "metavar": "OUTFILE",
-      "description": "file to hold profiler output (default: stdout)"
-    },
-    {
-      "long": "--html",
-      "description": "output as HTML"
-    },
-    {
-      "long": "--json",
-      "description": "output as JSON"
-    },
-    {
-      "long": "--cli",
-      "description": "forces use of the command-line"
-    },
-    {
-      "long": "--web",
-      "description": "opens a web tab to view the profile (saved as 'profile.html')"
-    },
-    {
-      "long": "--viewer",
-      "description": "opens the Scalene web UI."
-    },
-    {
-      "long": "--profile-interval",
-      "metavar": "PROFILE_INTERVAL",
-      "description": "output profiles every so many seconds (default: inf)"
-    },
-    {
-      "long": "--cpu",
-      "description": "profile CPU time (default: True)"
-    },
-    {
-      "long": "--gpu",
-      "description": "profile GPU time and memory (default: True)"
-    },
-    {
-      "long": "--memory",
-      "description": "profile memory (default: True)"
-    },
-    {
-      "long": "--profile-all",
-      "description": "profile all executed code, not just the target program"
-    },
-    {
-      "long": "--profile-only",
-      "metavar": "PROFILE_ONLY",
-      "description": "profile only code in filenames that contain the given strings"
-    },
-    {
-      "long": "--profile-exclude",
-      "metavar": "PROFILE_EXCLUDE",
-      "description": "do not profile code in filenames that contain the given strings"
-    },
-    {
-      "long": "--cpu-percent-threshold",
-      "metavar": "CPU_PERCENT_THRESHOLD",
-      "description": "only report profiles with at least this percent of CPU time"
-    },
-    {
-      "long": "--malloc-threshold",
-      "metavar": "MALLOC_THRESHOLD",
-      "description": "only report profiles with at least this many allocations"
-    },
-    {
-      "long": "--on",
-      "description": "start with profiling on (default)"
-    },
-    {
-      "long": "--off",
-      "description": "start with profiling off"
-    }
-  ],
+  "command": "scalene",
+  "subcommand": null,
+  "description": "Scalene: a high-precision CPU and memory profiler, version 1.5.51 (2025.01.27)",
+  "usage": "scalene [options] your_program.py [--- --your_program_args] OR python3 -m scalene [options] your_program.py [--- --your_program_args]",
   "arguments": [
     {
       "name": "your_program.py",
       "description": "The Python program to profile.",
-      "optional": false
+      "required": true,
+      "nargs": 1
     },
     {
-      "name": "--your_program_args",
-      "description": "Arguments to pass to the profiled program.",
-      "optional": true,
+      "name": "your_program_args",
+      "description": "Arguments to pass to your_program.py, separated by ---",
+      "required": false,
       "nargs": "*"
     }
   ],
+  "options": [
+    {
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--version",
+      "aliases": [],
+      "description": "prints the version number for this release of Scalene and exits",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--column-width",
+      "aliases": [],
+      "description": "Column width for profile output (default: 132)",
+      "argument": "COLUMN_WIDTH",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--outfile",
+      "aliases": [],
+      "description": "file to hold profiler output (default: stdout)",
+      "argument": "OUTFILE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--html",
+      "aliases": [],
+      "description": "output as HTML (default: web)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--json",
+      "aliases": [],
+      "description": "output as JSON (default: web)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--cli",
+      "aliases": [],
+      "description": "forces use of the command-line",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--stacks",
+      "aliases": [],
+      "description": "collect stack traces",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--web",
+      "aliases": [],
+      "description": "opens a web tab to view the profile (saved as 'profile.html')",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--no-browser",
+      "aliases": [],
+      "description": "does not open a web tab; just saves the profile ('profile.html')",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--viewer",
+      "aliases": [],
+      "description": "opens the Scalene web UI.",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--reduced-profile",
+      "aliases": [],
+      "description": "generate a reduced profile, with non-zero lines only (default: False)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--profile-interval",
+      "aliases": [],
+      "description": "output profiles every so many seconds (default: inf)",
+      "argument": "PROFILE_INTERVAL",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--cpu",
+      "aliases": [],
+      "description": "profile CPU time (default: True)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--cpu-only",
+      "aliases": [],
+      "description": "profile CPU time (deprecated: use --cpu)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false,
+      "deprecated": true
+    },
+    {
+      "name": "--gpu",
+      "aliases": [],
+      "description": "profile GPU time and memory (default: True)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--memory",
+      "aliases": [],
+      "description": "profile memory (default: True)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--profile-all",
+      "aliases": [],
+      "description": "profile all executed code, not just the target program (default: only the target program)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--profile-only",
+      "aliases": [],
+      "description": "profile only code in filenames that contain the given strings, separated by commas (default: no restrictions)",
+      "argument": "PROFILE_ONLY",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--profile-exclude",
+      "aliases": [],
+      "description": "do not profile code in filenames that contain the given strings, separated by commas (default: no restrictions)",
+      "argument": "PROFILE_EXCLUDE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--use-virtual-time",
+      "aliases": [],
+      "description": "measure only CPU time, not time spent in I/O or blocking (default: False)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--cpu-percent-threshold",
+      "aliases": [],
+      "description": "only report profiles with at least this percent of CPU time (default: 1%)",
+      "argument": "CPU_PERCENT_THRESHOLD",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--cpu-sampling-rate",
+      "aliases": [],
+      "description": "CPU sampling rate (default: every 0.01s)",
+      "argument": "CPU_SAMPLING_RATE",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--allocation-sampling-window",
+      "aliases": [],
+      "description": "Allocation sampling window size, in bytes (default: 10485767 bytes)",
+      "argument": "ALLOCATION_SAMPLING_WINDOW",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--malloc-threshold",
+      "aliases": [],
+      "description": "only report profiles with at least this many allocations (default: 100)",
+      "argument": "MALLOC_THRESHOLD",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--program-path",
+      "aliases": [],
+      "description": "The directory containing the code to profile (default: the path to the profiled program)",
+      "argument": "PROGRAM_PATH",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--memory-leak-detector",
+      "aliases": [],
+      "description": "EXPERIMENTAL: report likely memory leaks (default: True)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--on",
+      "aliases": [],
+      "description": "start with profiling on (default)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    }
+  ],
+  "subcommands_detail": {},
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0x51BD1994"
+    "ground_truth_crc": "0x51BD1994",
+    "tool_name": "scalene",
+    "command_name": "scalene"
   }
 }

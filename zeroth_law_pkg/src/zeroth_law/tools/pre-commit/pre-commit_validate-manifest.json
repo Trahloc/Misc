@@ -1,0 +1,21 @@
+{
+  "command": "pre-commit",
+  "subcommand": "validate-manifest",
+  "description": "Validate the pre-commit manifest file.",
+  "usage": "pre-commit validate-manifest [-h] [--color {auto,always,never}] [filenames ...]",
+  "options": [],
+  "arguments": [
+    {
+      "name": "filenames",
+      "description": "Manifest files to validate.",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xF14D3536",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit",
+    "command_name": "validate-manifest"
+  }
+}

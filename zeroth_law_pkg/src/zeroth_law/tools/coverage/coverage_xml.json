@@ -1,0 +1,21 @@
+{
+  "description": "Generate an XML report of coverage results.",
+  "usage": "coverage xml [options] [modules]",
+  "options": [],
+  "arguments": [
+    {
+      "name": "modules",
+      "description": "Modules to include in report (optional).",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xE82FFDF5",
+    "schema_version": "1.0",
+    "tool_name": "coverage",
+    "command_name": "xml"
+  },
+  "command": "coverage",
+  "subcommand": "xml"
+}

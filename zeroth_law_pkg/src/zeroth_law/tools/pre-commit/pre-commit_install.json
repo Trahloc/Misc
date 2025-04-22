@@ -1,0 +1,72 @@
+{
+  "arguments": [],
+  "command": "pre-commit",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "install",
+    "ground_truth_crc": "0xB2587BDF",
+    "schema_version": "1.0",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "show this help message and exit",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "argument": "CONFIG",
+      "description": "Path to alternate config file",
+      "name": "--config",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-f"
+      ],
+      "argument": null,
+      "description": "Overwrite existing hooks / remove migration mode.",
+      "name": "--overwrite",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Whether to install hook environments for all environments in the config file.",
+      "name": "--install-hooks",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-t"
+      ],
+      "argument": "{commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}",
+      "description": "",
+      "name": "--hook-type",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Whether to allow a missing `pre-commit` configuration file or exit with a failure code.",
+      "name": "--allow-missing-config",
+      "required": false
+    }
+  ],
+  "subcommand": "install",
+  "usage": "pre-commit install [-h] [--color {auto,always,never}] [-c CONFIG] [-f] [--install-hooks] [-t {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}] [--allow-missing-config]"
+}

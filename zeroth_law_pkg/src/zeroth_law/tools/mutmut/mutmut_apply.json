@@ -1,0 +1,20 @@
+{
+  "command": "mutmut",
+  "subcommand": "apply",
+  "description": "Apply a specific mutant to the source code.",
+  "usage": "mutmut apply [OPTIONS] MUTANT_NAME",
+  "options": [],
+  "arguments": [
+    {
+      "name": "MUTANT_NAME",
+      "description": "The name or ID of the mutant to apply.",
+      "required": true
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xED1AC788",
+    "schema_version": "1.0",
+    "tool_name": "mutmut",
+    "command_name": "apply"
+  }
+}

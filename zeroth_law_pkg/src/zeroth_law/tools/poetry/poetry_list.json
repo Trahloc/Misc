@@ -1,0 +1,20 @@
+{
+  "command": "poetry",
+  "subcommand": "list",
+  "description": "Lists commands.",
+  "usage": "list [options] [--] [<namespace>]",
+  "options": [],
+  "arguments": [
+    {
+      "name": "namespace",
+      "description": "The namespace name",
+      "required": false
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0xDE061514",
+    "schema_version": "1.0",
+    "tool_name": "poetry",
+    "command_name": "list"
+  }
+}

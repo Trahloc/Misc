@@ -1,0 +1,15 @@
+{
+  "arguments": [],
+  "command": "ruff",
+  "description": "(Placeholder description for ruff_version)",
+  "metadata": {
+    "command_name": "version",
+    "description": "Display Ruff's version",
+    "ground_truth_crc": "0x985C188B",
+    "schema_version": "1.0",
+    "tool_name": "Ruff"
+  },
+  "options": [],
+  "subcommand": "version",
+  "usage": "ruff version [OPTIONS]"
+}

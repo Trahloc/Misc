@@ -1,47 +1,52 @@
 {
-  "tool_id": "radon",
-  "command": [
-    "radon"
-  ],
+  "command": "radon",
+  "subcommand": null,
   "description": "Radon is a Python tool that computes various code metrics from source code.",
-  "usage": [
-    {
-      "format": "radon [-h] [-v] {cc,raw,mi,hal} ..."
-    }
-  ],
+  "usage": "radon [-h] [-v] {cc,raw,mi,hal} ...",
+  "arguments": [],
   "options": [
     {
-      "short": "-h",
-      "long": "--help",
-      "description": "show this help message and exit"
+      "name": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
     {
-      "short": "-v",
-      "long": "--version",
-      "description": "show program's version number and exit"
+      "name": "--version",
+      "aliases": [
+        "-v"
+      ],
+      "description": "show program's version number and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
   ],
-  "arguments": [],
-  "subcommands": [
-    {
-      "name": "cc",
-      "description": "Analyze the given Python modules and compute Cyclomatic Complexity (CC)."
+  "subcommands_detail": {
+    "cc": {
+      "description": "Analyze the given Python modules and compute Cyclomatic Complexity (CC).",
+      "json_definition": "src/zeroth_law/tools/radon/radon_cc.json"
     },
-    {
-      "name": "raw",
-      "description": "Analyze the given Python modules and compute raw metrics."
+    "raw": {
+      "description": "Analyze the given Python modules and compute raw metrics.",
+      "json_definition": "src/zeroth_law/tools/radon/radon_raw.json"
     },
-    {
-      "name": "mi",
-      "description": "Analyze the given Python modules and compute the Maintainability Index."
+    "mi": {
+      "description": "Analyze the given Python modules and compute the Maintainability Index.",
+      "json_definition": "src/zeroth_law/tools/radon/radon_mi.json"
     },
-    {
-      "name": "hal",
-      "description": "Analyze the given Python modules and compute their Halstead metrics."
+    "hal": {
+      "description": "Analyze the given Python modules and compute their Halstead metrics.",
+      "json_definition": "src/zeroth_law/tools/radon/radon_hal.json"
     }
-  ],
+  },
   "metadata": {
-    "file_status": "populated",
-    "ground_truth_crc": "0x825609B9"
+    "ground_truth_crc": "0x825609B9",
+    "tool_name": "radon",
+    "command_name": "radon"
   }
 }

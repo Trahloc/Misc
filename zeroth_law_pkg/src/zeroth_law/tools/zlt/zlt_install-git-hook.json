@@ -1,0 +1,14 @@
+{
+  "command": "zlt",
+  "subcommand": "install-git-hook",
+  "description": "Installs the custom ZLT pre-commit hook for multi-project support.",
+  "usage": "zlt install-git-hook [OPTIONS]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0x500042CF",
+    "schema_version": "1.0",
+    "tool_name": "zlt",
+    "command_name": "install-git-hook"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "arguments": [],
+  "command": "ruff",
+  "description": "(Placeholder description for ruff_server)",
+  "metadata": {
+    "command_name": "server",
+    "description": "Run the language server",
+    "ground_truth_crc": "0x6679BE6E",
+    "schema_version": "1.0",
+    "tool_name": "Ruff"
+  },
+  "options": [],
+  "subcommand": "server",
+  "subcommands_detail": {},
+  "usage": "ruff server [OPTIONS]"
+}

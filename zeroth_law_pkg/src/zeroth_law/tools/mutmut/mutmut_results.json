@@ -1,0 +1,29 @@
+{
+  "arguments": [],
+  "command": "mutmut",
+  "description": "(No description provided in --help)",
+  "metadata": {
+    "command_name": "results",
+    "ground_truth_crc": "0x1CB4E6A1",
+    "schema_version": "1.0",
+    "tool_name": "mutmut"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "argument": "BOOLEAN",
+      "description": "(No description provided in --help)",
+      "name": "--all",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Show this message and exit.",
+      "name": "--help",
+      "required": false
+    }
+  ],
+  "subcommand": "results",
+  "usage": "mutmut results [OPTIONS]"
+}

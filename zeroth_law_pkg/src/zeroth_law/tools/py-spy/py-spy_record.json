@@ -1,0 +1,157 @@
+{
+  "arguments": [
+    {
+      "description": "commandline of a python program to run",
+      "name": "python_program",
+      "nargs": "*",
+      "required": false
+    }
+  ],
+  "command": "py-spy",
+  "description": "Records stack trace information to a flamegraph, speedscope or raw file",
+  "metadata": {
+    "command_name": "record",
+    "ground_truth_crc": "0x3FCF98B8",
+    "schema_version": "1.0",
+    "tool_name": "py-spy"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-p"
+      ],
+      "allow_multiple": false,
+      "argument": "pid",
+      "description": "PID of a running python program to spy on",
+      "name": "--pid",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show full Python filenames, instead of shortening to show only the package part",
+      "name": "--full-filenames",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-o"
+      ],
+      "allow_multiple": false,
+      "argument": "filename",
+      "description": "Output filename",
+      "name": "--output",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-f"
+      ],
+      "allow_multiple": false,
+      "argument": "format",
+      "description": "Output file format [default: flamegraph] [possible values: flamegraph, raw, speedscope, chrometrace]",
+      "name": "--format",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-d"
+      ],
+      "allow_multiple": false,
+      "argument": "duration",
+      "description": "The number of seconds to sample for [default: unlimited]",
+      "name": "--duration",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-r"
+      ],
+      "allow_multiple": false,
+      "argument": "rate",
+      "description": "The number of samples to collect per second [default: 100]",
+      "name": "--rate",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-s"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Profile subprocesses of the original process",
+      "name": "--subprocesses",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-F"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Aggregate samples by function's first line number, instead of current line number",
+      "name": "--function",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Do not show line numbers",
+      "name": "--nolineno",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-t"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show thread ids in the output",
+      "name": "--threads",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-g"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Only include traces that are holding on to the GIL",
+      "name": "--gil",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-i"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Include stack traces for idle threads",
+      "name": "--idle",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-n"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Collect stack traces from native extensions written in Cython, C or C++",
+      "name": "--native",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Don't pause the python process when collecting samples. Setting this option will reduce the performance impact of sampling, but may lead to inaccurate results",
+      "name": "--nonblocking",
+      "required": false
+    }
+  ],
+  "subcommand": "record",
+  "subcommands_detail": {},
+  "usage": "py-spy record [OPTIONS] [python_program]..."
+}

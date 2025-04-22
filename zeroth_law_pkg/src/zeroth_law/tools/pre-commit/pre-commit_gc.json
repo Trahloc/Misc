@@ -1,0 +1,22 @@
+{
+  "arguments": [],
+  "command": "pre-commit",
+  "description": "Clean unused cached repos.",
+  "metadata": {
+    "command_name": "gc",
+    "ground_truth_crc": "0xF37CCCF4",
+    "tool_name": "pre-commit"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": "{auto,always,never}",
+      "description": "Whether to use color in output. Defaults to `auto`.",
+      "name": "--color",
+      "required": false
+    }
+  ],
+  "subcommand": "gc",
+  "usage": "pre-commit gc [-h] [--color {auto,always,never}]"
+}

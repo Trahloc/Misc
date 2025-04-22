@@ -1,0 +1,13 @@
+{
+  "command": "ruff",
+  "subcommand": "help",
+  "description": "(Placeholder description for ruff_help)",
+  "usage": "ruff help [OPTIONS]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0x00000000",
+    "tool_name": "ruff",
+    "command_name": "help"
+  }
+}

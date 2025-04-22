@@ -1,0 +1,80 @@
+{
+  "arguments": [],
+  "command": "zlt",
+  "description": "Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality.",
+  "metadata": {
+    "command_name": "zlt",
+    "ground_truth_crc": "0x3810A5E8",
+    "tool_name": "zlt"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show the version and exit.",
+      "name": "--version",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-v"
+      ],
+      "allow_multiple": true,
+      "argument": null,
+      "description": "Increase verbosity: -v for INFO, -vv for DEBUG. [0<=x<=2]",
+      "name": "--verbose",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-q"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Suppress all output except errors.",
+      "name": "--quiet",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Enable/disable colored logging output.",
+      "name": "--color",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-c"
+      ],
+      "allow_multiple": false,
+      "argument": "FILE",
+      "description": "Path to configuration file (e.g., pyproject.toml). Overrides auto-detection.",
+      "name": "--config",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Show this message and exit.",
+      "name": "--help",
+      "required": false
+    }
+  ],
+  "subcommand": null,
+  "subcommands_detail": {
+    "install-git-hook": {
+      "description": "Installs the custom ZLT pre-commit hook for...",
+      "json_definition": "src/zeroth_law/tools/zlt/zlt_install-git-hook.json"
+    },
+    "restore-git-hooks": {
+      "description": "Restores standard pre-commit hooks, removing the ZLT...",
+      "json_definition": "src/zeroth_law/tools/zlt/zlt_restore-git-hooks.json"
+    }
+  },
+  "usage": "zlt [OPTIONS] COMMAND [ARGS]..."
+}

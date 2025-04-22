@@ -1,0 +1,38 @@
+
+Description:
+  Publishes a package to a remote repository.
+
+Usage:
+  publish [options]
+
+Options:
+  -r, --repository=REPOSITORY    The repository to publish the package to.
+  -u, --username=USERNAME        The username to access the repository.
+  -p, --password=PASSWORD        The password to access the repository.
+      --cert=CERT                Certificate authority to access the repository.
+      --client-cert=CLIENT-CERT  Client certificate to access the repository.
+      --dist-dir=DIST-DIR        Dist directory where built artifact are stored. Default is `dist`. [default: "dist"]
+      --build                    Build the package before publishing.
+      --dry-run                  Perform all actions except upload the package.
+      --skip-existing            Ignore errors from files already existing in the repository.
+  -h, --help                     Display help for the given command. When no command is given display help for the list command.
+  -q, --quiet                    Do not output any message.
+  -V, --version                  Display this application version.
+      --ansi                     Force ANSI output.
+      --no-ansi                  Disable ANSI output.
+  -n, --no-interaction           Do not ask any interactive question.
+      --no-plugins               Disables plugins.
+      --no-cache                 Disables Poetry source caches.
+  -P, --project=PROJECT          Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory.
+  -C, --directory=DIRECTORY      The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.
+  -v|vv|vvv, --verbose           Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.
+
+Help:
+  The publish command builds and uploads the package to a remote repository.
+  
+  By default, it will upload to PyPI but if you pass the --repository option it will
+  upload to it instead.
+  
+  The --repository option should match the name of a configured repository using
+  the config command.
+  

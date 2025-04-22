@@ -1,0 +1,102 @@
+{
+  "arguments": [],
+  "command": "safety",
+  "description": "Set up global configurations for Safety CLI, including proxy settings and organization details.",
+  "metadata": {
+    "command_name": "configure",
+    "ground_truth_crc": "0x087E25DF",
+    "schema_version": "1.0",
+    "tool_name": "safety"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-pr"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Choose the proxy protocol to be saved into Safety's configuration file (default: https).",
+      "name": "--proxy-protocol",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-ph"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Specify a proxy host for network communications to be saved into Safety's configuration.",
+      "name": "--proxy-host",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-pp"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Set the proxy port to be saved into Safety's configuration file (default: 80).",
+      "name": "--proxy-port",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-pt"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Set the timeout duration for proxy network calls.",
+      "name": "--proxy-timeout",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Enable or disable the requirement for a proxy in network communications",
+      "name": "--proxy-required",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-org-id"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Set the current device with an organization ID.",
+      "name": "--organization-id",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-org-name"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Set the current device with an organization name.",
+      "name": "--organization-name",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-stg"
+      ],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "The project development stage to be tied to the current device.",
+      "name": "--stage",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Save the configuration to a system config file.",
+      "name": "--save-to-system",
+      "required": false
+    }
+  ],
+  "subcommand": "configure",
+  "subcommands_detail": {},
+  "usage": "safety configure [OPTIONS]"
+}

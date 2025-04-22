@@ -1,0 +1,12 @@
+Usage: coverage help [command]
+
+Describe how to use coverage.py
+
+Options:
+  --debug=OPTS     Debug options, separated by commas. [env: COVERAGE_DEBUG]
+  -h, --help       Get help on this command.
+  --rcfile=RCFILE  Specify configuration file. By default '.coveragerc',
+                   'setup.cfg', 'tox.ini', and 'pyproject.toml' are tried.
+                   [env: COVERAGE_RCFILE]
+
+Full documentation is at https://coverage.readthedocs.io/en/7.8.0

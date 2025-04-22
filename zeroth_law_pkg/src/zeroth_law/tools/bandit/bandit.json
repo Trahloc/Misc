@@ -1,183 +1,250 @@
 {
-  "command_sequence": [
-    "bandit"
-  ],
+  "command": "bandit",
+  "subcommand": null,
   "description": "Bandit - a Python source code security analyzer",
   "usage": "bandit [-h] [-r] [-a {file,vuln}] [-n CONTEXT_LINES] [-c CONFIG_FILE] [-p PROFILE] [-t TESTS] [-s SKIPS] [-l | --severity-level {all,low,medium,high}] [-i | --confidence-level {all,low,medium,high}] [-f {csv,custom,html,json,screen,txt,xml,yaml}] [--msg-template MSG_TEMPLATE] [-o [OUTPUT_FILE]] [-v] [-d] [-q] [--ignore-nosec] [-x EXCLUDED_PATHS] [-b BASELINE] [--ini INI_PATH] [--exit-zero] [--version] [targets ...]",
-  "options": {
-    "-h": {
-      "short": "-h",
-      "long": "--help",
-      "description": "show this help message and exit",
-      "takes_value": false
-    },
-    "-r": {
-      "short": "-r",
-      "long": "--recursive",
-      "description": "find and process files in subdirectories",
-      "takes_value": false
-    },
-    "-a": {
-      "short": "-a",
-      "long": "--aggregate",
-      "description": "aggregate output by vulnerability (default) or by filename",
-      "takes_value": true,
-      "value_name": "{file,vuln}"
-    },
-    "-n": {
-      "short": "-n",
-      "long": "--number",
-      "description": "maximum number of code lines to output for each issue",
-      "takes_value": true,
-      "value_name": "CONTEXT_LINES"
-    },
-    "-c": {
-      "short": "-c",
-      "long": "--configfile",
-      "description": "optional config file to use for selecting plugins and overriding defaults",
-      "takes_value": true,
-      "value_name": "CONFIG_FILE"
-    },
-    "-p": {
-      "short": "-p",
-      "long": "--profile",
-      "description": "profile to use (defaults to executing all tests)",
-      "takes_value": true,
-      "value_name": "PROFILE"
-    },
-    "-t": {
-      "short": "-t",
-      "long": "--tests",
-      "description": "comma-separated list of test IDs to run",
-      "takes_value": true,
-      "value_name": "TESTS"
-    },
-    "-s": {
-      "short": "-s",
-      "long": "--skip",
-      "description": "comma-separated list of test IDs to skip",
-      "takes_value": true,
-      "value_name": "SKIPS"
-    },
-    "-l": {
-      "short": "-l",
-      "long": null,
-      "description": "report only issues of a given severity level or higher (-l for LOW, -ll for MEDIUM, -lll for HIGH)",
-      "takes_value": false
-    },
-    "--severity-level": {
-      "short": null,
-      "long": "--severity-level",
-      "description": "report only issues of a given severity level or higher. \"all\" and \"low\" are likely to produce the same results, but it is possible for rules to be undefined which will not be listed in \"low\".",
-      "takes_value": true,
-      "value_name": "{all,low,medium,high}"
-    },
-    "-i": {
-      "short": "-i",
-      "long": null,
-      "description": "report only issues of a given confidence level or higher (-i for LOW, -ii for MEDIUM, -iii for HIGH)",
-      "takes_value": false
-    },
-    "--confidence-level": {
-      "short": null,
-      "long": "--confidence-level",
-      "description": "report only issues of a given confidence level or higher. \"all\" and \"low\" are likely to produce the same results, but it is possible for rules to be undefined which will not be listed in \"low\".",
-      "takes_value": true,
-      "value_name": "{all,low,medium,high}"
-    },
-    "-f": {
-      "short": "-f",
-      "long": "--format",
-      "description": "specify output format",
-      "takes_value": true,
-      "value_name": "{csv,custom,html,json,screen,txt,xml,yaml}"
-    },
-    "--msg-template": {
-      "short": null,
-      "long": "--msg-template",
-      "description": "specify output message template (only usable with --format custom), see CUSTOM FORMAT section for list of available values",
-      "takes_value": true,
-      "value_name": "MSG_TEMPLATE"
-    },
-    "-o": {
-      "short": "-o",
-      "long": "--output",
-      "description": "write report to filename",
-      "takes_value": true,
-      "is_optional_value": true,
-      "value_name": "OUTPUT_FILE"
-    },
-    "-v": {
-      "short": "-v",
-      "long": "--verbose",
-      "description": "output extra information like excluded and included files",
-      "takes_value": false
-    },
-    "-d": {
-      "short": "-d",
-      "long": "--debug",
-      "description": "turn on debug mode",
-      "takes_value": false
-    },
-    "-q": {
-      "short": "-q",
-      "long": "--quiet",
+  "arguments": [
+    {
+      "name": "targets",
+      "description": "source file(s) or directory(s) to be tested",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "options": [
+    {
+      "name": "--help",
       "aliases": [
+        "-h"
+      ],
+      "description": "show this help message and exit",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--recursive",
+      "aliases": [
+        "-r"
+      ],
+      "description": "find and process files in subdirectories",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--aggregate",
+      "aliases": [
+        "-a"
+      ],
+      "argument": "{file,vuln}",
+      "description": "aggregate output by vulnerability (default) or by filename",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--number",
+      "aliases": [
+        "-n"
+      ],
+      "argument": "CONTEXT_LINES",
+      "description": "maximum number of code lines to output for each issue",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--configfile",
+      "aliases": [
+        "-c"
+      ],
+      "argument": "CONFIG_FILE",
+      "description": "optional config file to use for selecting plugins and overriding defaults",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--profile",
+      "aliases": [
+        "-p"
+      ],
+      "argument": "PROFILE",
+      "description": "profile to use (defaults to executing all tests)",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--tests",
+      "aliases": [
+        "-t"
+      ],
+      "argument": "TESTS",
+      "description": "comma-separated list of test IDs to run",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--skip",
+      "aliases": [
+        "-s"
+      ],
+      "argument": "SKIPS",
+      "description": "comma-separated list of test IDs to skip",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--level",
+      "aliases": [
+        "-l"
+      ],
+      "description": "report only issues of a given severity level or higher (-l for LOW, -ll for MEDIUM, -lll for HIGH)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": true
+    },
+    {
+      "name": "--severity-level",
+      "aliases": [],
+      "argument": "{all,low,medium,high}",
+      "description": "report only issues of a given severity level or higher. \"all\" and \"low\" are likely to produce the same results, but it is possible for rules to be undefined which will not be listed in \"low\".",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--confidence",
+      "aliases": [
+        "-i"
+      ],
+      "description": "report only issues of a given confidence level or higher (-i for LOW, -ii for MEDIUM, -iii for HIGH)",
+      "argument": null,
+      "required": false,
+      "allow_multiple": true
+    },
+    {
+      "name": "--confidence-level",
+      "aliases": [],
+      "argument": "{all,low,medium,high}",
+      "description": "report only issues of a given confidence level or higher. \"all\" and \"low\" are likely to produce the same results, but it is possible for rules to be undefined which will not be listed in \"low\".",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--format",
+      "aliases": [
+        "-f"
+      ],
+      "argument": "{csv,custom,html,json,screen,txt,xml,yaml}",
+      "description": "specify output format",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--msg-template",
+      "aliases": [],
+      "argument": "MSG_TEMPLATE",
+      "description": "specify output message template (only usable with --format custom), see CUSTOM FORMAT section for list of available values",
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--output",
+      "aliases": [
+        "-o"
+      ],
+      "argument": "OUTPUT_FILE",
+      "description": "write report to filename",
+      "required": false,
+      "nargs": "?",
+      "allow_multiple": false
+    },
+    {
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
+      "description": "output extra information like excluded and included files",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--debug",
+      "aliases": [
+        "-d"
+      ],
+      "description": "turn on debug mode",
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
+    },
+    {
+      "name": "--quiet",
+      "aliases": [
+        "-q",
         "--silent"
       ],
       "description": "only show output in the case of an error",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "--ignore-nosec": {
-      "short": null,
-      "long": "--ignore-nosec",
+    {
+      "name": "--ignore-nosec",
+      "aliases": [],
       "description": "do not skip lines with # nosec comments",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "-x": {
-      "short": "-x",
-      "long": "--exclude",
+    {
+      "name": "--exclude",
+      "aliases": [
+        "-x"
+      ],
+      "argument": "EXCLUDED_PATHS",
       "description": "comma-separated list of paths (glob patterns supported) to exclude from scan (note that these are in addition to the excluded paths provided in the config file) (default: .svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,*.egg)",
-      "takes_value": true,
-      "value_name": "EXCLUDED_PATHS"
+      "required": false,
+      "allow_multiple": false
     },
-    "-b": {
-      "short": "-b",
-      "long": "--baseline",
+    {
+      "name": "--baseline",
+      "aliases": [
+        "-b"
+      ],
+      "argument": "BASELINE",
       "description": "path of a baseline report to compare against (only JSON-formatted files are accepted)",
-      "takes_value": true,
-      "value_name": "BASELINE"
+      "required": false,
+      "allow_multiple": false
     },
-    "--ini": {
-      "short": null,
-      "long": "--ini",
+    {
+      "name": "--ini",
+      "aliases": [],
+      "argument": "INI_PATH",
       "description": "path to a .bandit file that supplies command line arguments",
-      "takes_value": true,
-      "value_name": "INI_PATH"
+      "required": false,
+      "allow_multiple": false
     },
-    "--exit-zero": {
-      "short": null,
-      "long": "--exit-zero",
+    {
+      "name": "--exit-zero",
+      "aliases": [],
       "description": "exit with 0, even with results found",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     },
-    "--version": {
-      "short": null,
-      "long": "--version",
+    {
+      "name": "--version",
+      "aliases": [],
       "description": "show program's version number and exit",
-      "takes_value": false
+      "argument": null,
+      "required": false,
+      "allow_multiple": false
     }
-  },
-  "arguments": {
-    "targets": {
-      "name": "targets",
-      "description": "source file(s) or directory(s) to be tested",
-      "is_required": false,
-      "is_variadic": true
-    }
-  },
-  "subcommands": [],
+  ],
+  "subcommands_detail": {},
   "metadata": {
-    "ground_truth_crc": "0xFB779DF1"
+    "ground_truth_crc": "0xFB779DF1",
+    "tool_name": "bandit",
+    "command_name": "bandit"
   }
 }

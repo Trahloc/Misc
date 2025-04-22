@@ -1,0 +1,198 @@
+{
+  "arguments": [
+    {
+      "description": "The path to create the project at.",
+      "name": "path",
+      "nargs": "1",
+      "required": true
+    }
+  ],
+  "command": "poetry",
+  "description": "Creates a new Python project at <path>.",
+  "metadata": {
+    "command_name": "new",
+    "ground_truth_crc": "0x8FA91293",
+    "schema_version": "1.0",
+    "tool_name": "poetry"
+  },
+  "options": [
+    {
+      "aliases": [
+        "-i"
+      ],
+      "argument": null,
+      "description": "Allow interactive specification of project configuration.",
+      "name": "--interactive",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "NAME",
+      "description": "Set the resulting package name.",
+      "name": "--name",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Use the src layout for the project. Deprecated: This is the default option now.",
+      "name": "--src",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Use the flat layout for the project.",
+      "name": "--flat",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "README",
+      "description": "Specify the readme file format. Default is md.",
+      "name": "--readme",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "DESCRIPTION",
+      "description": "Description of the package.",
+      "name": "--description",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "AUTHOR",
+      "description": "Author name of the package.",
+      "name": "--author",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": "PYTHON",
+      "description": "Compatible Python versions.",
+      "name": "--python",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": true,
+      "argument": "DEPENDENCY",
+      "description": "Package to require, with an optional version constraint, e.g. requests:^2.10.0 or requests=2.11.1. (multiple values allowed)",
+      "name": "--dependency",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": true,
+      "argument": "DEV-DEPENDENCY",
+      "description": "Package to require for development, with an optional version constraint, e.g. requests:^2.10.0 or requests=2.11.1. (multiple values allowed)",
+      "name": "--dev-dependency",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-l"
+      ],
+      "argument": "LICENSE",
+      "description": "License of the package.",
+      "name": "--license",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-h"
+      ],
+      "argument": null,
+      "description": "Display help for the given command. When no command is given display help for the list command.",
+      "name": "--help",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-q"
+      ],
+      "argument": null,
+      "description": "Do not output any message.",
+      "name": "--quiet",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-V"
+      ],
+      "argument": null,
+      "description": "Display this application version.",
+      "name": "--version",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Force ANSI output.",
+      "name": "--ansi",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Disable ANSI output.",
+      "name": "--no-ansi",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-n"
+      ],
+      "argument": null,
+      "description": "Do not ask any interactive question.",
+      "name": "--no-interaction",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Disables plugins.",
+      "name": "--no-plugins",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "argument": null,
+      "description": "Disables Poetry source caches.",
+      "name": "--no-cache",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-P"
+      ],
+      "argument": "PROJECT",
+      "description": "Specify another path as the project root. All command-line arguments will be resolved relative to the current working directory.",
+      "name": "--project",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-C"
+      ],
+      "argument": "DIRECTORY",
+      "description": "The working directory for the Poetry command (defaults to the current working directory). All command-line arguments will be resolved relative to the given directory.",
+      "name": "--directory",
+      "required": false
+    },
+    {
+      "aliases": [
+        "-v",
+        "vv",
+        "vvv"
+      ],
+      "argument": null,
+      "description": "Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug.",
+      "name": "--verbose",
+      "required": false
+    }
+  ],
+  "subcommand": "new",
+  "usage": "new [options] [--] <path>"
+}

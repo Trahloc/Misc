@@ -1,62 +1,59 @@
 {
-  "command_sequence": [
-    "coverage"
-  ],
+  "command": "coverage",
+  "subcommand": null,
   "description": "Coverage.py - Measure, collect, and report on code coverage in Python programs.",
   "usage": "coverage <command> [options] [args]",
-  "options": {},
-  "arguments": {},
-  "subcommands": {
+  "options": [],
+  "arguments": [],
+  "subcommands_detail": {
     "annotate": {
-      "name": "annotate",
-      "summary": "Annotate source files with execution information."
+      "description": "Annotate source files with execution information.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_annotate.json"
     },
     "combine": {
-      "name": "combine",
-      "summary": "Combine a number of data files."
+      "description": "Combine a number of data files.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_combine.json"
     },
     "debug": {
-      "name": "debug",
-      "summary": "Display information about the internals of coverage.py"
+      "description": "Display information about the internals of coverage.py",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_debug.json"
     },
     "erase": {
-      "name": "erase",
-      "summary": "Erase previously collected coverage data."
+      "description": "Erase previously collected coverage data.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_erase.json"
     },
     "help": {
-      "name": "help",
-      "summary": "Get help on using coverage.py."
+      "description": "Get help on using coverage.py.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_help.json"
     },
     "html": {
-      "name": "html",
-      "summary": "Create an HTML report."
+      "description": "Create an HTML report.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_html.json"
     },
     "json": {
-      "name": "json",
-      "summary": "Create a JSON report of coverage results."
+      "description": "Create a JSON report of coverage results.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_json.json"
     },
     "lcov": {
-      "name": "lcov",
-      "summary": "Create an LCOV report of coverage results."
+      "description": "Create an LCOV report of coverage results.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_lcov.json"
     },
     "report": {
-      "name": "report",
-      "summary": "Report coverage stats on modules."
+      "description": "Report coverage stats on modules.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_report.json"
     },
     "run": {
-      "name": "run",
-      "summary": "Run a Python program and measure code execution."
+      "description": "Run a Python program and measure code execution.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_run.json"
     },
     "xml": {
-      "name": "xml",
-      "summary": "Create an XML report of coverage results."
+      "description": "Create an XML report of coverage results.",
+      "json_definition": "src/zeroth_law/tools/coverage/coverage_xml.json"
     }
   },
-  "notes": [
-    "Use \"coverage help <command>\" for detailed help on any command.",
-    "Full documentation is at https://coverage.readthedocs.io/en/7.8.0"
-  ],
   "metadata": {
-    "ground_truth_crc": "0x891C20F3"
+    "ground_truth_crc": "0x891C20F3",
+    "tool_name": "coverage",
+    "command_name": "coverage"
   }
 }

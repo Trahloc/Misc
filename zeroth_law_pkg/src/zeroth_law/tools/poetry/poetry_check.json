@@ -1,0 +1,30 @@
+{
+  "arguments": [],
+  "command": "poetry",
+  "description": "Validates the content of the pyproject.toml file and its consistency with the poetry.lock file.",
+  "metadata": {
+    "command_name": "check",
+    "ground_truth_crc": "0x796B7716",
+    "tool_name": "poetry"
+  },
+  "options": [
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Checks that poetry.lock exists for the current version of pyproject.toml.",
+      "name": "--lock",
+      "required": false
+    },
+    {
+      "aliases": [],
+      "allow_multiple": false,
+      "argument": null,
+      "description": "Fail if check reports warnings.",
+      "name": "--strict",
+      "required": false
+    }
+  ],
+  "subcommand": "check",
+  "usage": "check [options]"
+}

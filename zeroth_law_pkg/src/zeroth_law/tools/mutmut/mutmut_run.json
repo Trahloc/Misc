@@ -1,0 +1,21 @@
+{
+  "description": "(No description provided in help text)",
+  "usage": "mutmut run [OPTIONS] [MUTANT_NAMES]...",
+  "options": [],
+  "arguments": [
+    {
+      "name": "MUTANT_NAMES",
+      "description": "(No description provided in help text)",
+      "required": false,
+      "nargs": "*"
+    }
+  ],
+  "metadata": {
+    "ground_truth_crc": "0x17BBCB7C",
+    "schema_version": "1.0",
+    "tool_name": "mutmut",
+    "command_name": "run"
+  },
+  "command": "mutmut",
+  "subcommand": "run"
+}

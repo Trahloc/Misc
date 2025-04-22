@@ -1,0 +1,14 @@
+{
+  "description": "Erase previously collected coverage data.",
+  "usage": "coverage erase [options]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0x97636057",
+    "schema_version": "1.0",
+    "tool_name": "coverage",
+    "command_name": "erase"
+  },
+  "command": "coverage",
+  "subcommand": "erase"
+}
