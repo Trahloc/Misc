@@ -289,24 +289,68 @@ def restore_git_hooks(git_root: Path) -> bool:
         log.info(f"Attempting to restore standard pre-commit hooks in: {git_root}")
         result = subprocess.run(
             ["pre-commit", "install"],
-            capture_output=True,
             text=True,
             check=True,
+            capture_output=True,  # Explicitly capture stdout/stderr
             cwd=git_root,
         )
-        log.info(f"pre-commit install output:\n{result.stdout.strip()}")
-        if result.stderr:
-            log.warning(f"pre-commit install stderr:\n{result.stderr.strip()}")
     except FileNotFoundError as e:
         raise ValueError("'pre-commit' command not found") from e  # TRY003 simplified
     except subprocess.CalledProcessError as e:
-        # Keep stderr here as it's informative
-        raise ValueError(f"'pre-commit install' failed: {e.stderr.strip()}") from e
+        # Log detailed error information using captured output
+        error_message = (
+            f"'pre-commit install' failed (Exit Code: {e.returncode}):\\n"
+            f"--- captured stdout ---\\n{e.stdout}\\n"
+            f"--- captured stderr ---\\n{e.stderr}"
+        )
+        log.error(error_message)
+        raise ValueError("pre-commit install failed") from e  # Re-raise as ValueError
     except Exception as e:
         raise ValueError(f"Unexpected error restoring hooks: {e}") from e  # TRY003 simplified
     else:
         log.info("Successfully restored standard pre-commit hooks.")
+        # Optionally log successful output if needed
+        # log.debug(f"pre-commit install stdout:\\n{result.stdout}")
+        # log.debug(f"pre-commit install stderr:\\n{result.stderr}")
         return True
+
+
+def restore_standard_hooks(git_root_path: Path) -> None:
+    """
+    Restores standard pre-commit hooks in the specified Git repository root.
+
+    Args:
+        git_root_path: Path to the Git repository root.
+
+    Raises:
+        ValueError: If 'pre-commit install' fails or if pre-commit is not installed.
+    """
+    log.info(f"Attempting to restore standard pre-commit hooks in: {git_root_path}")
+
+    # Attempt to run 'pre-commit install' in the git root
+    try:
+        result = subprocess.run(
+            ["pre-commit", "install"],
+            cwd=git_root_path,
+            capture_output=True,
+            text=True,
+            check=True,
+            encoding="utf-8",
+        )
+        log.info("Successfully ran 'pre-commit install' to restore hooks.")
+        log.debug("pre-commit install output:\n%s", result.stdout)
+    except FileNotFoundError:
+        err_msg = "'pre-commit' command not found. Cannot restore hooks automatically."
+        log.error(err_msg)
+        log.error("Please install pre-commit and run 'pre-commit install' manually in the git root.")
+        raise ValueError(err_msg)
+    except subprocess.CalledProcessError as e:
+        err_msg = f"'pre-commit install' failed (Exit Code: {e.returncode})"
+        log.error(err_msg)
+        log.error("--- stderr ---")
+        log.error(e.stderr)
+        log.error("Please check your pre-commit setup and try running manually.")
+        raise ValueError(err_msg) from e
 
 
 # Add other utility functions here

@@ -12,6 +12,7 @@ managed_tools:
   - flake8
   - isort
   - isort-identify-imports
+  - jsonschema
   - mutmut
   - mypy
   - pipdeptree
@@ -30,6 +31,10 @@ managed_tools:
   - scalene
   - uv # Assuming it might be needed/present
   - vulture
+  - pydocstyle
+  - yamllint
+  - zeroth-law
+  - zlt
 
 # List of executable base names found in the venv bin directory that ZLT should ignore.
 excluded_executables:
@@ -93,9 +98,28 @@ excluded_executables:
   - pycodestyle # Covered by ruff
   # pyflakes # Managed, removed from exclude
   - pygmentize # Syntax highlighter CLI
+  - chardetect
+  - docutils
+  - rst2html
+  - rst2html4
+  - rst2html5
+  - rst2latex
+  - rst2man
+  - rst2odt
+  - rst2pseudoxml
+  - rst2s5
+  - rst2xetex
+  - rst2xml
+  - tox
+  - twine
+  - uvx
   - tqdm # Library helper
   - typer # Library helper
   - virtualenv # Environment manager, replaced by uv
   # Exclude the project's own scripts defined in pyproject.toml
-  - zeroth-law
-  - zlt
+  #- zeroth-law # Removed from excludes
+  #- zlt # Removed from excludes
+  - sync-dev
+  - fix-json-schema
+  - fix-json-whitespace
+  - pytest-bisect-tests

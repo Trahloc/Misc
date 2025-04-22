@@ -17,11 +17,22 @@ from .file_finder import find_python_files
 from .git_utils import (
     find_git_root,
     install_git_hook_script,
+    restore_standard_hooks,
 )
 from .path_utils import find_project_root
 
-# Setup logger for this module
+# --- Early Logging Setup --- START
+# Configure root logger early to prevent premature debug logs (e.g., during --help)
+# Set a sensible default level here.
+DEFAULT_LOG_LEVEL = logging.WARNING
+log_format = "%(asctime)s [%(levelname)-8s] %(message)s"
+log_datefmt = "%Y-%m-%d %H:%M:%S"
+logging.basicConfig(level=DEFAULT_LOG_LEVEL, format=log_format, datefmt=log_datefmt, force=True)
+
+# Setup logger for this module *after* basicConfig
 log = logging.getLogger(__name__)
+log.debug("Initial basicConfig set to %s", logging.getLevelName(DEFAULT_LOG_LEVEL))
+# --- Early Logging Setup --- END
 
 # Context settings for Click
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
@@ -340,7 +351,7 @@ def _generic_action_handler(ctx: click.Context, paths: tuple[Path, ...], **kwarg
 @click.option(
     "--color/--no-color",
     is_flag=True,
-    default=None,  # Let auto-detection handle default
+    default=None,
     help="Enable/disable colored logging output.",
 )
 @click.option(
@@ -356,10 +367,7 @@ def cli_group(
     ctx: click.Context, verbosity: int, quiet: bool, color: bool | None, config_path_override: Path | None
 ) -> None:
     """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
-    # This function now only sets up context needed *at runtime* by commands.
-    # Dynamic command generation happens *outside* this function at module load time.
-
-    # Setup logging (based on arguments passed to the group)
+    # Determine effective log level based on flags
     if quiet:
         log_level = logging.ERROR
     elif verbosity == 1:
@@ -367,31 +375,35 @@ def cli_group(
     elif verbosity >= 2:
         log_level = logging.DEBUG
     else:
-        log_level = logging.WARNING
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-    log.debug("Logging setup complete. Level: %s", logging.getLevelName(log_level))
+        # Keep the default level set by basicConfig if no flags are specified
+        log_level = DEFAULT_LOG_LEVEL  # Use the default established earlier
+
+    # Adjust the level of the root logger
+    current_level = logging.getLogger().getEffectiveLevel()
+    if log_level != current_level:
+        logging.getLogger().setLevel(log_level)
+        log.debug("Log level adjusted by CLI args to: %s", logging.getLevelName(log_level))
+    else:
+        log.debug("Log level remains at default: %s", logging.getLevelName(current_level))
+
+    # TODO: Add color handling based on 'color' option
 
     # Find project root (might be needed by commands)
-    # Note: find_project_root needs a start_path
     project_root = find_project_root(start_path=Path.cwd())
     if not project_root:
-        # Log error but don't exit here, allow utility commands that might not need it
         log.error("Could not determine project root. Some commands might fail.")
 
-    # Load config (needed by commands) - Pass only the override path
+    # Load config (needed by commands)
     config = load_config(config_path_override=config_path_override)
     if config is None:
         config = {}
 
-    # Store project_root and config in context for commands to use
+    # Store context
     ctx.ensure_object(dict)
     ctx.obj["project_root"] = project_root
-    ctx.obj["config"] = config  # Store the loaded config (which includes actions)
-    ctx.obj["verbosity"] = verbosity  # Store verbosity
-    ctx.obj["quiet"] = quiet  # Store quiet flag
+    ctx.obj["config"] = config
+    ctx.obj["verbosity"] = verbosity
+    ctx.obj["quiet"] = quiet
 
     # Handle color option
 
@@ -542,16 +554,21 @@ def install_git_hook(ctx: click.Context, git_root: str | None) -> None:
     if not project_root:
         project_root = find_project_root(start_path=Path.cwd())  # Find again if needed
 
+    # Use a flag to indicate failure instead of exiting early
+    # error_occurred = False
+
     try:
         git_root_path = Path(git_root) if git_root else find_git_root(start_path=Path.cwd())  # Find relative to CWD
         if not git_root_path:
             log.error("Could not determine Git repository root. Please specify with --git-root.")
-            ctx.exit(1)
+            # ctx.exit(1)
+            raise click.ClickException("Failed to determine Git root.")  # Raise exception instead
 
         # Ensure project_root is valid before using its name
         if not project_root or not project_root.is_dir():
             log.error("Project root is invalid or not found. Cannot install hook relative to project.")
-            ctx.exit(1)
+            # ctx.exit(1)
+            raise click.ClickException("Invalid project root.")  # Raise exception instead
 
         log.info(f"Using Git root: {git_root_path}")
         log.info(f"Using Project root: {project_root}")
@@ -571,13 +588,21 @@ def install_git_hook(ctx: click.Context, git_root: str | None) -> None:
             # Assuming install_git_hook_script only needs the git_root
             hook_path = install_git_hook_script(git_root_path)  # Pass only git_root
             log.info(f"Hook installed successfully at {hook_path}")
-            ctx.exit(0)
+            # ctx.exit(0) # Return normally on success
+            return
         except ValueError as e:
-            log.error(f"Could not find Git repository root: {e}")
-            ctx.exit(1)
+            # Log the specific ValueError from git_utils
+            log.error(f"Git hook installation failed: {e}")
+            # ctx.exit(1)
+            raise click.ClickException(f"Installation failed: {e}")  # Re-raise as ClickException
+
+    except click.ClickException:  # Catch our own exceptions to prevent generic logging
+        raise  # Re-raise them so Click handles the exit code
     except Exception as e:
-        log.exception("An error occurred during git hook installation.", exc_info=e)
-        ctx.exit(1)
+        log.exception("An unexpected error occurred during git hook installation.", exc_info=e)
+        # ctx.exit(1)
+        # Raise a generic exception for unexpected errors
+        raise click.ClickException("Unexpected installation error.")
 
 
 @cli_group.command("restore-git-hooks")
@@ -594,41 +619,18 @@ def restore_git_hooks(ctx: click.Context, git_root: str | None) -> None:
     try:
         git_root_path = Path(git_root) if git_root else find_git_root(start_path=project_root)
         if not git_root_path:
-            log.error("Could not determine Git repository root. Please specify with --git-root.")
-            ctx.exit(1)
+            err_msg = "Could not determine Git repository root. Please specify with --git-root."
+            log.error(err_msg)
+            # raise click.ClickException("Failed to determine Git root.")
+            raise ValueError(err_msg)  # Raise standard ValueError
 
-        log.info(f"Attempting to restore standard pre-commit hooks in: {git_root_path}")
-
-        # Attempt to run 'pre-commit install' in the git root
-        # This might require pre-commit to be installed globally or in the environment
-        try:
-            result = subprocess.run(
-                ["pre-commit", "install"],
-                cwd=git_root_path,
-                capture_output=True,
-                text=True,
-                check=True,
-                encoding="utf-8",
-            )
-            log.info("Successfully ran 'pre-commit install' to restore hooks.")
-            log.debug("pre-commit install output:\n%s", result.stdout)
-        except FileNotFoundError:
-            log.error("'pre-commit' command not found. Cannot restore hooks automatically.")
-            log.error("Please install pre-commit and run 'pre-commit install' manually in the git root.")
-            ctx.exit(1)
-        except subprocess.CalledProcessError as e:
-            log.error(f"'pre-commit install' failed (Exit Code: {e.returncode}):")
-            log.error("--- stderr ---")
-            log.error(e.stderr)
-            log.error("Please check your pre-commit setup and try running manually.")
-            ctx.exit(1)
-        except Exception as e:
-            log.exception("An unexpected error occurred while running 'pre-commit install'.", exc_info=e)
-            ctx.exit(1)
-
-    except Exception as e:
-        log.exception("An error occurred during git hook restoration.", exc_info=e)
-        ctx.exit(1)
+        restore_standard_hooks(git_root_path)
+        return  # Return normally on success
+    except ValueError as e:
+        log.error("An error occurred during git hook restoration.")
+        log.error(str(e))
+        # raise click.ClickException(str(e))
+        raise ValueError(str(e)) from e  # Raise standard ValueError, preserving cause
 
 
 if __name__ == "__main__":

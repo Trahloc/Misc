@@ -8,6 +8,7 @@ The module supports both tomllib (Python 3.11+) and tomli (for older versions)
 for parsing TOML configuration files.
 """
 
+import logging
 import os
 import tomllib
 from pathlib import Path
@@ -51,14 +52,12 @@ def find_pyproject_toml() -> Path | None:
     if _CONFIG_PATH_ENV_VAR in os.environ:
         config_path = Path(os.environ[_CONFIG_PATH_ENV_VAR])
         if config_path.exists():
-            log.debug("Using config from environment variable: %s", config_path)
             return config_path
 
     # Check XDG config directory
     xdg_config_home = os.environ.get(_XDG_CONFIG_HOME_ENV_VAR, _DEFAULT_XDG_CONFIG_HOME)
     xdg_path = Path(xdg_config_home).expanduser() / "zeroth-law" / _PYPROJECT_FILENAME
     if xdg_path.exists():
-        log.debug("Found config in XDG config directory: %s", xdg_path)
         return xdg_path
 
     # Search upwards from the current directory
@@ -66,7 +65,6 @@ def find_pyproject_toml() -> Path | None:
     while True:
         config_path = current_dir / _PYPROJECT_FILENAME
         if config_path.exists():
-            log.debug("Found config by searching upwards: %s", config_path)
             return config_path
 
         # Stop if we've reached the root directory
@@ -76,7 +74,6 @@ def find_pyproject_toml() -> Path | None:
         # Move up one directory
         current_dir = current_dir.parent
 
-    log.debug("No pyproject.toml found by searching upwards")
     return None
 
 
@@ -134,8 +131,6 @@ def extract_config_section(toml_data: dict[str, Any], section_path: str) -> dict
         Dictionary containing the extracted section or an empty dict if section is not found.
 
     """
-    log.debug("Extracting config section: %s", section_path)
-
     # Split the section path into components
     path_parts = section_path.split(".")
 
@@ -172,12 +167,6 @@ def merge_with_defaults(config_section: dict[str, Any], defaults: dict[str, Any]
     for key, default_value in defaults.items():
         if key in config_section:
             loaded_value = config_section[key]
-            log.debug(
-                "Found custom value for %s: %s (default: %s)",
-                key,
-                loaded_value,
-                default_value,
-            )
             merged_config[key] = loaded_value
         # Handle keys present in config_section but not in defaults (excluding 'actions')
         elif key not in defaults and key != "actions":
@@ -213,10 +202,6 @@ def merge_with_defaults(config_section: dict[str, Any], defaults: dict[str, Any]
             if key in defaults and key not in invalid_fields:
                 valid_config[key] = value
 
-        log.debug(
-            "Using partial config with invalid fields reverted to defaults: %s",
-            valid_config,
-        )
         return valid_config
 
 
@@ -229,7 +214,6 @@ def load_action_definitions(config_section: dict[str, Any]) -> dict[str, Any]:
             f"{type(actions).__name__}. Expected a dictionary. No actions loaded.",
         )
         return {}
-    log.debug(f"Loaded actions definition: {list(actions.keys())}")
     return actions
 
 
