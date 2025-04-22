@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 # Ensure the src directory is in the path for imports
-current_dir = Path(__file__).parent
-src_path = current_dir.parent.parent.parent.parent.parent / "src"
-sys.path.insert(0, str(src_path))
+# current_dir = Path(__file__).parent
+# src_path = current_dir.parent.parent.parent.parent.parent / "src"
+# sys.path.insert(0, str(src_path))
 
 from pathlib import Path  # noqa: E402
 
@@ -132,7 +132,15 @@ def test_perform_ast_analysis(test_case: AnalyzerCase, tmp_path: Path) -> None:
 
 
 # Combine all test cases for full file analysis
-all_test_cases = header_test_cases + footer_test_cases + docstring_test_cases + complexity_test_cases + parameter_test_cases + statement_test_cases + line_test_cases
+all_test_cases = (
+    header_test_cases
+    + footer_test_cases
+    + docstring_test_cases
+    + complexity_test_cases
+    + parameter_test_cases
+    + statement_test_cases
+    + line_test_cases
+)
 
 
 @pytest.mark.parametrize("test_case", all_test_cases)
@@ -164,59 +172,63 @@ def test_file_analysis(test_case: AnalyzerCase, tmp_path: Path) -> None:
         assert result.get("line_counts", []) == test_case.expected_violations
 
 
-def test_ignore_rules():
-    """Test the ignore_rules parameter of analyze_file_compliance."""
-    # Create a file with header and footer violations
-    content = """This file has no proper header or footer."""
+def test_ignore_rules(tmp_path: Path):
+    """Test the ignore_rules parameter of analyze_file_compliance without mocking."""
+    # Create a file guaranteed to have header and footer violations
+    # An empty file or one with incorrect content will trigger both
+    content = "Invalid file content\nNo footer here either."
+    file_path = create_test_file(tmp_path, "test_ignore.py", content)
 
-    # Test with no ignored rules
-    tmp_path = Path("/tmp")  # Just for type checking, not actually used
-    mp = pytest.MonkeyPatch()
-    # Mock the check functions to return known violations
-    mp.setattr(
-        "zeroth_law.analyzer.python.analyzer_refactor.check_header_compliance",
-        lambda _: ["HEADER_LINE_1_MISMATCH"],
-    )
-    mp.setattr(
-        "zeroth_law.analyzer.python.analyzer_refactor.check_footer_compliance",
-        lambda _: ["FOOTER_MISSING"],
-    )
-    mp.setattr(
-        "zeroth_law.analyzer.python.analyzer_refactor.perform_ast_analysis",
-        lambda *args, **kwargs: {},
-    )
+    # Define default config (values don't matter much as we focus on header/footer)
+    config = {
+        "max_complexity": 10,
+        "max_params": 5,
+        "max_statements": 50,
+        "max_lines": 100,
+    }
 
-    # Test with no ignored rules
-    result = analyze_file_compliance(
-        tmp_path,
-        max_complexity=10,
-        max_params=5,
-        max_statements=50,
-        max_lines=100,
+    # --- Test with no ignored rules --- #
+    result_no_ignore = analyze_file_compliance(
+        file_path,
+        max_complexity=config["max_complexity"],
+        max_params=config["max_params"],
+        max_statements=config["max_statements"],
+        max_lines=config["max_lines"],
+        ignore_rules=[],  # Explicitly empty
     )
-    assert "header" in result
-    assert "footer" in result
+    # Check that *some* header violation is present (likely HEADER_LINE_1_MISMATCH)
+    assert "header" in result_no_ignore
+    assert result_no_ignore["header"]  # Ensure it's not an empty list
+    # Check that the specific footer violation is present
+    assert "footer" in result_no_ignore
+    assert "FOOTER_MISSING" in result_no_ignore["footer"]
 
-    # Test with ignored rules
-    result = analyze_file_compliance(
-        tmp_path,
-        max_complexity=10,
-        max_params=5,
-        max_statements=50,
-        max_lines=100,
-        ignore_rules=["HEADER_LINE_1_MISMATCH"],
-    )
-    assert "header" not in result
-    assert "footer" in result
+    # --- Test with header rule ignored --- #
+    # Identify the specific header rule triggered (likely HEADER_LINE_1_MISMATCH)
+    # We assume the first header error is the one to ignore for this test.
+    header_rule_to_ignore = result_no_ignore["header"][0]
+    assert isinstance(header_rule_to_ignore, str)  # Ensure it's a string code
 
-    # Test with all rules ignored
-    result = analyze_file_compliance(
-        tmp_path,
-        max_complexity=10,
-        max_params=5,
-        max_statements=50,
-        max_lines=100,
-        ignore_rules=["HEADER_LINE_1_MISMATCH", "FOOTER_MISSING"],
+    result_ignore_header = analyze_file_compliance(
+        file_path,
+        max_complexity=config["max_complexity"],
+        max_params=config["max_params"],
+        max_statements=config["max_statements"],
+        max_lines=config["max_lines"],
+        ignore_rules=[header_rule_to_ignore],
     )
-    assert "header" not in result
-    assert "footer" not in result
+    assert "header" not in result_ignore_header  # Header violations should be gone
+    assert "footer" in result_ignore_header  # Footer should still be present
+    assert "FOOTER_MISSING" in result_ignore_header["footer"]
+
+    # --- Test with all rules ignored --- #
+    result_ignore_all = analyze_file_compliance(
+        file_path,
+        max_complexity=config["max_complexity"],
+        max_params=config["max_params"],
+        max_statements=config["max_statements"],
+        max_lines=config["max_lines"],
+        ignore_rules=[header_rule_to_ignore, "FOOTER_MISSING"],
+    )
+    assert "header" not in result_ignore_all
+    assert "footer" not in result_ignore_all

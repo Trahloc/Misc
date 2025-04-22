@@ -7,4 +7,8 @@ def main() -> None:
     print("Compliant footer example")
 
 
+def example_function():
+    pass
+
+
 # <<< ZEROTH LAW FOOTER >>>

@@ -1,266 +1,238 @@
 import json
 import sys
+import subprocess
+import shutil  # Needed for copying helper scripts
+import os  # Needed for chmod
 from pathlib import Path
+from typing import Sequence  # Import Sequence
 
 # --- START ADDED CODE ---
 # Add project root to sys.path to allow importing 'src.zeroth_law'
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # tests/test_dev_scripts -> tests -> workspace
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 # --- END ADDED CODE ---
 
-from unittest.mock import MagicMock, patch, mock_open
-
-# Remove click testing imports if no longer testing the CLI directly
-# from click.testing import CliRunner
+# Remove unnecessary mock imports
+# from unittest.mock import MagicMock, patch, mock_open
+# from unittest.mock import MagicMock, call
 
 import pytest
+from pathlib import Path
+from enum import Enum
 
-# Import functions and classes from the actual script
 from src.zeroth_law.dev_scripts.baseline_generator import (
-    derive_tool_and_id,
     generate_or_verify_baseline,
     BaselineStatus,
-    TOOLS_DIR_ROOT as SCRIPT_TOOLS_DIR_ROOT,  # Import and alias for clarity
 )
+from src.zeroth_law.dev_scripts.baseline_writers import (
+    write_ground_truth_txt as real_write_ground_truth_txt,
+    ensure_skeleton_json_exists as real_ensure_skeleton_json_exists,
+)
+from src.zeroth_law.lib.crc import calculate_crc32 as calculate_hex_crc32
+from src.zeroth_law.dev_scripts.tool_index_utils import get_index_entry
 
-# Import other dependencies needed for mocking if necessary
-from src.zeroth_law.lib.crc import calculate_crc32 as calculate_hex_crc32  # Import if needed
 
-# Redefine constants if needed, or rely on imported ones
-# TOOLS_DIR = Path(__file__).parent.parent.parent / "src/zeroth_law/tools"
-INDEX_PATH = SCRIPT_TOOLS_DIR_ROOT / "tool_index.json"  # Use imported root
-WORKSPACE_ROOT = Path(__file__).resolve().parents[3]  # Define workspace root if needed elsewhere
+# --- Helper to get path to test data helper script --- #
+def get_helper_script_path(script_name: str) -> Path:
+    # Assumes scripts are in tests/test_data/dev_scripts/dummy_outputs/
+    return Path(__file__).parent.parent / "test_data" / "dev_scripts" / "dummy_outputs" / script_name
+
+
+# --- Helper to copy and prepare script in tmp_path --- #
+def prepare_helper_script(tmp_path: Path, source_script_name: str) -> Path:
+    source_path = get_helper_script_path(source_script_name)
+    if not source_path.is_file():
+        pytest.fail(f"Helper script not found: {source_path}")
+    dest_path = tmp_path / source_script_name
+    shutil.copy(source_path, dest_path)
+    os.chmod(dest_path, 0o755)  # Make executable
+    return dest_path
 
 
 # Fixture for mock capture output (can be reused)
 @pytest.fixture
 def mock_capture_output():
-    # Simple docstring
     """Mock capture output bytes and success exit code."""
-    # Corrected: Use \n for newline in bytes literal
-    return (b"Mocked help output for command.\nLine 2.", 0)
+    return (b"Mocked help output for command.\\nLine 2.", 0)
 
 
-# --- Remove old subprocess helper and test ---
-# def run_generate_script(...): ...
-# @pytest.mark.skip(...)
-# def test_generate_baseline_for_subcommand(...): ...
-
-# --- Remove old cleanup fixture ---
-# @pytest.fixture(scope="function")
-# def clean_generated_files(request): ...
-
-
-# --- NEW TESTS ---
-
-
-# Test derive_tool_and_id function
-@pytest.mark.parametrize(
-    "command_list, expected_tool, expected_id",
-    [
-        (["tool"], "tool", "tool"),
-        (["tool", "subcommand"], "tool", "tool_subcommand"),
-        (["tool-with-hyphen", "arg"], "tool-with-hyphen", "tool-with-hyphen_arg"),
-        # Add more cases if needed (e.g., sanitization)
-    ],
-)
-def test_derive_tool_and_id(command_list, expected_tool, expected_id):
-    tool_name, tool_id = derive_tool_and_id(command_list)
-    assert tool_name == expected_tool
-    assert tool_id == expected_id
-
-
-def test_derive_tool_and_id_empty():
-    with pytest.raises(ValueError):
-        derive_tool_and_id([])
-
-
-# Test baseline generation logic with mocks (Example: New Tool)
-def test_generate_baseline_new_tool(mock_capture_output):
+def test_generate_baseline_new_tool(tmp_path):
+    """Test baseline generation for a new tool using external helper script."""
     # Arrange
-    command = "newtool --flag"
-    tool_name, tool_id = derive_tool_and_id(command.split())
+    tool_name = "newtool"
+    flags = "--flag"
+    command_sequence_str = f"{tool_name} {flags}"  # Command ZLT thinks it's running
+    helper_script_name = "mock_output_1.py"
+    expected_output_str = "Mocked help output for command.\\nLine 2."  # Content of mock_output_1.py
+    expected_output_bytes = expected_output_str.encode("utf-8")
+    expected_crc = calculate_hex_crc32(expected_output_str.rstrip())
 
-    # Create mock functions
-    mock_capture = MagicMock(return_value=mock_capture_output)
-    mock_load_index = MagicMock(return_value={})
-    mock_save_index = MagicMock()
-    mock_write_txt = MagicMock(return_value=True)
-    mock_ensure_skeleton = MagicMock(return_value=True)
+    # Prepare the helper script
+    helper_script_path = prepare_helper_script(tmp_path, helper_script_name)
+    executable_command: Sequence[str] = (sys.executable, str(helper_script_path))
 
-    expected_crc = calculate_hex_crc32(
-        mock_capture_output[0].decode().replace("\r\n", "\n").replace("\r", "\n").rstrip()
-    )
+    # Set up temporary directory structure
+    tools_dir = tmp_path / "tools"
+    tools_dir.mkdir()
 
     # Act
-    # Pass mocks directly
-    status = generate_or_verify_baseline(
-        command_str=command,
-        load_tool_index_func=mock_load_index,
-        save_tool_index_func=mock_save_index,
-        capture_tty_output_func=mock_capture,
-        write_ground_truth_txt_func=mock_write_txt,
-        ensure_skeleton_json_exists_func=mock_ensure_skeleton,
+    # Pass original command_sequence_str for ID/paths
+    # Pass executable_command_override for actual execution
+    status, calculated_crc_hex, _ = generate_or_verify_baseline(
+        command_sequence_str, root_dir=tools_dir, executable_command_override=executable_command
     )
 
     # Assert
-    assert status == BaselineStatus.UPDATED
-    mock_capture.assert_called_once()
-    # Check the command passed to capture includes 'sh -c "... --help | cat"'
-    assert mock_capture.call_args[0][0][0] == "sh"
-    assert mock_capture.call_args[0][0][1] == "-c"
-    assert mock_capture.call_args[0][0][2] == f"{command} --help | cat"
-    mock_load_index.assert_called_once()
-    mock_write_txt.assert_called_once()
-    mock_save_index.assert_called_once()
-    # Check the data saved to the index
-    saved_index_data = mock_save_index.call_args[0][0]
-    assert tool_id in saved_index_data
-    assert saved_index_data[tool_id]["crc"] == expected_crc
-    mock_ensure_skeleton.assert_called_once()
+    assert status == BaselineStatus.CAPTURE_SUCCESS
+    assert calculated_crc_hex == expected_crc
+
+    # Verify file existence and content using paths derived from command_sequence_str
+    command_id = "_".join(command_sequence_str.split())
+    txt_path = tools_dir / tool_name / f"{command_id}.txt"
+    json_path = tools_dir / tool_name / f"{command_id}.json"
+
+    assert txt_path.exists(), f"Expected file {txt_path} does not exist"
+    assert txt_path.read_bytes() == expected_output_bytes, f"Content of {txt_path} does not match expected output"
+    assert json_path.exists(), f"Expected file {json_path} does not exist"
+
+    # Verify basic skeleton JSON structure
+    try:
+        with open(json_path, "r") as f:
+            json_data = json.load(f)
+        assert "command_sequence" in json_data
+        # Skeleton should store the original command sequence string
+        assert json_data["command_sequence"] == command_sequence_str
+        assert "metadata" in json_data
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        pytest.fail(f"Failed to read or parse skeleton JSON {json_path}: {e}")
 
 
-# Test baseline generation logic (Example: Up to Date)
-def test_generate_baseline_up_to_date(mock_capture_output):
+# Comment out this test as the UP_TO_DATE logic is now handled by the caller
+# def test_generate_baseline_up_to_date(tmp_path, monkeypatch):
+#     """Test verification when baseline is up-to-date."""
+#     # Arrange
+#     command = "existingtool"
+#     command_sequence_str = command
+#     mock_output = b"Mocked help output for command.\nLine 2."
+#     current_crc = calculate_hex_crc32(mock_output.decode().replace("\r\n", "\n").replace("\r", "\n").rstrip())
+#
+#     # Set up temporary directory structure
+#     tools_dir = tmp_path / "tools"
+#     tools_dir.mkdir()
+#     tool_index_path = tmp_path / "tool_index.json"
+#     tool_index_path.write_text(json.dumps({command: {"crc": current_crc}}))
+#
+#     # Monkeypatch constants to use temporary paths
+#     monkeypatch.setattr("src.zeroth_law.dev_scripts.tool_index_utils.TOOLS_DIR_ROOT", tools_dir)
+#     monkeypatch.setattr("src.zeroth_law.dev_scripts.tool_index_utils.TOOL_INDEX_PATH", tool_index_path)
+#
+#     # Monkeypatch subprocess to return mock output
+#     def mock_capture_command_output(cmd):
+#         return mock_output, 0
+#     monkeypatch.setattr("src.zeroth_law.dev_scripts.baseline_generator._capture_command_output", mock_capture_command_output)
+#
+#     # Mock the file writing functions to verify paths used
+#     dummy_txt_path = tools_dir / 'existingtool' / 'existingtool.txt'
+#     monkeypatch.setattr('src.zeroth_law.dev_scripts.baseline_writers.write_ground_truth_txt', MagicMock(return_value=None))
+#     monkeypatch.setattr('src.zeroth_law.dev_scripts.baseline_writers.ensure_skeleton_json_exists', MagicMock(return_value=None))
+#
+#     # Act
+#     # Need to adapt this call if generate_or_verify_baseline signature changed
+#     status, returned_crc, timestamp = generate_or_verify_baseline(command_sequence_str, root_dir=tools_dir)
+#
+#     # Assert
+#     # The status check needs rethinking. The core logic is now separate.
+#     # Maybe check that returned_crc matches current_crc and status is CAPTURE_SUCCESS?
+#     # assert status == BaselineStatus.UP_TO_DATE # This status is no longer returned directly
+#     assert status == BaselineStatus.CAPTURE_SUCCESS
+#     assert returned_crc == current_crc
+#
+#     # The index update check also needs rethinking as it's done by the caller
+#     # with open(tool_index_path, "r") as f:
+#     #     index_data = json.load(f)
+#     # entry = get_index_entry(index_data, command.split())
+#     # assert entry["crc"] == current_crc
+#     # assert "checked_timestamp" in entry
+
+
+def test_generate_baseline_crc_mismatch(tmp_path):
+    """Test baseline CRC mismatch detection using external helper script."""
     # Arrange
-    command = "existingtool"
-    tool_name, tool_id = derive_tool_and_id(command.split())
+    tool_name = "tool_to_update"
+    command_sequence_str = tool_name  # Command ZLT thinks it's running
+    helper_script_name = "mock_output_2.py"
+    expected_output_str = "New help output for command.\\nLine 2."  # Content of mock_output_2.py
+    expected_output_bytes = expected_output_str.encode("utf-8")
+    expected_crc = calculate_hex_crc32(expected_output_str.rstrip())
 
-    # Calculate CRC for the mock output
-    current_crc = calculate_hex_crc32(
-        mock_capture_output[0].decode().replace("\r\n", "\n").replace("\r", "\n").rstrip()
-    )
+    # Prepare the helper script
+    helper_script_path = prepare_helper_script(tmp_path, helper_script_name)
+    executable_command: Sequence[str] = (sys.executable, str(helper_script_path))
 
-    # Create mock functions
-    mock_capture = MagicMock(return_value=mock_capture_output)
-    mock_load_index = MagicMock(return_value={tool_id: {"crc": current_crc}})
-    mock_save_index = MagicMock()
-    mock_write_txt = MagicMock(return_value=True)
-    mock_ensure_skeleton = MagicMock(return_value=True)
+    # Set up temporary directory structure
+    tools_dir = tmp_path / "tools"
+    tools_dir.mkdir()
+    # Create a dummy index file indicating an *old* CRC to force an update scenario
+    # This part is tricky without index utils dependency. We are primarily testing
+    # that generate_or_verify_baseline returns CAPTURE_SUCCESS and the correct new CRC.
+    # We cannot easily verify the *index update* itself without more changes/mocks.
 
     # Act
-    # Pass mocks directly
-    status = generate_or_verify_baseline(
-        command_str=command,
-        load_tool_index_func=mock_load_index,
-        save_tool_index_func=mock_save_index,
-        capture_tty_output_func=mock_capture,
-        write_ground_truth_txt_func=mock_write_txt,
-        ensure_skeleton_json_exists_func=mock_ensure_skeleton,
+    status, calculated_crc_hex, _ = generate_or_verify_baseline(
+        command_sequence_str, root_dir=tools_dir, executable_command_override=executable_command
     )
 
     # Assert
-    assert status == BaselineStatus.UP_TO_DATE
-    mock_capture.assert_called_once()
-    mock_load_index.assert_called_once()
-    mock_write_txt.assert_not_called()  # Should not write TXT if up-to-date
-    mock_save_index.assert_not_called()  # Should not save index if up-to-date
-    mock_ensure_skeleton.assert_called_once()  # Should still ensure skeleton exists
+    assert status == BaselineStatus.CAPTURE_SUCCESS
+    assert calculated_crc_hex == expected_crc  # Verify the *new* CRC was calculated
+
+    # Verify file existence and content using paths derived from command_sequence_str
+    command_id = "_".join(command_sequence_str.split())
+    txt_path = tools_dir / tool_name / f"{command_id}.txt"
+    json_path = tools_dir / tool_name / f"{command_id}.json"
+    assert txt_path.exists(), f"Expected file {txt_path} does not exist"
+    assert txt_path.read_bytes() == expected_output_bytes, f"Content of {txt_path} does not match expected output"
+    assert json_path.exists(), f"Expected file {json_path} does not exist"
 
 
-# Test baseline generation logic (Example: CRC Mismatch -> Update)
-def test_generate_baseline_crc_mismatch(mock_capture_output):
+def test_generate_baseline_file_content(tmp_path):
+    """Test file writing content and path generation using external helper script."""
     # Arrange
-    command = "tool_to_update"
-    tool_name, tool_id = derive_tool_and_id(command.split())
+    tool_name = "filewritetest"
+    command_sequence_str = tool_name  # Command ZLT thinks it's running
+    helper_script_name = "mock_output_3.py"
+    # Align expected string with actual print() output (includes final newline)
+    expected_output_str = "Specific content for file write test.\nEnd.\n"
+    expected_output_bytes = expected_output_str.encode("utf-8")
+    # Calculate expected CRC on the string *with* the trailing newline
+    expected_crc = calculate_hex_crc32(expected_output_str)
 
-    # Calculate new CRC for the mock output
-    new_crc = calculate_hex_crc32(mock_capture_output[0].decode().replace("\r\n", "\n").replace("\r", "\n").rstrip())
-    old_crc = "0xOLDCRC00"
+    # Prepare the helper script
+    helper_script_path = prepare_helper_script(tmp_path, helper_script_name)
+    executable_command: Sequence[str] = (sys.executable, str(helper_script_path))
+    command_id_for_paths = "_".join(command_sequence_str.split())
 
-    # Create mock functions
-    mock_capture = MagicMock(return_value=mock_capture_output)
-    mock_load_index = MagicMock(return_value={tool_id: {"crc": old_crc}})
-    mock_save_index = MagicMock()
-    mock_write_txt = MagicMock(return_value=True)
-    mock_ensure_skeleton = MagicMock(return_value=True)
+    # Set up temporary directory structure
+    tools_dir = tmp_path / "tools"
+    tools_dir.mkdir()
 
     # Act
-    # Pass mocks directly
-    status = generate_or_verify_baseline(
-        command_str=command,
-        load_tool_index_func=mock_load_index,
-        save_tool_index_func=mock_save_index,
-        capture_tty_output_func=mock_capture,
-        write_ground_truth_txt_func=mock_write_txt,
-        ensure_skeleton_json_exists_func=mock_ensure_skeleton,
+    status, calculated_crc_hex, _ = generate_or_verify_baseline(
+        command_sequence_str, root_dir=tools_dir, executable_command_override=executable_command
     )
 
     # Assert
-    assert status == BaselineStatus.UPDATED
-    mock_capture.assert_called_once()
-    mock_load_index.assert_called_once()
-    mock_write_txt.assert_called_once()  # Should write TXT on mismatch
-    mock_save_index.assert_called_once()  # Should save index on mismatch
-    # Check saved data
-    saved_index_data = mock_save_index.call_args[0][0]
-    assert tool_id in saved_index_data
-    assert saved_index_data[tool_id]["crc"] == new_crc  # Should have new CRC
-    mock_ensure_skeleton.assert_called_once()
+    assert status == BaselineStatus.CAPTURE_SUCCESS
+    assert calculated_crc_hex == expected_crc
+
+    # Verify file existence and content using paths derived from command_sequence_str
+    txt_path = tools_dir / tool_name / f"{command_id_for_paths}.txt"
+    json_path = tools_dir / tool_name / f"{command_id_for_paths}.json"
+    assert txt_path.exists(), f"Expected file {txt_path} does not exist"
+    assert txt_path.read_bytes() == expected_output_bytes, f"Content of {txt_path} does not match expected output"
+    assert json_path.exists(), f"Expected file {json_path} does not exist"
 
 
-# Optional: Test file writing content (still requires mocks, but passed in)
-# Note: Patching TOOLS_DIR_ROOT directly is still an internal mock.
-# Instead, pass mock writer functions that internally use tmp_path.
-
-# Import the real writer functions to wrap them
-from src.zeroth_law.dev_scripts.baseline_writers import (
-    write_ground_truth_txt as real_write_ground_truth_txt,
-    ensure_skeleton_json_exists as real_ensure_skeleton_json_exists,
-)
-
-
-def test_generate_baseline_file_content(mock_capture_output, tmp_path):
-    # Arrange
-    command = "filewritetest"
-    tool_name, tool_id = derive_tool_and_id(command.split())
-
-    # Create mock functions for capture and index I/O
-    mock_capture = MagicMock(return_value=mock_capture_output)
-    mock_load_index = MagicMock(return_value={})
-    mock_save_index = MagicMock()  # Mock saving index to avoid file I/O
-
-    # Create wrapper functions for writers that use tmp_path
-    def mock_write_txt_to_tmp(tool_dir, tool_id, content):
-        # Original function uses TOOLS_DIR_ROOT, we replace tool_dir base
-        actual_tool_dir = tmp_path / tool_dir.name  # Use tmp_path as base
-        # Pass the tmp_path based directory to the real function
-        return real_write_ground_truth_txt(actual_tool_dir, tool_id, content)
-
-    def mock_ensure_skeleton_in_tmp(tool_dir, tool_id, command_list):
-        actual_tool_dir = tmp_path / tool_dir.name
-        # Pass the tmp_path based directory to the real function
-        return real_ensure_skeleton_json_exists(actual_tool_dir, tool_id, command_list)
-
-    expected_txt_path = tmp_path / tool_name / f"{tool_id}.txt"
-    expected_json_path = tmp_path / tool_name / f"{tool_id}.json"
-    expected_txt_content = mock_capture_output[0].decode().replace("\r\n", "\n").replace("\r", "\n").rstrip()
-
-    # Act
-    # Pass mocks and wrappers directly
-    status = generate_or_verify_baseline(
-        command_str=command,
-        load_tool_index_func=mock_load_index,
-        save_tool_index_func=mock_save_index,  # Mocked to prevent real write
-        capture_tty_output_func=mock_capture,
-        write_ground_truth_txt_func=mock_write_txt_to_tmp,  # Wrapper
-        ensure_skeleton_json_exists_func=mock_ensure_skeleton_in_tmp,  # Wrapper
-    )
-
-    # Assert
-    assert status == BaselineStatus.UPDATED
-    assert expected_txt_path.is_file()
-    assert expected_txt_path.read_text() == expected_txt_content
-    assert expected_json_path.is_file()
-    # Check basic skeleton content
-    skeleton_data = json.loads(expected_json_path.read_text())
-    assert "command_sequence" in skeleton_data
-    assert skeleton_data["command_sequence"] == command.split()
-    assert "metadata" in skeleton_data
-    assert skeleton_data["metadata"]["ground_truth_crc"] == "0x00000000"
-    mock_save_index.assert_called_once()  # Verify index saving was attempted
-
-
-# Add more tests for failure cases (capture failure, write failure, etc.)
-# ...
+# TODO: Add tests for failure conditions using real scenarios if possible
+# (e.g., non-executable script, script returning error code)

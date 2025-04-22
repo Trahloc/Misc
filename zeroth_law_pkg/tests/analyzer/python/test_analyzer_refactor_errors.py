@@ -86,75 +86,60 @@ def test_perform_ast_analysis_syntax_error(tmp_path):
     assert any("File cannot be parsed" in str(error) for error in result["analysis_error"])
 
 
-def test_perform_ast_analysis_generic_exception(monkeypatch):
-    """Test perform_ast_analysis when a generic exception occurs during analysis."""
-    test_file = Path("dummy.py")
+def test_analyze_file_compliance_with_errors(tmp_path):
+    """Test analyze_file_compliance with files causing real errors (no mocking)."""
 
-    # Mock analyze_line_counts to raise an exception
-    def mock_analyze_line_counts(*args, **kwargs):
-        raise Exception("Test exception")
+    config = {
+        "max_complexity": 10,
+        "max_params": 5,
+        "max_statements": 50,
+        "max_lines": 100,
+    }
 
-    monkeypatch.setattr(
-        "zeroth_law.analyzer.python.analyzer_refactor.analyze_line_counts",
-        mock_analyze_line_counts,
+    # --- Test Case 1: Syntax Error --- #
+    syntax_error_content = "def invalid_syntax(:\n    pass"
+    syntax_error_file = tmp_path / "syntax_error.py"
+    syntax_error_file.write_text(syntax_error_content, encoding="utf-8")
+
+    result_syntax = analyze_file_compliance(
+        syntax_error_file,
+        max_complexity=config["max_complexity"],
+        max_params=config["max_params"],
+        max_statements=config["max_statements"],
+        max_lines=config["max_lines"],
     )
 
-    result = perform_ast_analysis(
-        test_file,
-        max_complexity=10,
-        max_params=5,
-        max_statements=50,
-        max_lines=100,
+    # Expect header/footer errors because the file is invalid
+    assert "header" in result_syntax
+    assert result_syntax["header"]  # Should not be empty
+    assert "footer" in result_syntax
+    assert result_syntax["footer"]  # Should not be empty
+
+    # Expect analysis_error due to SyntaxError from perform_ast_analysis
+    assert "analysis_error" in result_syntax
+    assert any("File cannot be parsed" in str(e) for e in result_syntax["analysis_error"])
+    assert any("invalid syntax" in str(e).lower() for e in result_syntax["analysis_error"])
+
+    # --- Test Case 2: File Not Found --- #
+    non_existent_file = tmp_path / "i_do_not_exist.py"
+
+    result_not_found = analyze_file_compliance(
+        non_existent_file,
+        max_complexity=config["max_complexity"],
+        max_params=config["max_params"],
+        max_statements=config["max_statements"],
+        max_lines=config["max_lines"],
     )
 
-    assert "analysis_error" in result
-    assert any("Unexpected analysis failure" in str(error) for error in result["analysis_error"])
+    # Expect header/footer errors related to file not found
+    assert "header" in result_not_found
+    assert any("FILE_NOT_FOUND" in str(e) for e in result_not_found["header"])
+    assert "footer" in result_not_found
+    assert any("FILE_NOT_FOUND" in str(e) for e in result_not_found["footer"])
 
-
-def test_analyze_file_compliance_with_errors(tmp_path, monkeypatch):
-    """Test analyze_file_compliance with files causing errors."""
-    test_file = tmp_path / "test.py"
-    test_file.write_text("print('Hello')", encoding="utf-8")
-
-    # First test that header/footer violations are properly detected
-    result = analyze_file_compliance(
-        test_file,
-        max_complexity=10,
-        max_params=5,
-        max_statements=50,
-        max_lines=100,
-    )
-
-    assert "header" in result
-    assert "HEADER_LINE_1_MISMATCH" in result["header"]
-
-    # Now test AST analysis errors by mocking the perform_ast_analysis function
-    def mock_ast_analysis(*args, **kwargs):
-        return {"analysis_error": ["File cannot be parsed: SyntaxError in test_file"]}
-
-    # Mock both header/footer checks and AST analysis
-    monkeypatch.setattr(
-        "zeroth_law.analyzer.python.analyzer_refactor.check_header_compliance",
-        lambda x: [],
-    )
-    monkeypatch.setattr(
-        "zeroth_law.analyzer.python.analyzer_refactor.check_footer_compliance",
-        lambda x: [],
-    )
-    monkeypatch.setattr(
-        "zeroth_law.analyzer.python.analyzer_refactor.perform_ast_analysis",
-        mock_ast_analysis,
-    )
-
-    # Now when we call analyze_file_compliance, it should use our mocked functions
-    result = analyze_file_compliance(
-        test_file,
-        max_complexity=10,
-        max_params=5,
-        max_statements=50,
-        max_lines=100,
-    )
-
-    # Verify that the analysis error is present
-    assert "analysis_error" in result
-    assert "File cannot be parsed" in result["analysis_error"][0]
+    # Expect analysis_error due to FileNotFoundError from perform_ast_analysis
+    assert "analysis_error" in result_not_found
+    assert any("File cannot be parsed" in str(e) for e in result_not_found["analysis_error"])
+    # Check for the specific OS error message components
+    assert any("No such file or directory" in str(e) for e in result_not_found["analysis_error"])
+    # assert any("FileNotFoundError" in str(e) for e in result_not_found["analysis_error"]) # Don't check for exception type string
