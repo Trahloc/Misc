@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+Default date unless otherwise specified is gathered by `date +%s.%N`

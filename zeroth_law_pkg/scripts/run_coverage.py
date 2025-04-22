@@ -75,24 +75,36 @@ def main():
     print("\nStep 1: Erasing previous coverage data...")
     run_command(coverage_erase_cmd, cwd=WORKSPACE_ROOT)
 
-    print("\nStep 2: Running tests via coverage to collect data & parse total...")
-    # Run pytest via coverage, allow failure, capture its output to parse TOTAL
-    pytest_result = run_command(
+    print("\nStep 2: Running tests via coverage to collect data...")
+    # Run pytest via coverage, allow failure, but don't capture output here
+    run_command(
         coverage_run_cmd,
         cwd=WORKSPACE_ROOT,
-        allowed_exit_codes=(0, 1),
-        capture_stdout_for_cmd=coverage_run_cmd,  # Pass the command to capture
+        allowed_exit_codes=(0, 1),  # Allow tests to fail without stopping script
+        # capture_stdout_for_cmd=coverage_run_cmd, # REMOVED - we capture report later
     )
 
-    # Parse the captured stdout from pytest_result
+    # Step 2.5: Generate and capture the coverage report summary
+    print("\nStep 2.5: Generating coverage report summary...")
+    coverage_report_summary_cmd = ["uv", "run", "coverage", "report"]  # Basic report for total
+    report_result = run_command(
+        coverage_report_summary_cmd,
+        cwd=WORKSPACE_ROOT,
+        allowed_exit_codes=(0,),  # Report should succeed
+        capture_stdout_for_cmd=coverage_report_summary_cmd,  # Capture this output
+    )
+
+    # Parse the captured stdout from report_result
     total_percentage = None
-    if pytest_result.stdout:  # Check if stdout was captured
-        print("--- Captured STDOUT from Step 2 (pytest-cov report) ---")
-        print(pytest_result.stdout)  # Print the captured output for verification
-        print("-----------------------------------------------------")
-        for line in pytest_result.stdout.splitlines():
+    if report_result.stdout:  # Check if stdout was captured
+        print("--- Captured STDOUT from Step 2.5 (Coverage Report) ---")
+        print(report_result.stdout)  # Print the captured output for verification
+        print("-------------------------------------------------------")
+        # Look for the TOTAL line in the report output
+        for line in report_result.stdout.splitlines():
             if line.startswith("TOTAL"):
-                match = re.search(r"\b(\d+)[%\s]*$", line)
+                # Regex to find digits possibly followed by % at the end of the TOTAL line
+                match = re.search(r"\b(\d+(?:.\d+)?)[%s]*$", line)  # Updated regex for potential float
                 if match:
                     try:
                         total_percentage = float(match.group(1))
@@ -101,9 +113,7 @@ def main():
                         pass  # Ignore if parsing fails
 
     if total_percentage is None:
-        print(f"*** ERROR: Could not parse TOTAL percentage from pytest-cov output! ***", file=sys.stderr)
-        # Decide if we should fail here or let the threshold test handle it
-        # Let's write 0.0 and let the test fail clearly
+        print(f"*** ERROR: Could not parse TOTAL percentage from coverage report output! ***", file=sys.stderr)
         total_percentage = 0.0
         print(f"Proceeding with 0.0% for threshold check.", file=sys.stderr)
 
