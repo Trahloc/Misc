@@ -153,9 +153,14 @@ def analyze_statements(file_path: str | Path, threshold: int) -> list[StatementV
                 visitor.visit(node)
                 statement_count = visitor.count
                 # Add debug logging
-                log.debug(f"Function: {node.name}, Line: {node.lineno}, " f"Counted Statements: {statement_count}, Threshold: {threshold}")
-                if statement_count > threshold:
+                log.debug(
+                    f"Function: {node.name}, Line: {node.lineno}, Counted Statements: {statement_count}, Threshold: {threshold}"
+                )
+                if statement_count >= threshold:
                     # Use node.lineno - assuming it now points to start of signature/decorators
+                    log.debug(
+                        f"Reporting violation for {node.name} with {statement_count} statements against threshold {threshold}"
+                    )
                     violations.append((node.name, node.lineno, statement_count))
 
     except (FileNotFoundError, SyntaxError, OSError) as e:

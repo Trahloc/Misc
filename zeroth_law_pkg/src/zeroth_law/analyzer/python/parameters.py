@@ -47,6 +47,10 @@ def analyze_parameters(file_path: str | Path, threshold: int) -> list[ParameterV
 
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                # Log node details for debugging
+                # log.debug(f"Found function/async function: {getattr(node, 'name', 'N/A')} at line {getattr(node, 'lineno', 'N/A')}")
+                # log.debug(f"AST Node: {ast.dump(node)}") # Dump the AST node structure
+
                 # Don't analyze methods for now
                 # is_method = any(isinstance(parent, ast.ClassDef) for parent in getattr(node, "_parents", []))
                 parent = parent_map.get(node)
@@ -58,8 +62,14 @@ def analyze_parameters(file_path: str | Path, threshold: int) -> list[ParameterV
                 # Exclude 'self' or 'cls' for methods if we analyze them later
                 args = node.args
                 param_count = (
-                    len(args.args) + len(args.posonlyargs) + len(args.kwonlyargs) + (1 if args.vararg else 0) + (1 if args.kwarg else 0)
+                    len(args.args)
+                    + len(args.posonlyargs)
+                    + len(args.kwonlyargs)
+                    + (1 if args.vararg else 0)
+                    + (1 if args.kwarg else 0)
                 )
+                # Log calculated count
+                # log.debug(f"Calculated param_count for {node.name}: {param_count}")
 
                 if param_count > threshold:
                     violations.append((node.name, node.lineno, param_count))

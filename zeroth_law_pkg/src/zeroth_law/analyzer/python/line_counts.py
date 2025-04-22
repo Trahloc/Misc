@@ -84,9 +84,15 @@ def _count_executable_lines(content: str) -> tuple[int, set[int]]:
                 tokenize.ERRORTOKEN,
             ):
                 lines_with_code.add(srow)
+                # --- DEBUG --- Log added line
+                # log.debug(f"_count_executable_lines: Added line {srow} for token {tokval!r} ({toktype})")
+                # --- END DEBUG ---
 
             prev_tok_type = toktype
 
+        # --- DEBUG --- Log final set
+        # log.debug(f"_count_executable_lines: Final code lines set: {sorted(list(lines_with_code))}")
+        # --- END DEBUG ---
         return len(lines_with_code), lines_with_code
 
     except tokenize.TokenError as e:
@@ -132,11 +138,16 @@ def analyze_line_counts(file_path: str | Path, max_lines: int) -> list[LineCount
     try:
         path = Path(file_path)
         content = path.read_text(encoding="utf-8")
+        log.debug(f"analyze_line_counts [{path.name}]: Read content starting with: {content[:100]!r}...")  # DEBUG
         executable_line_count, _ = _count_executable_lines(content)
+        # Log calculated count and threshold
+        log.debug(
+            f"analyze_line_counts: File: {path.name}, Executable Lines: {executable_line_count}, Threshold: {max_lines}"
+        )
 
-        if executable_line_count > max_lines:
+        if executable_line_count >= max_lines:
             violations.append(("max_executable_lines", executable_line_count))
-            log.debug(f"File {path.name} exceeds max line count: {executable_line_count} > {max_lines}")
+            log.debug(f"analyze_line_counts: File {path.name} EXCEEDS threshold.")
 
     except FileNotFoundError:
         log.error(f"File not found during line count analysis: {file_path}")

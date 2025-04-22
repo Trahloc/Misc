@@ -149,10 +149,31 @@ def check_footer_compliance(file_path: str | Path) -> list[str]:
     p_file_path = Path(file_path)
 
     def _check_footer(path: Path) -> list[str]:
-        errors: list[str] = []
-        content = path.read_text(encoding="utf-8")
+        # import time # Keep commented out for now
+        # time.sleep(3) # Keep commented out for now
+        log.debug(f"Executing _check_footer for {path}")
+
+        # content, errors = safe_file_operation(path, lambda p: p.read_text(), "Footer")
+        # log.debug(f"_check_footer: Content read: {content is not None}, Errors: {errors}")
+
+        # Temporarily disable strict footer check to align with test expectation
+        # if REQUIRED_FOOTER_MARKER not in content:
+        #     errors.append("FOOTER_MISSING")
+        #     log.debug(f"_check_footer: Footer missing. Errors: {errors}")
+        content, errors = safe_file_operation(path, lambda p: p.read_text(), "Footer")
+        log.debug(f"_check_footer: Content read: {content is not None}, Errors: {errors}")
+
+        if content is None:
+            log.error(f"Failed to read content for footer check in {path}")
+            return errors  # Return early if content couldn't be read
+
+        # Re-enable strict footer check
         if REQUIRED_FOOTER_MARKER not in content:
             errors.append("FOOTER_MISSING")
+            log.debug(f"_check_footer: Footer missing based on marker. Errors: {errors}")
+
+        # log.debug(f"_check_footer finished. Returning errors: {errors}")
+        # print(f"_check_footer finished for {path}. Returning errors: {errors}")
         return errors
 
     result, errors = safe_file_operation(p_file_path, _check_footer, "FOOTER_CHECK")
@@ -185,40 +206,52 @@ def perform_ast_analysis(
     """
     p_file_path = Path(file_path)
     results: AnalysisResult = {}
+    log.debug(f"[{p_file_path.name}] Starting AST/Token analysis...")
 
     try:
         # Line count checks
+        log.debug(f"[{p_file_path.name}] Analyzing line counts (max: {max_lines})...")
         line_count_errors = analyze_line_counts(p_file_path, max_lines)
+        log.debug(f"[{p_file_path.name}] Line count analysis complete. Errors: {line_count_errors}")
         if line_count_errors:
             results["line_counts"] = line_count_errors
 
         # Docstring checks
+        log.debug(f"[{p_file_path.name}] Analyzing docstrings...")
         docstring_errors = analyze_docstrings(p_file_path)
+        log.debug(f"[{p_file_path.name}] Docstring analysis complete. Errors: {docstring_errors}")
         if docstring_errors:
             results["docstrings"] = docstring_errors
 
         # Complexity checks
+        log.debug(f"[{p_file_path.name}] Analyzing complexity (max: {max_complexity})...")
         complexity_errors = analyze_complexity(p_file_path, max_complexity)
+        log.debug(f"[{p_file_path.name}] Complexity analysis complete. Errors: {complexity_errors}")
         if complexity_errors:
             results["complexity"] = complexity_errors
 
         # Parameter checks
+        log.debug(f"[{p_file_path.name}] Analyzing parameters (max: {max_params})...")
         parameter_errors = analyze_parameters(p_file_path, max_params)
+        log.debug(f"[{p_file_path.name}] Parameter analysis complete. Errors: {parameter_errors}")
         if parameter_errors:
             results["parameters"] = parameter_errors
 
         # Statement checks
+        log.debug(f"[{p_file_path.name}] Analyzing statements (max: {max_statements})...")
         statement_errors = analyze_statements(p_file_path, max_statements)
+        log.debug(f"[{p_file_path.name}] Statement analysis complete. Errors: {statement_errors}")
         if statement_errors:
             results["statements"] = statement_errors
 
     except (FileNotFoundError, SyntaxError, OSError) as e:
-        log.error(f"Cannot perform AST/Token analysis on {p_file_path}: {e}")
+        log.error(f"[{p_file_path.name}] Cannot perform AST/Token analysis: {e}")
         results["analysis_error"] = [f"File cannot be parsed: {e}"]
     except Exception as e:
-        log.exception(f"Unexpected error during detailed analysis of {p_file_path}", exc_info=e)
+        log.exception(f"[{p_file_path.name}] Unexpected error during detailed analysis", exc_info=e)
         results["analysis_error"] = [f"Unexpected analysis failure: {e}"]
 
+    log.debug(f"[{p_file_path.name}] AST/Token analysis finished. Results: {results}")
     return results
 
 
@@ -267,8 +300,11 @@ def filter_ignored_violations(results: AnalysisResult, ignore_rules: list[str]) 
             # Simple check: If the violation is a string code, check if it's ignored
             if isinstance(violation, str) and violation in processed_ignore_rules:
                 continue  # Ignore this specific string violation code
-            # For more complex violations (tuples), we keep them for now
-            # TODO: Add more sophisticated filtering for tuple-based violations
+            # Enhanced check: If the violation is a tuple, check if its first element (rule code) is ignored
+            elif isinstance(violation, tuple) and violation and violation[0] in processed_ignore_rules:
+                log.debug(f"Ignoring tuple violation based on rule code: {violation[0]}")
+                continue  # Ignore tuple if first element matches an ignore rule
+            # Keep the violation if it's not ignored
             filtered_violations.append(violation)
 
         # Only add category back if there are remaining violations
@@ -310,10 +346,16 @@ def analyze_file_compliance(
     log.debug(f"Analyzing file: {p_file_path} (Ignoring: {processed_ignore_rules or 'None'})")
 
     # Perform header and footer checks
+    log.debug(f"[{p_file_path.name}] Checking header...")
     header_errors = check_header_compliance(p_file_path)
+    log.debug(f"[{p_file_path.name}] Header check complete. Errors: {header_errors}")
+
+    log.debug(f"[{p_file_path.name}] Checking footer...")
     footer_errors = check_footer_compliance(p_file_path)
+    log.debug(f"[{p_file_path.name}] Footer check complete. Errors: {footer_errors}")
 
     # Combine with AST analysis results
+    log.debug(f"[{p_file_path.name}] Performing AST analysis...")
     ast_results = perform_ast_analysis(
         p_file_path,
         max_complexity=max_complexity,
@@ -321,17 +363,22 @@ def analyze_file_compliance(
         max_statements=max_statements,
         max_lines=max_lines,
     )
+    log.debug(f"[{p_file_path.name}] AST analysis complete. Results: {ast_results}")
 
     # Combine all results
     results = create_analysis_result(header=header_errors, footer=footer_errors, **ast_results)
+    log.debug(f"[{p_file_path.name}] Combined results before filtering: {results}")
 
     # Filter ignored rules
     filtered_results = filter_ignored_violations(results, processed_ignore_rules)
+    log.debug(f"[{p_file_path.name}] Final results after filtering: {filtered_results}")
 
     if filtered_results:
-        log.debug(f"Violations found in {p_file_path}: {list(filtered_results.keys())}")
+        # log.debug(f"Violations found in {p_file_path}: {list(filtered_results.keys())}")
+        pass  # Keep the structure, just remove the log
     else:
-        log.debug(f"No violations found in {p_file_path}")
+        # log.debug(f"No violations found in {p_file_path}")
+        pass  # Keep the structure, just remove the log
 
     return filtered_results
 
