@@ -137,24 +137,26 @@
     - [x] Document schema in **`tests/codebase_map/schema.sql`**.
     - [ ] Note: Conceptual tables (`principles`, `rules`, mappings) deferred to Phase Y.
 - [ ] **2. Implement Map Generator (`tests/codebase_map/map_generator.py`):
-    - [ ] Use `ast` to traverse Python files in `src/zeroth_law/`.
-    - [ ] Use `sqlite3` module to connect to `tests/codebase_map/code_map.db`.
-    - [ ] Implement logic to create tables based on schema if DB doesn't exist.
-    - [ ] Implement SQL `INSERT OR REPLACE` or `UPDATE` logic based on AST scan results.
-    - [ ] Implement logic to detect potential deletions (items in DB but not in AST scan).
-- [ ] **3. Implement Map Verification Tests (`tests/test_codebase_map/`):
-    - [ ] `test_map_code_consistency`:
-        - Use SQL queries to compare AST scan results with DB content.
-        - Test for deletions (code missing but DB entry exists) -> Fail with specific guidance.
-    - [ ] `test_map_signature_consistency`: Use SQL queries to compare signatures.
-    - [ ] `test_name_uniqueness`: Rely on DB constraints and potentially specific SQL queries.
-    - [ ] Refine failure messages to guide AI based on SQL query results.
-- [ ] **4. Implement Pruning Mechanism:**
-    - [ ] Design the confirmation mechanism for deletions.
-    - [ ] Update the map generator to execute SQL `DELETE` statements *only* when confirmation is present.
-- [ ] **5. Integrate into Test Workflow:**
-    - [ ] Ensure map generation/update runs automatically during `pytest`.
-    - [ ] Ensure verification tests run as part of the standard test suite.
+    - [x] Use `ast` (via `ast.NodeVisitor`) to traverse Python files in `src/zeroth_law/`.
+    - [x] Use `sqlite-utils` module to connect to `tests/codebase_map/code_map.db`.
+    - [x] Implement logic to create tables based on schema if DB doesn't exist.
+    - [x] Implement `sqlite_utils.upsert` logic based on AST scan results.
+    - [x] Implement logic to detect potential stale entries (`audit_database_against_scan`).
+    - [x] Track processed items during scan.
+    - [x] Add `argparse` for script execution.
+- [ ] **3. Implement Map Verification Tests (`tests/test_codebase_map/test_map_generator.py`):
+    - [ ] Test basic generation (modules, classes, functions) with temp files.
+    - [ ] Test signature hash calculation and updates.
+    - [ ] Test handling of methods vs. module-level functions.
+    - [ ] Test stale entry detection (`audit_database_against_scan`) reporting.
+    - [ ] Use `pytest` fixtures for setup/teardown (temp DB, temp src files).
+- [ ] **4. Implement Pruning/Cleanup Mechanism:**
+    - [x] Design the confirmation mechanism for stale entry removal (require `--prune-stale-entries "<confirmation_string>"`).
+    - [x] Implement the logic to execute SQL `DELETE` statements based on the verified confirmation.
+    - [x] Add tests to verify conditional pruning based on confirmation string.
+- [x] **5. Integrate into Test Workflow:**
+    - [x] Ensure map generation/update runs automatically during `pytest` (via session-scoped fixture `code_map_db` in `tests/conftest.py`).
+    - [ ] Ensure verification tests run as part of the standard test suite (will be covered by creating tests in Task 3/6).
 - [ ] **6. Implement Reporting (Optional but Recommended):**
     - [ ] Add fixtures or scripts to query the DB upon specific test failures and generate consumable reports for the AI (e.g., list of orphaned functions, signature mismatches).
 - [ ] **7. (Future) ZLT Integration:** Explore having ZLT directly query the `code_map.db`.

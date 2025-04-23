@@ -74,6 +74,7 @@ dev = [
     "pyyaml",             # YAML parser
     "requests",           # HTTP library (for potential integrations)
     "uv>=0.2.0",          # Extremely fast Python package installer and resolver
+    "sqlite-utils",       # For codebase map generation
 ]
 
 test = [
@@ -149,7 +150,6 @@ whitelist = [
     "pipdeptree",
     "pre-commit",
     "py-spy",
-    "pydocstyle",
     "pyflakes",
     "pylint",
     "pytest",
@@ -158,7 +158,6 @@ whitelist = [
     "safety",
     "scalene",
     "vulture",
-    "yamllint",
     "zeroth-law", # The tool itself
 ]
 

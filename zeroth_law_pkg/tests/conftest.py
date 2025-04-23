@@ -424,3 +424,111 @@ def auto_format_tool_json_files(TOOLS_DIR: Path, WORKSPACE_ROOT: Path):
 
 
 # --- END JSON Auto-formatter Fixture ---
+
+# --- Codebase Map Generation Fixture ---
+
+
+@pytest.fixture(scope="session")
+def code_map_db(WORKSPACE_ROOT: Path) -> Path:
+    """Fixture to ensure the codebase map DB is generated/updated once per session."""
+    generator_script = WORKSPACE_ROOT / "tests" / "codebase_map" / "map_generator.py"
+    db_path = WORKSPACE_ROOT / "tests" / "codebase_map" / "code_map.db"
+    schema_path = WORKSPACE_ROOT / "tests" / "codebase_map" / "schema.sql"
+    src_dir = WORKSPACE_ROOT / "src"
+
+    if not generator_script.exists():
+        pytest.fail(f"Codebase map generator script not found at: {generator_script}")
+    if not src_dir.exists():
+        pytest.fail(f"Source directory not found at: {src_dir}")
+    if not schema_path.exists():
+        pytest.fail(f"Schema file not found at: {schema_path}")
+
+    log.info(f"Running codebase map generator for session: {generator_script}")
+    cmd = [
+        sys.executable,
+        str(generator_script),
+        "--db",
+        str(db_path),
+        "--src",
+        str(src_dir),
+        "--schema",
+        str(schema_path),
+        # Do NOT add --prune-stale-entries here - should be manual or specific test
+    ]
+
+    try:
+        # Use check=True to automatically raise CalledProcessError on failure
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=WORKSPACE_ROOT)
+        log.info("Codebase map generator finished successfully.")
+        # Log stdout/stderr only if verbose logging is enabled perhaps?
+        # print("Generator STDOUT:", result.stdout)
+        # print("Generator STDERR:", result.stderr)
+    except subprocess.CalledProcessError as e:
+        print("Codebase map generator script failed during session setup:")
+        print("RETURN CODE:", e.returncode)
+        print("COMMAND:", e.cmd)
+        print("STDOUT:", e.stdout)
+        print("STDERR:", e.stderr)
+        pytest.fail("Codebase map generator failed, aborting tests.")
+    except Exception as e:
+        print(f"An unexpected error occurred running the codebase map generator: {e}")
+        pytest.fail("Codebase map generator failed unexpectedly.")
+
+    if not db_path.exists():
+        pytest.fail(f"Codebase map database file was not created at: {db_path}")
+
+    yield db_path
+    # No cleanup needed for session-scoped fixture using default path
+
+
+# --- Codebase Map Report Generation Fixture ---
+
+
+@pytest.fixture(scope="session")
+def code_map_report_json(WORKSPACE_ROOT: Path, code_map_db: Path) -> Path:
+    """Fixture to generate the codebase map JSON report once per session.
+    Depends on code_map_db to ensure the DB exists first.
+    """
+    reporter_script = WORKSPACE_ROOT / "tests" / "codebase_map" / "map_reporter.py"
+    # Use the default output path defined in the reporter script if possible,
+    # otherwise define it here.
+    # from tests.codebase_map.map_reporter import OUTPUT_PATH_DEFAULT # Avoid import if possible
+    output_path = WORKSPACE_ROOT / "tests" / "codebase_map" / "code_map_report.json"
+
+    if not reporter_script.exists():
+        pytest.fail(f"Codebase map reporter script not found at: {reporter_script}")
+    if not code_map_db.exists():  # Check DB from dependent fixture
+        pytest.fail(f"Codebase map database not found at expected path: {code_map_db}")
+
+    log.info(f"Running codebase map reporter for session: {reporter_script}")
+    cmd = [
+        sys.executable,
+        str(reporter_script),
+        "--db",
+        str(code_map_db),
+        "--output",
+        str(output_path),
+    ]
+
+    try:
+        # Use check=True to automatically raise CalledProcessError on failure
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=WORKSPACE_ROOT)
+        log.info("Codebase map reporter finished successfully.")
+        # print("Reporter STDOUT:", result.stdout)
+        # print("Reporter STDERR:", result.stderr)
+    except subprocess.CalledProcessError as e:
+        print("Codebase map reporter script failed during session setup:")
+        print("RETURN CODE:", e.returncode)
+        print("COMMAND:", e.cmd)
+        print("STDOUT:", e.stdout)
+        print("STDERR:", e.stderr)
+        pytest.fail("Codebase map reporter failed, aborting tests.")
+    except Exception as e:
+        print(f"An unexpected error occurred running the codebase map reporter: {e}")
+        pytest.fail("Codebase map reporter failed unexpectedly.")
+
+    if not output_path.exists():
+        pytest.fail(f"Codebase map report file was not created at: {output_path}")
+
+    yield output_path
+    # No cleanup needed for session-scoped fixture using default path

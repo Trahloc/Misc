@@ -202,106 +202,6 @@ logging:
   --log-disable=LOGGER_DISABLE
                         Disable a logger by name. Can be passed multiple times.
 
-pytest-randomly:
-  --randomly-seed=RANDOMLY_SEED
-                        Set the seed that pytest-randomly uses (int), or pass
-                        the
-                        special value 'last' to reuse the seed from the previous
-                        run.
-                        Default behaviour: use random.Random().getrandbits(32),
-                        so the seed is
-                        different on each run.
-  --randomly-dont-reset-seed
-                        Stop pytest-randomly from resetting random.seed() at the
-                        start of every test context (e.g. TestCase) and
-                        individual
-                        test.
-  --randomly-dont-reorganize
-                        Stop pytest-randomly from randomly reorganizing the test
-                        order.
-
-coverage reporting with distributed testing support:
-  --cov=[SOURCE]        Path or package name to measure during execution (multi-
-                        allowed). Use --cov= to not do any source filtering and
-                        record everything.
-  --cov-reset           Reset cov sources accumulated in options so far.
-  --cov-report=TYPE     Type of report to generate: term, term-missing,
-                        annotate, html, xml, json, lcov (multi-allowed). term,
-                        term-missing may be followed by ":skip-covered".
-                        annotate, html, xml, json and lcov may be followed by
-                        ":DEST" where DEST specifies the output location. Use
-                        --cov-report= to not generate any output.
-  --cov-config=PATH     Config file for coverage. Default: .coveragerc
-  --no-cov-on-fail      Do not report coverage if test run fails. Default: False
-  --no-cov              Disable coverage report completely (useful for
-                        debuggers). Default: False
-  --cov-fail-under=MIN  Fail if the total coverage is less than MIN.
-  --cov-append          Do not delete coverage but append to current. Default:
-                        False
-  --cov-branch          Enable branch coverage.
-  --cov-precision=COV_PRECISION
-                        Override the reporting precision.
-  --cov-context=CONTEXT
-                        Dynamic contexts to use. "test" for now.
-
-distributed and subprocess testing:
-  -n, --numprocesses numprocesses
-                        Shortcut for '--dist=load --tx=NUM*popen'.
-                        With 'logical', attempt to detect logical CPU count
-                        (requires psutil, falls back to 'auto').
-                        With 'auto', attempt to detect physical CPU count. If
-                        physical CPU count cannot be determined, falls back to
-                        1.
-                        Forced to 0 (disabled) when used with --pdb.
-  --maxprocesses=maxprocesses
-                        Limit the maximum number of workers to process the tests
-                        when using --numprocesses with 'auto' or 'logical'
-  --max-worker-restart=MAXWORKERRESTART
-                        Maximum number of workers that can be restarted when
-                        crashed (set to zero to disable this feature)
-  --dist=distmode       Set mode for distributing tests to exec environments.
-                        each: Send each test to all available environments.
-                        load: Load balance by sending any pending test to any
-                        available environment.
-                        loadscope: Load balance by sending pending groups of
-                        tests in the same scope to any available environment.
-                        loadfile: Load balance by sending test grouped by file
-                        to any available environment.
-                        loadgroup: Like 'load', but sends tests marked with
-                        'xdist_group' to the same worker.
-                        worksteal: Split the test suite between available
-                        environments, then re-balance when any worker runs out
-                        of tests.
-                        (default) no: Run tests inprocess, don't distribute.
-  --tx=xspec            Add a test execution environment. Some examples:
-                        --tx popen//python=python2.5 --tx
-                        socket=192.168.1.102:8888
-                        --tx ssh=user@codespeak.net//chdir=testcache
-  -d                    Load-balance tests. Shortcut for '--dist=load'.
-  --rsyncdir=DIR        Add directory for rsyncing to remote tx nodes
-  --rsyncignore=GLOB    Add expression for ignores when rsyncing to remote tx
-                        nodes
-  --testrunuid=TESTRUNUID
-                        Provide an identifier shared amongst all workers as the
-                        value of the 'testrun_uid' fixture.
-                        If not provided, 'testrun_uid' is filled with a new
-                        unique string on every test run.
-  --maxschedchunk=MAXSCHEDCHUNK
-                        Maximum number of tests scheduled in one step for
-                        --dist=load.
-                        Setting it to 1 will force pytest to send tests to
-                        workers one by one - might be useful for a small number
-                        of slow tests.
-                        Larger numbers will allow the scheduler to submit
-                        consecutive chunks of tests to workers - allows reusing
-                        fixtures.
-                        Due to implementation reasons, at least 2 tests are
-                        scheduled per worker at the start. Only later tests can
-                        be scheduled one by one.
-                        Unlimited if not set.
-  -f, --looponfail      Run tests in subprocess: wait for files to be modified,
-                        then re-run failing test set until all pass.
-
 [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
   markers (linelist):   Register new markers for test functions
@@ -401,19 +301,6 @@ distributed and subprocess testing:
   minversion (string):  Minimally required pytest version
   required_plugins (args):
                         Plugins that must be present for pytest to run
-  mock_traceback_monkeypatch (string):
-                        Monkeypatch the mock library to improve reporting of the
-                        assert_called_... methods
-  mock_use_standalone_module (string):
-                        Use standalone "mock" (from PyPI) instead of builtin
-                        "unittest.mock" on Python 3
-  rsyncdirs (paths):    list of (relative) paths to be rsynced for remote
-                        distributed testing.
-  rsyncignore (paths):  list of (relative) glob-style paths to be ignored for
-                        rsyncing.
-  looponfailroots (paths):
-                        directories to check for changes. Default: current
-                        directory.
 
 Environment variables:
   CI                       When set (regardless of value), pytest knows it is running in a CI process and does not truncate summary info

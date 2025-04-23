@@ -607,26 +607,13 @@ Implement a system that maintains an automated, persistent "map" of the codebase
 
 **Generation & Maintenance:**
 *   **Generator:** A dedicated script/module (e.g., `tests/codebase_map/map_generator.py`) using `ast` will scan `src/zeroth_law/`.
-*   **Database Interaction:** Uses Python's built-in `sqlite3` module to connect and execute SQL queries (INSERT, UPDATE, SELECT).
+*   **Database Interaction:** Uses Python's built-in `sqlite3` module and `sqlite-utils` to connect and execute SQL queries/upserts.
 *   **Trigger:** Map generation/update **must** be triggered automatically as part of the test suite execution.
-*   **Additions:** New functions/classes detected are INSERTed into the database.
-*   **Updates:** Changes to signatures detected result in UPDATEs to the relevant database rows.
-*   **Pruning (Deletion Handling - Safety Mechanism):**
-    1.  The AST scan identifies elements present in the DB but *not* found in the current code.
-    2.  The map verification test (see below) fails for these discrepancies.
-    3.  The failure message explicitly instructs the AI developer: "Database contains entry for `[module.function]`, but the code element was not found via AST scan. Verify this deletion was intentional (check recent Git history). If intentional, remove the corresponding tests and then approve the removal of this entry from the database (details TBD - likely requires a specific test marker or temporary config flag to allow pruning during the next map update run)."
-    4.  The map generator script will only execute `DELETE` statements for confirmed deletions.
+*   **Additions/Updates:** New or modified functions/classes detected are INSERTed or UPDATEd via `sqlite_utils.upsert`.
+*   **Stale Entry Audit & Pruning Workflow:**
+    1.  **Detection (Audit):** The generator script (`audit_database_against_scan`) identifies entries present in the DB but *not* found in the current AST scan.
+    2.  **Reporting:** These stale entries are logged as warnings. In the CI/test environment, this detection will cause a test failure (`test_map_code_consistency`).
+    3.  **Verification:** The failure message explicitly instructs the AI/developer: "Database contains stale entry for `[module.function]` (not found in scan). Verify this deletion/move was intentional (check recent Git history). If intentional, remove the corresponding tests (if any) and then approve the pruning action."
+    4.  **Pruning (Cleanup):** Rerun the generator script, adding the `--prune-stale-entries` flag followed by the *exact required confirmation string* (e.g., `--prune-stale-entries "Yes I have reviewed..."`). The script verifies the string before executing `DELETE` statements for verified stale entries.
 
-**Verification Tests (`tests/test_codebase_map/`):**
-A new test suite will connect to the database and use SQL queries to verify integrity:
-*   `test_map_code_consistency`: Checks that AST scan results match DB content (SELECT queries compare counts/existence).
-*   `test_map_signature_consistency`: Compares signatures from AST scan with those stored in the DB.
-*   `test_name_uniqueness`: Uses SQL `UNIQUE` constraints and potentially queries (`GROUP BY ... HAVING COUNT(*) > 1`) to enforce uniqueness.
-
-**ZLT Integration & AI Consumption:**
-*   The SQLite database provides a powerful, relational knowledge base for ZLT.
-*   ZLT can execute complex SQL queries to understand code structure, relationships, and potentially map rules/principles to specific code elements.
-*   Tests can generate specific, AI-consumable reports (text summaries, JSON snippets) by querying the database upon failure.
-
-**Location:**
-Map generation logic, verification tests, schema definitions, and the database file itself will reside within the `tests` directory, likely under `tests/codebase_map/`.
+**Verification Tests (`

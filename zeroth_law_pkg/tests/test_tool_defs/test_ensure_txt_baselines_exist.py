@@ -47,82 +47,30 @@ def command_sequence_to_id(command_parts: tuple[str, ...]) -> str:
 
 
 def is_tool_available(tool_name: str, workspace_root: Path) -> bool:
-    """Checks if a tool is likely runnable via 'uv run -- which tool_name'."""
-    command = ["uv", "run", "--", "which", tool_name]
-    log.debug(f"Checking availability: {' '.join(command)}")
+    """Checks if a tool is likely runnable via 'uv run which tool_name'."""
+    command = ["uv", "run", "--quiet", "--", "which", tool_name]
     try:
-        result = subprocess.run(
+        subprocess.run(
             command,
             capture_output=True,
             text=True,
-            check=False,
+            check=True,
             cwd=workspace_root,
             timeout=10,  # Short timeout for a simple check
         )
-        log.debug(f"'which {tool_name}' exited with {result.returncode}")
-        return result.returncode == 0
+        return True
+    except subprocess.CalledProcessError as e:
+        return False
+    except FileNotFoundError:
+        log.error("'uv' command not found. Ensure uv is installed and in PATH.")
+        return False
     except Exception as e:
-        log.warning(f"Error checking availability for {tool_name}: {e}")
+        log.warning(f"Unexpected error checking availability for {tool_name}: {e}")
         return False
 
 
-def _get_uv_bin_dir(workspace_root: Path) -> Path | None:
-    """Finds the bin directory of the current uv environment."""
-    try:
-        # Run 'uv run which python' to find the interpreter path
-        result = subprocess.run(
-            ["uv", "run", "which", "python"],
-            capture_output=True,
-            text=True,
-            check=True,  # Fail if command fails
-            cwd=workspace_root,
-            timeout=10,
-        )
-        python_path_str = result.stdout.strip()
-        if not python_path_str:
-            log.error("'uv run which python' did not return a path.")
-            return None
-
-        python_path = Path(python_path_str)
-        bin_dir = python_path.parent
-        if bin_dir.is_dir() and bin_dir.name == "bin":  # Basic sanity check
-            log.info(f"Found environment bin directory: {bin_dir}")
-            return bin_dir
-        else:
-            log.error(f"Could not reliably determine bin directory from python path: {python_path}")
-            return None
-    except FileNotFoundError:
-        log.error("Failed to run 'uv'. Is it installed and in PATH?")
-        return None
-    except subprocess.CalledProcessError as e:
-        log.error(f"'uv run which python' failed (return code {e.returncode}): {e.stderr}")
-        return None
-    except subprocess.TimeoutExpired:
-        log.error("'uv run which python' timed out.")
-        return None
-    except Exception as e:
-        log.error(f"Error finding uv bin directory: {e}")
-        return None
-
-
-def _get_available_commands(bin_dir: Path) -> set[str]:
-    """Lists executable files in the specified bin directory."""
-    available = set()
-    if not bin_dir or not bin_dir.is_dir():
-        return available
-    try:
-        for item_name in os.listdir(bin_dir):
-            item_path = bin_dir / item_name
-            # Check if it's a file and executable
-            if item_path.is_file() and os.access(item_path, os.X_OK):
-                available.add(item_name)
-    except OSError as e:
-        log.error(f"Error reading bin directory {bin_dir}: {e}")
-    return available
-
-
 def get_managed_sequences(config_path: Path, tools_dir: Path, workspace_root: Path) -> list[tuple[str, ...]]:
-    """Loads managed tool sequences based on pyproject.toml, validating against available commands."""
+    """Loads managed tool sequences based on pyproject.toml, validating against 'uv run which'."""
     managed_sequences = []
     try:
         config_data = toml.load(config_path)
@@ -130,65 +78,41 @@ def get_managed_sequences(config_path: Path, tools_dir: Path, workspace_root: Pa
         tools_config = zlt_config.get("tools", {})
         whitelist = set(tools_config.get("whitelist", []))  # Base tool names expected to be managed
         blacklist = set(tools_config.get("blacklist", []))  # Base tool/subcommand names to ignore
-    except FileNotFoundError:
-        log.error(f"Configuration file not found: {config_path}")
-        pytest.fail(f"Missing configuration file: {config_path}")  # Fail hard if config missing
-        return []  # Should not be reached
     except Exception as e:
-        log.error(f"Error reading config file {config_path}: {e}")
-        pytest.fail(f"Error reading configuration file {config_path}: {e}")  # Fail hard on config error
-        return []  # Should not be reached
+        pytest.fail(f"Error reading config file {config_path}: {e}")
+        return []
 
-    # --- Step 1 & 2: Get available commands from bin ---
-    bin_dir = _get_uv_bin_dir(workspace_root)
-    if not bin_dir:
-        pytest.fail(
-            "CRITICAL: Could not determine environment bin directory ('uv run which python' failed?). Cannot proceed."
-        )
-        return []  # Should not be reached
+    # --- Check availability of whitelisted tools using 'uv run which' ---
+    log.info(f"Checking availability of {len(whitelist)} whitelisted tools using 'uv run which'...")
+    available_whitelisted_tools = set()
+    missing_whitelisted_tools = set()
+    for tool_name in whitelist:
+        if is_tool_available(tool_name, workspace_root):
+            available_whitelisted_tools.add(tool_name)
+        else:
+            missing_whitelisted_tools.add(tool_name)
 
-    available_commands = _get_available_commands(bin_dir)
-    if not available_commands:
-        pytest.fail(
-            f"CRITICAL: Found bin directory {bin_dir}, but no executable commands within. Check environment installation."
-        )
-        return []  # Should not be reached
-
-    log.info(f"Found {len(available_commands)} available commands in {bin_dir}.")
-    log.debug(f"Available commands: {sorted(list(available_commands))}")
-
-    # --- Step 3 & 4: Apply Whitelist & Blacklist to BASE commands ---
-    potential_base_tools = available_commands.difference(blacklist)
-    validated_base_tools = potential_base_tools.intersection(whitelist)
-
-    log.info(f"Derived {len(validated_base_tools)} validated base tools after applying whitelist/blacklist.")
-    log.debug(f"Validated base tools: {sorted(list(validated_base_tools))}")
-
-    # --- Step 6.5: Error on Missing Whitelisted BASE Tools ---
-    missing_whitelisted = whitelist.difference(available_commands)
-    if missing_whitelisted:
+    # --- Error on Missing Whitelisted BASE Tools ---
+    if missing_whitelisted_tools:
         fail_message = (
-            f"Found {len(missing_whitelisted)} tool(s) listed in the pyproject.toml whitelist "
-            f"that were NOT found as executable commands in the environment bin directory ({bin_dir}):\n"
-            f"  - {', '.join(sorted(list(missing_whitelisted)))}\n"
-            f"Action Required: Ensure these tools are correctly installed in the 'uv' environment "
+            f"Found {len(missing_whitelisted_tools)} tool(s) listed in the pyproject.toml whitelist that could NOT be found via 'uv run which <tool>':\n"
+            f"  - {', '.join(sorted(list(missing_whitelisted_tools)))}\n"
+            f"Action Required: Ensure these tools are correctly installed in the 'uv' environment and accessible to 'uv run' "
             f"OR remove them from the 'whitelist' in pyproject.toml ([tool.zeroth-law.tools])."
         )
-        pytest.fail(fail_message)  # Fail the test run early
-        return []  # Should not be reached
+        pytest.fail(fail_message)
+        return []
 
-    # --- Log Blacklist issues detected (Informational) ---
-    found_blacklist = available_commands.intersection(blacklist)
-    if found_blacklist:
-        log.info(
-            f"The following blacklisted tools were found in the environment bin and correctly ignored: {sorted(list(found_blacklist))}"
-        )
+    # Filter available tools by blacklist for base command processing
+    validated_base_tools = available_whitelisted_tools - blacklist
 
-    # --- Step 7: Generate Sequences for Validated Base Tools and their Subcommands ---
+    log.info(
+        f"Found {len(validated_base_tools)} validated base tools available via 'uv run which' after applying blacklist."
+    )
+    log.debug(f"Validated base tools for sequence generation: {sorted(list(validated_base_tools))}")
+
+    # --- Generate Sequences for Validated Base Tools and their Subcommands ---
     for tool_name in sorted(list(validated_base_tools)):
-        if tool_name in blacklist:
-            log.info(f"Ignoring base tool sequence '{tool_name}' because it is explicitly blacklisted.")
-            continue
         managed_sequences.append((tool_name,))
         tool_json_path = tools_dir / tool_name / f"{tool_name}.json"
         if tool_json_path.is_file():
