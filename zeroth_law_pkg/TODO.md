@@ -129,6 +129,36 @@
 - [ ] **7. (Optional) `.zgraph.yaml` Integration:**
     - [ ] Explore modeling principles and rule mappings within `.zgraph.yaml` for high-level coverage visualization.
 
+## Phase Z: Codebase Map & Structural Verification (SQLite Backend)
+# Goal: Implement an automated map of the codebase structure (in SQLite) to enhance refactoring safety and ZLT's understanding.
+- [ ] **1. Define SQLite Schema:**
+    - [x] Design core tables (`modules`, `classes`, `functions`) and columns.
+    - [x] Define relationships (FOREIGN KEYs) and constraints (UNIQUE).
+    - [x] Document schema in **`tests/codebase_map/schema.sql`**.
+    - [ ] Note: Conceptual tables (`principles`, `rules`, mappings) deferred to Phase Y.
+- [ ] **2. Implement Map Generator (`tests/codebase_map/map_generator.py`):
+    - [ ] Use `ast` to traverse Python files in `src/zeroth_law/`.
+    - [ ] Use `sqlite3` module to connect to `tests/codebase_map/code_map.db`.
+    - [ ] Implement logic to create tables based on schema if DB doesn't exist.
+    - [ ] Implement SQL `INSERT OR REPLACE` or `UPDATE` logic based on AST scan results.
+    - [ ] Implement logic to detect potential deletions (items in DB but not in AST scan).
+- [ ] **3. Implement Map Verification Tests (`tests/test_codebase_map/`):
+    - [ ] `test_map_code_consistency`:
+        - Use SQL queries to compare AST scan results with DB content.
+        - Test for deletions (code missing but DB entry exists) -> Fail with specific guidance.
+    - [ ] `test_map_signature_consistency`: Use SQL queries to compare signatures.
+    - [ ] `test_name_uniqueness`: Rely on DB constraints and potentially specific SQL queries.
+    - [ ] Refine failure messages to guide AI based on SQL query results.
+- [ ] **4. Implement Pruning Mechanism:**
+    - [ ] Design the confirmation mechanism for deletions.
+    - [ ] Update the map generator to execute SQL `DELETE` statements *only* when confirmation is present.
+- [ ] **5. Integrate into Test Workflow:**
+    - [ ] Ensure map generation/update runs automatically during `pytest`.
+    - [ ] Ensure verification tests run as part of the standard test suite.
+- [ ] **6. Implement Reporting (Optional but Recommended):**
+    - [ ] Add fixtures or scripts to query the DB upon specific test failures and generate consumable reports for the AI (e.g., list of orphaned functions, signature mismatches).
+- [ ] **7. (Future) ZLT Integration:** Explore having ZLT directly query the `code_map.db`.
+
 ## Tool Interface Definition Workflow (v3 - AI Interpretation)
 # Goal: Refine the process for capturing and verifying tool CLI definitions using AI interpretation.
 #

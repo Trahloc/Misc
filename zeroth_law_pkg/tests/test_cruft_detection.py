@@ -31,6 +31,8 @@ KNOWN_GOOD_PATTERNS = {
     "NOTES.md",  # Keep
     "TODO.md",  # Keep
     str(STRUCTURE_DATA_PATH.relative_to(WORKSPACE_ROOT)),  # project_structure.json
+    "package.json",  # For npm/prettier
+    "uv.lock",
     # Top-level Dirs / Glob patterns
     ".git/**",
     ".venv/**",
@@ -40,7 +42,7 @@ KNOWN_GOOD_PATTERNS = {
     "src/__init__.py",  # Keep top-level src init if it exists
     "tests/**",  # Matches all test files, conftest, test_data etc.
     "docs/**",  # Matches docs/legacy/analysis_summary.md
-    "scripts/**",  # Matches all files in scripts/
+    # "scripts/**",  # Removed as scripts were moved
     "frameworks/**",  # Matches all files in frameworks/
     "templates/**",  # Matches all files in templates/
     "__pycache__/**",
@@ -57,11 +59,16 @@ KNOWN_GOOD_PATTERNS = {
     "src/zeroth_law/tools/**",  # Allow everything under tools
     "src/zeroth_law/dev_scripts/**",  # Allow everything under dev_scripts
     "src/zeroth_law/managed_tools.yaml",
+    "src/zeroth_law/schemas/**",  # Allow schemas directory
+    # Generated files
+    "coverage.json",
+    "coverage_report.txt",
+    "coverage_total.txt",
+    # Legacy / Temp?
     "tools/",
     "tools/tool_index.json",
     "tools/zlt_schema_guidelines.md",
     "tmp",
-    "uv.lock",
     # Add other known files/directories here
 }
 

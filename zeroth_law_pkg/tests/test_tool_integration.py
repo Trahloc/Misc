@@ -122,10 +122,11 @@ def test_project_coverage_threshold():
             f"Threshold Check Failed: Project coverage is {parsed_total_coverage:.1f}%, "
             f"below minimum requirement of {MIN_PROJECT_COVERAGE:.1f}%.\n"
             "To investigate:\n"
-            "  1. Run 'uv run coverage report -m' in the terminal.\n"
-            "  2. Identify files/lines marked as 'Missing' in the report.\n"
-            "  3. Add tests to cover these specific lines/branches.\n"
-            "  4. Rerun './scripts/run_coverage.py' to confirm improvement."
+            "  1. Ensure coverage data is generated: run 'uv run python -m zeroth_law.dev_scripts.run_coverage'\n"
+            "  2. Generate the detailed report: run 'uv run coverage report -m'\n"
+            "  3. Identify files/lines marked as 'Missing' in the report.\n"
+            "  4. Add tests to cover these specific lines/branches.\n"
+            "  5. Rerun 'uv run python -m zeroth_law.dev_scripts.run_coverage' to confirm improvement."
         )
         pytest.fail(fail_message, pytrace=False)  # Keep pytrace=False for cleaner output
     else:

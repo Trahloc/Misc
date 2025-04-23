@@ -187,7 +187,15 @@ This section details specific practices and metrics used to assess compliance wi
 
 ### 4.7 Data Validation & Parsing
 *(Supports Principle #10, #14)*
-*   **External Data Handling:** **Require** **Pydantic** models for defining, parsing, and validating non-trivial external data structures (e.g., API responses, config files). **Require** writing tests covering valid and invalid data scenarios using these models. (Validation occurs at runtime, tests verified by ZLT via `pytest`).
+
+*   **External Data Handling:** **Require** **Pydantic** models for defining, parsing, and validating non-trivial external data structures. **Require** writing tests covering valid and invalid data scenarios using these models. (Validation occurs at runtime, tests verified by ZLT via `pytest`).
+*   **Mandatory Pydantic Use Cases:** Pydantic **must** be used for:
+    1.  **Configuration Loading:** Validating the structure and types of data loaded from `pyproject.toml` (specifically `[tool.zeroth-law]` sections) via `config_loader.py`.
+    2.  **Tool Definition JSON Parsing:** Validating the AI-generated `.json` tool definition files (`src/zeroth_law/tools/<tool>/<id>.json`) against their schema (`tools/zlt_schema_guidelines.md`) when read by ZLT or related tooling.
+    3.  **Tool Index Parsing:** Validating the structure of `src/zeroth_law/tools/tool_index.json` when read by ZLT or related tooling.
+    4.  **Action Mapping Parsing:** Validating the structure of `tool_mapping.yaml` if/when it is loaded programmatically by ZLT.
+    5.  **(Future) API Interactions:** Validating external API request/response schemas.
+    6.  **(Future) Complex Tool Output Parsing:** Validating structured output from consultant tools if needed.
 *   **Runtime Validation vs. Assertions:** Use Pydantic/explicit checks for *external* inputs (tested); use `assert` for *internal* invariants identified and verified during TDD (see Section [4.8](#48-defensive-programming--assertions)).
 
 ### 4.8 Defensive Programming & Assertions

@@ -4,58 +4,113 @@
 
 ---
 
-## Current Workflow: Tool Help Baseline Generation & Verification (2025-04-13T16:01:32+08:00)
+## Current Tool Interface Workflow: Ground Truth & AI Interpretation (Consolidated 2025-04-13 & v3)
 
-**Summary:** This section documents the current, authoritative workflow for generating and verifying configuration definitions for external command-line tools integrated with ZLT. This process ensures ZLT's understanding of a tool's interface (stored in YAML) remains synchronized with the tool's actual help output (captured in TXT/JSON baselines).
+**--- MANDATE ---**
+**`tool_index.json` is 100% Deterministic:** The `src/zeroth_law/tools/tool_index.json` file is **solely** managed by automated scripts (specifically, the logic within `src/zeroth_law/dev_scripts/baseline_generator.py::generate_or_verify_baseline` as executed by tests). It serves as a cache reflecting the state (CRC, timestamps) of the ground-truth `.txt` baseline files.
+**NEVER Edit Manually or via AI:** Under **no circumstances** should `tool_index.json` be directly modified by human intervention or AI editing tools during the standard development or testing workflow. Any direct edits violate this mandate and will likely be overwritten or cause inconsistencies.
+**AI Role is Interpretation Only:** The AI's responsibility in this workflow is strictly limited to interpreting the ground-truth `.txt` files and populating/updating the corresponding `.json` *definition* files (e.g., `src/zeroth_law/tools/<tool>/<id>.json`). This includes syncing the `metadata.ground_truth_crc` within the `.json` definition file to match the value found in the programmatically managed `tool_index.json`.
+**--- END MANDATE ---**
+
+**--- Clarification (2025-04-20T16:07:17+08:00) ---**
+To reiterate the mandate above for absolute clarity: The ONLY non-deterministic task permitted within this tool definition workflow is the AI's interpretation of a tool's unstructured `.txt` help output into the structured `.json` definition format. All other aspects, especially the generation and management of CRC values within `tool_index.json`, MUST be handled deterministically by the project's automated scripts (primarily invoked via `pytest`). Any deviation from this is a violation of the workflow.
+**--- END Clarification ---**
+
+**--- FURTHER MANDATE (JSON Interpretation - 2025-04-20T16:14:29+08:00) ---**
+**ABSOLUTELY NO BACKSLASHES (`\`)**: When interpreting `.txt` help text into `.json` definition files, the use of backslashes (`\`) for any purpose, including escaping characters within strings (e.g., `\'`, `\"`, `\\`), is **strictly forbidden**.
+**FORBIDDEN BY PROXY (2025-04-20T16:15:02+08:00):** If a character in the source `.txt` help text requires a backslash escape for correct representation within a standard double-quoted JSON string, that character itself is **forbidden by proxy** and must not be included. Handle this by rephrasing the text to avoid the character or omitting the problematic phrase entirely. Backslashes and characters requiring them introduce parsing ambiguity and errors and must be avoided.
+**--- END FURTHER MANDATE ---**
+
+**Summary:** This section details the current, streamlined workflow for managing external tool interface definitions, emphasizing the separation between automated ground-truth tracking and AI-driven interpretation.
 
 **Workflow Steps:**
 
-1.  **Capture (`src/zeroth_law/dev_scripts/capture_txt_tty_output.py`):
-    *   Executes the target command (e.g., `ruff --help`) within a pseudo-terminal (PTY) environment.
-    *   Crucially, the command's output is piped through `cat` (`sh -c 'command | cat'`) within the PTY.
-    *   **Rationale:** This captures the layout intended for a terminal but uses `cat` to reliably strip ANSI escape codes (colors, formatting) before further processing.
-    *   Returns the resulting raw bytes and exit code.
+1.  **Tool Discovery & Indexing (Tests - `test_ensure_txt_baselines_exist.py`):**
+    *   The test function `get_managed_sequences` examines the environment's executables against whitelists/blacklists in `pyproject.toml`.
+    *   It determines the managed tool sequences (base commands and discovered subcommands).
+    *   It fails the test run if orphaned tools are found or whitelisted tools are missing.
 
-2.  **Generate (Likely `src/zeroth_law/dev_scripts/generate_baseline_cli.py` / Test Logic):**
-    *   Takes a command string as input.
-    *   Calls the Capture script logic.
-    *   Decodes the captured bytes (UTF-8).
-    *   **Saves Ground Truth:**
-        *   `src/zeroth_law/tools/<tool>/txt/<stem>.txt`: Stores the full decoded string for human readability.
-        *   `src/zeroth_law/tools/<tool>/json/<stem>.json`: Stores a structured representation:
-            *   `command_used`: List of original command parts.
-            *   `generation_timestamp`: ISO 8601 timestamp (UTC).
-            *   `overall_crc32_hex`: Hex CRC32 of the entire decoded string.
-            *   `lines`: List of objects, each containing:
-                *   `line_number`: 1-based index.
-                *   `raw_content`: The text of the line (from the `cat`-filtered output).
-                *   `crc32_hex`: Hex CRC32 of the `raw_content`, calculated using `lib.crc.calculate_hex_crc32`.
-    *   **Idempotent:** Re-running this script for the same command overwrites the `.txt` and `.json` files, updating the timestamp.
+2.  **Ground Truth Check & Update (Core logic in `src/zeroth_law/dev_scripts/baseline_generator.py::generate_or_verify_baseline`, called by tests):**
+    *   For each managed sequence, captures `command --help | cat` output.
+    *   Calculates the CRC32 hash of the output.
+    *   Compares calculated CRC with the `crc` stored in `tool_index.json` for that sequence.
+    *   **If CRCs match:** Updates only the `checked_timestamp` in `tool_index.json`.
+    *   **If CRCs mismatch (or entry is new):**
+        *   Overwrites the corresponding `.txt` file (`src/zeroth_law/tools/<tool>/<id>.txt`) with the new output.
+        *   Updates `crc`, `updated_timestamp`, and `checked_timestamp` in `tool_index.json`.
+        *   **Ensures Minimal Skeleton JSON:** Checks if `src/zeroth_law/tools/<tool>/<id>.json` exists. If not, creates it with basic keys and `metadata.ground_truth_crc = "0x00000000"`. It *does not* modify an existing JSON or populate the skeleton.
 
-3.  **AI Interpretation (YAML):
-    *   `src/zeroth_law/tools/<tool>/yaml/<stem>.yaml`: This file is created or updated by the AI (or a human).
-    *   It represents ZLT's structured understanding of the tool's interface, based on analysis of the corresponding `.json` file.
-    *   Contains keys like `command`, `description`, `help_command`, `help_crc32_baseline_file`, `ignored_help_line_crc32s`, `options`, `positional_args`, `subcommands`.
-    *   Crucially, `ignored_help_line_crc32s` and `help_line_crc32` within options/args/subcommands list the hex CRC strings from the `.json` file that define those elements.
+3.  **AI Interpretation & Synchronization (`.json` Population):**
+    *   Triggered by a failing `test_txt_json_consistency.py` (see Step 4).
+    *   **Me (the AI)** reads the existing `.json` file (which might be a skeleton or partially populated).
+    *   **Me (the AI)** reads the ground-truth `.txt` file (which was updated in Step 2 if necessary).
+    *   **Me (the AI)** holistically compares the `.txt` content to the `.json` structure. Update the `.json` content (filling `description`, `usage`, `options`, `arguments`, `subcommands` etc.) based on the `.txt` content and schema guidelines (`tools/zlt_schema_guidelines.md`), ensuring the entire JSON structure accurately reflects the interpretation of the TXT baseline. Preserve existing unchanged elements where appropriate.
+    *   **Me (the AI)** **ONLY AFTER** ensuring the JSON content is fully updated and consistent with the `.txt` interpretation, update the `metadata.ground_truth_crc` field *inside the `.json` file* to match the authoritative `crc` value from `tool_index.json`. **Updating the CRC in isolation without verifying/updating the content first is incorrect procedure.**
 
-4.  **Verify (`tests/test_tool_defs/test_crc_consistency.py`):
-    *   This `pytest` test automates the consistency check between the JSON ground truth and the YAML interpretation.
-    *   It discovers corresponding `.json` and `.yaml` pairs.
-    *   **Checks Performed:**
-        *   YAML Existence: Fails if `.yaml` is missing for a `.json`.
-        *   YAML Load & Path: Fails if `.yaml` is unparseable or `help_crc32_baseline_file` is incorrect.
-        *   JSON Load: Fails if `.json` is unparseable.
-        *   **CRC Set Comparison:**
-            *   Extracts all unique `crc32_hex` values from JSON lines (`json_crc_set`).
-            *   Extracts all unique `crc32_hex` values listed anywhere in the YAML (`yaml_crc_set`).
-            *   **If `json_crc_set == yaml_crc_set`:** Pass.
-            *   **If `json_crc_set != yaml_crc_set`:** Fail, providing specific error messages:
-                *   Lists CRCs missing from YAML (`json_crc_set - yaml_crc_set`).
-                *   Lists stale/incorrect CRCs in YAML (`yaml_crc_set - json_crc_set`).
-                *   Considers the JSON timestamp (`generation_timestamp`) to guide the user (e.g., if JSON is recent, assume YAML needs fixing; if JSON is old, suggest regenerating baseline first).
-    *   **Outcome:** This test acts as the gatekeeper, signalling when AI/human intervention is required to update the YAML interpretation based on changes in the ground truth.
+4.  **Verification (Separate Tests):**
+    *   **`test_txt_json_consistency.py`:**
+        *   Compares the `metadata.ground_truth_crc` value *inside* the `.json` file against the `crc` value stored in `tool_index.json` for the same tool ID.
+        *   A mismatch indicates the AI interpretation (Step 3) is needed or incomplete.
+    *   `test_json_schema_validation.py`:
+        *   Validates the structure and content rules of the populated `.json` files against the defined schema.
 
-**Superseding Notice:** This section describes the current, implemented workflow. Details regarding specific script names, normalization methods (like `COLUMNS=32767`), or validation logic found in older sections (e.g., "Tool Definition Help Validation Refactoring & Enhancement" dated 2025-04-12) are superseded by this description. The core *rationale* in older sections may still be relevant.
+**Rationale & Consumption:** This workflow uses automated tests for discovery and ground-truth (`.txt`, index CRC) updates. It relies on the AI for the interpretation step (`.json` content population and internal CRC sync), clearly signaled by the `test_txt_json_consistency.py` failure. The AI-populated and validated `.json` files serve as the machine-readable knowledge base for ZLT, defining the capabilities and interface of each tool. This knowledge base informs the configuration in `tool_mapping.yaml` (see next section).
+
+---
+
+## ZLT Action Mapping (`tool_mapping.yaml`)
+
+**Goal:** Define the unified user-facing actions (e.g., `format`, `lint`) provided by ZLT and map them to the execution of specific underlying tools. `tool_mapping.yaml` acts as the central configuration for **how ZLT utilizes** the tools whose interfaces are defined in the `.json` definition files.
+
+**Structure:**
+
+```yaml
+# Action Definition (e.g., format)
+format:
+  description: Description of the ZLT 'format' action.
+
+  # 1. Define the ZLT unified interface concepts for this action
+  zlt_options:
+    # Key: Conceptual option name used in zlt CLI (e.g., --quiet)
+    quiet:
+      type: flag # Type (flag, value)
+      description: Unified description for this ZLT option (e.g., Suppress non-error output).
+    config:
+      type: value
+      value_type: path # Optional: Hint for CLI type
+      description: Unified description (e.g., Path to tool-specific config file).
+    paths:
+      type: positional
+      description: Unified description (e.g., Files or directories to process).
+    # ... other conceptual ZLT options for this action ...
+
+  # 2. Define tools implementing this action & map ZLT options to tool arguments
+  tools:
+    # Key: Unique name for the tool entry (can be anything, often tool name)
+    ruff_format:
+      # Command defined IN THE CORRESPONDING .json definition file
+      # command: ruff format # (Example: Command comes from ruff.json)
+      maps_options:
+        # Key: The name of the option from 'zlt_options' above
+        # Value: The specific argument string the *tool* expects (defined in its .json)
+        #        or null if the tool handles the concept positionally/implicitly.
+        quiet: -q
+        config: --config
+        paths: null # Indicates tool uses positional paths defined in zlt_options.paths
+        # Presence/absence here shows capability mapping for *this action*
+    black:
+      # command: black # (Example: Command comes from black.json)
+      maps_options:
+        quiet: --quiet
+        config: --config
+        paths: null
+```
+
+**Rationale:**
+*   **Unified ZLT Interface:** `zlt_options` defines the consistent command-line interface ZLT presents to the user for each action.
+*   **Tool Knowledge Source:** The underlying capabilities, default commands, and available options for each tool (`ruff_format`, `black`) are defined in their respective `.json` definition files (populated by the AI based on `.txt` ground truth).
+*   **Action-Specific Mapping:** `tool_mapping.yaml`'s `tools` section and `maps_options` define *how* ZLT translates its unified action options into the specific arguments needed to invoke a particular tool *for that specific action*.
+*   **Decoupling:** This separates the definition of ZLT's actions (`tool_mapping.yaml`) from the definition of the tools themselves (`*.json` files), allowing tools to be updated independently while maintaining a stable ZLT interface.
 
 ---
 
@@ -458,82 +513,21 @@ format:
 
 ## Mandate: Standardize on `uv` as the Primary Environment/Package Manager (2025-04-13T18:25:00Z) # AI: Run date --iso-8601=seconds
 
-**Decision:** The Zeroth Law Framework (ZLF) will standardize on **`uv`** as the **primary and recommended** tool for Python environment management and package installation for projects adhering to the ZLF.
+**Decision:** The Zeroth Law Framework (ZLF) will standardize on **`uv`** as the **primary and required** tool for Python environment management and package installation for projects adhering to the ZLF.
 
 **Rationale:**
 *   **ZLF Opinionation:** Aligns with the ZLF goal of being opinionated about core tooling to ensure consistency and reduce friction.
 *   **Standards Alignment (PEP 621):** `uv` natively uses the standard `[project]` table in `pyproject.toml` for dependency specification, promoting interoperability and adherence to modern Python packaging standards.
-*   **Performance:** `uv` offers significant speed advantages over Poetry for dependency resolution and installation.
+*   **Performance:** `uv` offers significant speed advantages over other tools for dependency resolution and installation.
 *   **Modern Tooling:** Represents a current and actively developed tool focused on performance and standards compliance.
 
-**Legacy/Transitional Support for Poetry:**
-*   Poetry is now considered **legacy/transitional** within the ZLF context.
-*   Projects migrating to ZLF may still use Poetry initially.
-*   `uv` provides compatibility by being able to install dependencies from an existing `poetry.lock` file via `uv pip sync --resolver=poetry poetry.lock`. This offers a gradual migration path.
-*   New ZLF-native projects **must** use `uv` and define dependencies in the `[project]` table.
+**Implementation:**
+*   The ZLF documentation (`ZerothLawAIFramework.py313.md`) reflects `uv` as the standard.
+*   `pyproject.toml` examples and requirements use the `[project]` table for dependencies.
+*   Scripts and tests interacting with the environment manager must use `uv` commands or operate correctly within a `uv`-managed environment.
+*   CI/CD workflows must use `uv` for environment setup and dependency installation.
 
-**Impact:**
-*   The ZLF documentation (`ZerothLawAIFramework.py313.md`) will be updated to reflect `uv` as the standard.
-*   `pyproject.toml` examples and requirements will use the `[project]` table for dependencies.
-*   Scripts and tests interacting with the environment manager (e.g., baseline generation scripts like `generate_baseline_cli.py`, `test_tool_integration.py`) must be updated to use `uv` commands or operate correctly within a `uv`-managed environment.
-*   CI/CD workflows must be updated to use `uv` for environment setup and dependency installation.
-*   `TODO.md` will be updated with specific migration tasks.
-
-## Refined Tool Interface Workflow & AI Interpretation (v3) (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ) # AI: Run `date --iso-8601=seconds`
-
-**--- MANDATE ---**
-**`tool_index.json` is 100% Deterministic:** The `src/zeroth_law/tools/tool_index.json` file is **solely** managed by automated scripts (specifically, the logic within `src/zeroth_law/dev_scripts/baseline_generator.py::generate_or_verify_baseline` as executed by tests). It serves as a cache reflecting the state (CRC, timestamps) of the ground-truth `.txt` baseline files.
-**NEVER Edit Manually or via AI:** Under **no circumstances** should `tool_index.json` be directly modified by human intervention or AI editing tools during the standard development or testing workflow. Any direct edits violate this mandate and will likely be overwritten or cause inconsistencies.
-**AI Role is Interpretation Only:** The AI's responsibility in this workflow is strictly limited to interpreting the ground-truth `.txt` files and populating/updating the corresponding `.json` *definition* files (e.g., `src/zeroth_law/tools/<tool>/<id>.json`). This includes syncing the `metadata.ground_truth_crc` within the `.json` definition file to match the value found in the programmatically managed `tool_index.json`.
-**--- END MANDATE ---**
-
-**--- Clarification (2025-04-20T16:07:17+08:00) ---**
-To reiterate the mandate above for absolute clarity: The ONLY non-deterministic task permitted within this tool definition workflow is the AI's interpretation of a tool's unstructured `.txt` help output into the structured `.json` definition format. All other aspects, especially the generation and management of CRC values within `tool_index.json`, MUST be handled deterministically by the project's automated scripts (primarily invoked via `pytest`). Any deviation from this is a violation of the workflow.
-**--- END Clarification ---**
-
-**--- FURTHER MANDATE (JSON Interpretation - 2025-04-20T16:14:29+08:00) ---**
-**ABSOLUTELY NO BACKSLASHES (`\`)**: When interpreting `.txt` help text into `.json` definition files, the use of backslashes (`\`) for any purpose, including escaping characters within strings (e.g., `\'`, `\"`, `\\`), is **strictly forbidden**.
-**FORBIDDEN BY PROXY (2025-04-20T16:15:02+08:00):** If a character in the source `.txt` help text requires a backslash escape for correct representation within a standard double-quoted JSON string, that character itself is **forbidden by proxy** and must not be included. Handle this by rephrasing the text to avoid the character or omitting the problematic phrase entirely. Backslashes and characters requiring them introduce parsing ambiguity and errors and must be avoided.
-**--- END FURTHER MANDATE ---**
-
-**Summary:** This section details the current, streamlined workflow for managing external tool interface definitions, emphasizing the separation between automated ground-truth tracking and AI-driven interpretation. This supersedes previous workflows involving YAML or complex per-line CRC checks.
-
-**Workflow Steps:**
-
-1.  **Tool Discovery & Indexing (Tests - `test_ensure_txt_baselines_exist.py`):**
-    *   The test function `get_managed_sequences` examines the environment's executables against whitelists/blacklists in `pyproject.toml`.
-    *   It determines the managed tool sequences (base commands and discovered subcommands).
-    *   It fails the test run if orphaned tools are found or whitelisted tools are missing.
-
-2.  **Ground Truth Check & Update (Core logic in `src/zeroth_law/dev_scripts/baseline_generator.py::generate_or_verify_baseline`, called by tests):
-    *   For each managed sequence, captures `command --help | cat` output.
-    *   Calculates the CRC32 hash of the output.
-    *   Compares calculated CRC with the `crc` stored in `tool_index.json` for that sequence.
-    *   **If CRCs match:** Updates only the `checked_timestamp` in `tool_index.json`.
-    *   **If CRCs mismatch (or entry is new):**
-        *   Overwrites the corresponding `.txt` file (`src/zeroth_law/tools/<tool>/<id>.txt`) with the new output.
-        *   Updates `crc`, `updated_timestamp`, and `checked_timestamp` in `tool_index.json`.
-        *   **Ensures Minimal Skeleton JSON:** Checks if `src/zeroth_law/tools/<tool>/<id>.json` exists. If not, creates it with basic keys and `metadata.ground_truth_crc = "0x00000000"`. It *does not* modify an existing JSON or populate the skeleton.
-
-3.  **AI Interpretation & Synchronization (`.json` Population):**
-    *   Triggered by a failing `test_txt_json_consistency.py` (see Step 4).
-    *   **Me (the AI)** reads the existing `.json` file (which might be a skeleton or partially populated).
-    *   **Me (the AI)** reads the ground-truth `.txt` file (which was updated in Step 2 if necessary).
-    *   **Me (the AI)** holistically compares the `.txt` content to the `.json` structure. Update the `.json` content (filling `description`, `options`, `arguments`, `subcommands` etc.) based on the `.txt` content and schema guidelines, ensuring the entire JSON structure accurately reflects the interpretation of the TXT baseline. Preserve existing unchanged elements where appropriate.
-    *   **Me (the AI)** **ONLY AFTER** ensuring the JSON content is fully updated and consistent with the `.txt` interpretation, update the `metadata.ground_truth_crc` field *inside the `.json` file* to match the authoritative `crc` value from `tool_index.json`. **Updating the CRC in isolation without verifying/updating the content first is incorrect procedure.**
-
-4.  **Verification (Separate Tests):
-    *   `test_txt_json_consistency.py`:
-        *   Compares the `metadata.ground_truth_crc` value *inside* the `.json` file against the `crc` value stored in `tool_index.json` for the same tool ID.
-        *   A mismatch indicates the AI interpretation (Step 3) is needed or incomplete.
-    *   `test_json_schema_validation.py`:
-        *   Validates the structure and content rules of the populated `.json` files against the defined schema.
-
-**Rationale:** This workflow uses automated tests for discovery and ground-truth (`.txt`, index CRC) updates. It relies on the AI for the interpretation step (`.json` content population and internal CRC sync), clearly signaled by the `test_txt_json_consistency.py` failure.
-
-**Consumption by ZLT:** The AI-populated and validated `.json` file serves as the machine-readable knowledge base for ZLT.
-
-# Process for Populating Tool Definition JSON Files
+## Process for Populating Tool Definition JSON Files
 
 1.  **Run Baseline Tests:**
     *   Execute `uv run pytest tests/test_tool_defs/`
@@ -590,3 +584,49 @@ Instead of mocking or embedding, use dedicated external helper script files as "
 *   **Clear Separation:** Keeps test logic clean and separates the definition of the external dependency's behavior (in the script file) from the test's orchestration code.
 
 **Limitation:** This primarily tests the interaction with the process based on its *output*. It may not fully replicate complex exit code behaviors or side effects of the *real* external tool unless explicitly coded into the helper script. It also requires careful management of the helper script files.
+
+---
+
+## Codebase Map & Structural Verification (Revised: SQLite Backend - YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - AI: Run `date --iso-8601=seconds`)
+
+**Problem:**
+While TDD/DDT and static analysis effectively catch direct import errors or simple code duplication, they don't inherently guarantee overall structural integrity after complex refactoring, especially involving both moving *and* renaming functions/classes. A function could be moved and renamed (`cli.example_one` -> `new_module.example_1`), breaking consumers importing the old name, while tests for the *new* name pass. Without additional checks, an AI might struggle to locate the renamed function or might incorrectly recreate the function at the old location (which standard duplication checks might miss if the name/signature differs slightly).
+
+**Solution: Codebase Map Verification (SQLite Backend):**
+Implement a system that maintains an automated, persistent "map" of the codebase's significant structural elements **stored in an SQLite database**. This database acts as a queryable representation of the intended code structure, verified against the actual code.
+
+**Map Content & Schema (SQLite):**
+*   The map will be stored in an SQLite database file (e.g., `tests/codebase_map/code_map.db`).
+*   **Core Tables (Implemented):**
+    *   `modules` (id, path, last_scanned_timestamp)
+    *   `classes` (id, module_id, name, signature_hash, start_line, end_line)
+    *   `functions` (id, module_id, class_id (nullable), name, signature_hash, start_line, end_line)
+*   **Schema Definition:** The `CREATE TABLE` statements and constraints (UNIQUE, FOREIGN KEY) are defined in **`tests/codebase_map/schema.sql`**.
+*   **Deferred Tables:** Conceptual tables for `principles`, `rules`, and their mappings are deferred until Phase Y (ZLT-dev).
+*   **Signatures:** Signature hashes are stored directly in `classes` and `functions` tables; a separate `signatures` table is deferred.
+
+**Generation & Maintenance:**
+*   **Generator:** A dedicated script/module (e.g., `tests/codebase_map/map_generator.py`) using `ast` will scan `src/zeroth_law/`.
+*   **Database Interaction:** Uses Python's built-in `sqlite3` module to connect and execute SQL queries (INSERT, UPDATE, SELECT).
+*   **Trigger:** Map generation/update **must** be triggered automatically as part of the test suite execution.
+*   **Additions:** New functions/classes detected are INSERTed into the database.
+*   **Updates:** Changes to signatures detected result in UPDATEs to the relevant database rows.
+*   **Pruning (Deletion Handling - Safety Mechanism):**
+    1.  The AST scan identifies elements present in the DB but *not* found in the current code.
+    2.  The map verification test (see below) fails for these discrepancies.
+    3.  The failure message explicitly instructs the AI developer: "Database contains entry for `[module.function]`, but the code element was not found via AST scan. Verify this deletion was intentional (check recent Git history). If intentional, remove the corresponding tests and then approve the removal of this entry from the database (details TBD - likely requires a specific test marker or temporary config flag to allow pruning during the next map update run)."
+    4.  The map generator script will only execute `DELETE` statements for confirmed deletions.
+
+**Verification Tests (`tests/test_codebase_map/`):**
+A new test suite will connect to the database and use SQL queries to verify integrity:
+*   `test_map_code_consistency`: Checks that AST scan results match DB content (SELECT queries compare counts/existence).
+*   `test_map_signature_consistency`: Compares signatures from AST scan with those stored in the DB.
+*   `test_name_uniqueness`: Uses SQL `UNIQUE` constraints and potentially queries (`GROUP BY ... HAVING COUNT(*) > 1`) to enforce uniqueness.
+
+**ZLT Integration & AI Consumption:**
+*   The SQLite database provides a powerful, relational knowledge base for ZLT.
+*   ZLT can execute complex SQL queries to understand code structure, relationships, and potentially map rules/principles to specific code elements.
+*   Tests can generate specific, AI-consumable reports (text summaries, JSON snippets) by querying the database upon failure.
+
+**Location:**
+Map generation logic, verification tests, schema definitions, and the database file itself will reside within the `tests` directory, likely under `tests/codebase_map/`.
