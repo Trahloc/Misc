@@ -23,6 +23,7 @@ src/civit/signal_handler.py
 src/civit/test_utils.py
 src/civit/url_extraction.py
 src/civit/url_validator.py
+src/civit/verify.py
 src/civit.egg-info/PKG-INFO
 src/civit.egg-info/SOURCES.txt
 src/civit.egg-info/dependency_links.txt
@@ -41,6 +42,8 @@ tests/test_filename_pattern.py
 tests/test_logging_setup.py
 tests/test_modules.py
 tests/test_network_safety.py
+tests/test_nogo_examples.py
 tests/test_resumable_download.py
 tests/test_should_use_custom_filename.py
+tests/test_silent_errors_example.py
 tests/test_url_validator.py

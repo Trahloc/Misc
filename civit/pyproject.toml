@@ -5,21 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "civit"
 version = "100.0.2"
-authors = [
-  { name="Trahloc colDhart", email="github@trahloc.com" },
-]
+authors = [{ name = "Trahloc colDhart", email = "github@trahloc.com" }]
 description = "Tool for downloading models from Civitai"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.8.1"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-    "requests",
-    "tqdm",
-]
+dependencies = ["requests", "tqdm"]
 
 # --- AI/Developer Note ---
 # Project uses a standard "src layout" where the package 'civit' is inside the 'src' directory.
@@ -38,9 +33,7 @@ civit = "civit.cli:main" # Pointing to the module within the installed package
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = [
-    "src"
-]
+pythonpath = ["src"]
 addopts = "-ra -q"
 
 [project.optional-dependencies]
@@ -50,4 +43,5 @@ dev = [
     "mypy>=1.0",
     "flake8>=6.0",
     "hypothesis",
+    "pre-commit",
 ]
