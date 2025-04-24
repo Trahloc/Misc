@@ -31,7 +31,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 log = logging.getLogger(__name__)
 
 
-def capture_tty_output(command: List[str], rows: int = DEFAULT_TERM_ROWS, cols: int = DEFAULT_TERM_COLS) -> Tuple[bytes, int]:
+def capture_tty_output(
+    command: List[str], rows: int = DEFAULT_TERM_ROWS, cols: int = DEFAULT_TERM_COLS
+) -> Tuple[bytes, int]:
     """Executes a command in a pseudo-terminal (pty) and captures raw byte output."""
     command_str = " ".join(shlex.quote(c) for c in command)
     log.info(f"Executing command in PTY ({rows}x{cols}): {command_str}")
@@ -152,9 +154,15 @@ def main():
         default=None,
         help="Optional file path to save the raw decoded output.",
     )
-    parser.add_argument("--rows", type=int, default=DEFAULT_TERM_ROWS, help=f"Terminal rows for PTY (default: {DEFAULT_TERM_ROWS})")
-    parser.add_argument("--cols", type=int, default=DEFAULT_TERM_COLS, help=f"Terminal columns for PTY (default: {DEFAULT_TERM_COLS})")
-    parser.add_argument("--encoding", default="utf-8", help="Encoding to use for decoding the raw byte output (default: utf-8).")
+    parser.add_argument(
+        "--rows", type=int, default=DEFAULT_TERM_ROWS, help=f"Terminal rows for PTY (default: {DEFAULT_TERM_ROWS})"
+    )
+    parser.add_argument(
+        "--cols", type=int, default=DEFAULT_TERM_COLS, help=f"Terminal columns for PTY (default: {DEFAULT_TERM_COLS})"
+    )
+    parser.add_argument(
+        "--encoding", default="utf-8", help="Encoding to use for decoding the raw byte output (default: utf-8)."
+    )
     parser.add_argument(
         "--encoding-errors",
         default="replace",

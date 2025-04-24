@@ -1,87 +1,87 @@
 {
-  "command": "uv",
-  "subcommand": null,
-  "description": "An extremely fast Python package manager.",
-  "usage": "uv [OPTIONS] <COMMAND>",
-  "options": [],
-  "arguments": [],
-  "subcommands_detail": {
-    "run": {
-      "description": "Run a command or script",
-      "json_definition": "src/zeroth_law/tools/uv/uv_run.json"
+    "command": "uv",
+    "subcommand": null,
+    "description": "An extremely fast Python package manager.",
+    "usage": "uv [OPTIONS] <COMMAND>",
+    "options": [],
+    "arguments": [],
+    "subcommands_detail": {
+        "run": {
+            "description": "Run a command or script",
+            "json_definition": "src/zeroth_law/tools/uv/uv_run.json"
+        },
+        "init": {
+            "description": "Create a new project",
+            "json_definition": "src/zeroth_law/tools/uv/uv_init.json"
+        },
+        "add": {
+            "description": "Add dependencies to the project",
+            "json_definition": "src/zeroth_law/tools/uv/uv_add.json"
+        },
+        "remove": {
+            "description": "Remove dependencies from the project",
+            "json_definition": "src/zeroth_law/tools/uv/uv_remove.json"
+        },
+        "sync": {
+            "description": "Update the project's environment",
+            "json_definition": "src/zeroth_law/tools/uv/uv_sync.json"
+        },
+        "lock": {
+            "description": "Update the project's lockfile",
+            "json_definition": "src/zeroth_law/tools/uv/uv_lock.json"
+        },
+        "export": {
+            "description": "Export the project's lockfile to an alternate format",
+            "json_definition": "src/zeroth_law/tools/uv/uv_export.json"
+        },
+        "tree": {
+            "description": "Display the project's dependency tree",
+            "json_definition": "src/zeroth_law/tools/uv/uv_tree.json"
+        },
+        "tool": {
+            "description": "Run and install commands provided by Python packages",
+            "json_definition": "src/zeroth_law/tools/uv/uv_tool.json"
+        },
+        "python": {
+            "description": "Manage Python versions and installations",
+            "json_definition": "src/zeroth_law/tools/uv/uv_python.json"
+        },
+        "pip": {
+            "description": "Manage Python packages with a pip-compatible interface",
+            "json_definition": "src/zeroth_law/tools/uv/uv_pip.json"
+        },
+        "venv": {
+            "description": "Create a virtual environment",
+            "json_definition": "src/zeroth_law/tools/uv/uv_venv.json"
+        },
+        "build": {
+            "description": "Build Python packages into source distributions and wheels",
+            "json_definition": "src/zeroth_law/tools/uv/uv_build.json"
+        },
+        "publish": {
+            "description": "Upload distributions to an index",
+            "json_definition": "src/zeroth_law/tools/uv/uv_publish.json"
+        },
+        "cache": {
+            "description": "Manage uv's cache",
+            "json_definition": "src/zeroth_law/tools/uv/uv_cache.json"
+        },
+        "self": {
+            "description": "Manage the uv executable",
+            "json_definition": "src/zeroth_law/tools/uv/uv_self.json"
+        },
+        "version": {
+            "description": "Display uv's version",
+            "json_definition": "src/zeroth_law/tools/uv/uv_version.json"
+        },
+        "help": {
+            "description": "Display documentation for a command",
+            "json_definition": "src/zeroth_law/tools/uv/uv_help.json"
+        }
     },
-    "init": {
-      "description": "Create a new project",
-      "json_definition": "src/zeroth_law/tools/uv/uv_init.json"
-    },
-    "add": {
-      "description": "Add dependencies to the project",
-      "json_definition": "src/zeroth_law/tools/uv/uv_add.json"
-    },
-    "remove": {
-      "description": "Remove dependencies from the project",
-      "json_definition": "src/zeroth_law/tools/uv/uv_remove.json"
-    },
-    "sync": {
-      "description": "Update the project's environment",
-      "json_definition": "src/zeroth_law/tools/uv/uv_sync.json"
-    },
-    "lock": {
-      "description": "Update the project's lockfile",
-      "json_definition": "src/zeroth_law/tools/uv/uv_lock.json"
-    },
-    "export": {
-      "description": "Export the project's lockfile to an alternate format",
-      "json_definition": "src/zeroth_law/tools/uv/uv_export.json"
-    },
-    "tree": {
-      "description": "Display the project's dependency tree",
-      "json_definition": "src/zeroth_law/tools/uv/uv_tree.json"
-    },
-    "tool": {
-      "description": "Run and install commands provided by Python packages",
-      "json_definition": "src/zeroth_law/tools/uv/uv_tool.json"
-    },
-    "python": {
-      "description": "Manage Python versions and installations",
-      "json_definition": "src/zeroth_law/tools/uv/uv_python.json"
-    },
-    "pip": {
-      "description": "Manage Python packages with a pip-compatible interface",
-      "json_definition": "src/zeroth_law/tools/uv/uv_pip.json"
-    },
-    "venv": {
-      "description": "Create a virtual environment",
-      "json_definition": "src/zeroth_law/tools/uv/uv_venv.json"
-    },
-    "build": {
-      "description": "Build Python packages into source distributions and wheels",
-      "json_definition": "src/zeroth_law/tools/uv/uv_build.json"
-    },
-    "publish": {
-      "description": "Upload distributions to an index",
-      "json_definition": "src/zeroth_law/tools/uv/uv_publish.json"
-    },
-    "cache": {
-      "description": "Manage uv's cache",
-      "json_definition": "src/zeroth_law/tools/uv/uv_cache.json"
-    },
-    "self": {
-      "description": "Manage the uv executable",
-      "json_definition": "src/zeroth_law/tools/uv/uv_self.json"
-    },
-    "version": {
-      "description": "Display uv's version",
-      "json_definition": "src/zeroth_law/tools/uv/uv_version.json"
-    },
-    "help": {
-      "description": "Display documentation for a command",
-      "json_definition": "src/zeroth_law/tools/uv/uv_help.json"
+    "metadata": {
+        "ground_truth_crc": "0xC050B5E9",
+        "tool_name": "uv",
+        "command_name": "uv"
     }
-  },
-  "metadata": {
-    "ground_truth_crc": "0x00000000",
-    "tool_name": "uv",
-    "command_name": "uv"
-  }
 }

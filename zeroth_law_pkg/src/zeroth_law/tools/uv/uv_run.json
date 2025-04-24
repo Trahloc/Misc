@@ -1,0 +1,151 @@
+{
+  "arguments": [
+    {
+      "name": "COMMAND",
+      "description": "The command or script to run.",
+      "is_required": false,
+      "allowed_values": null,
+      "default_value": null
+    }
+  ],
+  "command": "uv run",
+  "description": "Run a command or script in a virtual environment.",
+  "metadata": {
+    "application": "uv",
+    "command_name": "run",
+    "command_canonical": "uv run",
+    "version": "0.2.14",
+    "subcommand": null,
+    "date_modified": "1717600000.000000000",
+    "tool_name": "uv",
+    "ground_truth_crc": "0x00000000"
+  },
+  "options": [
+    {
+      "name": "--python",
+      "description": "Request a specific Python version. The requested version must be available in the search path or will be downloaded.",
+      "type": "string",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--isolated",
+      "description": "Run the command in an isolated environment, ignoring the current virtual environment.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--target",
+      "description": "Run the command or script against the given target (e.g., `.` or `pyproject.toml`).",
+      "type": "string",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--package",
+      "description": "Install the given package into the environment prior to running the command. The package will be installed into an ephemeral environment, unless combined with `--target`.",
+      "type": "string",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--from",
+      "description": "Install the given package into the environment prior to running the command. The package will be installed from the given requirements file (`requirements.txt`) or `pyproject.toml` file (`pyproject.toml` or `project.dependencies`).",
+      "type": "string",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--with",
+      "description": "Declare package requirements for the runtime environment.",
+      "type": "string",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--script",
+      "description": "Run a script defined in `pyproject.toml`.",
+      "type": "string",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--no-project",
+      "description": "Ignore the `pyproject.toml` file in the current or ancestor directories.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--no-deps",
+      "description": "Don't install any dependencies.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--no-cache",
+      "short_name": "-n",
+      "description": "Avoid reading from or writing to the cache.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--cache-dir",
+      "description": "Path to the cache directory.",
+      "type": "string",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--quiet",
+      "short_name": "-q",
+      "description": "Don't print any output.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--verbose",
+      "short_name": "-v",
+      "description": "Use verbose output. Takes precedence over `--quiet`.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--native-tls",
+      "description": "Use the operating system's native TLS implementation.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    },
+    {
+      "name": "--help",
+      "short_name": "-h",
+      "description": "Print help.",
+      "type": "boolean",
+      "default_value": null,
+      "allowed_values": null,
+      "is_required": false
+    }
+  ],
+  "usage": "uv run [OPTIONS] [COMMAND]",
+  "subcommand": "run"
+}

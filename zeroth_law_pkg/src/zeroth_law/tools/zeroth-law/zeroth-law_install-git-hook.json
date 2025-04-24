@@ -1,0 +1,14 @@
+{
+  "description": "(Placeholder description for zeroth-law_install-git-hook)",
+  "usage": "zeroth-law install-git-hook [OPTIONS]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "ground_truth_crc": "0x00000000",
+    "schema_version": "1.0",
+    "tool_name": "zeroth-law",
+    "command_name": "install-git-hook"
+  },
+  "command": "zeroth-law",
+  "subcommand": "install-git-hook"
+}

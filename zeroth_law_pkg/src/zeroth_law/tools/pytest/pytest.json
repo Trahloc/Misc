@@ -1,1009 +1,509 @@
 {
-    "arguments": [
-        {
-            "description": "",
-            "name": "file_or_dir",
-            "nargs": "*",
-            "required": false
-        }
-    ],
-    "command": "pytest",
-    "description": "pytest: helps you write better programs.",
-    "metadata": {
-        "command_name": "pytest",
-        "ground_truth_crc": "0xE8A31970",
-        "schema_version": "1.0",
-        "tool_name": "pytest"
+  "arguments": [
+    {
+      "description": "File or directory to test",
+      "name": "file_or_dir",
+      "nargs": "*",
+      "required": false
+    }
+  ],
+  "command": "pytest",
+  "description": "pytest: helps you write better programs.",
+  "metadata": {
+    "command_name": "pytest",
+    "ground_truth_crc": "0x063C1748",
+    "schema_version": "1.0",
+    "tool_name": "pytest"
+  },
+  "options": [
+    {
+      "name": "-k",
+      "description": "Only run tests which match the given substring expression. An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes.",
+      "argument": "EXPRESSION",
+      "required": false
     },
-    "options": [
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "show markers (builtin, plugin and per-project ones).",
-            "group": "general",
-            "name": "--markers",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-x",
-                "--exitfirst"
-            ],
-            "argument": null,
-            "description": "Exit instantly on first error or failed test",
-            "group": "general",
-            "name": "--exitfirst",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--fixtures",
-                "--funcargs"
-            ],
-            "argument": null,
-            "description": "Show available fixtures, sorted by plugin appearance (fixtures with leading '_' are only shown with '-v')",
-            "group": "general",
-            "name": "--fixtures",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Show fixtures per test",
-            "group": "general",
-            "name": "--fixtures-per-test",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Start the interactive Python debugger on errors or KeyboardInterrupt",
-            "group": "general",
-            "name": "--pdb",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "modulename:classname",
-            "description": "Specify a custom interactive Python debugger for use with --pdb.For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
-            "group": "general",
-            "name": "--pdbcls",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Immediately break when running each test",
-            "group": "general",
-            "name": "--trace",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "method",
-            "description": "Per-test capturing method: one of fd|sys|no|tee-sys",
-            "group": "general",
-            "name": "--capture",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-s"
-            ],
-            "argument": null,
-            "description": "Shortcut for --capture=no",
-            "group": "general",
-            "name": "-s",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Report the results of xfail tests as if they were not marked",
-            "group": "general",
-            "name": "--runxfail",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--lf",
-                "--last-failed"
-            ],
-            "argument": null,
-            "description": "Rerun only the tests that failed at the last run (or all if none failed)",
-            "group": "general",
-            "name": "--lf",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--ff",
-                "--failed-first"
-            ],
-            "argument": null,
-            "description": "Run all tests, but run the last failures first. This may re-order tests and thus lead to repeated fixture setup/teardown.",
-            "group": "general",
-            "name": "--ff",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--nf",
-                "--new-first"
-            ],
-            "argument": null,
-            "description": "Run tests from new files first, then the rest of the tests sorted by file mtime",
-            "group": "general",
-            "name": "--nf",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "[CACHESHOW]",
-            "description": "Show cache contents, don't perform collection or tests. Optional argument: glob (default: '*'.)",
-            "group": "general",
-            "name": "--cache-show",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Remove all cache contents at start of test run",
-            "group": "general",
-            "name": "--cache-clear",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--lfnf",
-                "--last-failed-no-failures"
-            ],
-            "argument": "{all,none}",
-            "description": "With ``--lf``, determines whether to execute tests when there are no previously (known) failures or when no cached ``lastfailed`` data was found. ``all`` (the default) runs the full test suite again. ``none`` just emits a message about no known failures and exits successfully.",
-            "group": "general",
-            "name": "--lfnf",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--sw",
-                "--stepwise"
-            ],
-            "argument": null,
-            "description": "Exit on test failure and continue from last failing test next time",
-            "group": "general",
-            "name": "--sw",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--sw-skip",
-                "--stepwise-skip"
-            ],
-            "argument": null,
-            "description": "Ignore the first failing test but stop on the next failing test. Implicitly enables --stepwise.",
-            "group": "general",
-            "name": "--sw-skip",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "N",
-            "description": "Show N slowest setup/test durations (N=0 for all)",
-            "group": "Reporting",
-            "name": "--durations",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "N",
-            "description": "Minimal duration in seconds for inclusion in slowest list. Default: 0.005.",
-            "group": "Reporting",
-            "name": "--durations-min",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-v",
-                "--verbose"
-            ],
-            "argument": null,
-            "description": "Increase verbosity",
-            "group": "Reporting",
-            "name": "-v",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Disable header",
-            "group": "Reporting",
-            "name": "--no-header",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Disable summary",
-            "group": "Reporting",
-            "name": "--no-summary",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Do not fold skipped tests in short summary.",
-            "group": "Reporting",
-            "name": "--no-fold-skipped",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-q",
-                "--quiet"
-            ],
-            "argument": null,
-            "description": "Decrease verbosity",
-            "group": "Reporting",
-            "name": "-q",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "VERBOSE",
-            "description": "Set verbosity. Default: 0.",
-            "group": "Reporting",
-            "name": "--verbosity",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--disable-warnings",
-                "--disable-pytest-warnings"
-            ],
-            "argument": null,
-            "description": "Disable warnings summary",
-            "group": "Reporting",
-            "name": "--disable-warnings",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-l",
-                "--showlocals"
-            ],
-            "argument": null,
-            "description": "Show locals in tracebacks (disabled by default)",
-            "group": "Reporting",
-            "name": "--showlocals",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Hide locals in tracebacks (negate --showlocals passed through addopts)",
-            "group": "Reporting",
-            "name": "--no-showlocals",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "style",
-            "description": "Traceback print mode (auto/long/short/line/native/no)",
-            "group": "Reporting",
-            "name": "--tb",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Show tracebacks for xfail (as long as --tb != no)",
-            "group": "Reporting",
-            "name": "--xfail-tb",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "{no,stdout,stderr,log,all}",
-            "description": "Controls how captured stdout/stderr/log is shown on failed tests. Default: all.",
-            "group": "Reporting",
-            "name": "--show-capture",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Don't cut any tracebacks (default is to cut)",
-            "group": "Reporting",
-            "name": "--full-trace",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "color",
-            "description": "Color terminal output (yes/no/auto)",
-            "group": "Reporting",
-            "name": "--color",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "{yes,no}",
-            "description": "Whether code should be highlighted (only if --color is also enabled). Default: yes.",
-            "group": "Reporting",
-            "name": "--code-highlight",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "mode",
-            "description": "Send failed|all info to bpaste.net pastebin service",
-            "group": "Reporting",
-            "name": "--pastebin",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--junitxml",
-                "--junit-xml"
-            ],
-            "argument": "path",
-            "description": "Create junit-xml style report file at given path",
-            "group": "Reporting",
-            "name": "--junit-xml",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--junitprefix",
-                "--junit-prefix"
-            ],
-            "argument": "str",
-            "description": "Prepend prefix to classnames in junit-xml output",
-            "group": "Reporting",
-            "name": "--junit-prefix",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-W",
-                "--pythonwarnings"
-            ],
-            "argument": "PYTHONWARNINGS",
-            "description": "Set which warnings to report, see -W option of Python itself",
-            "group": "pytest-warnings",
-            "name": "-W",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "num",
-            "description": "Exit after first num failures or errors",
-            "group": "pytest-warnings",
-            "name": "--maxfail",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Any warnings encountered while parsing the `pytest` section of the configuration file raise errors",
-            "group": "pytest-warnings",
-            "name": "--strict-config",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Markers not registered in the `markers` section of the configuration file raise errors",
-            "group": "pytest-warnings",
-            "name": "--strict-markers",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "(Deprecated) alias to --strict-markers",
-            "group": "pytest-warnings",
-            "name": "--strict",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-c",
-                "--config-file"
-            ],
-            "argument": "FILE",
-            "description": "Load configuration from `FILE` instead of trying to locate one of the implicit configuration files.",
-            "group": "pytest-warnings",
-            "name": "--config-file",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Force test execution even if collection errors occur",
-            "group": "pytest-warnings",
-            "name": "--continue-on-collection-errors",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "ROOTDIR",
-            "description": "Define root directory for tests. Can be relative path: 'root_dir', './root_dir', 'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: '$HOME/root_dir'.",
-            "group": "pytest-warnings",
-            "name": "--rootdir",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--collect-only",
-                "--co"
-            ],
-            "argument": null,
-            "description": "Only collect tests, don't execute them",
-            "group": "collection",
-            "name": "--collect-only",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Try to interpret all arguments as Python packages",
-            "group": "collection",
-            "name": "--pyargs",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "allow_multiple": true,
-            "argument": "path",
-            "description": "Ignore path during collection (multi-allowed)",
-            "group": "collection",
-            "name": "--ignore",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "allow_multiple": true,
-            "argument": "path",
-            "description": "Ignore path pattern during collection (multi-allowed)",
-            "group": "collection",
-            "name": "--ignore-glob",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "allow_multiple": true,
-            "argument": "nodeid_prefix",
-            "description": "Deselect item (via node id prefix) during collection (multi-allowed)",
-            "group": "collection",
-            "name": "--deselect",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "dir",
-            "description": "Only load conftest.py's relative to specified dir",
-            "group": "collection",
-            "name": "--confcutdir",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Don't load any conftest.py files",
-            "group": "collection",
-            "name": "--noconftest",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Keep duplicate tests",
-            "group": "collection",
-            "name": "--keep-duplicates",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Don't ignore tests in a local virtualenv directory",
-            "group": "collection",
-            "name": "--collect-in-virtualenv",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "{prepend,append,importlib}",
-            "description": "Prepend/append to sys.path when importing test modules and conftest files. Default: prepend.",
-            "group": "collection",
-            "name": "--import-mode",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Run doctests in all .py modules",
-            "group": "collection",
-            "name": "--doctest-modules",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "{none,cdiff,ndiff,udiff,only_first_failure}",
-            "description": "Choose another output format for diffs on doctest failure",
-            "group": "collection",
-            "name": "--doctest-report",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "pat",
-            "description": "Doctests file matching pattern, default: test*.txt",
-            "group": "collection",
-            "name": "--doctest-glob",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Ignore doctest collection errors",
-            "group": "collection",
-            "name": "--doctest-ignore-import-errors",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "For a given doctest, continue to run after the first failure",
-            "group": "collection",
-            "name": "--doctest-continue-on-failure",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "dir",
-            "description": "Base temporary directory for this test run. (Warning: this directory is removed if it exists.)",
-            "group": "test session debugging and configuration",
-            "name": "--basetemp",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-V",
-                "--version"
-            ],
-            "argument": null,
-            "description": "Display pytest version and information about plugins. When given twice, also display information about plugins.",
-            "group": "test session debugging and configuration",
-            "name": "-V",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-h",
-                "--help"
-            ],
-            "argument": null,
-            "description": "Show help message and configuration info",
-            "group": "test session debugging and configuration",
-            "name": "--help",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Trace considerations of conftest.py files",
-            "group": "test session debugging and configuration",
-            "name": "--trace-config",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "[DEBUG_FILE_NAME]",
-            "description": "Store internal tracing debug information in this log file. This file is opened with 'w' and truncated as a result, care advised. Default: pytestdebug.log.",
-            "group": "test session debugging and configuration",
-            "name": "--debug",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-o",
-                "--override-ini"
-            ],
-            "argument": "OVERRIDE_INI",
-            "description": "Override ini option with \"option=value\" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.",
-            "group": "test session debugging and configuration",
-            "name": "--override-ini",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "MODE",
-            "description": "Control assertion debugging tools. 'plain' performs no assertion debugging. 'rewrite' (the default) rewrites assert statements in test modules on import to provide assert expression information.",
-            "group": "test session debugging and configuration",
-            "name": "--assert",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Only setup fixtures, do not execute tests",
-            "group": "test session debugging and configuration",
-            "name": "--setup-only",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Show setup of fixtures while executing tests",
-            "group": "test session debugging and configuration",
-            "name": "--setup-show",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Show what fixtures and tests would be executed but don't execute anything",
-            "group": "test session debugging and configuration",
-            "name": "--setup-plan",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LEVEL",
-            "description": "Level of messages to catch/display. Not set by default, so it depends on the root/parent log handler's effective level, where it is \"WARNING\" by default.",
-            "group": "logging",
-            "name": "--log-level",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_FORMAT",
-            "description": "Log format used by the logging module",
-            "group": "logging",
-            "name": "--log-format",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_DATE_FORMAT",
-            "description": "Log date format used by the logging module",
-            "group": "logging",
-            "name": "--log-date-format",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_CLI_LEVEL",
-            "description": "CLI logging level",
-            "group": "logging",
-            "name": "--log-cli-level",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_CLI_FORMAT",
-            "description": "Log format used by the logging module",
-            "group": "logging",
-            "name": "--log-cli-format",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_CLI_DATE_FORMAT",
-            "description": "Log date format used by the logging module",
-            "group": "logging",
-            "name": "--log-cli-date-format",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_FILE",
-            "description": "Path to a file when logging will be written to",
-            "group": "logging",
-            "name": "--log-file",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "{w,a}",
-            "description": "Log file open mode",
-            "group": "logging",
-            "name": "--log-file-mode",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_FILE_LEVEL",
-            "description": "Log file logging level",
-            "group": "logging",
-            "name": "--log-file-level",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_FILE_FORMAT",
-            "description": "Log format used by the logging module",
-            "group": "logging",
-            "name": "--log-file-format",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_FILE_DATE_FORMAT",
-            "description": "Log date format used by the logging module",
-            "group": "logging",
-            "name": "--log-file-date-format",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "LOG_AUTO_INDENT",
-            "description": "Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
-            "group": "logging",
-            "name": "--log-auto-indent",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "allow_multiple": true,
-            "argument": "LOGGER_DISABLE",
-            "description": "Disable a logger by name. Can be passed multiple times.",
-            "group": "logging",
-            "name": "--log-disable",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-k"
-            ],
-            "argument": "EXPRESSION",
-            "description": "Only run tests which match the given substring expression. An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes. Example: -k 'test_method or test_other' matches all test functions and classes whose name contains 'test_method' or 'test_other', while -k 'not test_method' matches those that don't contain 'test_method' in their names. -k 'not test_method and not test_other' will eliminate the matches. Additionally keywords are matched to classes and functions containing extra names in their 'extra_keyword_matches' set, as well as functions which have names assigned directly to them. The matching is case-insensitive.",
-            "group": "general",
-            "name": "-k EXPRESSION",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-m"
-            ],
-            "argument": "MARKEXPR",
-            "description": "Only run tests matching given mark expression. For example: -m 'mark1 and not mark2'.",
-            "group": "general",
-            "name": "-m MARKEXPR",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "chars",
-            "description": "Show extra test summary info as specified by chars: (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed, (p)assed, (P)assed with output, (a)ll except passed (p/P), or (A)ll. (w)arnings are enabled by default (see --disable-warnings), 'N' can be used to reset the list. (default: 'fE').",
-            "group": "Reporting",
-            "name": "-r",
-            "required": false
-        },
-        {
-            "aliases": [
-                "--disable-pytest-warnings",
-                "--disable-warnings"
-            ],
-            "argument": null,
-            "description": "Disable warnings summary",
-            "group": "Reporting",
-            "name": "--disable-warnings",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-l"
-            ],
-            "argument": null,
-            "description": "Show locals in tracebacks (disabled by default)",
-            "group": "Reporting",
-            "name": "--showlocals",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "PYTHONWARNINGS",
-            "description": "Set which warnings to report, see -W option of Python itself",
-            "group": "pytest-warnings",
-            "name": "-W",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Markers not registered in the `markers` section of the configuration file raise errors",
-            "group": "pytest-warnings",
-            "name": "--strict-markers",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "(Deprecated) alias to --strict-markers",
-            "group": "pytest-warnings",
-            "name": "--strict",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-c"
-            ],
-            "argument": "FILE",
-            "description": "Load configuration from `FILE` instead of trying to locate one of the implicit configuration files.",
-            "group": "pytest-warnings",
-            "name": "--config-file",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Only collect tests, don't execute them",
-            "group": "collection",
-            "name": "--collect-only",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Display pytest version and information about plugins. When given twice, also display information about plugins.",
-            "group": "test session debugging and configuration",
-            "name": "-V",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-p"
-            ],
-            "argument": "name",
-            "description": "Early-load given plugin module name or entry point (multi-allowed). To avoid loading of plugins, use the `no:` prefix, e.g. `no:doctest`.",
-            "group": "test session debugging and configuration",
-            "name": "-p name",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-o"
-            ],
-            "argument": "OVERRIDE_INI",
-            "description": "Override ini option with \"option=value\" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.",
-            "group": "test session debugging and configuration",
-            "name": "--override-ini",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "RANDOMLY_SEED",
-            "description": "Set the seed that pytest-randomly uses (int), or pass the special value 'last' to reuse the seed from the previous run. Default behaviour: use random.Random().getrandbits(32), so the seed is different on each run.",
-            "group": "pytest-randomly",
-            "name": "--randomly-seed",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Stop pytest-randomly from resetting random.seed() at the start of every test context (e.g. TestCase) and individual test.",
-            "group": "pytest-randomly",
-            "name": "--randomly-dont-reset-seed",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Stop pytest-randomly from randomly reorganizing the test order.",
-            "group": "pytest-randomly",
-            "name": "--randomly-dont-reorganize",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "[SOURCE]",
-            "description": "Path or package name to measure during execution (multi-allowed). Use --cov= to not do any source filtering and record everything.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Reset cov sources accumulated in options so far.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-reset",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "TYPE",
-            "description": "Type of report to generate: term, term-missing, annotate, html, xml, json, lcov (multi-allowed). term, term-missing may be followed by \":skip-covered\". annotate, html, xml, json and lcov may be followed by \":DEST\" where DEST specifies the output location. Use --cov-report= to not generate any output.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-report",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "PATH",
-            "description": "Config file for coverage. Default: .coveragerc",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-config",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Do not report coverage if test run fails. Default: False",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--no-cov-on-fail",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Disable coverage report completely (useful for debuggers). Default: False",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--no-cov",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "MIN",
-            "description": "Fail if the total coverage is less than MIN.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-fail-under",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Do not delete coverage but append to current. Default: False",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-append",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": null,
-            "description": "Enable branch coverage.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-branch",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "COV_PRECISION",
-            "description": "Override the reporting precision.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-precision",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "CONTEXT",
-            "description": "Dynamic contexts to use. \"test\" for now.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov-context",
-            "required": false
-        },
-        {
-            "aliases": [
-                "-n"
-            ],
-            "argument": "numprocesses",
-            "description": "Shortcut for '--dist=load --tx=NUM*popen'. With 'logical', attempt to detect logical CPU count",
-            "group": "distributed and subprocess testing",
-            "name": "--numprocesses",
-            "required": false
-        },
-        {
-            "aliases": [],
-            "argument": "[SOURCE]",
-            "description": "Path or package name to measure during execution (multi-allowed). Use --cov= to not do any source filtering and record everything.",
-            "group": "coverage reporting with distributed testing support",
-            "name": "--cov",
-            "required": false
-        }
-    ],
-    "subcommand": null,
-    "usage": "pytest [options] [file_or_dir] [file_or_dir] [...]"
+    {
+      "name": "-m",
+      "description": "Only run tests matching given mark expression. For example: -m 'mark1 and not mark2'.",
+      "argument": "MARKEXPR",
+      "required": false
+    },
+    {
+      "name": "--markers",
+      "description": "Show markers (builtin, plugin and per-project ones).",
+      "required": false
+    },
+    {
+      "name": "-x, --exitfirst",
+      "description": "Exit instantly on first error or failed test",
+      "required": false
+    },
+    {
+      "name": "--fixtures, --funcargs",
+      "description": "Show available fixtures, sorted by plugin appearance (fixtures with leading '_' are only shown with '-v')",
+      "required": false
+    },
+    {
+      "name": "--fixtures-per-test",
+      "description": "Show fixtures per test",
+      "required": false
+    },
+    {
+      "name": "--pdb",
+      "description": "Start the interactive Python debugger on errors or KeyboardInterrupt",
+      "required": false
+    },
+    {
+      "name": "--pdbcls",
+      "description": "Specify a custom interactive Python debugger for use with --pdb. For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
+      "argument": "modulename:classname",
+      "required": false
+    },
+    {
+      "name": "--trace",
+      "description": "Immediately break when running each test",
+      "required": false
+    },
+    {
+      "name": "--capture",
+      "description": "Per-test capturing method: one of fd|sys|no|tee-sys",
+      "argument": "method",
+      "required": false
+    },
+    {
+      "name": "-s",
+      "description": "Shortcut for --capture=no",
+      "required": false
+    },
+    {
+      "name": "--runxfail",
+      "description": "Report the results of xfail tests as if they were not marked",
+      "required": false
+    },
+    {
+      "name": "--lf, --last-failed",
+      "description": "Rerun only the tests that failed at the last run (or all if none failed)",
+      "required": false
+    },
+    {
+      "name": "--ff, --failed-first",
+      "description": "Run all tests, but run the last failures first. This may re-order tests and thus lead to repeated fixture setup/teardown.",
+      "required": false
+    },
+    {
+      "name": "--nf, --new-first",
+      "description": "Run tests from new files first, then the rest of the tests sorted by file mtime",
+      "required": false
+    },
+    {
+      "name": "--cache-show",
+      "description": "Show cache contents, don't perform collection or tests. Optional argument: glob (default: '*').",
+      "argument": "[CACHESHOW]",
+      "required": false
+    },
+    {
+      "name": "--cache-clear",
+      "description": "Remove all cache contents at start of test run",
+      "required": false
+    },
+    {
+      "name": "--lfnf, --last-failed-no-failures",
+      "description": "With ``--lf``, determines whether to execute tests when there are no previously (known) failures or when no cached ``lastfailed`` data was found. ``all`` (the default) runs the full test suite again. ``none`` just emits a message about no known failures and exits successfully.",
+      "argument": "{all,none}",
+      "required": false
+    },
+    {
+      "name": "--sw, --stepwise",
+      "description": "Exit on test failure and continue from last failing test next time",
+      "required": false
+    },
+    {
+      "name": "--sw-skip, --stepwise-skip",
+      "description": "Ignore the first failing test but stop on the next failing test. Implicitly enables --stepwise.",
+      "required": false
+    },
+    {
+      "name": "--durations",
+      "description": "Show N slowest setup/test durations (N=0 for all)",
+      "argument": "N",
+      "required": false
+    },
+    {
+      "name": "--durations-min",
+      "description": "Minimal duration in seconds for inclusion in slowest list. Default: 0.005.",
+      "argument": "N",
+      "required": false
+    },
+    {
+      "name": "-v, --verbose",
+      "description": "Increase verbosity",
+      "required": false
+    },
+    {
+      "name": "--no-header",
+      "description": "Disable header",
+      "required": false
+    },
+    {
+      "name": "--no-summary",
+      "description": "Disable summary",
+      "required": false
+    },
+    {
+      "name": "--no-fold-skipped",
+      "description": "Do not fold skipped tests in short summary.",
+      "required": false
+    },
+    {
+      "name": "-q, --quiet",
+      "description": "Decrease verbosity",
+      "required": false
+    },
+    {
+      "name": "--verbosity",
+      "description": "Set verbosity. Default: 0.",
+      "argument": "VERBOSE",
+      "required": false
+    },
+    {
+      "name": "-r",
+      "description": "Show extra test summary info as specified by chars: (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed, (p)assed, (P)assed with output, (a)ll except passed (p/P), or (A)ll. (w)arnings are enabled by default (see --disable-warnings), 'N' can be used to reset the list. (default: 'fE').",
+      "argument": "chars",
+      "required": false
+    },
+    {
+      "name": "--disable-warnings, --disable-pytest-warnings",
+      "description": "Disable warnings summary",
+      "required": false
+    },
+    {
+      "name": "-l, --showlocals",
+      "description": "Show locals in tracebacks (disabled by default)",
+      "required": false
+    },
+    {
+      "name": "--no-showlocals",
+      "description": "Hide locals in tracebacks (negate --showlocals passed through addopts)",
+      "required": false
+    },
+    {
+      "name": "--tb",
+      "description": "Traceback print mode (auto/long/short/line/native/no)",
+      "argument": "style",
+      "required": false
+    },
+    {
+      "name": "--xfail-tb",
+      "description": "Show tracebacks for xfail (as long as --tb != no)",
+      "required": false
+    },
+    {
+      "name": "--show-capture",
+      "description": "Controls how captured stdout/stderr/log is shown on failed tests. Default: all.",
+      "argument": "{no,stdout,stderr,log,all}",
+      "required": false
+    },
+    {
+      "name": "--full-trace",
+      "description": "Don't cut any tracebacks (default is to cut)",
+      "required": false
+    },
+    {
+      "name": "--color",
+      "description": "Color terminal output (yes/no/auto)",
+      "argument": "color",
+      "required": false
+    },
+    {
+      "name": "--code-highlight",
+      "description": "Whether code should be highlighted (only if --color is also enabled). Default: yes.",
+      "argument": "{yes,no}",
+      "required": false
+    },
+    {
+      "name": "--pastebin",
+      "description": "Send failed|all info to bpaste.net pastebin service",
+      "argument": "mode",
+      "required": false
+    },
+    {
+      "name": "--junitxml, --junit-xml",
+      "description": "Create junit-xml style report file at given path",
+      "argument": "path",
+      "required": false
+    },
+    {
+      "name": "--junitprefix, --junit-prefix",
+      "description": "Prepend prefix to classnames in junit-xml output",
+      "argument": "str",
+      "required": false
+    },
+    {
+      "name": "-W, --pythonwarnings",
+      "description": "Set which warnings to report, see -W option of Python itself",
+      "argument": "PYTHONWARNINGS",
+      "required": false
+    },
+    {
+      "name": "--maxfail",
+      "description": "Exit after first num failures or errors",
+      "argument": "num",
+      "required": false
+    },
+    {
+      "name": "--strict-config",
+      "description": "Any warnings encountered while parsing the `pytest` section of the configuration file raise errors",
+      "required": false
+    },
+    {
+      "name": "--strict-markers",
+      "description": "Markers not registered in the `markers` section of the configuration file raise errors",
+      "required": false
+    },
+    {
+      "name": "--strict",
+      "description": "(Deprecated) alias to --strict-markers",
+      "required": false
+    },
+    {
+      "name": "-c, --config-file",
+      "description": "Load configuration from `FILE` instead of trying to locate one of the implicit configuration files.",
+      "argument": "FILE",
+      "required": false
+    },
+    {
+      "name": "--continue-on-collection-errors",
+      "description": "Force test execution even if collection errors occur",
+      "required": false
+    },
+    {
+      "name": "--rootdir",
+      "description": "Define root directory for tests. Can be relative path: 'root_dir', './root_dir', 'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: '$HOME/root_dir'.",
+      "argument": "ROOTDIR",
+      "required": false
+    },
+    {
+      "name": "--collect-only, --co",
+      "description": "Only collect tests, don't execute them",
+      "required": false
+    },
+    {
+      "name": "--pyargs",
+      "description": "Try to interpret all arguments as Python packages",
+      "required": false
+    },
+    {
+      "name": "--ignore",
+      "description": "Ignore path during collection (multi-allowed)",
+      "argument": "path",
+      "required": false
+    },
+    {
+      "name": "--ignore-glob",
+      "description": "Ignore path pattern during collection (multi-allowed)",
+      "argument": "path",
+      "required": false
+    },
+    {
+      "name": "--deselect",
+      "description": "Deselect item (via node id prefix) during collection (multi-allowed)",
+      "argument": "nodeid_prefix",
+      "required": false
+    },
+    {
+      "name": "--confcutdir",
+      "description": "Only load conftest.py's relative to specified dir",
+      "argument": "dir",
+      "required": false
+    },
+    {
+      "name": "--noconftest",
+      "description": "Don't load any conftest.py files",
+      "required": false
+    },
+    {
+      "name": "--keep-duplicates",
+      "description": "Keep duplicate tests",
+      "required": false
+    },
+    {
+      "name": "--collect-in-virtualenv",
+      "description": "Don't ignore tests in a local virtualenv directory",
+      "required": false
+    },
+    {
+      "name": "--import-mode",
+      "description": "Prepend/append to sys.path when importing test modules and conftest files. Default: prepend.",
+      "argument": "{prepend,append,importlib}",
+      "required": false
+    },
+    {
+      "name": "--doctest-modules",
+      "description": "Run doctests in all .py modules",
+      "required": false
+    },
+    {
+      "name": "--doctest-report",
+      "description": "Choose another output format for diffs on doctest failure",
+      "argument": "{none,cdiff,ndiff,udiff,only_first_failure}",
+      "required": false
+    },
+    {
+      "name": "--doctest-glob",
+      "description": "Doctests file matching pattern, default: test*.txt",
+      "argument": "pat",
+      "required": false
+    },
+    {
+      "name": "--doctest-ignore-import-errors",
+      "description": "Ignore doctest collection errors",
+      "required": false
+    },
+    {
+      "name": "--doctest-continue-on-failure",
+      "description": "For a given doctest, continue to run after the first failure",
+      "required": false
+    },
+    {
+      "name": "--basetemp",
+      "description": "Base temporary directory for this test run. (Warning: this directory is removed if it exists.)",
+      "argument": "dir",
+      "required": false
+    },
+    {
+      "name": "-V, --version",
+      "description": "Display pytest version and information about plugins. When given twice, also display information about plugins.",
+      "required": false
+    },
+    {
+      "name": "-h, --help",
+      "description": "Show help message and configuration info",
+      "required": false
+    },
+    {
+      "name": "-p",
+      "description": "Early-load given plugin module name or entry point (multi-allowed). To avoid loading of plugins, use the `no:` prefix, e.g. `no:doctest`.",
+      "argument": "name",
+      "required": false
+    },
+    {
+      "name": "--trace-config",
+      "description": "Trace considerations of conftest.py files",
+      "required": false
+    },
+    {
+      "name": "--debug",
+      "description": "Store internal tracing debug information in this log file. This file is opened with 'w' and truncated as a result, care advised. Default: pytestdebug.log.",
+      "argument": "[DEBUG_FILE_NAME]",
+      "required": false
+    },
+    {
+      "name": "-o, --override-ini",
+      "description": "Override ini option with \"option=value\" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.",
+      "argument": "OVERRIDE_INI",
+      "required": false
+    },
+    {
+      "name": "--assert",
+      "description": "Control assertion debugging tools. 'plain' performs no assertion debugging. 'rewrite' (the default) rewrites assert statements in test modules on import to provide assert expression information.",
+      "argument": "MODE",
+      "required": false
+    },
+    {
+      "name": "--setup-only",
+      "description": "Only setup fixtures, do not execute tests",
+      "required": false
+    },
+    {
+      "name": "--setup-show",
+      "description": "Show setup of fixtures while executing tests",
+      "required": false
+    },
+    {
+      "name": "--setup-plan",
+      "description": "Show what fixtures and tests would be executed but don't execute anything",
+      "required": false
+    },
+    {
+      "name": "--log-level",
+      "description": "Level of messages to catch/display. Not set by default, so it depends on the root/parent log handler's effective level, where it is \"WARNING\" by default.",
+      "argument": "LEVEL",
+      "required": false
+    },
+    {
+      "name": "--log-format",
+      "description": "Log format used by the logging module",
+      "argument": "LOG_FORMAT",
+      "required": false
+    },
+    {
+      "name": "--log-date-format",
+      "description": "Log date format used by the logging module",
+      "argument": "LOG_DATE_FORMAT",
+      "required": false
+    },
+    {
+      "name": "--log-cli-level",
+      "description": "CLI logging level",
+      "argument": "LOG_CLI_LEVEL",
+      "required": false
+    },
+    {
+      "name": "--log-cli-format",
+      "description": "Log format used by the logging module",
+      "argument": "LOG_CLI_FORMAT",
+      "required": false
+    },
+    {
+      "name": "--log-cli-date-format",
+      "description": "Log date format used by the logging module",
+      "argument": "LOG_CLI_DATE_FORMAT",
+      "required": false
+    },
+    {
+      "name": "--log-file",
+      "description": "Path to a file when logging will be written to",
+      "argument": "LOG_FILE",
+      "required": false
+    },
+    {
+      "name": "--log-file-mode",
+      "description": "Log file open mode",
+      "argument": "{w,a}",
+      "required": false
+    },
+    {
+      "name": "--log-file-level",
+      "description": "Log file logging level",
+      "argument": "LOG_FILE_LEVEL",
+      "required": false
+    },
+    {
+      "name": "--log-file-format",
+      "description": "Log format used by the logging module",
+      "argument": "LOG_FILE_FORMAT",
+      "required": false
+    },
+    {
+      "name": "--log-file-date-format",
+      "description": "Log date format used by the logging module",
+      "argument": "LOG_FILE_DATE_FORMAT",
+      "required": false
+    },
+    {
+      "name": "--log-auto-indent",
+      "description": "Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.",
+      "argument": "LOG_AUTO_INDENT",
+      "required": false
+    },
+    {
+      "name": "--log-disable",
+      "description": "Disable a logger by name. Can be passed multiple times.",
+      "argument": "LOGGER_DISABLE",
+      "required": false
+    }
+  ],
+  "subcommands_detail": {},
+  "usage": "pytest [options] [file_or_dir] [file_or_dir] [...]",
+  "subcommand": null
 }

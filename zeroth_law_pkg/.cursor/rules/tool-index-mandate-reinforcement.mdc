@@ -1,6 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: false
----
-Before editing any file within src/zeroth_law/tools/ (especially tool_index.json or .json definition files), re-read the MANDATE sections in NOTES.md regarding tool_index.json and AI interpretation. Explicitly confirm that the intended edit only modifies fields designated for AI interpretation (like .json definition content and its internal metadata.ground_truth_crc) and never fields managed solely by automated scripts (like tool_index.json contents or timestamps within definition files).

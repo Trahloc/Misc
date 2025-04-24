@@ -147,3 +147,7 @@ requirements-dev.txt
 
 # Generated code todos
 CODE_TODOS.md
+.ignore/
+.github/
+.cursor/
+.vscode/

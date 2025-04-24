@@ -1,0 +1,11 @@
+Usage: zeroth-law restore-git-hooks [OPTIONS]
+
+  Restores standard pre-commit hooks backed up by ZLT, removing the
+  dispatcher.
+
+  Looks for '.zl_backup' files in the hooks directory and restores them.
+
+Options:
+  --git-root DIRECTORY  Path to the Git repository root (auto-detected if not
+                        specified).
+  -h, --help            Show this message and exit.

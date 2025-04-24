@@ -51,12 +51,113 @@ class MapVisitor(ast.NodeVisitor):
         self.current_class_name = None
         # Track items found in this specific scan pass: (type, path, class_name, func_name)
         self.processed_in_scan = set()
-        self.processed_in_scan.add(("module", module_path, None, None))
+        # Visitor adds module to processed set, not init
+        # self.processed_in_scan.add(("module", module_path, None, None))
 
     def _calculate_signature_hash(self, node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) -> str:
-        """Calculates a SHA256 hash representing the signature."""
-        signature_str = ast.unparse(node)  # Use unparse for a consistent representation
-        return hashlib.sha256(signature_str.encode("utf-8")).hexdigest()
+        """Calculates a SHA256 hash representing the structural signature (excluding body/comments/docstrings)."""
+        signature_parts = []
+
+        try:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                # Function/Method Signature
+                if isinstance(node, ast.AsyncFunctionDef):
+                    signature_parts.append("async")
+                signature_parts.append("def")
+                signature_parts.append(node.name)
+
+                # Arguments (simplified representation: name:annotation)
+                args_repr = []
+                args_info = node.args
+                # Combine all arg types for consistent processing
+                all_args = args_info.posonlyargs + args_info.args + args_info.kwonlyargs
+                for arg in all_args:
+                    arg_str = arg.arg
+                    if arg.annotation:
+                        try:
+                            arg_str += f":{ast.unparse(arg.annotation).strip()}"
+                        except Exception:
+                            arg_str += ":<unparse_error>"  # Handle annotation unparsing error
+                    args_repr.append(arg_str)
+                if args_info.vararg:
+                    arg_str = f"*{args_info.vararg.arg}"
+                    if args_info.vararg.annotation:
+                        try:
+                            arg_str += f":{ast.unparse(args_info.vararg.annotation).strip()}"
+                        except Exception:
+                            arg_str += ":<unparse_error>"
+                    args_repr.append(arg_str)  # Corrected indentation
+                if args_info.kwarg:
+                    arg_str = f"**{args_info.kwarg.arg}"
+                    if args_info.kwarg.annotation:
+                        try:
+                            arg_str += f":{ast.unparse(args_info.kwarg.annotation).strip()}"
+                        except Exception:
+                            arg_str += ":<unparse_error>"
+                    args_repr.append(arg_str)  # Corrected indentation
+
+                signature_parts.append(f"({','.join(args_repr)})")  # Join args
+
+                # Return Type
+                if node.returns:
+                    try:
+                        signature_parts.append(f"->{ast.unparse(node.returns).strip()}")
+                    except Exception:
+                        signature_parts.append("-><unparse_error>")
+
+                # Decorators (sorted)
+                decorator_reprs = []
+                for d in node.decorator_list:
+                    try:
+                        decorator_reprs.append(f"@{ast.unparse(d).strip()}")
+                    except Exception:
+                        decorator_reprs.append("@<unparse_error>")
+                signature_parts.extend(sorted(decorator_reprs))
+
+            elif isinstance(node, ast.ClassDef):
+                # Class Signature
+                signature_parts.append("class")
+                signature_parts.append(node.name)
+
+                # Bases and Keywords (sorted together for consistency)
+                parent_reprs = []
+                for b in node.bases:
+                    try:
+                        parent_reprs.append(ast.unparse(b).strip())
+                    except Exception:
+                        parent_reprs.append("<unparse_error_base>")
+                for k in node.keywords:
+                    kw_val_str = "<unparse_error_kw_val>"
+                    try:
+                        kw_val_str = ast.unparse(k.value).strip()
+                    except Exception:
+                        pass
+                    parent_reprs.append(f"{k.arg}={kw_val_str}")  # k.arg should exist
+                if parent_reprs:
+                    signature_parts.append(f"({','.join(sorted(parent_reprs))})")
+
+                # Decorators (sorted)
+                decorator_reprs = []
+                for d in node.decorator_list:
+                    try:
+                        decorator_reprs.append(f"@{ast.unparse(d).strip()}")
+                    except Exception:
+                        decorator_reprs.append("@<unparse_error>")
+                signature_parts.extend(sorted(decorator_reprs))
+
+        except Exception as e:
+            log.error(
+                f"Error building signature for node {getattr(node, 'name', 'UNKNOWN')} in {self.module_path}: {e}",
+                exc_info=True,
+            )
+            # Fallback to simple hash if detailed parsing fails?
+            # For now, just return a hash of the error message or a fixed value
+            return hashlib.sha256(f"error: {e}".encode()).hexdigest()
+
+        # Join all parts with a delimiter and hash
+        canonical_string = "|".join(signature_parts)
+        log.debug(f"  Node: {getattr(node, 'name', 'N/A')}, Canonical Signature String: {canonical_string}")
+        return hashlib.sha256(canonical_string.encode("utf-8")).hexdigest()
 
     def visit_ClassDef(self, node: ast.ClassDef):
         """Process Class Definitions."""
@@ -481,17 +582,24 @@ def generate_map(db_path: Path, schema_path: Path, src_dir: Path, prune_confirma
 
 # --- MAIN EXECUTION --- (Allow running as script)
 if __name__ == "__main__":
+    # Define defaults here before parser uses them
+    # These might need adjustment based on where the script is expected to be run from
+    # Assuming script might be run from project root or tests/codebase_map
+    _default_src_dir = Path("src")
+    _default_db_path = Path("tests/codebase_map/code_map.db")
+    _default_schema_path = Path("tests/codebase_map/schema.sql")
+
     parser = argparse.ArgumentParser(
         description="Generate/Update the ZLF Codebase Map SQLite database.",
     )
     parser.add_argument(
-        "--src", type=Path, default=SRC_DIR_DEFAULT, help=f"Source directory to scan (default: {SRC_DIR_DEFAULT})"
+        "--src", type=Path, default=_default_src_dir, help=f"Source directory to scan (default: {_default_src_dir})"
     )
     parser.add_argument(
-        "--db", type=Path, default=DB_PATH_DEFAULT, help=f"Database file path (default: {DB_PATH_DEFAULT})"
+        "--db", type=Path, default=_default_db_path, help=f"Database file path (default: {_default_db_path})"
     )
     parser.add_argument(
-        "--schema", type=Path, default=SCHEMA_PATH_DEFAULT, help=f"Schema file path (default: {SCHEMA_PATH_DEFAULT})"
+        "--schema", type=Path, default=_default_schema_path, help=f"Schema file path (default: {_default_schema_path})"
     )
     parser.add_argument(
         "--prune-stale-entries",
@@ -509,6 +617,9 @@ if __name__ == "__main__":
         log.debug("Verbose logging enabled.")
 
     log.info("Starting Codebase Map Generator Script")
-    SRC_DIR_DEFAULT = args.src  # Update global default used by process_file's relative path logic
+    # IMPORTANT: The global SRC_DIR_DEFAULT used in process_file needs the runtime value
+    # We should ideally pass args.src down instead of relying on a global.
+    # For now, update the global, but this is a refactoring target.
+    SRC_DIR_DEFAULT = args.src
     generate_map(args.db, args.schema, args.src, prune_confirmation=args.prune_stale_entries)
     log.info("Codebase Map Generator Script Finished")

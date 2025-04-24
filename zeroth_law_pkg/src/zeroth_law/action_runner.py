@@ -48,7 +48,9 @@ def _build_tool_arguments(
                     # If tool_arg_string is null/empty, maybe it takes value positionally?
                     # This needs careful handling based on tool behavior.
                     # For now, just append the value if no tool_arg specified.
-                    log.debug(f"No specific tool_arg for value option '{zlt_opt_name}' in '{tool_name}', appending value directly.")
+                    log.debug(
+                        f"No specific tool_arg for value option '{zlt_opt_name}' in '{tool_name}', appending value directly."
+                    )
                     tool_args.append(str(cli_value))
             # Ignore 'positional' type here, handled by _build_path_arguments
             # Ignore unknown types
@@ -110,7 +112,9 @@ def _build_path_arguments(
             # For now, if a tool requires a specific option, and no paths are given,
             # we add neither the option nor any paths.
             # TODO: Consider if default paths should be used with the specific option.
-            log.debug(f"Tool '{tool_name}' requires path option '{path_option_key}', but no paths were provided. Adding no path arguments.")
+            log.debug(
+                f"Tool '{tool_name}' requires path option '{path_option_key}', but no paths were provided. Adding no path arguments."
+            )
 
     return path_args
 
@@ -184,7 +188,9 @@ def _execute_tool(
                 log.info(f"Tool '{tool_name}' stderr (already debug logged): {result.stderr.strip()}")
 
     except FileNotFoundError:
-        log.error(f"Execution failed for tool '{tool_name}': 'poetry' command not found. Is Poetry installed and in PATH?")
+        log.error(
+            f"Execution failed for tool '{tool_name}': 'poetry' command not found. Is Poetry installed and in PATH?"
+        )
         tool_passed = False
     except Exception as e:
         log.exception(f"Unexpected error executing tool '{tool_name}'", exc_info=e)
@@ -248,7 +254,9 @@ def run_action(
         log.debug(f"Processing tool: {tool_name} with base command: {base_command_list}")
 
         # Build arguments based on zlt options and tool's mapping
-        tool_args = _build_tool_arguments(maps_options=maps_options, zlt_options=zlt_options_config, cli_args=cli_args, tool_name=tool_name)
+        tool_args = _build_tool_arguments(
+            maps_options=maps_options, zlt_options=zlt_options_config, cli_args=cli_args, tool_name=tool_name
+        )
 
         # Build path arguments
         path_args = _build_path_arguments(

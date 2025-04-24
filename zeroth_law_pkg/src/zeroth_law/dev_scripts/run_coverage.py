@@ -81,32 +81,31 @@ def main():
     run_command(
         coverage_run_cmd,
         cwd=WORKSPACE_ROOT,
-        allowed_exit_codes=(0, 1), # Allow tests to fail without stopping script
+        allowed_exit_codes=(0, 1),  # Allow tests to fail without stopping script
         # capture_stdout_for_cmd=coverage_run_cmd, # REMOVED - we capture report later
     )
 
     # Step 2.5: Generate and capture the coverage report summary
     print("\nStep 2.5: Generating coverage report summary...")
-    coverage_report_summary_cmd = ["uv", "run", "coverage", "report"] # Basic report for total
+    coverage_report_summary_cmd = ["uv", "run", "coverage", "report"]  # Basic report for total
     report_result = run_command(
         coverage_report_summary_cmd,
         cwd=WORKSPACE_ROOT,
-        allowed_exit_codes=(0,), # Report should succeed
-        capture_stdout_for_cmd=coverage_report_summary_cmd, # Capture this output
+        allowed_exit_codes=(0,),  # Report should succeed
+        capture_stdout_for_cmd=coverage_report_summary_cmd,  # Capture this output
     )
-
 
     # Parse the captured stdout from report_result
     total_percentage = None
     if report_result.stdout:  # Check if stdout was captured
         print("--- Captured STDOUT from Step 2.5 (Coverage Report) ---")
         print(report_result.stdout)  # Print the captured output for verification
-        print("-------------------------------------------------------") # Removed invalid escapes
+        print("-------------------------------------------------------")  # Removed invalid escapes
         # Look for the TOTAL line in the report output
         for line in report_result.stdout.splitlines():
             if line.startswith("TOTAL"):
                 # Regex to find digits possibly followed by % at the end of the TOTAL line
-                match = re.search(r"\b(\d+(?:\.\d+)?)[%\s]*$", line) # Updated regex for potential float
+                match = re.search(r"\b(\d+(?:\.\d+)?)[%\s]*$", line)  # Updated regex for potential float
                 if match:
                     try:
                         total_percentage = float(match.group(1))

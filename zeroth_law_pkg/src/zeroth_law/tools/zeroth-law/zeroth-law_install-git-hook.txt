@@ -1,0 +1,11 @@
+Usage: zeroth-law install-git-hook [OPTIONS]
+
+  Installs the custom ZLT pre-commit hook for multi-project support.
+
+  This replaces any existing pre-commit hook. The original hook (if any) is
+  backed up to pre-commit.zl_backup. Use 'restore-git-hooks' to revert.
+
+Options:
+  --git-root DIRECTORY  Path to the Git repository root (auto-detected if not
+                        specified).
+  -h, --help            Show this message and exit.

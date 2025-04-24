@@ -532,3 +532,49 @@ def code_map_report_json(WORKSPACE_ROOT: Path, code_map_db: Path) -> Path:
 
     yield output_path
     # No cleanup needed for session-scoped fixture using default path
+
+
+# --- ADDED UV Environment Check Fixture --- #
+@pytest.fixture(scope="session", autouse=True)
+def check_uv_environment(WORKSPACE_ROOT: Path):
+    """Verify that tests are running in a uv-managed environment."""
+    command = ["uv", "run", "--quiet", "--", "which", "python"]
+    try:
+        result = subprocess.run(
+            command,
+            cwd=WORKSPACE_ROOT,  # Run from workspace root
+            capture_output=True,
+            text=True,
+            check=False,  # Check return code manually
+            timeout=15,   # Generous timeout for uv run
+        )
+        if result.returncode != 0:
+            error_message = (
+                "Failed to verify uv environment.\n"
+                f"Command '{" ".join(command)}' failed with exit code {result.returncode}.\n"
+                f"Stderr: {result.stderr}\n"
+                "Ensure 'uv' is installed and the environment is active/managed correctly."
+            )
+            pytest.fail(error_message, pytrace=False)
+        # Optionally, check if the python path seems reasonable (e.g., contains .venv)
+        python_path = result.stdout.strip()
+        if not python_path:
+             pytest.fail(
+                 f"Command '{" ".join(command)}' succeeded but returned an empty path.", pytrace=False
+             )
+        # Add more sophisticated path checks if needed
+        logging.info(f"UV Environment Check PASSED. Using Python at: {python_path}")
+
+    except FileNotFoundError:
+        pytest.fail(
+            "Failed to verify uv environment: 'uv' command not found. Is uv installed and in PATH?",
+            pytrace=False
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail(
+            f"Failed to verify uv environment: Command '{" ".join(command)}' timed out.",
+            pytrace=False
+        )
+    except Exception as e:
+        pytest.fail(f"Unexpected error during uv environment check: {e}", pytrace=False)
+# --- END ADDED UV Environment Check Fixture --- #

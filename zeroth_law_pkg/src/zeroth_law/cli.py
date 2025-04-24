@@ -6,7 +6,7 @@ import logging
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List
 
 import click
 
@@ -19,6 +19,7 @@ from zeroth_law.analysis_runner import (
     analyze_files,
     format_violations_as_json,
     log_violations_as_text,
+    run_all_checks,
 )
 
 # Import the dynamic command function
@@ -26,12 +27,17 @@ from zeroth_law.dynamic_commands import add_dynamic_commands
 
 # Import the Git hook commands
 from zeroth_law.commands.git_hooks import install_git_hook, restore_git_hooks
+# Import the new Audit command
+from zeroth_law.commands.audit.audit import audit
 from zeroth_law.git_utils import (
     find_git_root,
     # install_git_hook_script, # No longer needed directly in cli.py
     # restore_standard_hooks, # No longer needed directly in cli.py
 )
 from zeroth_law.path_utils import find_project_root
+
+# Import the pre-commit analyzer
+from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 
 # --- Early Logging Setup --- START
 # Configure root logger early to prevent premature debug logs (e.g., during --help)
@@ -220,6 +226,19 @@ def cli_group(
 # Add the static Git hook commands (Keep here, added to the group object directly)
 cli_group.add_command(install_git_hook)
 cli_group.add_command(restore_git_hooks)
+# Add the audit command
+cli_group.add_command(audit)
+
+
+# === Standalone Audit Command (Phase 2/3 Goal) ===
+# @cli_group.command("audit")
+# @click.argument(
+#     "paths",
+# ... (Remove the entire audit function definition here) ...
+#         exit_code = 2 # Use a different exit code for unexpected errors
+#
+#     # Finally, exit with the determined code
+#     ctx.exit(exit_code)
 
 
 # --- Main Execution Guard ---

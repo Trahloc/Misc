@@ -9,10 +9,12 @@ from pathlib import Path
 import time
 import subprocess
 import sys
+import os # Need os for environment variables
 
 # Assuming the script is runnable and in the correct location relative to tests
 # Adjust the path if necessary based on how tests are run
 GENERATOR_SCRIPT = Path(__file__).parent.parent.parent / "tests/codebase_map/map_generator.py"
+WORKSPACE_ROOT = Path(__file__).parent.parent.parent # Define workspace root for PYTHONPATH
 
 
 # Helper function to run the generator script
@@ -27,8 +29,21 @@ def run_generator(db_path: Path, src_path: Path, *args, expect_fail: bool = Fals
         "-v",  # Add verbose flag to get debug logs potentially
     ]
     cmd.extend(args)
+
+    # Create a copy of the current environment and update PYTHONPATH
+    env = os.environ.copy()
+    # Add WORKSPACE_ROOT to PYTHONPATH to allow imports relative to project root
+    # This ensures the subprocess can find 'tests.codebase_map.cli_utils'
+    env['PYTHONPATH'] = str(WORKSPACE_ROOT) + os.pathsep + env.get('PYTHONPATH', '')
+
     # Use Popen to better capture stdout/stderr separately if needed
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=env # Pass the modified environment to the subprocess
+    )
     stdout, stderr = process.communicate()
 
     if not expect_fail and process.returncode != 0:
@@ -55,6 +70,39 @@ def query_db(db_path: Path, sql: str, params=()):
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+
+class LookupError(Exception):
+    """Custom exception for database lookup failures."""
+    pass
+
+
+# Helper to get signature hash for a function/method or class
+def get_signature_hash(db_path: Path, item_type: str, item_name: str, module_path: str = None, class_name: str = None):
+    if item_type not in ["function", "class"]:
+        raise ValueError("item_type must be 'function' or 'class'")
+
+    table = "functions" if item_type == "function" else "classes"
+    sql = f"SELECT signature_hash FROM {table} WHERE name = ?"
+    params = [item_name]
+
+    if module_path:
+        sql += " AND module_id = (SELECT id FROM modules WHERE path = ?)"
+        params.append(module_path)
+    if item_type == "function" and class_name:
+        sql += " AND class_id = (SELECT id FROM classes WHERE name = ? AND module_id = (SELECT id FROM modules WHERE path = ?))"
+        params.append(class_name)
+        params.append(module_path)
+    elif item_type == "function":
+        sql += " AND class_id IS NULL"
+
+    rows = query_db(db_path, sql, tuple(params))
+    if not rows:
+        raise LookupError(f"Could not find {item_type} '{item_name}' in the database.")
+    if len(rows) > 1:
+        # This might happen if not filtering by module/class appropriately
+        raise LookupError(f"Found multiple entries for {item_type} '{item_name}'. Specify module/class?")
+    return rows[0][0]
 
 
 # --- Test Cases ---
@@ -427,6 +475,219 @@ from collections import *
         db_file, "SELECT imported_name, alias, line_number FROM imports WHERE imported_name = ?", ("collections.*",)
     )
     assert wildcard_import[0] == ("collections.*", None, 11)
+
+
+def test_detailed_signature_hashing(tmp_path):
+    """Test signature hashing robustness across various code structures."""
+    src_dir = tmp_path / "src"
+    db_file = tmp_path / "test_map.db"
+    src_dir.mkdir()
+    test_file = src_dir / "sig_test.py"
+
+    # --- Test Case 1: Body/Docstring/Comment changes should NOT affect hash ---
+    content_v1 = """
+def func_body_change(a: int) -> str:
+    '''Initial docstring.'''
+    # Initial comment
+    return str(a) # Initial logic
+"""
+    test_file.write_text(content_v1)
+    run_generator(db_file, src_dir)
+    hash_v1 = get_signature_hash(db_file, "function", "func_body_change", "sig_test.py")
+    assert hash_v1 is not None
+
+    # Modify body, docstring, comment
+    content_v2 = """
+def func_body_change(a: int) -> str:
+    '''Changed docstring.'''
+    # Changed comment
+    x = int(a) * 2 # Changed logic
+    return f"Value: {x}"
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v2)
+    run_generator(db_file, src_dir)
+    hash_v2 = get_signature_hash(db_file, "function", "func_body_change", "sig_test.py")
+    assert hash_v2 == hash_v1, "Hash changed unexpectedly on body/doc/comment modification"
+
+    # --- Test Case 2: Argument kind changes SHOULD affect hash ---
+    content_v3 = """
+def func_arg_kinds(a, /, b, *, c, d=1, **kwargs):
+    pass
+"""
+    test_file.write_text(content_v3)
+    run_generator(db_file, src_dir)
+    hash_v3 = get_signature_hash(db_file, "function", "func_arg_kinds", "sig_test.py")
+
+    content_v4 = """
+def func_arg_kinds(a, b, *, c, d=1, **kwargs): # Removed positional-only marker
+    pass
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v4)
+    run_generator(db_file, src_dir)
+    hash_v4 = get_signature_hash(db_file, "function", "func_arg_kinds", "sig_test.py")
+    assert hash_v4 != hash_v3, "Hash did not change for positional-only modification"
+
+    content_v5 = """
+def func_arg_kinds(a, b, c, d=1, **kwargs): # Removed keyword-only marker
+    pass
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v5)
+    run_generator(db_file, src_dir)
+    hash_v5 = get_signature_hash(db_file, "function", "func_arg_kinds", "sig_test.py")
+    assert hash_v5 != hash_v4, "Hash did not change for keyword-only modification"
+
+    content_v6 = """
+def func_arg_kinds(a, b, c, d=1, *args, **kwargs): # Added *args
+    pass
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v6)
+    run_generator(db_file, src_dir)
+    hash_v6 = get_signature_hash(db_file, "function", "func_arg_kinds", "sig_test.py")
+    assert hash_v6 != hash_v5, "Hash did not change when *args added"
+
+    # --- Test Case 3: Return type changes SHOULD affect hash ---
+    content_v7 = """
+def func_return_type(x): # No return type
+    return x
+"""
+    test_file.write_text(content_v7)
+    run_generator(db_file, src_dir)
+    hash_v7 = get_signature_hash(db_file, "function", "func_return_type", "sig_test.py")
+
+    content_v8 = """
+def func_return_type(x) -> int: # Added return type
+    return x
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v8)
+    run_generator(db_file, src_dir)
+    hash_v8 = get_signature_hash(db_file, "function", "func_return_type", "sig_test.py")
+    assert hash_v8 != hash_v7, "Hash did not change when return type added"
+
+    content_v9 = """
+def func_return_type(x) -> str: # Changed return type
+    return x
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v9)
+    run_generator(db_file, src_dir)
+    hash_v9 = get_signature_hash(db_file, "function", "func_return_type", "sig_test.py")
+    assert hash_v9 != hash_v8, "Hash did not change when return type changed"
+
+    # --- Test Case 4: Decorator changes SHOULD affect hash ---
+    content_v10 = """
+def my_decorator(f): return f
+
+def func_decorated(p):
+    pass
+"""
+    test_file.write_text(content_v10)
+    run_generator(db_file, src_dir)
+    hash_v10 = get_signature_hash(db_file, "function", "func_decorated", "sig_test.py")
+
+    content_v11 = """
+def my_decorator(f): return f
+
+@my_decorator
+def func_decorated(p): # Added decorator
+    pass
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v11)
+    run_generator(db_file, src_dir)
+    hash_v11 = get_signature_hash(db_file, "function", "func_decorated", "sig_test.py")
+    assert hash_v11 != hash_v10, "Hash did not change when decorator added"
+
+    content_v12 = """
+def my_decorator(f): return f
+def another_decorator(f): return f
+
+@another_decorator # Changed decorator
+@my_decorator
+def func_decorated(p):
+    pass
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v12)
+    run_generator(db_file, src_dir)
+    hash_v12 = get_signature_hash(db_file, "function", "func_decorated", "sig_test.py")
+    assert hash_v12 != hash_v11, "Hash did not change when decorator changed/added"
+
+    # --- Test Case 5: Class signature changes SHOULD affect hash ---
+    content_v13 = """
+class BaseClass: pass
+class Meta(type): pass
+
+class TargetClass: # No base, no meta
+    pass
+"""
+    test_file.write_text(content_v13)
+    run_generator(db_file, src_dir)
+    hash_v13 = get_signature_hash(db_file, "class", "TargetClass", "sig_test.py")
+
+    content_v14 = """
+class BaseClass: pass
+class Meta(type): pass
+
+class TargetClass(BaseClass): # Added base class
+    pass
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v14)
+    run_generator(db_file, src_dir)
+    hash_v14 = get_signature_hash(db_file, "class", "TargetClass", "sig_test.py")
+    assert hash_v14 != hash_v13, "Class hash did not change when base class added"
+
+    content_v15 = """
+class BaseClass: pass
+class Meta(type): pass
+
+class TargetClass(BaseClass, metaclass=Meta): # Added metaclass
+    pass
+"""
+    time.sleep(0.1)
+    test_file.write_text(content_v15)
+    run_generator(db_file, src_dir)
+    hash_v15 = get_signature_hash(db_file, "class", "TargetClass", "sig_test.py")
+    assert hash_v15 != hash_v14, "Class hash did not change when metaclass added"
+
+    # --- Test Case 6: Annotation/Decorator Parsing Errors ---
+    # Note: Requires map_generator to handle ast.unparse errors gracefully
+    # Check if the implementation adds '<unparse_error>' or similar placeholder
+    # This test assumes the generator *completes* but stores a specific error marker
+
+    # Example: Unparseable annotation (e.g., invalid syntax within annotation)
+    content_v16 = """
+# Type Alias that might be tricky or invalid in some contexts
+ComplexType = list[lambda x: x**2] # Simplified, real cases might be more complex
+
+def func_bad_annotation(a: ComplexType):
+    pass
+"""
+    test_file.write_text(content_v16)
+    # We expect the generator to run, but the hash might be based on the error marker
+    run_generator(db_file, src_dir)
+    hash_v16 = get_signature_hash(db_file, "function", "func_bad_annotation", "sig_test.py")
+    # The exact assertion depends on how map_generator handles this.
+    # If it uses a placeholder like '<unparse_error:annotation>', we could check for its hash.
+    # For now, just assert it produced *some* hash. A more specific check
+    # requires knowing the exact error handling strategy in map_generator.py
+    assert hash_v16 is not None, "Generator failed or didn't produce hash for bad annotation"
+
+    # Example: Unparseable decorator
+    content_v17 = """
+@some_module.attribute[invalid_syntax]()
+def func_bad_decorator():
+    pass
+"""
+    test_file.write_text(content_v17)
+    run_generator(db_file, src_dir)
+    hash_v17 = get_signature_hash(db_file, "function", "func_bad_decorator", "sig_test.py")
+    assert hash_v17 is not None, "Generator failed or didn't produce hash for bad decorator"
 
 
 # TODO: Add test_nested_classes_functions (if needed/supported)

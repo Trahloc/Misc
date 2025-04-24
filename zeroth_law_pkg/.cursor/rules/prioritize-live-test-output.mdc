@@ -1,7 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-
-When resolving test failures that report discrepancies or expected values (e.g., CRC mismatches in test_txt_json_consistency), the most recent pytest output is the definitive source of truth for expected values. Do not rely solely on previously attached file contents or conversational memory, as they may be outdated. Always use the values reported directly in the latest test failure message.

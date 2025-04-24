@@ -13,26 +13,41 @@ import concurrent.futures
 from pathlib import Path
 import re  # Import regex module
 from .test_ensure_txt_baselines_exist import get_managed_sequences, get_index_entry  # Import the function
+from typing import List, Tuple, Set, Dict, Any
 
-# Add src directory to sys.path
-_SRC_DIR = Path(__file__).parent.parent.parent / "src"
-if str(_SRC_DIR.resolve()) not in sys.path:
-    sys.path.insert(0, str(_SRC_DIR.resolve()))
-    # print(f"DEBUG: Added {_SRC_DIR.resolve()} to sys.path") # Keep commented unless debugging path
+# Remove manual path manipulation
+# _conftest_dir = Path(__file__).parent.resolve()
+# _tests_root = _conftest_dir.parent
+# _workspace_root_session = _tests_root.parent
+# _src_path = _workspace_root_session / "src"
+# if str(_src_path) not in sys.path:
+#     sys.path.insert(0, str(_src_path))
 
-# Import the path utility function *after* modifying sys.path
+# --- Import Refactored Components (Assume standard imports work) ---
 try:
-    from zeroth_law.path_utils import find_project_root
-except ImportError as e:
-    print(f"DEBUG: Failed to import find_project_root from path_utils. sys.path={sys.path}")
-    raise e
-
-# Import the *actual* handler class
-try:
+    from zeroth_law.dev_scripts.config_reader import load_tool_lists_from_toml
+    from zeroth_law.dev_scripts.environment_scanner import get_executables_from_env
+    from zeroth_law.dev_scripts.tools_dir_scanner import get_tool_dirs
+    from zeroth_law.dev_scripts.tool_reconciler import reconcile_tools, ToolStatus
+    from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
+    from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_tool
     from zeroth_law.lib.tool_index_handler import ToolIndexHandler
 except ImportError as e:
-    print(f"ERROR: Could not import ToolIndexHandler from zeroth_law.lib.tool_index_handler. {e}")
-    raise
+    # Keep the ImportError handling as a safeguard
+    print(f"ERROR in test_tool_defs/conftest.py: Failed to import dev scripts. Check PYTHONPATH/editable install. Details: {e}")
+    # Define dummy functions or raise early failure if imports fail
+    def load_tool_lists_from_toml(*args, **kwargs): pytest.fail("Import failed"); return set(), set()
+    def get_executables_from_env(*args, **kwargs): pytest.fail("Import failed"); return set()
+    def get_tool_dirs(*args, **kwargs): pytest.fail("Import failed"); return set()
+    def reconcile_tools(*args, **kwargs): pytest.fail("Import failed"); return {}
+    def get_subcommands_from_json(*args, **kwargs): pytest.fail("Import failed"); return {}
+    def generate_sequences_for_tool(*args, **kwargs): pytest.fail("Import failed"); return []
+    class ToolIndexHandler:
+        def __init__(*args, **kwargs): pytest.fail("Import failed")
+        def get_raw_index_data(*args, **kwargs): return {}
+        def reload(*args, **kwargs): pass
+        def get_entry(*args, **kwargs): return None
+
 
 # --- Logging Setup ---
 log = logging.getLogger(__name__)
@@ -47,13 +62,15 @@ MAX_WORKERS = os.cpu_count() or 4  # Default to 4 if cpu_count returns None
 
 @pytest.fixture(scope="session")
 def WORKSPACE_ROOT() -> Path:
-    """Fixture to dynamically find and provide the project root directory."""
-    _conftest_dir = Path(__file__).parent
-    root = find_project_root(_conftest_dir)
-    if not root:
-        pytest.fail("Could not find project root (containing pyproject.toml) from conftest.py location.")
-    log.info(f"WORKSPACE_ROOT determined as: {root}")
-    return root
+    # Assuming this conftest is in tests/test_tool_defs/
+    # Recalculate relative to this file's location
+    # This might still be needed if the root conftest doesn't provide it
+    # or if we want to be self-contained here.
+    ws_root = Path(__file__).resolve().parents[2]
+    # Add a check?
+    if not (ws_root / "pyproject.toml").exists():
+         pytest.warning(f"pyproject.toml not found at deduced WORKSPACE_ROOT: {ws_root}")
+    return ws_root
 
 
 @pytest.fixture(scope="session")
@@ -384,3 +401,53 @@ def auto_fix_json_files(WORKSPACE_ROOT):
 
 
 # --- END ADDED Fixture --- #
+
+# --- Fixture to Generate Managed Sequences --- #
+@pytest.fixture(scope="session")
+def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> List[Tuple[str, ...]]:
+    """Session-scoped fixture that discovers, reconciles, and generates managed sequences."""
+    log.info("--- Running managed_sequences fixture --- ")
+    config_path = WORKSPACE_ROOT / "pyproject.toml"
+    all_generated_sequences: List[Tuple[str, ...]] = [] # Ensure initialization
+
+    try:
+        whitelist, blacklist = load_tool_lists_from_toml(config_path)
+        env_tools = get_executables_from_env()
+        dir_tools = get_tool_dirs(TOOLS_DIR)
+        reconciliation_results = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+
+        errors = []
+        managed_tools_for_sequencing: Set[str] = set()
+        for tool, status in reconciliation_results.items():
+             # Collect reconciliation errors to report later
+             if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
+                 errors.append(f"Error: Tool '{tool}' is blacklisted but has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
+             elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
+                 errors.append(f"Error: Tool '{tool}' has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)} but is not in whitelist or blacklist.")
+             elif status == ToolStatus.ERROR_MISSING_WHITELISTED:
+                 errors.append(f"Error: Tool '{tool}' is whitelisted but not found in environment or {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
+             # Identify tools needing sequences
+             elif status in [ToolStatus.MANAGED_OK, ToolStatus.MANAGED_MISSING_ENV, ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR]:
+                 managed_tools_for_sequencing.add(tool)
+
+        # If critical reconciliation errors exist, fail early
+        if errors:
+            pytest.fail("Reconciliation Errors Found (in managed_sequences fixture):\n" + "\n".join(errors), pytrace=False)
+
+        log.debug(f"Managed tools identified for sequence generation: {managed_tools_for_sequencing}")
+
+        # Generate sequences
+        for tool_name in sorted(list(managed_tools_for_sequencing)):
+            # Assume JSON path convention for subcommand discovery
+            tool_json_path = TOOLS_DIR / tool_name / f"{tool_name}.json"
+            subcommands = get_subcommands_from_json(tool_json_path)
+            sequences = generate_sequences_for_tool(tool_name, subcommands, blacklist)
+            all_generated_sequences.extend(sequences)
+
+        log.info(f"Managed sequences fixture generated {len(all_generated_sequences)} sequences.")
+        return all_generated_sequences
+
+    except Exception as e:
+        # Catch any other unexpected error during sequence generation
+        pytest.fail(f"Unexpected error during managed_sequences generation: {e}")
+        return [] # Should not be reached

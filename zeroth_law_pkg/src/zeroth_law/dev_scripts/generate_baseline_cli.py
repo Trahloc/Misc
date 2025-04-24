@@ -46,7 +46,10 @@ def main():
         "--command",
         required=True,
         nargs="+",
-        help=("The full command sequence for the tool (e.g., 'ruff', 'ruff check'). " "'--help | cat' will be added automatically by the generator."),
+        help=(
+            "The full command sequence for the tool (e.g., 'ruff', 'ruff check'). "
+            "'--help | cat' will be added automatically by the generator."
+        ),
     )
     # Optional: Add verbosity flag if needed later
     # parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")

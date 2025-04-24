@@ -35,6 +35,8 @@ managed_tools:
   - yamllint
   - zeroth-law
   - zlt
+  - sqlite-utils # Added - For codebase map
+  - tabulate     # Added - Likely for table formatting
 
 # List of executable base names found in the venv bin directory that ZLT should ignore.
 excluded_executables:

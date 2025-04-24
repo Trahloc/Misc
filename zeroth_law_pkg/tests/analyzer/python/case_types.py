@@ -32,7 +32,9 @@ class AnalyzerCase:
         file_path = test_data_dir / self.input_file
         # Add error handling for missing test data file
         if not file_path.is_file():
-            raise FileNotFoundError(f"Test data file not found: {file_path}. " f"Ensure test data is correctly placed in '{test_data_dir}'.")
+            raise FileNotFoundError(
+                f"Test data file not found: {file_path}. " f"Ensure test data is correctly placed in '{test_data_dir}'."
+            )
         return file_path.read_text(encoding="utf-8")
 
 

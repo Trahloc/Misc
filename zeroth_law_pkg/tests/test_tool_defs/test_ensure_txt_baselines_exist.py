@@ -1,9 +1,7 @@
 # FILE: tests/test_tool_defs/test_ensure_txt_baselines_exist.py
 """
-Tests that a TXT baseline file exists for every managed tool/subcommand
-and that its content matches the expected CRC stored in a central index.
-Uses concurrent execution for speed.
-Generates missing files and updates the index if needed.
+Orchestrates the discovery, reconciliation, and baseline generation/verification
+for managed tools.
 """
 
 import logging
@@ -15,187 +13,48 @@ from pathlib import Path
 import json
 import toml
 import os
-import concurrent.futures  # Added for parallel execution
-from typing import Tuple, Dict, Any, List, Optional  # Added List, Optional
+import concurrent.futures
+from typing import Tuple, Dict, Any, List, Optional, Set
 
-# Import necessary components from baseline_generator
-from src.zeroth_law.dev_scripts.baseline_generator import (
-    generate_or_verify_baseline,
-    BaselineStatus,
-)
+# --- Import New Components (Assume standard imports work) ---
+from zeroth_law.dev_scripts.config_reader import load_tool_lists_from_toml
+from zeroth_law.dev_scripts.environment_scanner import get_executables_from_env
+from zeroth_law.dev_scripts.tools_dir_scanner import get_tool_dirs
+from zeroth_law.dev_scripts.tool_reconciler import reconcile_tools, ToolStatus
+from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
+from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_tool
+from zeroth_law.dev_scripts.baseline_manager import manage_baseline_for_sequence, BaselineStatus
+from zeroth_law.lib.utils import command_sequence_to_id # Use lib version
 
-# Corrected Imports
-from src.zeroth_law.dev_scripts.tool_discovery import load_tools_config
-from src.zeroth_law.lib.crc import calculate_crc32  # Correct function name
-
-# Need index utils for post-processing
-from src.zeroth_law.dev_scripts.tool_index_utils import get_index_entry, load_update_and_save_entry
+# Import test fixtures if needed (WORKSPACE_ROOT, TOOLS_DIR, etc.)
+# Assuming these are provided by the root conftest.py
 
 # Setup logging
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.WARNING)  # Keep level WARNING for less noise
+# logging.basicConfig(level=logging.INFO) # Configure globally or in pytest.ini
 
 # Constants
-MAX_WORKERS = os.cpu_count() or 4  # Sensible default for thread pool
+MAX_WORKERS = os.cpu_count() or 4
 
-# --- Helper Functions (Keep existing helpers like command_sequence_to_id, _get_uv_bin_dir, etc.) ---
+# --- REMOVE Old get_managed_sequences and related logic ---
+# (The old function and the global MANAGED_COMMAND_SEQUENCES calculation are removed)
 
-
-def command_sequence_to_id(command_parts: tuple[str, ...]) -> str:
-    """Creates a readable ID for parametrized tests and dictionary keys."""
-    return "_".join(command_parts)
-
-
-def is_tool_available(tool_name: str, workspace_root: Path) -> bool:
-    """Checks if a tool is likely runnable via 'uv run which tool_name'."""
-    command = ["uv", "run", "--quiet", "--", "which", tool_name]
-    try:
-        subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd=workspace_root,
-            timeout=10,  # Short timeout for a simple check
-        )
-        return True
-    except subprocess.CalledProcessError as e:
-        return False
-    except FileNotFoundError:
-        log.error("'uv' command not found. Ensure uv is installed and in PATH.")
-        return False
-    except Exception as e:
-        log.warning(f"Unexpected error checking availability for {tool_name}: {e}")
-        return False
-
-
-def get_managed_sequences(config_path: Path, tools_dir: Path, workspace_root: Path) -> list[tuple[str, ...]]:
-    """Loads managed tool sequences based on pyproject.toml, validating against 'uv run which'."""
-    managed_sequences = []
-    try:
-        config_data = toml.load(config_path)
-        zlt_config = config_data.get("tool", {}).get("zeroth-law", {})
-        tools_config = zlt_config.get("tools", {})
-        whitelist = set(tools_config.get("whitelist", []))  # Base tool names expected to be managed
-        blacklist = set(tools_config.get("blacklist", []))  # Base tool/subcommand names to ignore
-    except Exception as e:
-        pytest.fail(f"Error reading config file {config_path}: {e}")
-        return []
-
-    # --- Check availability of whitelisted tools using 'uv run which' ---
-    log.info(f"Checking availability of {len(whitelist)} whitelisted tools using 'uv run which'...")
-    available_whitelisted_tools = set()
-    missing_whitelisted_tools = set()
-    for tool_name in whitelist:
-        if is_tool_available(tool_name, workspace_root):
-            available_whitelisted_tools.add(tool_name)
-        else:
-            missing_whitelisted_tools.add(tool_name)
-
-    # --- Error on Missing Whitelisted BASE Tools ---
-    if missing_whitelisted_tools:
-        fail_message = (
-            f"Found {len(missing_whitelisted_tools)} tool(s) listed in the pyproject.toml whitelist that could NOT be found via 'uv run which <tool>':\n"
-            f"  - {', '.join(sorted(list(missing_whitelisted_tools)))}\n"
-            f"Action Required: Ensure these tools are correctly installed in the 'uv' environment and accessible to 'uv run' "
-            f"OR remove them from the 'whitelist' in pyproject.toml ([tool.zeroth-law.tools])."
-        )
-        pytest.fail(fail_message)
-        return []
-
-    # Filter available tools by blacklist for base command processing
-    validated_base_tools = available_whitelisted_tools - blacklist
-
-    log.info(
-        f"Found {len(validated_base_tools)} validated base tools available via 'uv run which' after applying blacklist."
-    )
-    log.debug(f"Validated base tools for sequence generation: {sorted(list(validated_base_tools))}")
-
-    # --- Generate Sequences for Validated Base Tools and their Subcommands ---
-    for tool_name in sorted(list(validated_base_tools)):
-        managed_sequences.append((tool_name,))
-        tool_json_path = tools_dir / tool_name / f"{tool_name}.json"
-        if tool_json_path.is_file():
-            try:
-                with open(tool_json_path, "r", encoding="utf-8") as f:
-                    tool_data = json.load(f)
-                subcommands_list = tool_data.get("subcommands_detail", {})
-                if isinstance(subcommands_list, dict):
-                    for sub_name, sub_details in subcommands_list.items():
-                        if sub_name:
-                            subcommand_tool_id = command_sequence_to_id((tool_name, sub_name))
-                            if subcommand_tool_id in blacklist:
-                                log.info(
-                                    f"Ignoring subcommand sequence '{subcommand_tool_id}' because it is blacklisted."
-                                )
-                            else:
-                                managed_sequences.append((tool_name, sub_name))
-                                log.debug(
-                                    f"Adding managed sequence: ({tool_name}, {sub_name}) -> ID: {subcommand_tool_id}"
-                                )
-                                # Correctly indented block starts here:
-                                if isinstance(sub_details, dict) and "subcommands_detail" in sub_details:
-                                    nested_subcommands = sub_details.get("subcommands_detail", {})
-                                    if isinstance(nested_subcommands, dict):
-                                        for nested_sub_name, nested_sub_details in nested_subcommands.items():
-                                            if nested_sub_name:
-                                                nested_subcommand_tool_id = command_sequence_to_id(
-                                                    (tool_name, sub_name, nested_sub_name)
-                                                )
-                                                if nested_subcommand_tool_id in blacklist:
-                                                    log.info(
-                                                        f"Ignoring subsubcommand sequence '{nested_subcommand_tool_id}' because it is blacklisted."
-                                                    )
-                                                else:
-                                                    managed_sequences.append((tool_name, sub_name, nested_sub_name))
-                                                    log.debug(
-                                                        f"Adding managed sequence: ({tool_name}, {sub_name}, {nested_sub_name}) -> ID: {nested_subcommand_tool_id}"
-                                                    )
-            except json.JSONDecodeError:
-                log.warning(
-                    f"Could not decode JSON for tool '{tool_name}' at {tool_json_path} to discover subcommands."
-                )
-            except Exception as e:
-                log.error(f"Error reading JSON for '{tool_name}' subcommands: {e}")
-        else:
-            log.debug(
-                f"No JSON definition found for base tool '{tool_name}' at {tool_json_path}, cannot discover subcommands."
-            )
-
-    log.info(f"Generated {len(managed_sequences)} managed command sequences for testing.")
-    log.debug(f"Final managed sequences: {managed_sequences}")
-    return managed_sequences
-
-
-# --- Global Definition of Managed Sequences ---
-# Calculate this once at module load time
-_current_file_dir_for_managed = Path(__file__).resolve().parent
-_workspace_root_for_managed = _current_file_dir_for_managed.parent.parent
-_config_path_for_managed = _workspace_root_for_managed / "pyproject.toml"
-_tools_dir_for_managed = _workspace_root_for_managed / "src/zeroth_law/tools"
-MANAGED_COMMAND_SEQUENCES = get_managed_sequences(
-    _config_path_for_managed, _tools_dir_for_managed, _workspace_root_for_managed
-)
-
-if not MANAGED_COMMAND_SEQUENCES:
-    log.warning("MANAGED_COMMAND_SEQUENCES is empty after loading from pyproject.toml and checking environment.")
-
-
-# --- Worker Function for Concurrent Execution ---
-def _check_single_baseline_worker(
-    command_sequence: Tuple[str, ...], workspace_root: Path, tools_dir: Path
+# --- Worker Function for Baseline Management (Modified) ---
+def _manage_single_baseline_worker(
+    command_sequence: Tuple[str, ...],
+    workspace_root: Path,
+    tools_dir: Path
 ) -> Dict[str, Any]:
-    """Worker function to process a single command sequence baseline (no index interaction)."""
+    """Worker function to process a single command sequence baseline using baseline_manager."""
     tool_id = command_sequence_to_id(command_sequence)
-    command_sequence_str = " ".join(command_sequence)
-    # Pass the base tools dir (e.g., src/zeroth_law/tools) to generate_or_verify_baseline
-    base_tools_dir_for_worker = workspace_root / "src/zeroth_law/tools"
     result_data = {"tool_id": tool_id, "command_sequence": command_sequence}
+    base_tools_dir_for_worker = tools_dir # Pass the specific tools dir
 
     try:
-        status, calculated_crc_hex, timestamp = generate_or_verify_baseline(
-            command_sequence_str,
-            root_dir=base_tools_dir_for_worker,  # Pass correct base tools dir
+        # Call the refactored baseline manager function
+        status, calculated_crc_hex, timestamp = manage_baseline_for_sequence(
+            command_sequence,
+            root_dir=base_tools_dir_for_worker,
         )
 
         result_data["status_code"] = status
@@ -204,159 +63,153 @@ def _check_single_baseline_worker(
         result_data["timestamp"] = timestamp
 
         # Post-generation verification (TXT existence)
-        if status in [BaselineStatus.CAPTURE_SUCCESS]:  # Only check if generation step reported success
+        if status in [BaselineStatus.CAPTURE_SUCCESS, BaselineStatus.CAPTURE_NO_CHANGE]:
             tool_name = command_sequence[0]
-            # Use the tools_dir passed to the worker (derived from fixture)
             tool_dir_path = tools_dir / tool_name
             txt_file = tool_dir_path / f"{tool_id}.txt"
             if not txt_file.is_file():
-                result_data["status"] = "ERROR_TXT_MISSING_POST_GEN"
-                result_data["error_message"] = f"TXT file missing after successful generation attempt: {txt_file}"
+                result_data["status"] = "ERROR_TXT_MISSING_POST_RUN"
+                result_data["error_message"] = f"TXT file missing after baseline manager ran: {txt_file}"
                 log.error(f"[{tool_id}] {result_data['error_message']}")
             else:
-                log.info(f"[{tool_id}] Worker completed successfully ({status.name}). CRC: {calculated_crc_hex}")
+                log.info(f"[{tool_id}] Baseline worker completed ({status.name}). CRC: {calculated_crc_hex or 'N/A'}")
         elif status != BaselineStatus.CAPTURE_SUCCESS:
-            log.error(f"[{tool_id}] Worker reported failure status: {status.name}")
-            result_data["error_message"] = f"Baseline generation failed with status {status.name}"
+            log.error(f"[{tool_id}] Baseline worker reported failure status: {status.name}")
+            result_data["error_message"] = f"Baseline management failed with status {status.name}"
 
     except Exception as e:
-        log.exception(f"[{tool_id}] Unexpected error in worker: {e}")
+        log.exception(f"[{tool_id}] Unexpected error in baseline worker: {e}")
         result_data["status"] = "ERROR_UNEXPECTED_WORKER"
         result_data["error_message"] = f"Unexpected worker error: {e}"
 
     return result_data
 
+# --- Main Orchestrating Test Function (Refactored) ---
+def test_tool_discovery_reconciliation_and_baselines(WORKSPACE_ROOT: Path, TOOLS_DIR: Path):
+    """Discovers, reconciles tools, and generates/verifies baselines for managed sequences."""
 
-# --- Main Test Function (Concurrent Execution) ---
-def test_all_txt_baselines_concurrently(WORKSPACE_ROOT, TOOLS_DIR, tool_index_handler):  # No parametrize
-    """
-    Ensures TXT baselines are generated/verified concurrently and the index
-    is updated sequentially based on the results.
-    """
-    if not MANAGED_COMMAND_SEQUENCES:
-        pytest.skip("Skipping test: No managed command sequences found.")
+    log.info("=== Starting Tool Discovery & Reconciliation Phase ===")
+    config_path = WORKSPACE_ROOT / "pyproject.toml"
 
-    log.info(
-        f"Starting concurrent baseline checks for {len(MANAGED_COMMAND_SEQUENCES)} sequences using {MAX_WORKERS} workers..."
-    )
+    # 1. Gather Inputs
+    try:
+        whitelist, blacklist = load_tool_lists_from_toml(config_path)
+        log.info(f"Loaded whitelist ({len(whitelist)}) and blacklist ({len(blacklist)}) from {config_path.name}")
+    except FileNotFoundError:
+        pytest.fail(f"Configuration file not found: {config_path}")
+    except (toml.TomlDecodeError, ValueError, IOError) as e:
+        pytest.fail(f"Error loading configuration from {config_path}: {e}")
+
+    env_tools = get_executables_from_env()
+    log.info(f"Found {len(env_tools)} potential executables in environment.")
+
+    dir_tools = get_tool_dirs(TOOLS_DIR)
+    log.info(f"Found {len(dir_tools)} tool directories in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
+
+    # 2. Reconcile Tools
+    reconciliation_results = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+
+    # 3. Report Reconciliation Errors and Identify Managed Tools
+    errors = []
+    managed_tools_for_sequencing: Set[str] = set()
+
+    for tool, status in reconciliation_results.items():
+        if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
+            errors.append(f"Error: Tool '{tool}' is blacklisted but has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
+        elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
+            errors.append(f"Error: Tool '{tool}' has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)} but is not in whitelist or blacklist.")
+        elif status == ToolStatus.ERROR_MISSING_WHITELISTED:
+            errors.append(f"Error: Tool '{tool}' is whitelisted but not found in environment or {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
+        elif status == ToolStatus.NEW_ENV_TOOL:
+            # Log new tools found in env but don't treat as error for this test
+            log.warning(f"Discovered new potential tool in environment: '{tool}'. Add to whitelist or blacklist in {config_path.name}.")
+        elif status in [ToolStatus.MANAGED_OK, ToolStatus.MANAGED_MISSING_ENV, ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR]:
+            # These statuses indicate tools that require further processing (sequence generation, baseline checks)
+            managed_tools_for_sequencing.add(tool)
+
+    if errors:
+        pytest.fail("Reconciliation Errors Found:\n" + "\n".join(errors), pytrace=False)
+
+    log.info(f"Identified {len(managed_tools_for_sequencing)} tools for sequence generation and baseline checks.")
+    if not managed_tools_for_sequencing:
+        pytest.skip("No managed tools identified for baseline processing.")
+
+    # 4. Generate All Sequences for Managed Tools
+    all_managed_sequences: List[Tuple[str, ...]] = []
+    for tool_name in sorted(list(managed_tools_for_sequencing)):
+        tool_json_path = TOOLS_DIR / tool_name / f"{tool_name}.json"
+        subcommands = get_subcommands_from_json(tool_json_path)
+        # Pass the overall blacklist to filter sequences
+        sequences = generate_sequences_for_tool(tool_name, subcommands, blacklist)
+        all_managed_sequences.extend(sequences)
+
+    log.info(f"Generated a total of {len(all_managed_sequences)} command sequences across all managed tools.")
+    if not all_managed_sequences:
+        pytest.skip("No command sequences generated for managed tools.")
+
+    # --- Pass sequences to the existing concurrent baseline check logic ---
+    log.info(f"=== Starting Concurrent Baseline Checks for {len(all_managed_sequences)} Sequences ===")
     start_time = time.monotonic()
-    results = []
+    baseline_results = []
     futures = []
 
     # Use ThreadPoolExecutor for I/O-bound tasks (running subprocesses, file ops)
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        for command_parts in MANAGED_COMMAND_SEQUENCES:
+        for command_parts in all_managed_sequences:
             if not command_parts:
-                continue  # Skip empty sequences if any
-            futures.append(executor.submit(_check_single_baseline_worker, command_parts, WORKSPACE_ROOT, TOOLS_DIR))
+                continue # Should not happen with new generator, but keep safeguard
+            futures.append(executor.submit(_manage_single_baseline_worker, command_parts, WORKSPACE_ROOT, TOOLS_DIR))
 
-        # Use tqdm for progress bar if installed (optional enhancement)
+        # Optional: Add tqdm progress bar if installed
         try:
             from tqdm import tqdm
-
-            futures_iterator = tqdm(
-                concurrent.futures.as_completed(futures), total=len(futures), desc="Checking Baselines"
-            )
+            futures_iterator = tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Checking Baselines")
         except ImportError:
+            log.info("tqdm not installed, skipping progress bar.")
             futures_iterator = concurrent.futures.as_completed(futures)
 
         for future in futures_iterator:
             try:
                 result = future.result()
-                results.append(result)
-            except Exception as e:
-                log.exception(f"Error retrieving result from future: {e}")
-                results.append(
-                    {
-                        "tool_id": "unknown",
-                        "status": "ERROR_FUTURE_EXCEPTION",
-                        "error_message": f"Future raised exception: {e}",
-                    }
-                )
+                baseline_results.append(result)
+            except Exception as exc:
+                # Log errors from the future itself (though worker should catch most)
+                log.error(f"Error retrieving result from baseline worker future: {exc}")
+                # You might want to create a dummy error result here
+                # to ensure it gets counted as a failure later.
+                baseline_results.append({
+                    "tool_id": "unknown_future_error",
+                    "status": "ERROR_FUTURE_EXCEPTION",
+                    "error_message": str(exc)
+                })
 
-    execution_duration = time.monotonic() - start_time
-    log.info(f"Concurrent baseline checks completed in {execution_duration:.2f} seconds.")
+    end_time = time.monotonic()
+    log.info(f"Concurrent baseline checks completed in {end_time - start_time:.2f} seconds.")
 
-    # --- Post-Processing: Index Update and Verification (Sequential) ---
-    log.info("Starting sequential index update and final verification...")
+    # 5. Aggregate and Report Baseline Check Results
     failures = []
-    index_updates_performed = 0
-
-    # Load index *once* before processing results
-    tool_index_handler.reload()  # Ensure we have the latest index state
-    raw_index_data = tool_index_handler.get_raw_index_data()
-
-    for result in results:
+    success_count = 0
+    for result in baseline_results:
+        status = result.get("status", "ERROR_UNKNOWN_WORKER_STATE")
         tool_id = result.get("tool_id", "unknown")
-        status = result.get("status", "ERROR_UNKNOWN")
-        status_code = result.get("status_code")
-        calculated_crc = result.get("calculated_crc")
-        timestamp = result.get("timestamp")
-        command_sequence = result.get("command_sequence")
-        error_message = result.get("error_message")
-
-        # Check for worker errors first
-        if "ERROR" in status:
-            failures.append(f"{tool_id}: Worker failed - {status} ({error_message or 'No details'})")
-            continue
-
-        # Check if baseline generation step succeeded
-        if status_code != BaselineStatus.CAPTURE_SUCCESS:
-            failures.append(f"{tool_id}: Baseline generation failed - {status} ({error_message or 'No details'})")
-            continue
-
-        # Generation succeeded, now check/update index
-        if not command_sequence or calculated_crc is None or timestamp is None:
-            failures.append(
-                f"{tool_id}: Worker succeeded but returned incomplete data (Seq: {command_sequence}, CRC: {calculated_crc}, TS: {timestamp})"
-            )
-            continue
-
-        # Get current index entry
-        current_entry = get_index_entry(raw_index_data, command_sequence)
-        stored_crc = current_entry.get("crc") if current_entry else None
-
-        entry_update_data = {}
-        needs_update = False
-
-        if stored_crc != calculated_crc:
-            log.info(
-                f"[{tool_id}] Index Update: CRC mismatch (Stored: {stored_crc}, Calculated: {calculated_crc}). Queuing update."
-            )
-            entry_update_data["crc"] = calculated_crc
-            entry_update_data["updated_timestamp"] = timestamp
-            entry_update_data["checked_timestamp"] = timestamp
-            needs_update = True
+        if status not in [BaselineStatus.CAPTURE_SUCCESS.name, BaselineStatus.CAPTURE_NO_CHANGE.name]:
+            error_msg = result.get("error_message", f"Worker failed with status {status}")
+            failures.append(f" - {tool_id}: {error_msg}")
         else:
-            # CRCs match, just update checked_timestamp if it's significantly different
-            stored_checked = current_entry.get("checked_timestamp")
-            if stored_checked is None or abs(stored_checked - timestamp) > 1:  # Update if missing or differs > 1 sec
-                log.debug(f"[{tool_id}] Index Check: CRC matches ({stored_crc}). Queuing checked_timestamp update.")
-                entry_update_data["checked_timestamp"] = timestamp
-                needs_update = True
-            # else: # CRC matches and timestamp is recent, no update needed
-            #     log.debug(f"[{tool_id}] Index Check: CRC matches and checked_timestamp is recent.")
+            success_count += 1
 
-        # Perform the update using the locked utility function if needed
-        if needs_update:
-            if not load_update_and_save_entry(command_sequence, entry_update_data):
-                error_msg = f"Failed to update index entry for {tool_id} with data: {entry_update_data}"
-                log.error(error_msg)
-                failures.append(f"{tool_id}: Index Update Failed - {error_msg}")
-            else:
-                index_updates_performed += 1
-                # IMPORTANT: Reload index data *after* a successful update
-                # to ensure subsequent checks use the updated state, especially for nested structures.
-                raw_index_data = tool_index_handler.get_raw_index_data()
-
-    # --- Final Assertion ---
-    # Save index explicitly at the end (the handler fixture might also do this) - REMOVED as handler should manage saves
-    # tool_index_handler.save_if_dirty()
+    log.info(f"Baseline Check Summary: Success = {success_count}, Failures = {len(failures)}")
 
     if failures:
-        fail_msg = f"Baseline checks failed for {len(failures)} sequence(s):\n" + "\\n".join(f"- {f}" for f in failures)
-        pytest.fail(fail_msg, pytrace=False)
-    else:
-        log.info(
-            f"All {len(MANAGED_COMMAND_SEQUENCES)} baseline checks passed. {index_updates_performed} index update(s) performed."
+        fail_summary = "\n".join(failures)
+        pytest.fail(
+            f"Baseline generation/verification failed for {len(failures)} sequence(s):\n{fail_summary}",
+            pytrace=False
         )
+
+    log.info("All baseline checks passed.")
+
+# Note: The tests for CRC consistency and schema validation should be handled
+# in their respective files (test_txt_json_consistency.py, test_json_schema_validation.py)
+# They will need modification to get the list of sequences generated here,
+# potentially by using a session-scoped fixture or recalculating.

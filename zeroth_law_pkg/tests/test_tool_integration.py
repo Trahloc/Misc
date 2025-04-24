@@ -47,9 +47,9 @@ def test_check_for_new_tools():
             f"Newly discovered potential tools found: {sorted(list(unknown_tools))}\n"
             "These executables exist in the environment bin directory but are neither\n"
             f"explicitly excluded nor listed as managed in {MANAGED_TOOLS_YAML.relative_to(WORKSPACE_ROOT)}.\n"
-            "\nAction Required: For each listed executable, research it and update managed_tools.yaml:\n"
-            "  - If it's a tool ZLT should manage, add its name to the 'managed_tools' list.\n"
-            "  - If it's cruft/helper/unwanted, add its name to the 'excluded_executables' list.\n"
+            "\nAction Required: Assess each listed executable based on its **long-term utility to the ZLT project** and update managed_tools.yaml:\n"
+            "  - If it provides essential, long-term value and ZLT should manage its configuration/baselines, add its name to the 'managed_tools' list.\n"
+            "  - If it's a temporary helper, part of another tool's internals, unwanted, or not useful for ZLT's core goals, add its name to the 'excluded_executables' list.\n"
             "--------------------------------------------------"
         )
         pytest.fail(error_msg, pytrace=False)

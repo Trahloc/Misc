@@ -107,7 +107,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Discover and manage ZLT tool configurations.")
-    parser.add_argument("--check", action="store_true", help="Check for newly discovered tools that are not managed or excluded.")
+    parser.add_argument(
+        "--check", action="store_true", help="Check for newly discovered tools that are not managed or excluded."
+    )
     # Add --update-list later if needed, requires careful implementation
 
     args = parser.parse_args()
@@ -131,7 +133,9 @@ if __name__ == "__main__":
             print("--------------------------------------------------")
             sys.exit(1)  # Exit with error code to signal failure for CI/automation
         else:
-            print("No new potential tools found. managed_tools.yaml is up-to-date with discovered non-excluded executables.")
+            print(
+                "No new potential tools found. managed_tools.yaml is up-to-date with discovered non-excluded executables."
+            )
             sys.exit(0)
     else:
         print("Please specify an action, e.g., --check")

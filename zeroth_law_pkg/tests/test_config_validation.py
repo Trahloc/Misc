@@ -187,7 +187,9 @@ def test_validate_config_ddt(input_config, expected_values):
             try:
                 actual_value = getattr(validated, key)
                 expected_default = DEFAULT_CONFIG[key]
-                assert actual_value == expected_default, f"Expected default {key}={expected_default}, got {actual_value}"
+                assert (
+                    actual_value == expected_default
+                ), f"Expected default {key}={expected_default}, got {actual_value}"
             except AttributeError:
                 # Skip fields that aren't in the model but might be in DEFAULT_CONFIG
                 pass

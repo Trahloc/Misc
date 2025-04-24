@@ -1,8 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: false
----
-
-# Your rule content
-When finishing a targeted pytest make sure to run a general pytest to make sure no lingering pytests remain.
