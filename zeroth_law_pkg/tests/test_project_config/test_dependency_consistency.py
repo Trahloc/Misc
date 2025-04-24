@@ -55,20 +55,30 @@ def get_main_and_dev_dependencies_from_toml(toml_path: Path) -> set[str]:
 
         # --- Parse [project.optional-dependencies].dev --- #
         # Find the optional-dependencies section first
+        # Corrected regex: Look for section header, capture content until next section or EOF
         optional_deps_section_match = re.search(
-            r"^\\[project\\.optional-dependencies\\](.*?)(?:\\n^\\[|$)",
+            # Match section header, allow spaces/newlines
+            r"^\s*\[project\.optional-dependencies\]\s*\n"
+            # Capture everything until next section header or end of string
+            r"(.*?)"
+            r"(?:\n\s*^\[|$)",
             content,
             re.DOTALL | re.MULTILINE | re.IGNORECASE,
         )
         if optional_deps_section_match:
             optional_deps_content = optional_deps_section_match.group(1)
             # Now find the dev list within that section
+            # Corrected regex: Look for dev =, capture items in brackets
             dev_deps_match = re.search(
-                r"^dev\\s*=\\s*\\[(.*?)\\]", optional_deps_content, re.DOTALL | re.MULTILINE | re.IGNORECASE
+                # Match 'dev =', allow spaces/newlines, capture bracket content
+                r"^\s*dev\s*=\s*\[(.*?)\]",
+                optional_deps_content,
+                re.DOTALL | re.MULTILINE | re.IGNORECASE,
             )
             if dev_deps_match:
                 dev_deps_str = dev_deps_match.group(1)
-                pattern = r"^\\s*[\'\\\"]?([a-zA-Z0-9._-]+)(?:\\[.*?\\])?(?:[<>=!~^].*)?[\'\\\"]?,?\\s*$"
+                # Use the same pattern as for main dependencies
+                pattern = r"^\s*['\"]?([a-zA-Z0-9._-]+)(?:\[.*?\])?(?:[<>=!~^].*)?['\"]?,?\s*$"
                 for line in dev_deps_str.splitlines():
                     match = re.match(pattern, line.strip())
                     if match:

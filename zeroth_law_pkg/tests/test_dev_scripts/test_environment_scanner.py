@@ -33,13 +33,15 @@ def test_scan_successful_unix(mock_subprocess_run, tmp_path):
 
     found_executables = get_executables_from_env()
 
-    # Assert subprocess was called correctly
+    # Assert subprocess was called correctly, including defaults from helper
     mock_subprocess_run.assert_called_once_with(
         ["uv", "run", "--quiet", "--", "which", "python"],
         capture_output=True,
         text=True,
-        check=False,  # Verify check=False is used internally
+        check=False,
         timeout=15,
+        shell=False,  # Added default from helper
+        errors="replace",  # Added default from helper
     )
 
     # Check the returned set (base names)
@@ -66,9 +68,15 @@ def test_scan_successful_windows(mock_subprocess_run, tmp_path):
 
     found_executables = get_executables_from_env()
 
-    # Assert subprocess was called correctly
+    # Assert subprocess was called correctly, including defaults from helper
     mock_subprocess_run.assert_called_once_with(
-        ["uv", "run", "--quiet", "--", "which", "python"], capture_output=True, text=True, check=False, timeout=15
+        ["uv", "run", "--quiet", "--", "which", "python"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=15,
+        shell=False,  # Added default from helper
+        errors="replace",  # Added default from helper
     )
 
     # Check the returned set (base names)

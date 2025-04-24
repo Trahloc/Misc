@@ -2,6 +2,10 @@
 
 import logging
 from typing import Optional
+import sys
+
+# Add missing import
+import subprocess
 
 # Import the new helper
 from zeroth_law.utils.subprocess_utils import run_subprocess_no_check
@@ -44,7 +48,7 @@ def is_tool_available(tool_name: str, timeout: Optional[int] = None) -> bool:
         log.error("Command 'uv' not found. Cannot check tool availability.")
         return False
     except subprocess.TimeoutExpired:
-        log.warning(f"Command '{" ".join(command)}' timed out after {timeout}s.")
+        log.warning(f"Checking tool availability for '{tool_name}' timed out after {timeout}s.")
         return False
     except Exception as e:
         log.exception(f"Unexpected error checking availability for '{tool_name}': {e}")
