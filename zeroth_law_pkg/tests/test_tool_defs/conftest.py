@@ -12,7 +12,6 @@ import warnings
 import concurrent.futures
 from pathlib import Path
 import re  # Import regex module
-from .test_ensure_txt_baselines_exist import get_managed_sequences, get_index_entry  # Import the function
 from typing import List, Tuple, Set, Dict, Any
 
 # Remove manual path manipulation
@@ -25,13 +24,11 @@ from typing import List, Tuple, Set, Dict, Any
 
 # --- Import Refactored Components (Assume standard imports work) ---
 try:
-    from zeroth_law.dev_scripts.config_reader import load_tool_lists_from_toml
-    from zeroth_law.dev_scripts.environment_scanner import get_executables_from_env
-    from zeroth_law.dev_scripts.tools_dir_scanner import get_tool_dirs
-    from zeroth_law.dev_scripts.tool_reconciler import reconcile_tools, ToolStatus
+    from zeroth_law.dev_scripts.tool_reconciler import ToolStatus
     from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
     from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_tool
     from zeroth_law.lib.tool_index_handler import ToolIndexHandler
+    from zeroth_law.dev_scripts.reconciliation_logic import perform_tool_reconciliation, ReconciliationError
 except ImportError as e:
     # Keep the ImportError handling as a safeguard
     print(
@@ -39,22 +36,6 @@ except ImportError as e:
     )
 
     # Define dummy functions or raise early failure if imports fail
-    def load_tool_lists_from_toml(*args, **kwargs):
-        pytest.fail("Import failed")
-        return set(), set()
-
-    def get_executables_from_env(*args, **kwargs):
-        pytest.fail("Import failed")
-        return set()
-
-    def get_tool_dirs(*args, **kwargs):
-        pytest.fail("Import failed")
-        return set()
-
-    def reconcile_tools(*args, **kwargs):
-        pytest.fail("Import failed")
-        return {}
-
     def get_subcommands_from_json(*args, **kwargs):
         pytest.fail("Import failed")
         return {}
@@ -75,6 +56,22 @@ except ImportError as e:
 
         def get_entry(*args, **kwargs):
             return None
+
+    def perform_tool_reconciliation(*args, **kwargs):
+        pytest.fail("Import failed")
+        return {}, set()
+
+    class ReconciliationError(Exception):
+        pass
+
+    # ToolStatus might not be directly importable if reconcile_tools is removed, handle appropriately
+    # If ToolStatus enum is needed, ensure it can still be imported or defined.
+    # Assuming it might still come from tool_reconciler or another accessible place.
+    class ToolStatus:
+        MANAGED_OK = object()
+        MANAGED_MISSING_ENV = object()
+        WHITELISTED_NOT_IN_TOOLS_DIR = object()
+        # Add other statuses if needed by remaining logic
 
 
 # --- Logging Setup ---
@@ -97,7 +94,7 @@ def WORKSPACE_ROOT() -> Path:
     ws_root = Path(__file__).resolve().parents[2]
     # Add a check?
     if not (ws_root / "pyproject.toml").exists():
-        pytest.warning(f"pyproject.toml not found at deduced WORKSPACE_ROOT: {ws_root}")
+        pytest.fail(f"CRITICAL: pyproject.toml not found at deduced WORKSPACE_ROOT: {ws_root}")
     return ws_root
 
 
@@ -115,6 +112,18 @@ def TOOL_INDEX_PATH(TOOLS_DIR: Path) -> Path:
     index_path = TOOLS_DIR / "tool_index.json"
     log.info(f"TOOL_INDEX_PATH determined as: {index_path}")
     return index_path
+
+
+@pytest.fixture(scope="session")
+def TOOL_DEFS_DIR_FIXTURE(WORKSPACE_ROOT: Path) -> Path:
+    """Fixture providing the path to the tool definitions directory."""
+    # Define tool_defs dir based on WORKSPACE_ROOT, consistent with integration test
+    tool_defs_path = WORKSPACE_ROOT / "tool_defs"
+    log.info(f"TOOL_DEFS_DIR determined as: {tool_defs_path}")
+    if not tool_defs_path.is_dir():
+        # Changed to pytest.fail as this is critical for reconciliation
+        pytest.fail(f"CRITICAL: Tool definitions directory not found: {tool_defs_path}")
+    return tool_defs_path
 
 
 # --- Helper Functions (mostly from timing script, adapted) ---
@@ -433,62 +442,71 @@ def auto_fix_json_files(WORKSPACE_ROOT):
 
 # --- Fixture to Generate Managed Sequences --- #
 @pytest.fixture(scope="session")
-def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> List[Tuple[str, ...]]:
-    """Session-scoped fixture that discovers, reconciles, and generates managed sequences."""
-    log.info("--- Running managed_sequences fixture --- ")
-    config_path = WORKSPACE_ROOT / "pyproject.toml"
-    all_generated_sequences: List[Tuple[str, ...]] = []  # Ensure initialization
+def managed_sequences(WORKSPACE_ROOT: Path, TOOL_DEFS_DIR_FIXTURE: Path) -> List[Tuple[str, ...]]:
+    """Generates a list of all command sequences for managed tools."""
+    log.info("Generating managed sequences...")
+    all_generated_sequences = []
 
+    # Use the correct tool definitions directory path from the fixture
+    tool_defs_dir_path = TOOL_DEFS_DIR_FIXTURE
+
+    # --- Refactored Reconciliation Section ---
     try:
-        whitelist, blacklist = load_tool_lists_from_toml(config_path)
-        env_tools = get_executables_from_env()
-        dir_tools = get_tool_dirs(TOOLS_DIR)
-        reconciliation_results = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+        # Call the helper function
+        reconciliation_results, managed_tools_for_processing = perform_tool_reconciliation(
+            project_root_dir=WORKSPACE_ROOT, tool_defs_dir=tool_defs_dir_path
+        )
+        log.info(f"Managed tools identified for sequence generation: {managed_tools_for_processing}")
 
-        errors = []
-        managed_tools_for_sequencing: Set[str] = set()
-        for tool, status in reconciliation_results.items():
-            # Collect reconciliation errors to report later
-            if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
-                errors.append(
-                    f"Error: Tool '{tool}' is blacklisted but has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}."
-                )
-            elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
-                errors.append(
-                    f"Error: Tool '{tool}' has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)} but is not in whitelist or blacklist."
-                )
-            elif status == ToolStatus.ERROR_MISSING_WHITELISTED:
-                errors.append(
-                    f"Error: Tool '{tool}' is whitelisted but not found in environment or {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}."
-                )
-            # Identify tools needing sequences
-            elif status in [
-                ToolStatus.MANAGED_OK,
-                ToolStatus.MANAGED_MISSING_ENV,
-                ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
-            ]:
-                managed_tools_for_sequencing.add(tool)
-
-        # If critical reconciliation errors exist, fail early
-        if errors:
-            pytest.fail(
-                "Reconciliation Errors Found (in managed_sequences fixture):\n" + "\n".join(errors), pytrace=False
-            )
-
-        log.debug(f"Managed tools identified for sequence generation: {managed_tools_for_sequencing}")
-
-        # Generate sequences
-        for tool_name in sorted(list(managed_tools_for_sequencing)):
-            # Assume JSON path convention for subcommand discovery
-            tool_json_path = TOOLS_DIR / tool_name / f"{tool_name}.json"
-            subcommands = get_subcommands_from_json(tool_json_path)
-            sequences = generate_sequences_for_tool(tool_name, subcommands, blacklist)
-            all_generated_sequences.extend(sequences)
-
-        log.info(f"Managed sequences fixture generated {len(all_generated_sequences)} sequences.")
-        return all_generated_sequences
-
+    except ReconciliationError as e:
+        pytest.fail(f"Tool reconciliation failed during fixture setup: {e}")
+    except FileNotFoundError as e:
+        pytest.fail(f"Required directory/file not found during reconciliation in fixture setup: {e}")
     except Exception as e:
-        # Catch any other unexpected error during sequence generation
-        pytest.fail(f"Unexpected error during managed_sequences generation: {e}")
-        return []  # Should not be reached
+        pytest.fail(f"Unexpected error during reconciliation in fixture setup: {e}", pytrace=True)
+    # --- End Refactored Section ---
+
+    # --- Sequence Generation Logic (Uses refactored results) ---
+    tools_with_issues = []
+    for tool_name in managed_tools_for_processing:
+        # Need the reconciliation_results to check status if filtering is needed here
+        tool_status = reconciliation_results.get(tool_name)
+
+        # Skip tools that are only whitelisted but have no definition directory,
+        # as we cannot generate sequences for them.
+        if tool_status == ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR:
+            log.warning(f"Skipping sequence generation for whitelisted tool '{tool_name}' - no definition found.")
+            continue
+
+        tool_def_dir = tool_defs_dir_path / tool_name
+        if not tool_def_dir.is_dir():
+            # This check might be redundant given the WHITELISTED_NOT_IN_TOOLS_DIR status check above,
+            # but serves as a safeguard.
+            log.error(f"Tool '{tool_name}' is managed but definition directory missing: {tool_def_dir}")
+            tools_with_issues.append(tool_name)
+            continue
+
+        # Get subcommands from the JSON definitions for this tool
+        subcommands_dict = get_subcommands_from_json(tool_def_dir)
+        if subcommands_dict is None:  # Handle potential errors from subcommand discovery
+            log.warning(
+                f"Could not retrieve subcommands for tool '{tool_name}' from {tool_def_dir}. Skipping sequence generation."
+            )
+            continue
+
+        # Generate all sequences (base command + subcommands)
+        sequences = generate_sequences_for_tool(tool_name, subcommands_dict)
+        all_generated_sequences.extend(sequences)
+        log.debug(f"Generated {len(sequences)} sequences for tool '{tool_name}'.")
+
+    if tools_with_issues:
+        # Fail the test session if definition directories are missing for expected tools
+        pytest.fail(f"Missing definition directories for managed tools: {tools_with_issues}")
+
+    log.info(f"Total managed sequences generated: {len(all_generated_sequences)}")
+    if not all_generated_sequences:
+        log.warning("No managed sequences were generated. Check tool definitions and reconciliation.")
+        # Decide if this should be a failure? For now, just warn.
+        # pytest.fail("Fixture 'managed_sequences' generated an empty list.")
+
+    return all_generated_sequences
