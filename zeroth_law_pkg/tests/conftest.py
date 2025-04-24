@@ -546,7 +546,7 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
             capture_output=True,
             text=True,
             check=False,  # Check return code manually
-            timeout=15,   # Generous timeout for uv run
+            timeout=15,  # Generous timeout for uv run
         )
         if result.returncode != 0:
             error_message = (
@@ -559,22 +559,18 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
         # Optionally, check if the python path seems reasonable (e.g., contains .venv)
         python_path = result.stdout.strip()
         if not python_path:
-             pytest.fail(
-                 f"Command '{" ".join(command)}' succeeded but returned an empty path.", pytrace=False
-             )
+            pytest.fail(f"Command '{" ".join(command)}' succeeded but returned an empty path.", pytrace=False)
         # Add more sophisticated path checks if needed
         logging.info(f"UV Environment Check PASSED. Using Python at: {python_path}")
 
     except FileNotFoundError:
         pytest.fail(
-            "Failed to verify uv environment: 'uv' command not found. Is uv installed and in PATH?",
-            pytrace=False
+            "Failed to verify uv environment: 'uv' command not found. Is uv installed and in PATH?", pytrace=False
         )
     except subprocess.TimeoutExpired:
-        pytest.fail(
-            f"Failed to verify uv environment: Command '{" ".join(command)}' timed out.",
-            pytrace=False
-        )
+        pytest.fail(f"Failed to verify uv environment: Command '{" ".join(command)}' timed out.", pytrace=False)
     except Exception as e:
         pytest.fail(f"Unexpected error during uv environment check: {e}", pytrace=False)
+
+
 # --- END ADDED UV Environment Check Fixture --- #

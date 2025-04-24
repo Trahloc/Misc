@@ -21,6 +21,7 @@ def test_scan_with_tool_dirs(tmp_path):
 
     assert found_tools == expected_tools
 
+
 def test_scan_empty_directory(tmp_path):
     """Test scanning an empty tools directory."""
     tools_base_dir = tmp_path / "tools"
@@ -30,18 +31,20 @@ def test_scan_empty_directory(tmp_path):
 
     assert found_tools == set()
 
+
 def test_scan_missing_directory():
     """Test scanning when the base tools directory does not exist."""
     missing_path = Path("./non_existent_tools_dir")
-    if missing_path.exists(): # Ensure it's gone
+    if missing_path.exists():  # Ensure it's gone
         if missing_path.is_dir():
-             missing_path.rmdir()
+            missing_path.rmdir()
         else:
-             missing_path.unlink()
+            missing_path.unlink()
 
     # Should return an empty set if the base directory is missing
     found_tools = get_tool_dirs(missing_path)
     assert found_tools == set()
+
 
 def test_scan_directory_with_only_files(tmp_path):
     """Test scanning a directory containing only files, no tool subdirs."""

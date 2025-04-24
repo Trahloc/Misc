@@ -32,6 +32,7 @@ whitelist = "not_a_list"
 blacklist = 123
 """
 
+
 def test_load_valid_toml(tmp_path):
     """Test loading from a valid pyproject.toml file."""
     toml_path = tmp_path / "pyproject.toml"
@@ -44,6 +45,7 @@ def test_load_valid_toml(tmp_path):
     assert whitelist == {"tool_a", "tool_b"}
     assert blacklist == {"tool_c", "tool_d"}
 
+
 def test_load_missing_keys(tmp_path):
     """Test loading when whitelist/blacklist keys are missing."""
     toml_path = tmp_path / "pyproject.toml"
@@ -53,6 +55,7 @@ def test_load_missing_keys(tmp_path):
 
     assert whitelist == set()
     assert blacklist == set()
+
 
 def test_load_missing_section(tmp_path):
     """Test loading when the [tool.zeroth-law.tools] section is missing."""
@@ -64,6 +67,7 @@ def test_load_missing_section(tmp_path):
     assert whitelist == set()
     assert blacklist == set()
 
+
 def test_load_invalid_types(tmp_path):
     """Test loading when whitelist/blacklist have incorrect types."""
     toml_path = tmp_path / "pyproject.toml"
@@ -71,17 +75,19 @@ def test_load_invalid_types(tmp_path):
 
     # Expecting a ValueError due to wrong types
     with pytest.raises(ValueError):
-         load_tool_lists_from_toml(toml_path)
+        load_tool_lists_from_toml(toml_path)
+
 
 def test_load_file_not_found():
     """Test loading when the pyproject.toml file does not exist."""
-    non_existent_path = Path("./non_existent_pyproject.toml") # Use relative path likely in tmp
+    non_existent_path = Path("./non_existent_pyproject.toml")  # Use relative path likely in tmp
     if non_existent_path.exists():
-        non_existent_path.unlink() # Ensure it doesn't exist
+        non_existent_path.unlink()  # Ensure it doesn't exist
 
     # Expecting FileNotFoundError
     with pytest.raises(FileNotFoundError):
         load_tool_lists_from_toml(non_existent_path)
+
 
 def test_load_invalid_toml_content(tmp_path):
     """Test loading from a file with invalid TOML syntax."""

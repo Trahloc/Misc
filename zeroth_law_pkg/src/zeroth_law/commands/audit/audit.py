@@ -13,7 +13,7 @@ from zeroth_law.analysis_runner import (
     analyze_files,
     format_violations_as_json,
     log_violations_as_text,
-    run_all_checks, # Placeholder
+    run_all_checks,  # Placeholder
 )
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 from zeroth_law.file_processor import find_files_to_audit
@@ -25,9 +25,7 @@ log = logging.getLogger(__name__)
 @click.argument(
     "paths",
     nargs=-1,
-    type=click.Path(
-        exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path
-    ),
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path),
     required=False,
 )
 @click.option(
@@ -119,12 +117,18 @@ def audit(
             log.warning("Project root not found, skipping pre-commit config check.")
 
         # Report Combined Results
-        total_entities_with_violations = combined_stats["files_with_violations"] + combined_stats["configs_with_violations"]
+        total_entities_with_violations = (
+            combined_stats["files_with_violations"] + combined_stats["configs_with_violations"]
+        )
 
         if output_json:
-            violations_for_json = {str(k): v for k, v in all_violations.items() if k != precommit_config_path} if precommit_config_path else {str(k): v for k, v in all_violations.items()}
+            violations_for_json = (
+                {str(k): v for k, v in all_violations.items() if k != precommit_config_path}
+                if precommit_config_path
+                else {str(k): v for k, v in all_violations.items()}
+            )
             json_output = format_violations_as_json(
-                violations_for_json, # Pass dict with string paths
+                violations_for_json,  # Pass dict with string paths
                 combined_stats["files_analyzed"],
                 combined_stats["files_with_violations"],
                 combined_stats["compliant_files"],

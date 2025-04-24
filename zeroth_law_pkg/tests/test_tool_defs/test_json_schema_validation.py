@@ -8,7 +8,7 @@ import pytest
 import logging
 from pathlib import Path
 import sys
-import jsonschema # Import the library
+import jsonschema  # Import the library
 
 # Reuse constants and helpers from TXT test
 from tests.test_tool_defs.test_ensure_txt_baselines_exist import (
@@ -31,7 +31,7 @@ from zeroth_law.lib.utils import command_sequence_to_id
 
 # Import fixtures from this directory's conftest
 # (WORKSPACE_ROOT, TOOLS_DIR, ZLT_SCHEMA_PATH, managed_sequences)
-from .conftest import managed_sequences # Import the fixture
+from .conftest import managed_sequences  # Import the fixture
 
 # Assuming refactored schema validator component exists
 from zeroth_law.dev_scripts.schema_validator import validate_tool_json_schema, SchemaValidationStatus
@@ -65,11 +65,12 @@ def tool_definition_schema(WORKSPACE_ROOT):
 
 # --- Test Function (Uses managed_sequences fixture) ---
 
+
 def test_all_json_schema_validation(
-    managed_sequences: list, # Use the fixture
-    tool_definition_schema,       # Use the schema fixture
-    WORKSPACE_ROOT: Path,    # Existing fixture
-    TOOLS_DIR: Path          # Existing fixture
+    managed_sequences: list,  # Use the fixture
+    tool_definition_schema,  # Use the schema fixture
+    WORKSPACE_ROOT: Path,  # Existing fixture
+    TOOLS_DIR: Path,  # Existing fixture
 ):
     """Validates all managed tool JSON definitions against the schema."""
 
@@ -111,6 +112,6 @@ def test_all_json_schema_validation(
     if failures:
         pytest.fail("\n\n".join(failures), pytrace=False)
     elif validation_count == 0:
-         log.warning("No existing JSON files found to perform schema validation.")
+        log.warning("No existing JSON files found to perform schema validation.")
     else:
-         log.info(f"All {validation_count} checked JSON files passed schema validation.")
+        log.info(f"All {validation_count} checked JSON files passed schema validation.")

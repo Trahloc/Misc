@@ -5,14 +5,14 @@ from typing import List, Tuple, Dict, Any, Set
 
 log = logging.getLogger(__name__)
 
+
 def _generate_sequence_id(parts: Tuple[str, ...]) -> str:
     """Helper to generate the underscore-separated ID for blacklist checking."""
     return "_".join(parts)
 
+
 def generate_sequences_for_tool(
-    tool_name: str,
-    subcommands_detail: Dict[str, Any],
-    blacklist: Set[str]
+    tool_name: str, subcommands_detail: Dict[str, Any], blacklist: Set[str]
 ) -> List[Tuple[str, ...]]:
     """Generates a list of command sequence tuples for a given tool and its subcommands.
 
@@ -42,7 +42,7 @@ def generate_sequences_for_tool(
     def process_level(current_parts: Tuple[str, ...], details: Dict[str, Any]):
         for sub_name, sub_data in details.items():
             if not sub_name or not isinstance(sub_data, dict):
-                continue # Skip invalid entries
+                continue  # Skip invalid entries
 
             new_parts = current_parts + (sub_name,)
             sequence_id = _generate_sequence_id(new_parts)

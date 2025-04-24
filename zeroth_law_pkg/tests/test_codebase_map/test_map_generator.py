@@ -9,12 +9,12 @@ from pathlib import Path
 import time
 import subprocess
 import sys
-import os # Need os for environment variables
+import os  # Need os for environment variables
 
 # Assuming the script is runnable and in the correct location relative to tests
 # Adjust the path if necessary based on how tests are run
 GENERATOR_SCRIPT = Path(__file__).parent.parent.parent / "tests/codebase_map/map_generator.py"
-WORKSPACE_ROOT = Path(__file__).parent.parent.parent # Define workspace root for PYTHONPATH
+WORKSPACE_ROOT = Path(__file__).parent.parent.parent  # Define workspace root for PYTHONPATH
 
 
 # Helper function to run the generator script
@@ -34,7 +34,7 @@ def run_generator(db_path: Path, src_path: Path, *args, expect_fail: bool = Fals
     env = os.environ.copy()
     # Add WORKSPACE_ROOT to PYTHONPATH to allow imports relative to project root
     # This ensures the subprocess can find 'tests.codebase_map.cli_utils'
-    env['PYTHONPATH'] = str(WORKSPACE_ROOT) + os.pathsep + env.get('PYTHONPATH', '')
+    env["PYTHONPATH"] = str(WORKSPACE_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
 
     # Use Popen to better capture stdout/stderr separately if needed
     process = subprocess.Popen(
@@ -42,7 +42,7 @@ def run_generator(db_path: Path, src_path: Path, *args, expect_fail: bool = Fals
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        env=env # Pass the modified environment to the subprocess
+        env=env,  # Pass the modified environment to the subprocess
     )
     stdout, stderr = process.communicate()
 
@@ -74,6 +74,7 @@ def query_db(db_path: Path, sql: str, params=()):
 
 class LookupError(Exception):
     """Custom exception for database lookup failures."""
+
     pass
 
 

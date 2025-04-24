@@ -7,6 +7,7 @@ from typing import Dict, Any
 
 log = logging.getLogger(__name__)
 
+
 def get_subcommands_from_json(json_path: Path) -> Dict[str, Any]:
     """Safely loads a tool's JSON definition and extracts the subcommands_detail.
 

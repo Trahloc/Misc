@@ -15,7 +15,7 @@ from zeroth_law.lib.utils import command_sequence_to_id
 
 # Import fixtures from this directory's conftest
 # (WORKSPACE_ROOT, TOOLS_DIR, TOOL_INDEX_PATH, tool_index_handler, managed_sequences)
-from .conftest import managed_sequences # Import the fixture
+from .conftest import managed_sequences  # Import the fixture
 
 # Assuming refactored consistency checker component exists
 from zeroth_law.dev_scripts.consistency_checker import check_crc_consistency, ConsistencyStatus
@@ -34,30 +34,33 @@ log = logging.getLogger(__name__)
     # *before* parametrization happens, which is tricky.
     # Let's restructure to iterate within the test function instead.
     # managed_sequences,
-    argvalues=[pytest.param(seq, id=command_sequence_to_id(seq)) for seq in managed_sequences([])], # Placeholder to get ids
+    argvalues=[
+        pytest.param(seq, id=command_sequence_to_id(seq)) for seq in managed_sequences([])
+    ],  # Placeholder to get ids
     # ids=[command_sequence_to_id(cp) for cp in managed_sequences],
 )
 def test_txt_json_consistency(
     command_parts: tuple[str, ...],
-    managed_sequences: list, # Add fixture as argument
-    tool_index_handler, # Existing fixture
-    WORKSPACE_ROOT: Path, # Existing fixture
-    TOOLS_DIR: Path, # Existing fixture
-    TOOL_INDEX_PATH: Path # Existing fixture
+    managed_sequences: list,  # Add fixture as argument
+    tool_index_handler,  # Existing fixture
+    WORKSPACE_ROOT: Path,  # Existing fixture
+    TOOLS_DIR: Path,  # Existing fixture
+    TOOL_INDEX_PATH: Path,  # Existing fixture
 ):
     """Compares JSON CRC with index CRC for each managed sequence."""
 
     # Check if the current command_parts is actually in the generated list
     # This seems overly complex due to parametrization limitations.
     # Let's simplify: remove parametrize and iterate within the function.
-    pass # Remove parametrization structure
+    pass  # Remove parametrization structure
+
 
 def test_all_txt_json_consistency(
-    managed_sequences: list, # Use the fixture
-    tool_index_handler, # Existing fixture
-    WORKSPACE_ROOT: Path, # Existing fixture
-    TOOLS_DIR: Path, # Existing fixture
-    TOOL_INDEX_PATH: Path # Existing fixture
+    managed_sequences: list,  # Use the fixture
+    tool_index_handler,  # Existing fixture
+    WORKSPACE_ROOT: Path,  # Existing fixture
+    TOOLS_DIR: Path,  # Existing fixture
+    TOOL_INDEX_PATH: Path,  # Existing fixture
 ):
     """Compares JSON CRC with index CRC for all managed sequences."""
 
@@ -75,7 +78,7 @@ def test_all_txt_json_consistency(
         tool_dir = TOOLS_DIR / tool_name
         json_file = tool_dir / f"{tool_id}.json"
         relative_json_path = json_file.relative_to(WORKSPACE_ROOT)
-        relative_txt_path = TOOLS_DIR / tool_name / f"{tool_id}.txt".relative_to(WORKSPACE_ROOT) # For messages
+        relative_txt_path = TOOLS_DIR / tool_name / f"{tool_id}.txt".relative_to(WORKSPACE_ROOT)  # For messages
 
         # Use the refactored consistency checker
         status, message = check_crc_consistency(command_parts, tool_index_handler, TOOLS_DIR, WORKSPACE_ROOT)
@@ -85,12 +88,14 @@ def test_all_txt_json_consistency(
         elif status == ConsistencyStatus.JSON_ERROR:
             failures.append(f"{tool_id}: Failed to load/decode JSON file {relative_json_path}: {message}")
         elif status == ConsistencyStatus.INDEX_MISSING:
-            failures.append(f"{tool_id}: Managed sequence missing a valid CRC entry in the tool index {TOOL_INDEX_PATH.relative_to(WORKSPACE_ROOT)}: {message}")
+            failures.append(
+                f"{tool_id}: Managed sequence missing a valid CRC entry in the tool index {TOOL_INDEX_PATH.relative_to(WORKSPACE_ROOT)}: {message}"
+            )
         elif status == ConsistencyStatus.JSON_CRC_MISSING:
-             failures.append(f"{tool_id}: Missing 'metadata.ground_truth_crc' in {relative_json_path}.")
+            failures.append(f"{tool_id}: Missing 'metadata.ground_truth_crc' in {relative_json_path}.")
         elif status == ConsistencyStatus.SKELETON_NEEDS_POPULATING:
             # Format message similar to the original test failure for AI instructions
-            index_crc, index_source = message # Unpack details from message
+            index_crc, index_source = message  # Unpack details from message
             fail_message = (
                 f"{tool_id}: JSON CRC is skeleton value (0x00000000).\n"
                 f"  JSON file ({relative_json_path}): metadata.ground_truth_crc = 0x00000000\n"
@@ -108,7 +113,7 @@ def test_all_txt_json_consistency(
             )
             failures.append(fail_message)
         elif status == ConsistencyStatus.MISMATCH:
-            json_crc, index_crc, index_source = message # Unpack details
+            json_crc, index_crc, index_source = message  # Unpack details
             fail_message = (
                 f"{tool_id}: JSON CRC mismatch (case-insensitive comparison).\n"
                 f"  JSON file ({relative_json_path}): metadata.ground_truth_crc = {json_crc}\n"

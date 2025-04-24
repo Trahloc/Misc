@@ -34,19 +34,47 @@ try:
     from zeroth_law.lib.tool_index_handler import ToolIndexHandler
 except ImportError as e:
     # Keep the ImportError handling as a safeguard
-    print(f"ERROR in test_tool_defs/conftest.py: Failed to import dev scripts. Check PYTHONPATH/editable install. Details: {e}")
+    print(
+        f"ERROR in test_tool_defs/conftest.py: Failed to import dev scripts. Check PYTHONPATH/editable install. Details: {e}"
+    )
+
     # Define dummy functions or raise early failure if imports fail
-    def load_tool_lists_from_toml(*args, **kwargs): pytest.fail("Import failed"); return set(), set()
-    def get_executables_from_env(*args, **kwargs): pytest.fail("Import failed"); return set()
-    def get_tool_dirs(*args, **kwargs): pytest.fail("Import failed"); return set()
-    def reconcile_tools(*args, **kwargs): pytest.fail("Import failed"); return {}
-    def get_subcommands_from_json(*args, **kwargs): pytest.fail("Import failed"); return {}
-    def generate_sequences_for_tool(*args, **kwargs): pytest.fail("Import failed"); return []
+    def load_tool_lists_from_toml(*args, **kwargs):
+        pytest.fail("Import failed")
+        return set(), set()
+
+    def get_executables_from_env(*args, **kwargs):
+        pytest.fail("Import failed")
+        return set()
+
+    def get_tool_dirs(*args, **kwargs):
+        pytest.fail("Import failed")
+        return set()
+
+    def reconcile_tools(*args, **kwargs):
+        pytest.fail("Import failed")
+        return {}
+
+    def get_subcommands_from_json(*args, **kwargs):
+        pytest.fail("Import failed")
+        return {}
+
+    def generate_sequences_for_tool(*args, **kwargs):
+        pytest.fail("Import failed")
+        return []
+
     class ToolIndexHandler:
-        def __init__(*args, **kwargs): pytest.fail("Import failed")
-        def get_raw_index_data(*args, **kwargs): return {}
-        def reload(*args, **kwargs): pass
-        def get_entry(*args, **kwargs): return None
+        def __init__(*args, **kwargs):
+            pytest.fail("Import failed")
+
+        def get_raw_index_data(*args, **kwargs):
+            return {}
+
+        def reload(*args, **kwargs):
+            pass
+
+        def get_entry(*args, **kwargs):
+            return None
 
 
 # --- Logging Setup ---
@@ -69,7 +97,7 @@ def WORKSPACE_ROOT() -> Path:
     ws_root = Path(__file__).resolve().parents[2]
     # Add a check?
     if not (ws_root / "pyproject.toml").exists():
-         pytest.warning(f"pyproject.toml not found at deduced WORKSPACE_ROOT: {ws_root}")
+        pytest.warning(f"pyproject.toml not found at deduced WORKSPACE_ROOT: {ws_root}")
     return ws_root
 
 
@@ -402,13 +430,14 @@ def auto_fix_json_files(WORKSPACE_ROOT):
 
 # --- END ADDED Fixture --- #
 
+
 # --- Fixture to Generate Managed Sequences --- #
 @pytest.fixture(scope="session")
 def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> List[Tuple[str, ...]]:
     """Session-scoped fixture that discovers, reconciles, and generates managed sequences."""
     log.info("--- Running managed_sequences fixture --- ")
     config_path = WORKSPACE_ROOT / "pyproject.toml"
-    all_generated_sequences: List[Tuple[str, ...]] = [] # Ensure initialization
+    all_generated_sequences: List[Tuple[str, ...]] = []  # Ensure initialization
 
     try:
         whitelist, blacklist = load_tool_lists_from_toml(config_path)
@@ -419,20 +448,32 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> List[Tuple[str, 
         errors = []
         managed_tools_for_sequencing: Set[str] = set()
         for tool, status in reconciliation_results.items():
-             # Collect reconciliation errors to report later
-             if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
-                 errors.append(f"Error: Tool '{tool}' is blacklisted but has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
-             elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
-                 errors.append(f"Error: Tool '{tool}' has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)} but is not in whitelist or blacklist.")
-             elif status == ToolStatus.ERROR_MISSING_WHITELISTED:
-                 errors.append(f"Error: Tool '{tool}' is whitelisted but not found in environment or {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
-             # Identify tools needing sequences
-             elif status in [ToolStatus.MANAGED_OK, ToolStatus.MANAGED_MISSING_ENV, ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR]:
-                 managed_tools_for_sequencing.add(tool)
+            # Collect reconciliation errors to report later
+            if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
+                errors.append(
+                    f"Error: Tool '{tool}' is blacklisted but has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}."
+                )
+            elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
+                errors.append(
+                    f"Error: Tool '{tool}' has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)} but is not in whitelist or blacklist."
+                )
+            elif status == ToolStatus.ERROR_MISSING_WHITELISTED:
+                errors.append(
+                    f"Error: Tool '{tool}' is whitelisted but not found in environment or {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}."
+                )
+            # Identify tools needing sequences
+            elif status in [
+                ToolStatus.MANAGED_OK,
+                ToolStatus.MANAGED_MISSING_ENV,
+                ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
+            ]:
+                managed_tools_for_sequencing.add(tool)
 
         # If critical reconciliation errors exist, fail early
         if errors:
-            pytest.fail("Reconciliation Errors Found (in managed_sequences fixture):\n" + "\n".join(errors), pytrace=False)
+            pytest.fail(
+                "Reconciliation Errors Found (in managed_sequences fixture):\n" + "\n".join(errors), pytrace=False
+            )
 
         log.debug(f"Managed tools identified for sequence generation: {managed_tools_for_sequencing}")
 
@@ -450,4 +491,4 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> List[Tuple[str, 
     except Exception as e:
         # Catch any other unexpected error during sequence generation
         pytest.fail(f"Unexpected error during managed_sequences generation: {e}")
-        return [] # Should not be reached
+        return []  # Should not be reached

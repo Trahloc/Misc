@@ -24,7 +24,7 @@ from zeroth_law.dev_scripts.tool_reconciler import reconcile_tools, ToolStatus
 from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
 from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_tool
 from zeroth_law.dev_scripts.baseline_manager import manage_baseline_for_sequence, BaselineStatus
-from zeroth_law.lib.utils import command_sequence_to_id # Use lib version
+from zeroth_law.lib.utils import command_sequence_to_id  # Use lib version
 
 # Import test fixtures if needed (WORKSPACE_ROOT, TOOLS_DIR, etc.)
 # Assuming these are provided by the root conftest.py
@@ -39,16 +39,15 @@ MAX_WORKERS = os.cpu_count() or 4
 # --- REMOVE Old get_managed_sequences and related logic ---
 # (The old function and the global MANAGED_COMMAND_SEQUENCES calculation are removed)
 
+
 # --- Worker Function for Baseline Management (Modified) ---
 def _manage_single_baseline_worker(
-    command_sequence: Tuple[str, ...],
-    workspace_root: Path,
-    tools_dir: Path
+    command_sequence: Tuple[str, ...], workspace_root: Path, tools_dir: Path
 ) -> Dict[str, Any]:
     """Worker function to process a single command sequence baseline using baseline_manager."""
     tool_id = command_sequence_to_id(command_sequence)
     result_data = {"tool_id": tool_id, "command_sequence": command_sequence}
-    base_tools_dir_for_worker = tools_dir # Pass the specific tools dir
+    base_tools_dir_for_worker = tools_dir  # Pass the specific tools dir
 
     try:
         # Call the refactored baseline manager function
@@ -84,6 +83,7 @@ def _manage_single_baseline_worker(
 
     return result_data
 
+
 # --- Main Orchestrating Test Function (Refactored) ---
 def test_tool_discovery_reconciliation_and_baselines(WORKSPACE_ROOT: Path, TOOLS_DIR: Path):
     """Discovers, reconciles tools, and generates/verifies baselines for managed sequences."""
@@ -115,14 +115,22 @@ def test_tool_discovery_reconciliation_and_baselines(WORKSPACE_ROOT: Path, TOOLS
 
     for tool, status in reconciliation_results.items():
         if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
-            errors.append(f"Error: Tool '{tool}' is blacklisted but has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
+            errors.append(
+                f"Error: Tool '{tool}' is blacklisted but has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}."
+            )
         elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
-            errors.append(f"Error: Tool '{tool}' has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)} but is not in whitelist or blacklist.")
+            errors.append(
+                f"Error: Tool '{tool}' has a directory in {TOOLS_DIR.relative_to(WORKSPACE_ROOT)} but is not in whitelist or blacklist."
+            )
         elif status == ToolStatus.ERROR_MISSING_WHITELISTED:
-            errors.append(f"Error: Tool '{tool}' is whitelisted but not found in environment or {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}.")
+            errors.append(
+                f"Error: Tool '{tool}' is whitelisted but not found in environment or {TOOLS_DIR.relative_to(WORKSPACE_ROOT)}."
+            )
         elif status == ToolStatus.NEW_ENV_TOOL:
             # Log new tools found in env but don't treat as error for this test
-            log.warning(f"Discovered new potential tool in environment: '{tool}'. Add to whitelist or blacklist in {config_path.name}.")
+            log.warning(
+                f"Discovered new potential tool in environment: '{tool}'. Add to whitelist or blacklist in {config_path.name}."
+            )
         elif status in [ToolStatus.MANAGED_OK, ToolStatus.MANAGED_MISSING_ENV, ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR]:
             # These statuses indicate tools that require further processing (sequence generation, baseline checks)
             managed_tools_for_sequencing.add(tool)
@@ -157,13 +165,16 @@ def test_tool_discovery_reconciliation_and_baselines(WORKSPACE_ROOT: Path, TOOLS
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         for command_parts in all_managed_sequences:
             if not command_parts:
-                continue # Should not happen with new generator, but keep safeguard
+                continue  # Should not happen with new generator, but keep safeguard
             futures.append(executor.submit(_manage_single_baseline_worker, command_parts, WORKSPACE_ROOT, TOOLS_DIR))
 
         # Optional: Add tqdm progress bar if installed
         try:
             from tqdm import tqdm
-            futures_iterator = tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Checking Baselines")
+
+            futures_iterator = tqdm(
+                concurrent.futures.as_completed(futures), total=len(futures), desc="Checking Baselines"
+            )
         except ImportError:
             log.info("tqdm not installed, skipping progress bar.")
             futures_iterator = concurrent.futures.as_completed(futures)
@@ -177,11 +188,9 @@ def test_tool_discovery_reconciliation_and_baselines(WORKSPACE_ROOT: Path, TOOLS
                 log.error(f"Error retrieving result from baseline worker future: {exc}")
                 # You might want to create a dummy error result here
                 # to ensure it gets counted as a failure later.
-                baseline_results.append({
-                    "tool_id": "unknown_future_error",
-                    "status": "ERROR_FUTURE_EXCEPTION",
-                    "error_message": str(exc)
-                })
+                baseline_results.append(
+                    {"tool_id": "unknown_future_error", "status": "ERROR_FUTURE_EXCEPTION", "error_message": str(exc)}
+                )
 
     end_time = time.monotonic()
     log.info(f"Concurrent baseline checks completed in {end_time - start_time:.2f} seconds.")
@@ -203,11 +212,11 @@ def test_tool_discovery_reconciliation_and_baselines(WORKSPACE_ROOT: Path, TOOLS
     if failures:
         fail_summary = "\n".join(failures)
         pytest.fail(
-            f"Baseline generation/verification failed for {len(failures)} sequence(s):\n{fail_summary}",
-            pytrace=False
+            f"Baseline generation/verification failed for {len(failures)} sequence(s):\n{fail_summary}", pytrace=False
         )
 
     log.info("All baseline checks passed.")
+
 
 # Note: The tests for CRC consistency and schema validation should be handled
 # in their respective files (test_txt_json_consistency.py, test_json_schema_validation.py)

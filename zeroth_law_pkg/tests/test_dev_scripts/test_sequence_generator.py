@@ -16,27 +16,25 @@ from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_too
 # --- Test Data ---
 SUBCOMMANDS_SIMPLE: Dict[str, Any] = {
     "check": {"description": "Check files"},
-    "format": {"description": "Format files"}
+    "format": {"description": "Format files"},
 }
 
 SUBCOMMANDS_NESTED: Dict[str, Any] = {
     "config": {
         "description": "Configure settings",
-        "subcommands_detail": {
-            "show": {"description": "Show config"},
-            "set": {"description": "Set config value"}
-        }
+        "subcommands_detail": {"show": {"description": "Show config"}, "set": {"description": "Set config value"}},
     },
-    "run": {"description": "Run process"}
+    "run": {"description": "Run process"},
 }
 
 SUBCOMMANDS_EMPTY: Dict[str, Any] = {}
 
-BLACKLIST_SIMPLE: Set[str] = {"tool_a_format"} # Blacklist one subcommand
-BLACKLIST_NESTED: Set[str] = {"tool_b_config_set"} # Blacklist a nested subcommand
-BLACKLIST_BASE: Set[str] = {"tool_c"} # Blacklist the base tool (should prevent all sequence gen)
+BLACKLIST_SIMPLE: Set[str] = {"tool_a_format"}  # Blacklist one subcommand
+BLACKLIST_NESTED: Set[str] = {"tool_b_config_set"}  # Blacklist a nested subcommand
+BLACKLIST_BASE: Set[str] = {"tool_c"}  # Blacklist the base tool (should prevent all sequence gen)
 
 # --- Test Cases ---
+
 
 def test_generate_base_only():
     """Tool with no subcommands should generate only the base sequence."""
@@ -47,6 +45,7 @@ def test_generate_base_only():
     result = generate_sequences_for_tool(tool_name, subcommands, blacklist)
     assert result == expected
 
+
 def test_generate_simple_subcommands():
     """Tool with simple subcommands."""
     tool_name = "tool_a"
@@ -54,7 +53,8 @@ def test_generate_simple_subcommands():
     blacklist = set()
     expected = [("tool_a",), ("tool_a", "check"), ("tool_a", "format")]
     result = generate_sequences_for_tool(tool_name, subcommands, blacklist)
-    assert sorted(result) == sorted(expected) # Order might vary
+    assert sorted(result) == sorted(expected)  # Order might vary
+
 
 def test_generate_nested_subcommands():
     """Tool with nested subcommands."""
@@ -66,34 +66,37 @@ def test_generate_nested_subcommands():
         ("tool_b", "config"),
         ("tool_b", "config", "show"),
         ("tool_b", "config", "set"),
-        ("tool_b", "run")
+        ("tool_b", "run"),
     ]
     result = generate_sequences_for_tool(tool_name, subcommands, blacklist)
     assert sorted(result) == sorted(expected)
+
 
 def test_generate_with_blacklist_simple():
     """Tool with simple subcommands and one blacklisted."""
     tool_name = "tool_a"
     subcommands = SUBCOMMANDS_SIMPLE
-    blacklist = BLACKLIST_SIMPLE # tool_a_format
-    expected = [("tool_a",), ("tool_a", "check")] # format is excluded
+    blacklist = BLACKLIST_SIMPLE  # tool_a_format
+    expected = [("tool_a",), ("tool_a", "check")]  # format is excluded
     result = generate_sequences_for_tool(tool_name, subcommands, blacklist)
     assert sorted(result) == sorted(expected)
+
 
 def test_generate_with_blacklist_nested():
     """Tool with nested subcommands and one blacklisted."""
     tool_name = "tool_b"
     subcommands = SUBCOMMANDS_NESTED
-    blacklist = BLACKLIST_NESTED # tool_b_config_set
+    blacklist = BLACKLIST_NESTED  # tool_b_config_set
     expected = [
         ("tool_b",),
         ("tool_b", "config"),
         ("tool_b", "config", "show"),
         # ("tool_b", "config", "set"), # Excluded
-        ("tool_b", "run")
+        ("tool_b", "run"),
     ]
     result = generate_sequences_for_tool(tool_name, subcommands, blacklist)
     assert sorted(result) == sorted(expected)
+
 
 def test_generate_with_blacklist_base():
     """Test when the base tool itself is blacklisted (should yield nothing)."""
@@ -101,10 +104,11 @@ def test_generate_with_blacklist_base():
     # the function itself should handle it gracefully.
     tool_name = "tool_c"
     subcommands = SUBCOMMANDS_SIMPLE
-    blacklist = BLACKLIST_BASE # tool_c
+    blacklist = BLACKLIST_BASE  # tool_c
     expected: List[Tuple[str, ...]] = []
     result = generate_sequences_for_tool(tool_name, subcommands, blacklist)
     assert result == expected
+
 
 def test_generate_empty_subcommands_dict():
     """Test with an empty subcommands dictionary passed in."""

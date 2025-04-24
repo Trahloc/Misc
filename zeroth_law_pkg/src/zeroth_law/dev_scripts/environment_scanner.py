@@ -6,6 +6,9 @@ import logging
 from pathlib import Path
 from typing import Set
 
+# Import the new helper
+from zeroth_law.utils.subprocess_utils import run_subprocess_no_check
+
 log = logging.getLogger(__name__)
 
 # Default timeout for the subprocess call
@@ -27,18 +30,12 @@ def get_executables_from_env() -> Set[str]:
     try:
         # Run 'uv run which python' to find the interpreter
         log.debug(f"Running command to find python: {' '.join(command)}")
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            check=False, # Check return code manually
-            timeout=DEFAULT_TIMEOUT,
-        )
+        result = run_subprocess_no_check(command, timeout_seconds=DEFAULT_TIMEOUT)
 
         if result.returncode != 0:
             log.error(
                 f"Command '{" ".join(command)}' failed with code {result.returncode}. "
-                f"Cannot determine environment bin path. Stderr: {result.stderr.strip()}"
+                f"Cannot determine environment bin path. Stderr: {result.stderr.strip() if result.stderr else '[None]'}"
             )
             return set()
 
@@ -55,7 +52,7 @@ def get_executables_from_env() -> Set[str]:
         log.error(f"Command '{" ".join(command)}' timed out after {DEFAULT_TIMEOUT}s.")
         return set()
     except Exception as e:
-        log.exception(f"Unexpected error finding python via uv: {e}") # Use log.exception
+        log.exception(f"Unexpected error finding python via uv: {e}")  # Use log.exception
         return set()
 
     # Deduce bin/Scripts path
@@ -63,8 +60,8 @@ def get_executables_from_env() -> Set[str]:
         python_path = Path(python_path_str).resolve()
         # Check if parent exists before accessing its parent
         if not python_path.parent.exists():
-             log.error(f"Parent directory of Python interpreter does not exist: {python_path.parent}")
-             return set()
+            log.error(f"Parent directory of Python interpreter does not exist: {python_path.parent}")
+            return set()
 
         bin_path = python_path.parent
         log.debug(f"Deduced environment executable path: {bin_path}")

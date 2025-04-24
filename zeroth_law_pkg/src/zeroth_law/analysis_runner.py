@@ -21,7 +21,7 @@ def run_all_checks(file_path: Path, **kwargs: Any) -> dict[str, list[Any]]:
     # 2. Call each enabled check function on the file_path.
     # 3. Aggregate violations from all checks.
     # 4. Return the aggregated violations dictionary.
-    return {} # Return empty dict for now (no violations)
+    return {}  # Return empty dict for now (no violations)
 
 
 # --- Core Analysis Logic ---

@@ -27,6 +27,7 @@ from zeroth_law.dynamic_commands import add_dynamic_commands
 
 # Import the Git hook commands
 from zeroth_law.commands.git_hooks import install_git_hook, restore_git_hooks
+
 # Import the new Audit command
 from zeroth_law.commands.audit.audit import audit
 from zeroth_law.git_utils import (

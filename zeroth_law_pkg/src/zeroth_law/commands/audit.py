@@ -12,7 +12,7 @@ from zeroth_law.analysis_runner import (
     analyze_files,
     format_violations_as_json,
     log_violations_as_text,
-    run_all_checks, # Placeholder
+    run_all_checks,  # Placeholder
 )
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 from zeroth_law.file_processor import find_files_to_audit
@@ -20,20 +20,18 @@ from zeroth_law.file_processor import find_files_to_audit
 log = logging.getLogger(__name__)
 
 
-@click.command("audit") # Changed from @cli_group.command
+@click.command("audit")  # Changed from @cli_group.command
 @click.argument(
     "paths",
     nargs=-1,
-    type=click.Path(
-        exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path
-    ),
-    required=False, # Allow running on default paths if none provided
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True, path_type=Path),
+    required=False,  # Allow running on default paths if none provided
 )
 @click.option(
     "-R",
     "--recursive",
     is_flag=True,
-    default=None, # Default handled by config merge
+    default=None,  # Default handled by config merge
     help="Recursively search directories for Python files.",
 )
 @click.option(
@@ -53,8 +51,8 @@ def audit(
     """Perform static analysis checks based on ZLF principles."""
     config = ctx.obj["config"]
     verbosity = ctx.obj["verbosity"]
-    exit_code = 0 # Default to success
-    project_root = ctx.obj.get("project_root") # Get project root from context
+    exit_code = 0  # Default to success
+    project_root = ctx.obj.get("project_root")  # Get project root from context
 
     # Initialize results containers
     all_violations: Dict[Path, Dict[str, List[Any]]] = {}
@@ -73,12 +71,12 @@ def audit(
             paths_to_check = list(paths)
             log.debug(f"Using paths provided via CLI: {paths_to_check}")
         else:
-            default_paths = config.get("audit", {}).get("paths", ["."]) # Example config structure
+            default_paths = config.get("audit", {}).get("paths", ["."])  # Example config structure
             paths_to_check = [Path(p) for p in default_paths]
             log.debug(f"Using default/configured paths: {paths_to_check}")
 
         if recursive is None:
-            recursive = config.get("audit", {}).get("recursive", True) # Default to recursive
+            recursive = config.get("audit", {}).get("recursive", True)  # Default to recursive
             log.debug(f"Using default/configured recursive setting: {recursive}")
         else:
             log.debug(f"Using recursive setting from CLI: {recursive}")
@@ -87,7 +85,7 @@ def audit(
 
         # --- Analyze Source Files ---
         # TODO: Integrate specific analyzer function selection based on config/flags
-        analyzer_func = run_all_checks # Use the placeholder analyzer
+        analyzer_func = run_all_checks  # Use the placeholder analyzer
 
         files_to_audit = find_files_to_audit(paths_to_check, recursive, config)
         log.info(f"Found {len(files_to_audit)} source files to analyze.")
@@ -102,7 +100,7 @@ def audit(
             combined_stats["compliant_files"] = stats.get("compliant_files", 0)
 
         # --- Analyze Pre-commit Config ---
-        precommit_config_path = None # Define outside the if block
+        precommit_config_path = None  # Define outside the if block
         if project_root:
             precommit_config_path = project_root / ".pre-commit-config.yaml"
             if precommit_config_path.is_file():
@@ -121,15 +119,21 @@ def audit(
             log.warning("Project root not found, skipping pre-commit config check.")
 
         # --- Report Combined Results ---
-        total_entities_with_violations = combined_stats["files_with_violations"] + combined_stats["configs_with_violations"]
+        total_entities_with_violations = (
+            combined_stats["files_with_violations"] + combined_stats["configs_with_violations"]
+        )
 
         if output_json:
             # Pass only file violations for now, needs update for config violations
-            violations_for_json = {k: v for k, v in all_violations.items() if k != precommit_config_path} if precommit_config_path else all_violations
+            violations_for_json = (
+                {k: v for k, v in all_violations.items() if k != precommit_config_path}
+                if precommit_config_path
+                else all_violations
+            )
             json_output = format_violations_as_json(
                 violations_for_json,
                 combined_stats["files_analyzed"],
-                combined_stats["files_with_violations"], # Pass only file stats for now
+                combined_stats["files_with_violations"],  # Pass only file stats for now
                 combined_stats["compliant_files"],
             )
             # TODO: Add pre-commit violations to JSON output structure

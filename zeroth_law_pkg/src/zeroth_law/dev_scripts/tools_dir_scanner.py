@@ -6,6 +6,7 @@ from typing import Set
 
 log = logging.getLogger(__name__)
 
+
 def get_tool_dirs(tools_base_path: Path) -> Set[str]:
     """Gets the names of directories present directly under the specified base path.
 
@@ -30,6 +31,6 @@ def get_tool_dirs(tools_base_path: Path) -> Set[str]:
         log.debug(f"Found {len(found_dirs)} tool directories in {tools_base_path}.")
     except Exception as e:
         log.exception(f"Error scanning tools directory {tools_base_path}: {e}")
-        return set() # Return empty set on error during scan
+        return set()  # Return empty set on error during scan
 
     return found_dirs

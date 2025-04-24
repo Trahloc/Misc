@@ -6,17 +6,19 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class ToolStatus(Enum):
     """Represents the reconciliation status of a discovered tool."""
-    MANAGED_OK = auto()                      # In tools/, whitelisted, in env (Ideal state for managed)
-    MANAGED_MISSING_ENV = auto()             # In tools/, whitelisted, NOT in env (Needs install?)
-    WHITELISTED_NOT_IN_TOOLS_DIR = auto()    # Whitelisted, in env, NOT in tools/ (Needs baseline generation)
-    BLACKLISTED_IN_ENV = auto()              # Blacklisted, in env, NOT in tools/ (Correct state for blacklisted)
-    NEW_ENV_TOOL = auto()                    # In env, NOT in tools/, whitelist, or blacklist (Needs classification)
+
+    MANAGED_OK = auto()  # In tools/, whitelisted, in env (Ideal state for managed)
+    MANAGED_MISSING_ENV = auto()  # In tools/, whitelisted, NOT in env (Needs install?)
+    WHITELISTED_NOT_IN_TOOLS_DIR = auto()  # Whitelisted, in env, NOT in tools/ (Needs baseline generation)
+    BLACKLISTED_IN_ENV = auto()  # Blacklisted, in env, NOT in tools/ (Correct state for blacklisted)
+    NEW_ENV_TOOL = auto()  # In env, NOT in tools/, whitelist, or blacklist (Needs classification)
     # Error States
-    ERROR_BLACKLISTED_IN_TOOLS_DIR = auto() # Blacklisted AND in tools/ (Contradiction)
-    ERROR_ORPHAN_IN_TOOLS_DIR = auto()      # In tools/, NOT whitelisted or blacklisted (Needs classification)
-    ERROR_MISSING_WHITELISTED = auto()      # Whitelisted, NOT in env or tools/ (Config error or missing tool)
+    ERROR_BLACKLISTED_IN_TOOLS_DIR = auto()  # Blacklisted AND in tools/ (Contradiction)
+    ERROR_ORPHAN_IN_TOOLS_DIR = auto()  # In tools/, NOT whitelisted or blacklisted (Needs classification)
+    ERROR_MISSING_WHITELISTED = auto()  # Whitelisted, NOT in env or tools/ (Config error or missing tool)
 
 
 def reconcile_tools(
@@ -70,11 +72,11 @@ def reconcile_tools(
 
         # --- Other Valid States ---
         elif is_whitelisted and in_env and not in_dir:
-             status = ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR # Whitelisted, but needs setup
+            status = ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR  # Whitelisted, but needs setup
         elif is_blacklisted and in_env and not in_dir:
-            status = ToolStatus.BLACKLISTED_IN_ENV # Correct state for blacklisted
+            status = ToolStatus.BLACKLISTED_IN_ENV  # Correct state for blacklisted
         elif in_env and not in_dir and not is_whitelisted and not is_blacklisted:
-            status = ToolStatus.NEW_ENV_TOOL # Needs classification
+            status = ToolStatus.NEW_ENV_TOOL  # Needs classification
 
         # --- Handle tools only in lists but not found anywhere else (covered by ERROR_MISSING_WHITELISTED) ---
         # No explicit case needed here as ERROR_MISSING_WHITELISTED covers it.

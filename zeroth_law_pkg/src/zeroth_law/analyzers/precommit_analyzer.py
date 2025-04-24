@@ -15,9 +15,10 @@ PROJECT_ENV_HOOKS: Set[str] = {
     "mypy",
     "pytest",
     "autoinit",
-    "zeroth-law", # Assuming our own analyzer hook might run locally
+    "zeroth-law",  # Assuming our own analyzer hook might run locally
     # Add other hooks IDs as needed
 }
+
 
 def analyze_precommit_config(config_path: Path) -> Dict[str, List[Any]]:
     """Analyzes a .pre-commit-config.yaml file for ZLF workflow compliance.
@@ -56,7 +57,7 @@ def analyze_precommit_config(config_path: Path) -> Dict[str, List[Any]]:
     if not isinstance(config_data, dict) or "repos" not in config_data:
         log.warning(f"Invalid pre-commit config format in {config_path}: Missing 'repos' key.")
         # Allow processing potentially malformed files, but don't crash
-        return {} # Or add a specific violation if preferred
+        return {}  # Or add a specific violation if preferred
 
     for repo in config_data.get("repos", []):
         if not isinstance(repo, dict) or "hooks" not in repo:
@@ -69,7 +70,7 @@ def analyze_precommit_config(config_path: Path) -> Dict[str, List[Any]]:
             hook_id = hook.get("id")
             if hook_id in PROJECT_ENV_HOOKS:
                 language = hook.get("language")
-                entry = hook.get("entry", "") # Default to empty string if missing
+                entry = hook.get("entry", "")  # Default to empty string if missing
 
                 if language != "system":
                     msg = (

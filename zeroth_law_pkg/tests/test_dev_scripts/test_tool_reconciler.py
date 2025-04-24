@@ -16,6 +16,7 @@ from zeroth_law.dev_scripts.tool_reconciler import reconcile_tools, ToolStatus
 
 # --- Test Cases ---
 
+
 def test_reconcile_managed_ok():
     """Tool in tools dir, whitelisted, found in env."""
     env_tools = {"tool_a", "tool_b"}
@@ -29,6 +30,7 @@ def test_reconcile_managed_ok():
     assert result.get("tool_a") == ToolStatus.MANAGED_OK
     # We might refine expected status for tool_b later
 
+
 def test_reconcile_managed_missing_in_env():
     """Tool in tools dir, whitelisted, but NOT found in env."""
     env_tools = {"tool_b"}
@@ -38,6 +40,7 @@ def test_reconcile_managed_missing_in_env():
     expected = {"tool_a": ToolStatus.MANAGED_MISSING_ENV, "tool_b": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR}
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("tool_a") == ToolStatus.MANAGED_MISSING_ENV
+
 
 def test_reconcile_blacklisted_in_env_only():
     """Tool in env, blacklisted, NOT in tools dir (Correct state)."""
@@ -49,25 +52,28 @@ def test_reconcile_blacklisted_in_env_only():
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("tool_c") == ToolStatus.BLACKLISTED_IN_ENV
 
+
 def test_reconcile_blacklisted_in_tools_error():
     """Tool in tools dir AND blacklisted (ERROR state)."""
     env_tools = {"tool_c"}
-    dir_tools = {"tool_c"} # Error: Blacklisted tool has a directory
+    dir_tools = {"tool_c"}  # Error: Blacklisted tool has a directory
     whitelist = set()
     blacklist = {"tool_c"}
     expected = {"tool_c": ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR}
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("tool_c") == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR
 
+
 def test_reconcile_orphan_dir():
     """Tool in tools dir, but NOT whitelisted or blacklisted (Orphan)."""
     env_tools = {"orphan_tool"}
-    dir_tools = {"orphan_tool"} # Has a directory
+    dir_tools = {"orphan_tool"}  # Has a directory
     whitelist = {"tool_a"}
     blacklist = {"tool_b"}
     expected = {"orphan_tool": ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR}
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("orphan_tool") == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR
+
 
 def test_reconcile_new_env_tool():
     """Tool in env, but NOT in tools dir, whitelist, or blacklist (New)."""
@@ -79,25 +85,28 @@ def test_reconcile_new_env_tool():
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("new_tool") == ToolStatus.NEW_ENV_TOOL
 
+
 def test_reconcile_whitelisted_missing_dir():
     """Tool whitelisted, in env, but NOT in tools dir."""
     env_tools = {"tool_a"}
-    dir_tools = set() # Missing directory
+    dir_tools = set()  # Missing directory
     whitelist = {"tool_a"}
     blacklist = set()
     expected = {"tool_a": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR}
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("tool_a") == ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR
 
+
 def test_reconcile_whitelisted_missing_dir_and_env():
     """Tool whitelisted, but NOT in tools dir or env."""
     env_tools = set()
     dir_tools = set()
-    whitelist = {"tool_a"} # Whitelisted, but nowhere to be found
+    whitelist = {"tool_a"}  # Whitelisted, but nowhere to be found
     blacklist = set()
     expected = {"tool_a": ToolStatus.ERROR_MISSING_WHITELISTED}
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("tool_a") == ToolStatus.ERROR_MISSING_WHITELISTED
+
 
 def test_reconcile_mixed_complex():
     """Test a mix of different tool statuses."""
@@ -116,6 +125,7 @@ def test_reconcile_mixed_complex():
     }
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result == expected
+
 
 def test_reconcile_empty_inputs():
     """Test with all input sets empty."""
