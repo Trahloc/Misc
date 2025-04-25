@@ -19,14 +19,14 @@ classifiers = [ # Optional: Add classifiers for PyPI
 # Runtime Dependencies
 dependencies = [
     "autopep8",
-    "bandit", # Provides bandit, bandit-baseline, bandit-config-generator
+    "bandit",       # Provides bandit, bandit-baseline, bandit-config-generator
     "black",
-    "build", # Provides pyproject-build
+    "build",        # Provides pyproject-build
     "click",
     "coverage",
     "deptry",
     "flake8",
-    "isort", # Provides isort, isort-identify-imports
+    "isort",        # Provides isort, isort-identify-imports
     "jsonschema",
     "mutmut",
     "mypy",
@@ -35,20 +35,20 @@ dependencies = [
     "pre-commit",
     "py-spy",
     "pydantic",
-    "pydocstyle", # Provides pydocstyle
+    "pydocstyle",   # Provides pydocstyle
     "pyflakes",
     "pylint",
     "pytest",
     "pyyaml",
     "radon",
-    "ruff", # Provides ruff
+    "ruff",         # Provides ruff
     "safety",
     "scalene",
     "sqlite-utils", # Provides sqlite-utils
     "structlog",
-    "tabulate", # Provides tabulate
+    "tabulate",     # Provides tabulate
     "toml",
-    "uv", # Provides uv
+    "uv",           # Provides uv
     "vulture",
     "xdg",
     "yamllint",
@@ -58,48 +58,48 @@ dependencies = [
 # Optional Dependencies (for development, testing, etc.)
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",        # Testing framework
-    "pytest-cov",         # Coverage reporting for pytest
-    "pytest-mock",        # Mocking utilities for pytest
-    "pytest-xdist",       # Parallel test execution
-    "pytest-randomly",    # Randomize test order
-    "black>=24.0",        # Code formatter
-    "flake8>=7.0",        # Linter (style guide enforcement)
-    "mypy>=1.8",          # Static type checker
-    "ruff>=0.4.0",        # Fast linter and formatter
-    "pre-commit>=3.6",    # Framework for managing pre-commit hooks
-    "pydocstyle>=6.0",    # Docstring style checker (added)
-    "yamllint>=1.26",     # YAML linter (added)
-    "types-setuptools",   # Type hints for setuptools
-    "types-requests",     # Type hints for requests
-    "build",              # Build package
-    "twine",              # Upload package to PyPI
-    "tox>=4.0",           # Test automation tool
-    "coverage>=7.0",      # Code coverage measurement
-    "jsonschema>=4.0",    # JSON schema validation
-    "pyyaml",             # YAML parser
-    "requests",           # HTTP library (for potential integrations)
-    "uv>=0.2.0",          # Extremely fast Python package installer and resolver
-    "sqlite-utils",       # For codebase map generation
+    "pytest>=8.0",      # Testing framework
+    "pytest-cov",       # Coverage reporting for pytest
+    "pytest-mock",      # Mocking utilities for pytest
+    "pytest-xdist",     # Parallel test execution
+    "pytest-randomly",  # Randomize test order
+    "black>=24.0",      # Code formatter
+    "flake8>=7.0",      # Linter (style guide enforcement)
+    "mypy>=1.8",        # Static type checker
+    "ruff>=0.4.0",      # Fast linter and formatter
+    "pre-commit>=3.6",  # Framework for managing pre-commit hooks
+    "pydocstyle>=6.0",  # Docstring style checker (added)
+    "yamllint>=1.26",   # YAML linter (added)
+    "types-setuptools", # Type hints for setuptools
+    "types-requests",   # Type hints for requests
+    "build",            # Build package
+    "twine",            # Upload package to PyPI
+    "tox>=4.0",         # Test automation tool
+    "coverage>=7.0",    # Code coverage measurement
+    "jsonschema>=4.0",  # JSON schema validation
+    "pyyaml",           # YAML parser
+    "requests",         # HTTP library (for potential integrations)
+    "uv>=0.2.0",        # Extremely fast Python package installer and resolver
+    "sqlite-utils",     # For codebase map generation
 ]
 
 test = [
     "pytest",
     "pytest-cov",
     "pytest-mock",
-    "pytest-xdist",      # For parallel testing
+    "pytest-xdist", # For parallel testing
     # "pytest-randomly",   # Randomize test order
     "pytest-dependency", # Manage test dependencies
 ]
 
 # Scripts / Entry Points
 [project.scripts]
-zeroth-law = "zeroth_law.cli:cli_group"
-zlt = "zeroth_law.cli:cli_group"                                           # Add zlt alias
-generate-baselines = "zeroth_law.dev_scripts.generate_baseline_cli:main"  # Corrected script name
-sync-dev = "zeroth_law.dev_scripts.sync_dev:main"                          # New script for sync + editable install
-fix-json-whitespace = "zeroth_law.dev_scripts.fix_json_whitespace:main"      # Script to fix JSON trailing whitespace
-fix-json-schema = "zeroth_law.dev_scripts.fix_json_schema:main"          # Script to fix JSON schema structure
+# zeroth-law = "zeroth_law.cli:cli_group" # Removed in favor of zlt alias
+zlt = "zeroth_law.cli:cli_group"
+generate-baselines = "zeroth_law.dev_scripts.generate_baseline_cli:main"
+sync-dev = "zeroth_law.dev_scripts.sync_dev:main"
+fix-json-whitespace = "zeroth_law.dev_scripts.fix_json_whitespace:main"
+fix-json-schema = "zeroth_law.dev_scripts.fix_json_schema:main"
 
 # --- Build System (Required by PEP 517) ---
 [build-system]
@@ -175,12 +175,12 @@ blacklist = [
     "python3.13",
     "pip",
     "pip3",
-    "activate", # Virtualenv activate script
-    "activate.csh", # Virtualenv activate script (csh)
+    "activate",      # Virtualenv activate script
+    "activate.csh",  # Virtualenv activate script (csh)
     "activate.fish", # Virtualenv activate script (fish)
-    "Activate.ps1", # Virtualenv activate script (powershell)
-    "f2py", # numpy Fortran wrapper
-    "wheel", # Build tool often present
+    "Activate.ps1",  # Virtualenv activate script (powershell)
+    "f2py",          # numpy Fortran wrapper
+    "wheel",         # Build tool often present
 
     # Dev script helpers (not primary tools)
     "fix-json-schema",
@@ -188,7 +188,7 @@ blacklist = [
     "generate-baselines",
     "regenerate-index",
     "sync-dev",
-    "update-json-crc", # Assuming update_json_crc_tool.py is the actual script
+    "update-json-crc",     # Assuming update_json_crc_tool.py is the actual script
 
     # Linters/Formatters often used via pre-commit
     "autopep8", # Often run via pre-commit or other means
@@ -220,7 +220,7 @@ blacklist = [
     "tox",
     "twine",
     "uvx",
-    "safety_check", # Add deprecated command
+    "safety_check",  # Add deprecated command
 ]
 
 # ----------------------------------------- #
@@ -243,7 +243,7 @@ markers = [
     "needs_network: marks tests that require network access",
     "skip_in_ci: marks tests to be skipped in CI environments",
     "wip: marks tests as work-in-progress",
-    "coverage_check: marks tests related to coverage checks"
+    "coverage_check: marks tests related to coverage checks",
 ]
 # python_files = "tests.py test_*.py *_test.py" # Example if needed
 
@@ -447,27 +447,27 @@ skip_covered = true
 # Defines files and directories explicitly allowed at the project root.
 # Used by tests/test_project_integrity/test_project_layout.py to prevent cruft.
 items = [
-  "*.egg-info",       # Setuptools build metadata directory pattern
-  ".cursor",          # Cursor editor configuration (optional)
-  ".git",             # Git repository metadata
-  ".github",          # GitHub Actions workflows
-  ".gitignore",       # Git ignore rules
-  ".pre-commit-config.yaml", # Pre-commit hook configuration
-  ".venv",            # Virtual environment (uv default)
-  ".vscode",          # VSCode editor configuration (optional, common)
-  "NOTES.md",         # Project decision log (ZLF Section 8)
-  "README.md",        # Project documentation
-  "TODO.md",          # Project task tracking (ZLF Section 8)
-  "__pycache__",      # Python bytecode cache directory pattern
-  "build",            # Standard build directory
-  "dist",             # Standard distribution directory
-  "frameworks",       # ZLF framework definitions reference
-  "pyproject.toml",   # Project definition and configuration
-  "src",              # Main source code package root
-  "templates",        # Base project templates used by ZLT
-  "tests",            # Root directory for all tests
-  "uv.lock",          # uv lock file (recommended)
-  # Build artifacts (Commonly ignored, but explicitly listing allowed ones)
+    "*.egg-info",              # Setuptools build metadata directory pattern
+    ".cursor",                 # Cursor editor configuration (optional)
+    ".git",                    # Git repository metadata
+    ".github",                 # GitHub Actions workflows
+    ".gitignore",              # Git ignore rules
+    ".pre-commit-config.yaml", # Pre-commit hook configuration
+    ".venv",                   # Virtual environment (uv default)
+    ".vscode",                 # VSCode editor configuration (optional, common)
+    "NOTES.md",                # Project decision log (ZLF Section 8)
+    "README.md",               # Project documentation
+    "TODO.md",                 # Project task tracking (ZLF Section 8)
+    "__pycache__",             # Python bytecode cache directory pattern
+    "build",                   # Standard build directory
+    "dist",                    # Standard distribution directory
+    "frameworks",              # ZLF framework definitions reference
+    "pyproject.toml",          # Project definition and configuration
+    "src",                     # Main source code package root
+    "templates",               # Base project templates used by ZLT
+    "tests",                   # Root directory for all tests
+    "uv.lock",                 # uv lock file (recommended)
+    # Build artifacts (Commonly ignored, but explicitly listing allowed ones)
 ]
 # ------------------------------------
 
