@@ -1,122 +1,122 @@
 {
-  "command": "ruff",
-  "subcommand": null,
-  "description": "Ruff: An extremely fast Python linter and code formatter.",
-  "usage": "ruff [OPTIONS] <COMMAND>",
   "arguments": [],
+  "command": "ruff",
+  "description": "Ruff: An extremely fast Python linter and code formatter.",
+  "metadata": {
+    "command_name": "ruff",
+    "ground_truth_crc": "0xBE82B770",
+    "tool_name": "ruff"
+  },
   "options": [
     {
-      "name": "--help",
       "aliases": [
         "-h"
       ],
-      "description": "Print help.",
+      "allow_multiple": false,
       "argument": null,
-      "required": false,
-      "allow_multiple": false
+      "description": "Print help.",
+      "name": "--help",
+      "required": false
     },
     {
-      "name": "--version",
       "aliases": [
         "-V"
       ],
-      "description": "Print version.",
+      "allow_multiple": false,
       "argument": null,
-      "required": false,
-      "allow_multiple": false
+      "description": "Print version.",
+      "name": "--version",
+      "required": false
     },
     {
-      "name": "--verbose",
       "aliases": [
         "-v"
       ],
-      "description": "Enable verbose logging.",
+      "allow_multiple": false,
       "argument": null,
-      "required": false,
-      "allow_multiple": false
+      "description": "Enable verbose logging.",
+      "name": "--verbose",
+      "required": false
     },
     {
-      "name": "--quiet",
       "aliases": [
         "-q"
       ],
-      "description": "Print diagnostics, but nothing else.",
+      "allow_multiple": false,
       "argument": null,
-      "required": false,
-      "allow_multiple": false
+      "description": "Print diagnostics, but nothing else.",
+      "name": "--quiet",
+      "required": false
     },
     {
-      "name": "--silent",
       "aliases": [
         "-s"
       ],
+      "allow_multiple": false,
+      "argument": null,
       "description": "Disable all logging (but still exit with status code \"1\" upon detecting diagnostics).",
-      "argument": null,
-      "required": false,
-      "allow_multiple": false
+      "name": "--silent",
+      "required": false
     },
     {
-      "name": "--config",
       "aliases": [],
-      "description": "Either a path to a TOML configuration file (`pyproject.toml` or `ruff.toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might find in a `ruff.toml` configuration file) overriding a specific configuration option. Overrides of individual settings using this option always take precedence over all configuration files, including configuration files that were also specified using `--config\".",
+      "allow_multiple": true,
       "argument": "CONFIG_OPTION",
-      "required": false,
-      "allow_multiple": true
+      "description": "Either a path to a TOML configuration file (`pyproject.toml` or `ruff.toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might find in a `ruff.toml` configuration file) overriding a specific configuration option. Overrides of individual settings using this option always take precedence over all configuration files, including configuration files that were also specified using `--config\".",
+      "name": "--config",
+      "required": false
     },
     {
-      "name": "--isolated",
       "aliases": [],
-      "description": "Ignore all configuration files.",
+      "allow_multiple": false,
       "argument": null,
-      "required": false,
-      "allow_multiple": false
+      "description": "Ignore all configuration files.",
+      "name": "--isolated",
+      "required": false
     }
   ],
+  "subcommand": null,
   "subcommands_detail": {
+    "analyze": {
+      "description": "Run analysis over Python source code",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_analyze.json"
+    },
     "check": {
       "description": "Run Ruff on the given files or directories",
       "json_definition": "src/zeroth_law/tools/ruff/ruff_check.json"
-    },
-    "rule": {
-      "description": "Explain a rule (or all rules)",
-      "json_definition": "src/zeroth_law/tools/ruff/ruff_rule.json"
-    },
-    "config": {
-      "description": "List or describe the available configuration options",
-      "json_definition": "src/zeroth_law/tools/ruff/ruff_config.json"
-    },
-    "linter": {
-      "description": "List all supported upstream linters",
-      "json_definition": "src/zeroth_law/tools/ruff/ruff_linter.json"
     },
     "clean": {
       "description": "Clear any caches in the current directory and any subdirectories",
       "json_definition": "src/zeroth_law/tools/ruff/ruff_clean.json"
     },
+    "config": {
+      "description": "List or describe the available configuration options",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_config.json"
+    },
     "format": {
       "description": "Run the Ruff formatter on the given files or directories",
       "json_definition": "src/zeroth_law/tools/ruff/ruff_format.json"
+    },
+    "help": {
+      "description": "Print this message or the help of the given subcommand(s)",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_help.json"
+    },
+    "linter": {
+      "description": "List all supported upstream linters",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_linter.json"
+    },
+    "rule": {
+      "description": "Explain a rule (or all rules)",
+      "json_definition": "src/zeroth_law/tools/ruff/ruff_rule.json"
     },
     "server": {
       "description": "Run the language server",
       "json_definition": "src/zeroth_law/tools/ruff/ruff_server.json"
     },
-    "analyze": {
-      "description": "Run analysis over Python source code",
-      "json_definition": "src/zeroth_law/tools/ruff/ruff_analyze.json"
-    },
     "version": {
       "description": "Display Ruff's version",
       "json_definition": "src/zeroth_law/tools/ruff/ruff_version.json"
-    },
-    "help": {
-      "description": "Print this message or the help of the given subcommand(s)",
-      "json_definition": "src/zeroth_law/tools/ruff/ruff_help.json"
     }
   },
-  "metadata": {
-    "ground_truth_crc": "0xAE0936D1",
-    "tool_name": "ruff",
-    "command_name": "ruff"
-  }
+  "usage": "ruff [OPTIONS] <COMMAND>"
 }

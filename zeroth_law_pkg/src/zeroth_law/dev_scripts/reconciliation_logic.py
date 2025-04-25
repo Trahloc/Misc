@@ -20,7 +20,9 @@ class ReconciliationError(Exception):
     pass
 
 
-def perform_tool_reconciliation(project_root_dir: Path, tool_defs_dir: Path) -> Tuple[Dict[str, ToolStatus], Set[str]]:
+def perform_tool_reconciliation(
+    project_root_dir: Path, tool_defs_dir: Path
+) -> Tuple[Dict[str, ToolStatus], Set[str], Set[str]]:
     """
     Performs the full tool discovery, reconciliation, and filtering process.
 
@@ -32,6 +34,7 @@ def perform_tool_reconciliation(project_root_dir: Path, tool_defs_dir: Path) -> 
         A tuple containing:
             - The full reconciliation results dictionary.
             - A set of managed tool names suitable for further processing.
+            - The blacklist set loaded from the config.
 
     Raises:
         ReconciliationError: If any errors are detected during reconciliation.
@@ -93,4 +96,4 @@ def perform_tool_reconciliation(project_root_dir: Path, tool_defs_dir: Path) -> 
 
     logger.info(f"Identified {len(managed_tools_for_processing)} managed tools for processing.")
 
-    return reconciliation_results, managed_tools_for_processing
+    return reconciliation_results, managed_tools_for_processing, blacklist

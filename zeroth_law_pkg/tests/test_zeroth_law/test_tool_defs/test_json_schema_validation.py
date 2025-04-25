@@ -36,6 +36,15 @@ from .conftest import managed_sequences  # Import the fixture
 # Comment out the failing import
 # from zeroth_law.dev_scripts.schema_validator import validate_tool_json_schema, SchemaValidationStatus
 
+
+# Define status enum locally if needed
+class SchemaValidationStatus:
+    VALID = 1
+    INVALID_JSON = 2
+    SCHEMA_VIOLATION = 3
+    FILE_NOT_FOUND = 4  # Although not strictly checked here as we skip missing files
+
+
 # Setup logger for this test module
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -97,12 +106,36 @@ def test_all_json_schema_validation(
         validation_count += 1
         # Use the refactored schema validator
         # status, error_details = validate_tool_json_schema(json_file, tool_definition_schema)
+        status = SchemaValidationStatus.VALID  # Default
+        error_details = None
+        try:
+            with open(json_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            jsonschema.validate(instance=data, schema=tool_definition_schema)
+        except json.JSONDecodeError as e:
+            status = SchemaValidationStatus.INVALID_JSON
+            error_details = str(e)
+        except jsonschema.ValidationError as e:
+            status = SchemaValidationStatus.SCHEMA_VIOLATION
+            error_details = e  # Store the exception object for details
+        except Exception as e:  # Catch other potential errors during validation
+            status = SchemaValidationStatus.SCHEMA_VIOLATION  # Treat as schema violation
+            error_details = e  # Store the exception
+            log.error(f"Unexpected error validating {relative_json_path}: {e}")
 
         if status == SchemaValidationStatus.INVALID_JSON:
-            failures.append(f"{tool_id} ({relative_json_path}): Invalid JSON - {error_details}")
+            failures.append(f"{tool_id}: Invalid JSON ({relative_json_path}) - {error_details}")
         elif status == SchemaValidationStatus.SCHEMA_VIOLATION:
             # Format the jsonschema error details for readability
-            error_str = "\n".join([f"  - {err.message} (Path: {list(err.path)})" for err in error_details])
+            if isinstance(error_details, jsonschema.ValidationError):
+                error_str = "\n".join(
+                    [
+                        f"  - {err.message} (Path: {list(err.path)})"
+                        for err in getattr(error_details, "context", [error_details])
+                    ]
+                )
+            else:
+                error_str = str(error_details)  # Fallback for non-jsonschema errors
             failures.append(f"{tool_id} ({relative_json_path}): Schema validation failed:\n{error_str}")
         elif status == SchemaValidationStatus.VALID:
             log.debug(f"Schema validation PASSED for {tool_id}.")

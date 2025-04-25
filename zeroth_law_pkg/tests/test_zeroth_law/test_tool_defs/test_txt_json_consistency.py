@@ -18,6 +18,18 @@ from .conftest import command_sequence_to_id
 # Comment out the failing import for now
 # from zeroth_law.dev_scripts.consistency_checker import check_crc_consistency, ConsistencyStatus
 
+
+# Define status enum locally
+class ConsistencyStatus:
+    CONSISTENT = 0
+    JSON_MISSING = 1
+    JSON_ERROR = 2
+    INDEX_MISSING = 3
+    JSON_CRC_MISSING = 4
+    SKELETON_NEEDS_POPULATING = 5
+    MISMATCH = 6
+
+
 # Import fixtures from this directory's conftest
 # (WORKSPACE_ROOT, TOOLS_DIR, TOOL_INDEX_PATH, tool_index_handler, managed_sequences)
 from .conftest import managed_sequences  # Import the fixture
@@ -85,10 +97,78 @@ def test_all_txt_json_consistency(
         tool_dir = TOOLS_DIR / tool_name
         json_file = tool_dir / f"{tool_id}.json"
         relative_json_path = json_file.relative_to(WORKSPACE_ROOT)
-        relative_txt_path = TOOLS_DIR / tool_name / f"{tool_id}.txt".relative_to(WORKSPACE_ROOT)  # For messages
+        # Correctly construct the Path object for the txt file first
+        txt_file_path = tool_dir / f"{tool_id}.txt"
+        relative_txt_path = txt_file_path.relative_to(WORKSPACE_ROOT)  # Call relative_to on the Path
+
+        # Skip consistency check if the JSON file doesn't exist
+        if not json_file.is_file():
+            failures.append(f"{tool_id}: JSON file missing at {relative_json_path}. Cannot perform consistency check.")
+            continue
 
         # Use the refactored consistency checker
-        status, message = check_crc_consistency(command_parts, tool_index_handler, TOOLS_DIR, WORKSPACE_ROOT)
+        # status, message = check_crc_consistency(command_parts, tool_index_handler, TOOLS_DIR, WORKSPACE_ROOT)
+
+        # --- Inlined CRC Consistency Check Logic ---
+        status = ConsistencyStatus.CONSISTENT  # Default
+        message = None
+        json_crc = None
+        index_entry = None
+        index_crc = None
+        index_crc_source = "Unknown"
+
+        try:
+            # 1. Get Index Entry using handler's raw data
+            raw_index_data = tool_index_handler.get_raw_index_data()
+            # index_entry = tool_index_handler.get_entry(command_parts) # Incorrect method
+            index_entry = _get_entry_from_raw_index(raw_index_data, command_parts)
+
+            if index_entry is None:
+                status = ConsistencyStatus.INDEX_MISSING
+                message = "Entry not found in index."
+            else:
+                index_crc = index_entry.get("crc")
+                index_crc_source = index_entry.get("source", "tool_index.json")  # Assuming source is stored
+                if index_crc is None:
+                    status = ConsistencyStatus.INDEX_MISSING
+                    message = "'crc' field missing in index entry."
+
+            # 2. Load JSON and get its CRC (only if index CRC was found)
+            if status == ConsistencyStatus.CONSISTENT:
+                try:
+                    with open(json_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    if "metadata" not in data or not isinstance(data["metadata"], dict):
+                        status = ConsistencyStatus.JSON_CRC_MISSING
+                        message = "'metadata' object missing or invalid."
+                    else:
+                        json_crc = data["metadata"].get("ground_truth_crc")
+                        if json_crc is None:
+                            status = ConsistencyStatus.JSON_CRC_MISSING
+                            message = "'metadata.ground_truth_crc' field missing."
+                except json.JSONDecodeError as e:
+                    status = ConsistencyStatus.JSON_ERROR
+                    message = str(e)
+                except OSError as e:
+                    # This case should be caught earlier, but good to handle
+                    status = ConsistencyStatus.JSON_MISSING
+                    message = str(e)
+
+            # 3. Compare CRCs (only if both were loaded successfully)
+            if status == ConsistencyStatus.CONSISTENT:
+                if str(json_crc).lower() == "0x00000000":
+                    status = ConsistencyStatus.SKELETON_NEEDS_POPULATING
+                    message = (index_crc, index_crc_source)  # Pass needed info
+                elif str(json_crc).lower() != str(index_crc).lower():
+                    status = ConsistencyStatus.MISMATCH
+                    message = (json_crc, index_crc, index_crc_source)  # Pass needed info
+
+        except Exception as e:
+            # Catch unexpected errors during the check
+            log.exception(f"Unexpected error during consistency check for {tool_id}: {e}")
+            status = ConsistencyStatus.JSON_ERROR  # Or a generic error status
+            message = f"Unexpected error: {e}"
+        # --- End Inlined Logic ---
 
         if status == ConsistencyStatus.JSON_MISSING:
             failures.append(f"{tool_id}: JSON file missing at {relative_json_path}. Cannot perform consistency check.")
@@ -139,10 +219,34 @@ def test_all_txt_json_consistency(
                 f"Alternatively, if this sequence ('{tool_id}') should not be managed, update configuration."
             )
             failures.append(fail_message)
-        elif status == ConsistencyStatus.OK:
-            log.info(f"Consistency check PASSED for {tool_id}.")
-        elif status == ConsistencyStatus.SKIPPED_INTENTIONAL_SKELETON:
-            log.info(f"Consistency check SKIPPED for {tool_id} (intentional skeleton).")
+        elif status == ConsistencyStatus.CONSISTENT:
+            # Optional: Log success if needed, or just pass
+            log.debug(f"CRC consistency PASSED for {tool_id}")
+            pass  # Consistent, do nothing
 
     if failures:
         pytest.fail("\n\n".join(failures), pytrace=False)
+
+
+# Helper function to get entry from raw index data (similar to conftest's get_index_entry)
+# NOTE: This might need adjustment based on the exact structure of the index and handler
+def _get_entry_from_raw_index(raw_index_data: Dict[str, Any], command_parts: Tuple[str, ...]) -> Dict[str, Any] | None:
+    if not command_parts:
+        return None
+    current_level = raw_index_data
+    for i, part in enumerate(command_parts):
+        entry = current_level.get(part)
+        if entry is None:
+            return None  # Path does not exist
+        if i == len(command_parts) - 1:
+            # Reached the final part, return the entry if it's a dict
+            return entry if isinstance(entry, dict) else None
+        elif isinstance(entry, dict) and "subcommands" in entry:
+            # Move to the subcommands dictionary for the next part
+            current_level = entry["subcommands"]
+            if not isinstance(current_level, dict):
+                return None  # Expected subcommands dict, found something else
+        else:
+            # Intermediate part doesn't exist or isn't navigable
+            return None
+    return None  # Should not be reached if command_parts is not empty

@@ -443,7 +443,7 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_DEFS_DIR_FIXTURE: Path) -> List
     # --- Refactored Reconciliation Section ---
     try:
         # Call the helper function
-        reconciliation_results, managed_tools_for_processing = perform_tool_reconciliation(
+        reconciliation_results, managed_tools_for_processing, blacklist = perform_tool_reconciliation(
             project_root_dir=WORKSPACE_ROOT, tool_defs_dir=tool_defs_dir_path
         )
         log.info(f"Managed tools identified for sequence generation: {managed_tools_for_processing}")
@@ -485,7 +485,7 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_DEFS_DIR_FIXTURE: Path) -> List
             continue
 
         # Generate all sequences (base command + subcommands)
-        sequences = generate_sequences_for_tool(tool_name, subcommands_dict)
+        sequences = generate_sequences_for_tool(tool_name, subcommands_dict, blacklist)
         all_generated_sequences.extend(sequences)
         log.debug(f"Generated {len(sequences)} sequences for tool '{tool_name}'.")
 

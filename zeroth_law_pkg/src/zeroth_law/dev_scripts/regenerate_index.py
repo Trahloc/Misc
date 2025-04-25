@@ -46,7 +46,7 @@ def load_pyproject_toml(path: Path) -> Dict[str, Any]:
 def get_tool_whitelist(pyproject_data: Dict[str, Any]) -> Set[str]:
     """Extracts the tool whitelist from pyproject data."""
     try:
-        whitelist = pyproject_data["tool"]["zeroth-law"]["tools"]["whitelist"]
+        whitelist = pyproject_data["tool"]["zeroth-law"]["managed-tools"]["whitelist"]
         if not isinstance(whitelist, list) or not all(isinstance(t, str) for t in whitelist):
             raise ValueError("Whitelist must be a list of strings.")
         return set(whitelist)

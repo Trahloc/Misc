@@ -23,15 +23,16 @@ Commands:
   help     Display documentation for a command
 
 Cache options:
-  -n, --no-cache               Avoid reading from or writing to the cache, instead using a temporary
-                               directory for the duration of the operation [env: UV_NO_CACHE=]
+  -n, --no-cache               Avoid reading from or writing to the cache, instead using a
+                               temporary directory for the duration of the operation [env:
+                               UV_NO_CACHE=]
       --cache-dir <CACHE_DIR>  Path to the cache directory [env: UV_CACHE_DIR=]
 
 Python options:
-      --managed-python       Require use of uv-managed Python versions [env: UV_MANAGED_PYTHON=]
-      --no-managed-python    Disable use of uv-managed Python versions [env: UV_NO_MANAGED_PYTHON=]
-      --no-python-downloads  Disable automatic downloads of Python. [env:
-                             "UV_PYTHON_DOWNLOADS=never"]
+  --managed-python       Require use of uv-managed Python versions [env: UV_MANAGED_PYTHON=]
+  --no-managed-python    Disable use of uv-managed Python versions [env: UV_NO_MANAGED_PYTHON=]
+  --no-python-downloads  Disable automatic downloads of Python. [env:
+                         "UV_PYTHON_DOWNLOADS=never"]
 
 Global options:
   -q, --quiet...
@@ -56,7 +57,8 @@ Global options:
       --config-file <CONFIG_FILE>
           The path to a `uv.toml` file to use for configuration [env: UV_CONFIG_FILE=]
       --no-config
-          Avoid discovering configuration files (`pyproject.toml`, `uv.toml`) [env: UV_NO_CONFIG=]
+          Avoid discovering configuration files (`pyproject.toml`, `uv.toml`) [env:
+          UV_NO_CONFIG=]
   -h, --help
           Display the concise help for this command
   -V, --version

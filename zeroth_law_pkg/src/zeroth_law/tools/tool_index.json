@@ -1,702 +1,239 @@
 {
-  "autopep8": {
-    "args": [],
-    "baseline_file": "autopep8.txt",
-    "checked_timestamp": 1745315632.8468666,
-    "command": "autopep8",
-    "crc": "0x1FBFC363",
-    "json_skeleton_file": "autopep8.json",
-    "updated_timestamp": 1745290845.8643272
-  },
   "bandit": {
     "args": [
       "-r",
       "."
     ],
     "baseline_file": "bandit_report.txt",
-    "checked_timestamp": 1745461825.3583288,
+    "checked_timestamp": 1745572047.9290247,
     "command": "bandit",
     "crc": "0xFB779DF1",
     "json_skeleton_file": "bandit_report_skeleton.json",
-    "updated_timestamp": 1745290846.2516081
+    "updated_timestamp": 1745572047.9290247
   },
   "bandit-baseline": {
     "args": [],
     "baseline_file": "bandit-baseline.txt",
-    "checked_timestamp": 1745315632.847203,
+    "checked_timestamp": 1745572048.3324838,
     "command": "bandit-baseline",
     "crc": "0x2A2C3E5E",
     "json_skeleton_file": "bandit-baseline.json",
-    "updated_timestamp": 1745290846.643138
+    "updated_timestamp": 1745572048.3324838
   },
   "bandit-config-generator": {
     "args": [],
     "baseline_file": "bandit-config-generator.txt",
-    "checked_timestamp": 1745315632.8473296,
+    "checked_timestamp": 1745572048.7334065,
     "command": "bandit-config-generator",
     "crc": "0x9EAE605C",
     "json_skeleton_file": "bandit-config-generator.json",
-    "updated_timestamp": 1745290847.0189612
+    "updated_timestamp": 1745572048.7334065
   },
   "black": {
     "args": [],
     "baseline_file": "black.txt",
-    "checked_timestamp": 1745461825.3584507,
+    "checked_timestamp": 1745572049.0342612,
     "command": "black",
     "crc": "0xF83E45B7",
     "json_skeleton_file": "black.json",
-    "updated_timestamp": 1745290847.2975621
+    "updated_timestamp": 1745572049.0342612
   },
   "coverage": {
     "args": [],
     "baseline_file": "coverage.txt",
-    "checked_timestamp": 1745461825.358664,
+    "checked_timestamp": 1745572049.2996674,
     "command": "coverage",
     "crc": "0x891C20F3",
     "json_skeleton_file": "coverage.json",
-    "updated_timestamp": 1745290847.546873,
-    "subcommands": {
-      "json": {
-        "crc": "0x4B62D4AA",
-        "updated_timestamp": 1745290861.4753194,
-        "checked_timestamp": 1745461825.3604786
-      },
-      "xml": {
-        "crc": "0xE82FFDF5",
-        "updated_timestamp": 1745290861.4762797,
-        "checked_timestamp": 1745461825.3611226
-      },
-      "lcov": {
-        "crc": "0xABE46127",
-        "updated_timestamp": 1745290861.4757588,
-        "checked_timestamp": 1745461825.3605828
-      },
-      "help": {
-        "crc": "0xABF9FB74",
-        "updated_timestamp": 1745290861.4747403,
-        "checked_timestamp": 1745461825.3598506
-      },
-      "report": {
-        "crc": "0x938B6C25",
-        "updated_timestamp": 1745290861.475867,
-        "checked_timestamp": 1745461825.3608232
-      },
-      "html": {
-        "crc": "0x549A9276",
-        "updated_timestamp": 1745290861.474989,
-        "checked_timestamp": 1745461825.3602889
-      },
-      "erase": {
-        "crc": "0x97636057",
-        "updated_timestamp": 1745290861.4744086,
-        "checked_timestamp": 1745461825.359683
-      },
-      "run": {
-        "crc": "0x0775CE81",
-        "updated_timestamp": 1745290861.476113,
-        "checked_timestamp": 1745461825.3609712
-      },
-      "debug": {
-        "crc": "0xA6AA4E9D",
-        "updated_timestamp": 1745290861.474188,
-        "checked_timestamp": 1745461825.3592393
-      },
-      "annotate": {
-        "crc": "0xD717A5E4",
-        "updated_timestamp": 1745290861.473724,
-        "checked_timestamp": 1745461825.3588374
-      },
-      "combine": {
-        "crc": "0x16045BD7",
-        "updated_timestamp": 1745290861.47395,
-        "checked_timestamp": 1745461825.3590348
-      }
-    }
+    "updated_timestamp": 1745572049.2996674
   },
   "deptry": {
     "args": [],
     "baseline_file": "deptry.txt",
-    "checked_timestamp": 1745461825.3614779,
+    "checked_timestamp": 1745572049.581886,
     "command": "deptry",
     "crc": "0x7DEC14BC",
     "json_skeleton_file": "deptry.json",
-    "updated_timestamp": 1745290847.799084
+    "updated_timestamp": 1745572049.581886
   },
   "flake8": {
     "args": [],
     "baseline_file": "flake8.txt",
-    "checked_timestamp": 1745461825.3616607,
+    "checked_timestamp": 1745572049.9380908,
     "command": "flake8",
     "crc": "0x87ACFCE1",
     "json_skeleton_file": "flake8.json",
-    "updated_timestamp": 1745290848.136224
+    "updated_timestamp": 1745572049.9380908
   },
   "isort": {
     "args": [],
     "baseline_file": "isort.txt",
-    "checked_timestamp": 1745461825.3621247,
+    "checked_timestamp": 1745572050.2214506,
     "command": "isort",
     "crc": "0x3736B0EA",
     "json_skeleton_file": "isort.json",
-    "updated_timestamp": 1745290848.3993804
+    "updated_timestamp": 1745572050.2214506
   },
   "isort-identify-imports": {
     "args": [],
     "baseline_file": "isort-identify-imports.txt",
-    "checked_timestamp": 1745315632.852438,
+    "checked_timestamp": 1745572050.496713,
     "command": "isort-identify-imports",
     "crc": "0xBA808EAA",
     "json_skeleton_file": "isort-identify-imports.json",
-    "updated_timestamp": 1745290848.6575427
+    "updated_timestamp": 1745572050.496713
   },
   "jsonschema": {
     "args": [],
     "baseline_file": "jsonschema.txt",
-    "checked_timestamp": 1745315632.8527331,
+    "checked_timestamp": 1745572050.8223414,
     "command": "jsonschema",
     "crc": "0x08DD5625",
     "json_skeleton_file": "jsonschema.json",
-    "updated_timestamp": 1745290848.9698992
+    "updated_timestamp": 1745572050.8223414
   },
   "mutmut": {
     "args": [],
     "baseline_file": "mutmut.txt",
-    "checked_timestamp": 1745315632.8530273,
+    "checked_timestamp": 1745572051.1085224,
     "command": "mutmut",
     "crc": "0x43DB6A8D",
     "json_skeleton_file": "mutmut.json",
-    "updated_timestamp": 1745290849.2421546,
-    "subcommands": {
-      "run": {
-        "crc": "0x17BBCB7C",
-        "updated_timestamp": 1745290861.4805727,
-        "checked_timestamp": 1745315632.8548515
-      },
-      "print-time-estimates": {
-        "crc": "0x7E256336",
-        "updated_timestamp": 1745290861.4789658,
-        "checked_timestamp": 1745315632.853751
-      },
-      "tests-for-mutant": {
-        "crc": "0x46051973",
-        "updated_timestamp": 1745290861.481094,
-        "checked_timestamp": 1745315632.856518
-      },
-      "results": {
-        "crc": "0x1CB4E6A1",
-        "updated_timestamp": 1745290861.4803395,
-        "checked_timestamp": 1745315632.8541815
-      },
-      "apply": {
-        "crc": "0xED1AC788",
-        "updated_timestamp": 1745290861.4779985,
-        "checked_timestamp": 1745315632.8532321
-      },
-      "show": {
-        "crc": "0x1BDA752B",
-        "updated_timestamp": 1745290861.4807527,
-        "checked_timestamp": 1745315632.8552127
-      },
-      "browse": {
-        "crc": "0x6261AD55",
-        "updated_timestamp": 1745290861.4786043,
-        "checked_timestamp": 1745315632.8534584
-      }
-    }
+    "updated_timestamp": 1745572051.1085224
   },
   "mypy": {
     "args": [],
     "baseline_file": "mypy.txt",
-    "checked_timestamp": 1745461825.3625543,
+    "checked_timestamp": 1745572051.4109051,
     "command": "mypy",
     "crc": "0x4D4CC23B",
     "json_skeleton_file": "mypy.json",
-    "updated_timestamp": 1745290849.4863472
+    "updated_timestamp": 1745572051.4109051
   },
   "pipdeptree": {
     "args": [],
     "baseline_file": "pipdeptree.txt",
-    "checked_timestamp": 1745461825.362912,
+    "checked_timestamp": 1745572051.7905002,
     "command": "pipdeptree",
     "crc": "0x34985295",
     "json_skeleton_file": "pipdeptree.json",
-    "updated_timestamp": 1745290849.831499
-  },
-  "poetry": {
-    "args": [],
-    "baseline_file": "poetry.txt",
-    "checked_timestamp": 1745315633.1498344,
-    "command": "poetry",
-    "crc": "0xDE061514",
-    "json_skeleton_file": "poetry.json",
-    "updated_timestamp": 1745290850.5995452,
-    "subcommands": {
-      "about": {
-        "crc": "0x762BB2B1",
-        "updated_timestamp": 1745290861.883879,
-        "checked_timestamp": 1745315633.2721431
-      },
-      "export": {
-        "crc": "0x00000000",
-        "updated_timestamp": 1745290861.9280174,
-        "checked_timestamp": 1745315633.3058667
-      },
-      "add": {
-        "crc": "0xA318C6A3",
-        "updated_timestamp": 1745290861.8884478,
-        "checked_timestamp": 1745315633.275077
-      },
-      "remove": {
-        "crc": "0x585916E1",
-        "updated_timestamp": 1745290862.0149128,
-        "checked_timestamp": 1745315633.3364067
-      },
-      "show": {
-        "crc": "0x61C4B97C",
-        "updated_timestamp": 1745290862.0328813,
-        "checked_timestamp": 1745315633.3500557
-      },
-      "build": {
-        "crc": "0x114A1F6E",
-        "updated_timestamp": 1745290861.893644,
-        "checked_timestamp": 1745315633.2770035
-      },
-      "list": {
-        "crc": "0xDE061514",
-        "updated_timestamp": 1745290861.96292,
-        "checked_timestamp": 1745315633.3280625
-      },
-      "check": {
-        "crc": "0x796B7716",
-        "updated_timestamp": 1745290861.8958783,
-        "checked_timestamp": 1745315633.2807837
-      },
-      "lock": {
-        "crc": "0xA8D330D0",
-        "updated_timestamp": 1745290861.9637187,
-        "checked_timestamp": 1745315633.3324318
-      },
-      "init": {
-        "crc": "0xE154A986",
-        "updated_timestamp": 1745290861.9487243,
-        "checked_timestamp": 1745315633.306348
-      },
-      "shell": {
-        "crc": "0x00000000",
-        "updated_timestamp": 1745290862.0289805,
-        "checked_timestamp": 1745315633.3427792
-      },
-      "install": {
-        "crc": "0xAC914396",
-        "updated_timestamp": 1745290861.9572911,
-        "checked_timestamp": 1745315633.3194337
-      },
-      "update": {
-        "crc": "0x89EA27E2",
-        "updated_timestamp": 1745290862.0352595,
-        "checked_timestamp": 1745315633.3582897
-      },
-      "search": {
-        "crc": "0xC82AD518",
-        "updated_timestamp": 1745290862.0268269,
-        "checked_timestamp": 1745315633.3403752
-      },
-      "config": {
-        "crc": "0x38ACE07F",
-        "updated_timestamp": 1745290861.9029627,
-        "checked_timestamp": 1745315633.3043213
-      },
-      "version": {
-        "crc": "0xFCAAE6CD",
-        "updated_timestamp": 1745290862.04207,
-        "checked_timestamp": 1745315633.360549
-      },
-      "publish": {
-        "crc": "0x0E982771",
-        "updated_timestamp": 1745290862.0146835,
-        "checked_timestamp": 1745315633.3361194
-      },
-      "new": {
-        "crc": "0x8FA91293",
-        "updated_timestamp": 1745290861.9804034,
-        "checked_timestamp": 1745315633.333966
-      },
-      "run": {
-        "crc": "0x00000000",
-        "updated_timestamp": 1745290862.018496,
-        "checked_timestamp": 1745315633.3380635
-      }
-    }
+    "updated_timestamp": 1745572051.7905002
   },
   "pre-commit": {
     "args": [],
     "baseline_file": "pre-commit.txt",
-    "checked_timestamp": 1745461825.3639085,
+    "checked_timestamp": 1745572052.1337698,
     "command": "pre-commit",
     "crc": "0x426124A0",
     "json_skeleton_file": "pre-commit.json",
-    "updated_timestamp": 1745290850.9348269,
-    "subcommands": {
-      "clean": {
-        "crc": "0x0D40F6CA",
-        "updated_timestamp": 1745290862.0703166,
-        "checked_timestamp": 1745461825.364813
-      },
-      "install-hooks": {
-        "crc": "0x26DA5290",
-        "updated_timestamp": 1745290862.1160429,
-        "checked_timestamp": 1745461825.36598
-      },
-      "install": {
-        "crc": "0xB2587BDF",
-        "updated_timestamp": 1745290862.1078305,
-        "checked_timestamp": 1745461825.3656325
-      },
-      "autoupdate": {
-        "crc": "0xB7345F24",
-        "updated_timestamp": 1745290862.0582938,
-        "checked_timestamp": 1745461825.3642776
-      },
-      "init-templatedir": {
-        "crc": "0x0D6217CE",
-        "updated_timestamp": 1745290862.0862558,
-        "checked_timestamp": 1745461825.3651583
-      },
-      "gc": {
-        "crc": "0xF37CCCF4",
-        "updated_timestamp": 1745290862.0839975,
-        "checked_timestamp": 1745461825.3649983
-      },
-      "run": {
-        "crc": "0x91532B5B",
-        "updated_timestamp": 1745290862.200936,
-        "checked_timestamp": 1745461825.3674448
-      },
-      "migrate-config": {
-        "crc": "0x39447523",
-        "updated_timestamp": 1745290862.1293447,
-        "checked_timestamp": 1745461825.3669412
-      },
-      "sample-config": {
-        "crc": "0x0899744C",
-        "updated_timestamp": 1745290862.2037673,
-        "checked_timestamp": 1745461825.3676348
-      },
-      "try-repo": {
-        "crc": "0x9CC8C825",
-        "updated_timestamp": 1745290862.2080605,
-        "checked_timestamp": 1745461825.3679442
-      },
-      "uninstall": {
-        "crc": "0x30436FF2",
-        "updated_timestamp": 1745290862.2990403,
-        "checked_timestamp": 1745461825.3694634
-      },
-      "validate-manifest": {
-        "crc": "0xF14D3536",
-        "updated_timestamp": 1745290862.6707423,
-        "checked_timestamp": 1745461825.8059745
-      },
-      "validate-config": {
-        "crc": "0xA0DB903B",
-        "updated_timestamp": 1745290862.6577692,
-        "checked_timestamp": 1745461825.3697574
-      },
-      "help": {
-        "crc": "0x7DD080F1",
-        "updated_timestamp": 1745290862.694945,
-        "checked_timestamp": 1745461825.806237
-      },
-      "hook-impl": {
-        "crc": "0x062D74BA",
-        "updated_timestamp": 1745290862.7491121,
-        "checked_timestamp": 1745461825.8068414
-      }
-    }
+    "updated_timestamp": 1745572052.1337698
   },
   "py-spy": {
     "args": [],
     "baseline_file": "py-spy.txt",
-    "checked_timestamp": 1745461825.809142,
+    "checked_timestamp": 1745572052.1600666,
     "command": "py-spy",
     "crc": "0xDC4DE986",
     "json_skeleton_file": "py-spy.json",
-    "updated_timestamp": 1745290850.9496348,
-    "subcommands": {
-      "record": {
-        "crc": "0x3FCF98B8",
-        "updated_timestamp": 1745290862.7643247,
-        "checked_timestamp": 1745461825.8262882
-      },
-      "dump": {
-        "crc": "0x4C300294",
-        "updated_timestamp": 1745290862.7898006,
-        "checked_timestamp": 1745461825.832978
-      },
-      "top": {
-        "crc": "0xA53954FF",
-        "updated_timestamp": 1745290862.7859607,
-        "checked_timestamp": 1745461825.8306668
-      },
-      "help": {
-        "crc": "0x00000000",
-        "updated_timestamp": 1745290862.798875,
-        "checked_timestamp": 1745461825.8479705
-      }
-    }
+    "updated_timestamp": 1745572052.1600666
   },
   "pydocstyle": {
+    "args": [],
+    "baseline_file": "pydocstyle.txt",
+    "checked_timestamp": 1745572052.4843585,
+    "command": "pydocstyle",
     "crc": "0x57340659",
-    "updated_timestamp": 1745316012.8634083,
-    "checked_timestamp": 1745378841.2414176
+    "json_skeleton_file": "pydocstyle.json",
+    "updated_timestamp": 1745572052.4843585
   },
   "pyflakes": {
     "args": [],
     "baseline_file": "pyflakes.txt",
-    "checked_timestamp": 1745461825.8573904,
+    "checked_timestamp": 1745572052.6803448,
     "command": "pyflakes",
     "crc": "0x11B74AC5",
     "json_skeleton_file": "pyflakes.json",
-    "updated_timestamp": 1745290851.1328175
+    "updated_timestamp": 1745572052.6803448
   },
   "pylint": {
     "args": [],
     "baseline_file": "pylint.txt",
-    "checked_timestamp": 1745461825.8578084,
+    "checked_timestamp": 1745572053.2928634,
     "command": "pylint",
     "crc": "0x239DCAA8",
     "json_skeleton_file": "pylint.json",
-    "updated_timestamp": 1745290851.7116075
-  },
-  "pyproject-build": {
-    "args": [],
-    "baseline_file": "pyproject-build.txt",
-    "checked_timestamp": 1745315634.1130085,
-    "command": "pyproject-build",
-    "crc": "0x91EE1A8E",
-    "json_skeleton_file": "pyproject-build.json",
-    "updated_timestamp": 1745290851.910932
+    "updated_timestamp": 1745572053.2928634
   },
   "pytest": {
     "args": [],
     "baseline_file": "pytest.txt",
-    "checked_timestamp": 1745461825.8619485,
+    "checked_timestamp": 1745572054.0631342,
     "command": "pytest",
-    "crc": "0x063C1748",
+    "crc": "0xE255467B",
     "json_skeleton_file": "pytest.json",
-    "updated_timestamp": 1745389895.6027148
+    "updated_timestamp": 1745572054.0631342
   },
   "radon": {
     "args": [],
     "baseline_file": "radon.txt",
-    "checked_timestamp": 1745461825.863381,
+    "checked_timestamp": 1745572054.248109,
     "command": "radon",
     "crc": "0x825609B9",
     "json_skeleton_file": "radon.json",
-    "updated_timestamp": 1745290852.9203773,
-    "subcommands": {
-      "cc": {
-        "crc": "0x8DD6EDCD",
-        "updated_timestamp": 1745290862.859638,
-        "checked_timestamp": 1745461825.864931
-      },
-      "raw": {
-        "crc": "0x9CAE8228",
-        "updated_timestamp": 1745290862.949375,
-        "checked_timestamp": 1745461825.8711364
-      },
-      "mi": {
-        "crc": "0x5A768993",
-        "updated_timestamp": 1745290863.1487038,
-        "checked_timestamp": 1745461825.8843439
-      },
-      "hal": {
-        "crc": "0xE565006D",
-        "updated_timestamp": 1745290863.1693408,
-        "checked_timestamp": 1745461825.8883374
-      }
-    }
+    "updated_timestamp": 1745572054.248109
   },
   "ruff": {
     "args": [],
     "baseline_file": "ruff.txt",
-    "checked_timestamp": 1745461825.8888113,
+    "checked_timestamp": 1745572054.2670476,
     "command": "ruff",
-    "crc": "0xAE0936D1",
+    "crc": "0xBE82B770",
     "json_skeleton_file": "ruff.json",
-    "updated_timestamp": 1745291202.806153,
-    "subcommands": {
-      "check": {
-        "crc": "0x41897CFC",
-        "updated_timestamp": 1745291202.8468459,
-        "checked_timestamp": 1745461825.8993528
-      },
-      "rule": {
-        "crc": "0xC35ED592",
-        "updated_timestamp": 1745291202.8547835,
-        "checked_timestamp": 1745461825.9265764
-      },
-      "config": {
-        "crc": "0xD1B1C1AA",
-        "updated_timestamp": 1745291202.8666394,
-        "checked_timestamp": 1745461825.9335914
-      },
-      "clean": {
-        "crc": "0x2C216C81",
-        "updated_timestamp": 1745291202.8800964,
-        "checked_timestamp": 1745461825.9379568
-      },
-      "linter": {
-        "crc": "0x880A548D",
-        "updated_timestamp": 1745291202.877558,
-        "checked_timestamp": 1745461825.9376173
-      },
-      "format": {
-        "crc": "0x4E31BD8A",
-        "updated_timestamp": 1745291202.8817189,
-        "checked_timestamp": 1745461825.9455788
-      },
-      "server": {
-        "crc": "0x6679BE6E",
-        "updated_timestamp": 1745291202.8950815,
-        "checked_timestamp": 1745461825.964579
-      },
-      "analyze": {
-        "crc": "0x3B6300DB",
-        "updated_timestamp": 1745291202.90027,
-        "checked_timestamp": 1745461825.9668853
-      },
-      "version": {
-        "crc": "0x985C188B",
-        "updated_timestamp": 1745291202.9017198,
-        "checked_timestamp": 1745461825.9730232
-      },
-      "help": {
-        "crc": "0x00000000",
-        "updated_timestamp": 1745290863.3091354,
-        "checked_timestamp": 1745461825.9731386
-      }
-    }
+    "updated_timestamp": 1745572054.2670476
   },
   "safety": {
     "args": [],
     "baseline_file": "safety.txt",
-    "checked_timestamp": 1745461825.9736707,
+    "checked_timestamp": 1745572055.451621,
     "command": "safety",
-    "crc": "0x5A5AD14E",
+    "crc": "0xC9234583",
     "json_skeleton_file": "safety.json",
-    "updated_timestamp": 1745291202.9100199,
-    "subcommands": {
-      "configure": {
-        "crc": "0x087E25DF",
-        "updated_timestamp": 1745291202.9341493,
-        "checked_timestamp": 1745461825.9958134
-      },
-      "validate": {
-        "crc": "0xBFA477F1",
-        "updated_timestamp": 1745291202.9387982,
-        "checked_timestamp": 1745461826.0044992
-      },
-      "scan": {
-        "crc": "0x98DB5F70",
-        "updated_timestamp": 1745291202.9179704,
-        "checked_timestamp": 1745461825.9799144
-      },
-      "check-updates": {
-        "crc": "0x45BE4628",
-        "updated_timestamp": 1745291202.933966,
-        "checked_timestamp": 1745461825.9909086
-      },
-      "generate": {
-        "crc": "0x527D5F16",
-        "updated_timestamp": 1745291202.937447,
-        "checked_timestamp": 1745461826.001856
-      },
-      "alert": {
-        "crc": "0xBCB38F00",
-        "updated_timestamp": 1745291202.9246745,
-        "checked_timestamp": 1745461825.987111
-      },
-      "check": {
-        "crc": "0x2D25760F",
-        "updated_timestamp": 1745318799.3558419,
-        "checked_timestamp": 1745318799.3558419
-      },
-      "auth": {
-        "crc": "0xC1E1E2B5",
-        "updated_timestamp": 1745291202.9105809,
-        "checked_timestamp": 1745461825.9747534
-      },
-      "license": {
-        "crc": "0x6596E697",
-        "updated_timestamp": 1745291202.938739,
-        "checked_timestamp": 1745461826.0039866
-      }
-    }
+    "updated_timestamp": 1745572055.451621
   },
   "scalene": {
     "args": [],
     "baseline_file": "scalene.txt",
-    "checked_timestamp": 1745461826.0069017,
+    "checked_timestamp": 1745572056.0766802,
     "command": "scalene",
-    "crc": "0x51BD1994",
+    "crc": "0xCDA04DD8",
     "json_skeleton_file": "scalene.json",
-    "updated_timestamp": 1745291202.9709992
+    "updated_timestamp": 1745572056.0766802
+  },
+  "uv": {
+    "args": [],
+    "baseline_file": "uv.txt",
+    "checked_timestamp": 1745572056.0985126,
+    "command": "uv",
+    "crc": "0x257D5291",
+    "json_skeleton_file": "uv.json",
+    "updated_timestamp": 1745572056.0985126
   },
   "vulture": {
     "args": [],
     "baseline_file": "vulture.txt",
-    "checked_timestamp": 1745461826.0132065,
+    "checked_timestamp": 1745572056.23287,
     "command": "vulture",
     "crc": "0xE007FA0B",
     "json_skeleton_file": "vulture.json",
-    "updated_timestamp": 1745290854.681017
+    "updated_timestamp": 1745572056.23287
   },
   "yamllint": {
+    "args": [],
+    "baseline_file": "yamllint.txt",
+    "checked_timestamp": 1745572056.4259338,
+    "command": "yamllint",
     "crc": "0x77351DE5",
-    "updated_timestamp": 1745316013.05499,
-    "checked_timestamp": 1745378841.4033213
-  },
-  "zeroth-law": {
-    "args": [],
-    "baseline_file": "zeroth-law.txt",
-    "checked_timestamp": 1745461826.0262592,
-    "command": "zeroth-law",
-    "crc": "0xC7E11DC3",
-    "json_skeleton_file": "zeroth-law.json",
-    "updated_timestamp": 1745365168.492958,
-    "subcommands": {
-      "restore-git-hooks": {
-        "crc": "0x68C369B8",
-        "updated_timestamp": 1745419333.832855,
-        "checked_timestamp": 1745461826.061853
-      },
-      "install-git-hook": {
-        "crc": "0x73A47C44",
-        "updated_timestamp": 1745419333.825252,
-        "checked_timestamp": 1745461826.0276618
-      }
-    }
-  },
-  "zlt": {
-    "args": [],
-    "baseline_file": "zlt.txt",
-    "checked_timestamp": 1745315634.6892886,
-    "command": "zlt",
-    "crc": "0x3810A5E8",
-    "json_skeleton_file": "zlt.json",
-    "updated_timestamp": 1745290855.763161,
-    "subcommands": {
-      "restore-git-hooks": {
-        "crc": "0x2A296964",
-        "updated_timestamp": 1745290863.4461355,
-        "checked_timestamp": 1745315634.7318292
-      },
-      "install-git-hook": {
-        "crc": "0x500042CF",
-        "updated_timestamp": 1745290863.436889,
-        "checked_timestamp": 1745315634.7155602
-      }
-    }
+    "json_skeleton_file": "yamllint.json",
+    "updated_timestamp": 1745572056.4259338
   }
 }
