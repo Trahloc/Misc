@@ -91,7 +91,7 @@ def WORKSPACE_ROOT() -> Path:
     # Recalculate relative to this file's location
     # This might still be needed if the root conftest doesn't provide it
     # or if we want to be self-contained here.
-    ws_root = Path(__file__).resolve().parents[2]
+    ws_root = Path(__file__).resolve().parents[3]
     # Add a check?
     if not (ws_root / "pyproject.toml").exists():
         pytest.fail(f"CRITICAL: pyproject.toml not found at deduced WORKSPACE_ROOT: {ws_root}")
@@ -118,7 +118,7 @@ def TOOL_INDEX_PATH(TOOLS_DIR: Path) -> Path:
 def TOOL_DEFS_DIR_FIXTURE(WORKSPACE_ROOT: Path) -> Path:
     """Fixture providing the path to the tool definitions directory."""
     # Define tool_defs dir based on WORKSPACE_ROOT, consistent with integration test
-    tool_defs_path = WORKSPACE_ROOT / "tool_defs"
+    tool_defs_path = WORKSPACE_ROOT / "src" / "zeroth_law" / "tools"
     log.info(f"TOOL_DEFS_DIR determined as: {tool_defs_path}")
     if not tool_defs_path.is_dir():
         # Changed to pytest.fail as this is critical for reconciliation

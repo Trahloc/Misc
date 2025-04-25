@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 from tests.conftest import TOOLS_DIR, ZLT_ROOT
 
 # Import helper from sibling test module
-from .test_ensure_txt_baselines_exist import command_sequence_to_id
+from .conftest import command_sequence_to_id
 
 
 def test_no_redundant_top_level_subcommand_entries(tool_index_handler, WORKSPACE_ROOT, TOOL_INDEX_PATH):

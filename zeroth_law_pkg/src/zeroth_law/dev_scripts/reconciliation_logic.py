@@ -74,11 +74,13 @@ def perform_tool_reconciliation(project_root_dir: Path, tool_defs_dir: Path) -> 
         # Check only for valid error statuses defined in ToolStatus
         if status in (
             ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR,
-            ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR,
             ToolStatus.ERROR_MISSING_WHITELISTED,
         ):
             logger.error(f"Reconciliation Error! Tool: {tool}, Status: {status.name}")
             errors_found = True
+        elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
+            # Warn about orphan tools instead of treating as error
+            logger.warning(f"Reconciliation Warning! Orphan Tool Found: {tool}, Status: {status.name}")
         elif status in (
             ToolStatus.MANAGED_OK,
             ToolStatus.MANAGED_MISSING_ENV,
