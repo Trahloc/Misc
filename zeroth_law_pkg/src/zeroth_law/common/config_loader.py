@@ -18,7 +18,7 @@ import structlog
 
 # Import defaults from shared module
 from zeroth_law.config_defaults import DEFAULT_CONFIG
-from zeroth_law.config_validation import validate_config
+from zeroth_law.common.config_validation import validate_config
 
 # Setup logging
 log = structlog.get_logger()

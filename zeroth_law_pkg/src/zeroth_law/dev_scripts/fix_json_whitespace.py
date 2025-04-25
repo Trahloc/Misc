@@ -6,14 +6,14 @@ import sys
 import logging
 from pathlib import Path
 import re
+import json
 
-# Add project root to sys.path to allow importing 'src.zeroth_law'
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # dev_scripts -> src -> workspace
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
+# from zeroth_law.path_utils import find_project_root
+from zeroth_law.common.path_utils import find_project_root
 
-# Now import path_utils
-from zeroth_law.path_utils import find_project_root
+# Add project root to sys.path to ensure correct module resolution
+# Assuming this script is run from somewhere within the project structure
+project_root = find_project_root()
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -34,33 +34,31 @@ def fix_json_trailing_whitespace(file_path: Path) -> bool:
             # Double-check it still ends with '}' after stripping
             if corrected_content.endswith("}"):
                 if corrected_content != original_content:
-                    log.info(f"Fixing trailing whitespace in: {file_path.relative_to(_PROJECT_ROOT)}")
+                    log.info(f"Fixing trailing whitespace in: {file_path.relative_to(project_root)}")
                     file_path.write_text(corrected_content, encoding="utf-8")
                     return True  # File was changed
                 else:
                     # This case should be rare if TRAILING_WHITESPACE_RE matched
-                    log.debug(
-                        f"Whitespace found but stripping caused no change? {file_path.relative_to(_PROJECT_ROOT)}"
-                    )
+                    log.debug(f"Whitespace found but stripping caused no change? {file_path.relative_to(project_root)}")
                     return False
             else:
                 log.warning(
-                    f"Stripping whitespace removed closing brace in {file_path.relative_to(_PROJECT_ROOT)}. Skipping fix."
+                    f"Stripping whitespace removed closing brace in {file_path.relative_to(project_root)}. Skipping fix."
                 )
                 return False
         else:
-            # log.debug(f"No trailing whitespace found in: {file_path.relative_to(_PROJECT_ROOT)}")
+            # log.debug(f"No trailing whitespace found in: {file_path.relative_to(project_root)}")
             return False  # No change needed
 
     except Exception as e:
-        log.error(f"Error processing file {file_path.relative_to(_PROJECT_ROOT)}: {e}")
+        log.error(f"Error processing file {file_path.relative_to(project_root)}: {e}")
         return False
 
 
 def main():
     """Main function to find and fix JSON files."""
     log.info("Starting JSON trailing whitespace check...")
-    project_root = find_project_root(Path(__file__).parent)
+    project_root = find_project_root()
     if not project_root:
         log.error("Could not find project root. Exiting.")
         sys.exit(1)

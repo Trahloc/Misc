@@ -6,11 +6,12 @@ import time
 import sys
 from pathlib import Path
 import logging
+from typing import Any, Generator, List, Optional, Tuple
 
 import pytest
 
 # Import the path utility function
-from zeroth_law.path_utils import find_project_root
+from zeroth_law.common.path_utils import find_project_root
 
 # Explicitly import the session-scoped fixture
 # from tests.test_tool_defs.conftest import WORKSPACE_ROOT

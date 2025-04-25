@@ -6,6 +6,10 @@ import sys
 import logging
 import json
 from pathlib import Path
+from zeroth_law.common.path_utils import find_project_root
+
+# Add project root to sys.path to ensure correct module resolution
+project_root = find_project_root()
 
 # Add project root to sys.path to allow importing 'src.zeroth_law'
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # dev_scripts -> src -> workspace

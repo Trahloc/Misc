@@ -5,8 +5,10 @@ Handles finding and filtering files based on CLI input and configuration.
 
 import logging
 from pathlib import Path
-from typing import Any
-from zeroth_law.file_finder import find_python_files
+from typing import Any, List, Set
+from zeroth_law.common.file_finder import find_python_files
+from zeroth_law.analyzer.python.analyzer import analyze_file_compliance
+from zeroth_law.config_loader import load_config
 
 log = logging.getLogger(__name__)
 

@@ -2,6 +2,8 @@
 """Tests for path utility functions."""
 
 from pathlib import Path
+import sys
+import pytest
 
 # Assumes tests are run from the git root (Misc/)
 # Need to access the actual project root (Misc/zeroth_law/)
@@ -14,11 +16,11 @@ project_root = git_root / "zeroth_law"
 src_root = project_root / "src"
 outside_dir = git_root.parent  # Directory containing Misc/
 
-# Add src to path if necessary (though maybe not needed if testing utils directly)
-# import sys
-# sys.path.insert(0, str(src_root))
-
-from zeroth_law.path_utils import find_project_root  # noqa: E402
+# Add parent directory to sys.path to allow import of config_loader
+# This assumes tests are run from the project root or configured with PYTHONPATH
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
+# from zeroth_law.path_utils import find_project_root  # noqa: E402
+from zeroth_law.common.path_utils import find_project_root  # noqa: E402
 
 
 def test_find_project_root_from_within_project(tmp_path):
@@ -89,3 +91,9 @@ def test_find_project_root_from_simulated_git_root():
 
     # Start search from a directory outside the project
     assert find_project_root(outside_dir) is None
+
+
+@pytest.fixture
+def tmp_path(tmp_path):
+    # Add any additional setup for the test if needed
+    return tmp_path

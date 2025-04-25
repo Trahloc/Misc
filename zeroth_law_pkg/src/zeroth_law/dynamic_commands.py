@@ -5,11 +5,12 @@ Handles loading the tool index and dynamically generating Click commands.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, Callable
+from typing import Any, Dict, Callable, Optional, Type
 import click
 import importlib.resources  # Import importlib.resources
 
-from zeroth_law.path_utils import find_project_root
+from zeroth_law.common.path_utils import find_project_root
+from zeroth_law.managed_tools import get_tool_mapping
 from zeroth_law.action_runner import run_action
 
 log = logging.getLogger(__name__)

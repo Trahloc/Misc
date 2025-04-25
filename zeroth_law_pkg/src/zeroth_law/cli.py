@@ -11,8 +11,13 @@ from typing import Any, Dict, List
 import click
 
 from zeroth_law.action_runner import run_action
-from zeroth_law.config_loader import load_config
-from zeroth_law.file_processor import find_files_to_audit
+from zeroth_law.common.config_loader import load_config
+from zeroth_law.file_processor import find_files_to_audit, process_files
+from zeroth_law.exceptions import ConfigError, GitError
+from zeroth_law import __version__ as zlt_version  # Get version from __init__
+from zeroth_law.logging_utils import setup_logging, log_invocation
+from zeroth_law.common.git_utils import find_git_root, get_staged_files, identify_project_roots_from_files
+from zeroth_law.common.path_utils import find_project_root
 
 # Add import for analysis functions
 from zeroth_law.analysis_runner import (
@@ -30,12 +35,6 @@ from zeroth_law.commands.git_hooks import install_git_hook, restore_git_hooks
 
 # Import the new Audit command
 from zeroth_law.commands.audit.audit import audit
-from zeroth_law.git_utils import (
-    find_git_root,
-    # install_git_hook_script, # No longer needed directly in cli.py
-    # restore_standard_hooks, # No longer needed directly in cli.py
-)
-from zeroth_law.path_utils import find_project_root
 
 # Import the pre-commit analyzer
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config

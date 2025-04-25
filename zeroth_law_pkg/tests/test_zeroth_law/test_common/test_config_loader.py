@@ -6,16 +6,13 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import toml
 
-from zeroth_law.config_defaults import DEFAULT_CONFIG
-from zeroth_law.config_loader import (
-    _CONFIG_PATH_ENV_VAR,
-    TomlDecodeError,
-    extract_config_section,
-    find_pyproject_toml,
+from zeroth_law.common.config_loader import (
+    DEFAULT_CONFIG,
     load_config,
-    merge_with_defaults,
-    parse_toml_file,
+    merge_configs,
+    ConfigError,
 )
 
 

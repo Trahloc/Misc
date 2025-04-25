@@ -3,16 +3,16 @@ CLI commands related to Git hook management for Zeroth Law.
 """
 
 import logging
-from pathlib import Path
 import click
+import subprocess
+from pathlib import Path
 
-# Change to absolute imports
-from zeroth_law.git_utils import (
-    find_git_root,
-    install_git_hook_script,
-    restore_standard_hooks,
-)
-from zeroth_law.path_utils import find_project_root
+# from zeroth_law.git_utils import (
+#     find_git_root, install_git_hook_script, restore_git_hooks
+# )
+# from zeroth_law.path_utils import find_project_root
+from zeroth_law.common.git_utils import find_git_root, install_git_hook_script, restore_git_hooks
+from zeroth_law.common.path_utils import find_project_root
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ def restore_git_hooks(ctx: click.Context, git_root: str | None) -> None:
             )
 
         log.debug(f"Using Git repository root: {git_root_path}")
-        restored_count, error_count = restore_standard_hooks(git_root_path)
+        restored_count, error_count = restore_git_hooks(git_root_path)
 
         if restored_count > 0:
             log.info(f"Successfully restored {restored_count} standard Git hooks.")

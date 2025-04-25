@@ -1,9 +1,11 @@
 # File: tests/test_file_finder.py
 """Tests for the file_finder module."""
 
+import pytest
 from pathlib import Path
 
-from zeroth_law.file_finder import find_python_files
+# from zeroth_law.file_finder import find_python_files
+from zeroth_law.common.file_finder import find_python_files
 
 
 def test_find_python_files_simple(tmp_path: Path) -> None:
