@@ -241,7 +241,7 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
 *   **Justification**: Document reasons for significant third-party dependencies in `NOTES.md` or relevant docstrings.
 *   **Locking:** **Recommend** using a lock file (`uv lock > uv.lock` or using `poetry.lock`) for reproducible environments, especially in CI.
 
-### 4.13 Command-Based Module Organization
+### 4.14 Command-Based Module Organization
 *(Supports Principles #3, #8)*
 
 * **Command-Directed Directory Structure (CDDS):** **Require** organizing CLI subcommand implementations into dedicated directories named after the subcommand itself.
