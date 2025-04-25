@@ -19,14 +19,14 @@ classifiers = [ # Optional: Add classifiers for PyPI
 # Runtime Dependencies
 dependencies = [
     "autopep8",
-    "bandit",           # Provides bandit, bandit-baseline, bandit-config-generator
+    "bandit", # Provides bandit, bandit-baseline, bandit-config-generator
     "black",
-    "build",            # Provides pyproject-build
+    "build", # Provides pyproject-build
     "click",
     "coverage",
     "deptry",
     "flake8",
-    "isort",            # Provides isort, isort-identify-imports
+    "isort", # Provides isort, isort-identify-imports
     "jsonschema",
     "mutmut",
     "mypy",
@@ -35,23 +35,23 @@ dependencies = [
     "pre-commit",
     "py-spy",
     "pydantic",
-    "pydocstyle",       # Provides pydocstyle
+    "pydocstyle", # Provides pydocstyle
     "pyflakes",
     "pylint",
     "pytest",
     "pyyaml",
     "radon",
-    "ruff",             # Provides ruff
+    "ruff", # Provides ruff
     "safety",
     "scalene",
-    "sqlite-utils",     # Provides sqlite-utils
+    "sqlite-utils", # Provides sqlite-utils
     "structlog",
-    "tabulate",         # Provides tabulate
+    "tabulate", # Provides tabulate
     "toml",
-    "uv",               # Provides uv
+    "uv", # Provides uv
     "vulture",
     "xdg",
-    "yamllint",         # Provides yamllint
+    "yamllint",
     "zeroth-law",
 ]
 
