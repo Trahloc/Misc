@@ -37,7 +37,7 @@ def generate_project_overview(db: sqlite_utils.Database) -> dict:
         overview["class_count"] = db["classes"].count
         overview["function_count"] = db["functions"].count
         overview["import_count"] = db["imports"].count
-    except Exception as e:
+    except BaseException as e:
         log.error(f"Error querying counts: {e}")
         # Return partial data or raise?
         overview["error"] = f"Error querying counts: {e}"
@@ -97,7 +97,7 @@ def generate_module_details(db: sqlite_utils.Database) -> dict:
         # Sort modules by path for consistent output
         modules_data = sorted(modules.values(), key=lambda x: x["path"])
 
-    except Exception as e:
+    except BaseException as e:
         log.error(f"Error querying details: {e}")
         return {"error": f"Error querying details: {e}", "modules": list(modules_data)}
 

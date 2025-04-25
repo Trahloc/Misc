@@ -404,48 +404,84 @@ This workflow is typically executed by the AI developer or automation scripts:
 ### 6.3 Project Structure Example (Conceptual)
 *(Assumes project root contains `pyproject.toml`)*
 
-**Mandate:** To prevent ambiguity and ensure clear distinction, the ZLF **requires** that the project root directory name and the primary Python package directory name (typically inside `src/`) **must not** be identical.
+**Mandate (Project Naming):** To prevent ambiguity and ensure clear distinction, the ZLF **requires** that the project root directory name and the primary Python package directory name (typically inside `src/`) **must not** be identical. The **recommended** structure is `project_pkg/src/project/`.
 
-**Recommendation:** The **recommended** structure to achieve this distinction is `project_pkg/src/project/`. This keeps the importable Python package name clean (`project`) which aligns well with standard Python imports and tooling focus, while clearly identifying the project root directory via the `_pkg` suffix.
+**Mandate (Source File Naming):** Python source files within the package (e.g., inside `src/project/`) **must not** have filenames prefixed with `test_`. This prevents naming collisions and ambiguity with test files.
+
+**Mandate (Test Structure):** The `tests/` directory **must** mirror the structure of the source package (`src/project/`), applying the **"Prefix Everything"** convention: both test subdirectories and test files must be prefixed with `test_`. This ensures clarity and explicit separation between source and test code hierarchies.
 
 ```
-project_pkg/         # Project Root (Recommended naming convention)
+project_pkg/            # Project Root (e.g., zeroth_law_pkg)
 │
-├── .github/             # CI/CD workflows (e.g., GitHub Actions using Poetry)
+├── .github/
 │   └── workflows/
-│       └── ci.yml       # Runs `poetry run zlt validate` or individual checks
+│       └── ci.yml      # CI Pipeline (Sec 6.5)
 │
-├── frameworks/          # Optional: ZLF definitions for reference
-│   └── python/
-│       └── ZerothLawAIFramework-*.md
+├── .venv/              # Virtual environment (managed by uv)
 │
-├── scripts/             # Helper scripts (run via `poetry run`)
-│   └── ...
-│
-├── src/                 # Source code for the project/tool
-│   └── project/         # The main Python package (Matches intended import name)
+├── src/                # Source code root
+│   └── project/        # Primary Python package (e.g., zeroth_law)
 │       ├── __init__.py
-│       └── ...
+│       │
+│       ├── common/     # Shared utilities across the project
+│       │   ├── __init__.py
+│       │   └── utils.py # Example utility module
+│       │
+│       ├── commands/   # CLI commands (following CDDS - Sec 4.14)
+│       │   ├── __init__.py
+│       │   │
+│       │   └── <cmd>/  # Directory for a specific command (e.g., analyze)
+│       │       ├── __init__.py
+│       │       ├── <cmd>.py       # Main command orchestrator/Click definition
+│       │       └── helpers.py     # Example helper module for the command
+│       │
+│       └── <area>/     # Other functional areas of the project
+│           ├── __init__.py
+│           └── component.py # Example component module
 │
-├── tests/               # Tests (following TDD/DDT)
-│   ├── __init__.py
-│   └── test_data/       # External data files for DDT (Sec 4.2)
-│   └── fuzz/            # Fuzzing targets and corpus (Sec 4.X)
-│       ├── __init__.py
-│       ├── fuzz_parser.py # Example fuzz target script
-│       └── corpus_parser/ # Example corpus directory
-│   └── ...
+├── tests/              # Root directory for all tests
+│   ├── __init__.py     # Usually empty, marks tests as a package
+│   ├── conftest.py     # Global pytest fixtures
+│   │
+│   ├── test_common/    # Mirrors src/project/common/, prefixed
+│   │   ├── __init__.py
+│   │   └── test_utils.py # Unit tests for common/utils.py
+│   │
+│   ├── test_commands/  # Mirrors src/project/commands/, prefixed
+│   │   ├── __init__.py
+│   │   │
+│   │   └── test_<cmd>/ # Mirrors src/project/commands/<cmd>/, prefixed
+│   │       ├── __init__.py
+│   │       ├── conftest.py     # Fixtures specific to testing <cmd>
+│   │       │
+│   │       ├── test_<cmd>.py   # Unit tests for <cmd>.py orchestrator, CLI/E2E tests
+│   │       ├── test_helpers.py # Unit tests for helpers.py
+│   │       │
+│   │       └── integration/  # Explicit subdirectory for integration tests
+│   │           ├── __init__.py
+│   │           └── test_<cmd>_component_interaction.py # Example integration test
+│   │
+│   ├── test_<area>/    # Mirrors src/project/<area>/, prefixed
+│   │   ├── __init__.py
+│   │   └── test_component.py # Unit tests for component.py
+│   │
+│   └── test_data/      # External data files for testing
+│       └── test_commands/
+│           └── test_<cmd>/
+│               └── helpers/
+│                   └── sample_input.txt # Example test data mirroring test structure
 │
-├── .gitignore           # Standard Git ignore file
-├── .pre-commit-config.yaml # PROJECT-SPECIFIC pre-commit hooks (Sec 6.4)
-├── pyproject.toml       # Defines project metadata, dependencies, tool configs (Poetry, ZLT)
-├── poetry.lock          # Exact dependency versions (Managed by Poetry)
-├── README.md            # Project documentation
-├── NOTES.md             # Decision log & rationale (See Sec 8)
-└── TODO.md              # High-level goals & task tracking (See Sec 8)
+├── .gitignore
+├── .pre-commit-config.yaml # Project-specific pre-commit hooks (Sec 6.4)
+├── pyproject.toml      # Project metadata, dependencies, tool configs (PEP 621)
+├── uv.lock             # Optional but recommended lock file (uv lock > uv.lock)
+├── README.md
+├── NOTES.md            # Decision log & rationale (Sec 8)
+└── TODO.md             # High-level goals & task tracking (Sec 8)
 
 ```
-*(Note: For monorepos where Git root != project root, custom Git hooks managed by ZLT might be needed to invoke the project-specific ZLT validation. See Section [8](#8-project-knowledge-management) & NOTES.md for context).*
+*(Note: The fuzzing structure (`tests/fuzz/`, `tests/fuzz/corpus/`) previously shown remains valid but is omitted here for brevity, focusing on the core source/test mirroring.)*
+*(Note: For monorepos where Git root != project root, custom Git hooks managed by ZLT might be needed to invoke the project-specific ZLT validation. See Section [8](#8-project-knowledge-management) & NOTES.md for context).)*
 
 ### 6.4 Pre-Commit Configuration (`.pre-commit-config.yaml`)
 *   **Location:** **Must** reside in the project root (alongside `pyproject.toml`).

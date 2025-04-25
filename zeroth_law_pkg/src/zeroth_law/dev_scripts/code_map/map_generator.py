@@ -32,9 +32,20 @@ from tests.codebase_map.cli_utils import (
 # SCHEMA_PATH_DEFAULT = Path("tests/codebase_map/schema.sql")
 PRUNE_CONFIRMATION_STRING = "Yes I have reviewed the content of the source files and determined these entries are stale"
 
-# --- LOGGING ---
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-log = logging.getLogger(__name__)
+# --- LOGGING SETUP (Explicit) ---
+# Ensure logging is configured early and forcefully for the script itself
+log = logging.getLogger("map_generator") # Use a specific name?
+# Remove the basicConfig call here if cli_utils handles it later in main?
+# Or ensure this basicConfig uses force=True if kept.
+# Let's try setting the level directly on the logger for now.
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# log = logging.getLogger(__name__)
+# Attempt direct handler configuration:
+handler = logging.StreamHandler(sys.stderr) # Ensure output to stderr
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - [%(name)s] %(message)s')
+handler.setFormatter(formatter)
+log.addHandler(handler)
+log.setLevel(logging.INFO) # Default level, --verbose in main will set to DEBUG
 
 # --- AST Visitor ---
 
@@ -69,32 +80,51 @@ class MapVisitor(ast.NodeVisitor):
                 # Arguments (simplified representation: name:annotation)
                 args_repr = []
                 args_info = node.args
-                # Combine all arg types for consistent processing
-                all_args = args_info.posonlyargs + args_info.args + args_info.kwonlyargs
-                for arg in all_args:
+
+                # Positional-only args
+                for arg in args_info.posonlyargs:
                     arg_str = arg.arg
                     if arg.annotation:
-                        try:
-                            arg_str += f":{ast.unparse(arg.annotation).strip()}"
-                        except Exception:
-                            arg_str += ":<unparse_error>"  # Handle annotation unparsing error
+                        try: arg_str += f":{ast.unparse(arg.annotation).strip()}"
+                        except Exception: arg_str += ":<unparse_error>"
                     args_repr.append(arg_str)
+                if args_info.posonlyargs: args_repr.append("/") # Add positional-only marker if present
+
+                # Regular args
+                for arg in args_info.args:
+                    arg_str = arg.arg
+                    if arg.annotation:
+                        try: arg_str += f":{ast.unparse(arg.annotation).strip()}"
+                        except Exception: arg_str += ":<unparse_error>"
+                    args_repr.append(arg_str)
+
+                # Vararg (*args)
                 if args_info.vararg:
                     arg_str = f"*{args_info.vararg.arg}"
                     if args_info.vararg.annotation:
-                        try:
-                            arg_str += f":{ast.unparse(args_info.vararg.annotation).strip()}"
-                        except Exception:
-                            arg_str += ":<unparse_error>"
-                    args_repr.append(arg_str)  # Corrected indentation
+                        try: arg_str += f":{ast.unparse(args_info.vararg.annotation).strip()}"
+                        except Exception: arg_str += ":<unparse_error>"
+                    args_repr.append(arg_str)
+                    # Add keyword-only marker *if* vararg is present AND there are kwonlyargs
+                    if args_info.kwonlyargs: args_repr.append("*")
+                elif args_info.kwonlyargs: # Add keyword-only marker if no *args but kwonlyargs exist
+                    args_repr.append("*")
+
+                # Keyword-only args
+                for arg in args_info.kwonlyargs:
+                    arg_str = arg.arg
+                    if arg.annotation:
+                        try: arg_str += f":{ast.unparse(arg.annotation).strip()}"
+                        except Exception: arg_str += ":<unparse_error>"
+                    args_repr.append(arg_str)
+
+                # Kwarg (**kwargs)
                 if args_info.kwarg:
                     arg_str = f"**{args_info.kwarg.arg}"
                     if args_info.kwarg.annotation:
-                        try:
-                            arg_str += f":{ast.unparse(args_info.kwarg.annotation).strip()}"
-                        except Exception:
-                            arg_str += ":<unparse_error>"
-                    args_repr.append(arg_str)  # Corrected indentation
+                        try: arg_str += f":{ast.unparse(args_info.kwarg.annotation).strip()}"
+                        except Exception: arg_str += ":<unparse_error>"
+                    args_repr.append(arg_str)
 
                 signature_parts.append(f"({','.join(args_repr)})")  # Join args
 
@@ -175,17 +205,36 @@ class MapVisitor(ast.NodeVisitor):
             "end_line": end_line,
         }
 
-        # Upsert class and get its ID
         table = self.db["classes"]
-        result = table.upsert(
-            class_record,
-            pk=("id"),
-            # Match existing record based on unique constraint
-            # Use alter=True in case we add columns later, though not strictly needed now
-            alter=True,
-            column_order=["id", "module_id", "name", "signature_hash", "start_line", "end_line"],
-        )
-        self.current_class_id = result.last_pk
+
+        # --- Explicit Check-then-Insert/Update Logic for Classes ---
+        where_clause = "module_id = :module_id AND name = :name"
+        params = {"module_id": self.module_id, "name": class_name}
+        existing_rows = list(table.rows_where(where_clause, params))
+
+        if existing_rows:
+            # Update existing class
+            existing_row = existing_rows[0]
+            log.debug(f"  Updating existing class: {class_name} (ID: {existing_row['id']})")
+            updates = {
+                "signature_hash": signature_hash,
+                "start_line": start_line,
+                "end_line": end_line,
+            }
+            # Check if update is needed (e.g., hash changed)
+            if existing_row["signature_hash"] != signature_hash or \
+               existing_row["start_line"] != start_line or \
+               existing_row["end_line"] != end_line:
+                table.update(existing_row["id"], updates)
+            self.current_class_id = existing_row["id"] # Use existing ID
+        else:
+            # Insert new class
+            log.debug(f"  Inserting new class: {class_name}")
+            # Use column_order consistent with schema if needed, ensure pk='id' works for auto-inc
+            inserted = table.insert(class_record, pk="id")
+            self.current_class_id = inserted.last_pk # Get new ID
+        # --- End Explicit Logic ---
+
         self.current_class_name = class_name
         self.processed_in_scan.add(("class", self.module_path, class_name, None))
 
@@ -367,9 +416,10 @@ def find_python_files(src_dir: Path) -> list[Path]:
     return python_files
 
 
-def process_file(file_path: Path, db: sqlite_utils.Database, current_scan_timestamp: float) -> set:
+def process_file(file_path: Path, src_dir: Path, db: sqlite_utils.Database, current_scan_timestamp: float) -> set:
     """Parses a single Python file using AST and updates the database via the visitor."""
-    relative_path = file_path.relative_to(SRC_DIR_DEFAULT).as_posix()  # Assume SRC_DIR_DEFAULT for relative path calc
+    # Use the provided src_dir to calculate the relative path
+    relative_path = file_path.relative_to(src_dir).as_posix()
     log.debug(f"Processing file: {relative_path}")
 
     try:
@@ -377,7 +427,11 @@ def process_file(file_path: Path, db: sqlite_utils.Database, current_scan_timest
             content = f.read()
         tree = ast.parse(content, filename=str(file_path))
     except Exception as e:
-        log.error(f"Error parsing {relative_path}: {e}")
+        err_type = type(e).__name__
+        # Log a simpler message, including the error type name
+        log.error(f"Error parsing {relative_path}. Type: {err_type}")
+        # Log the full exception details at DEBUG level if needed
+        log.debug(f"Full parsing error for {relative_path}", exc_info=True)
         return set()  # Skip this file, return empty set
 
     # 1. Upsert Module and get ID
@@ -408,6 +462,8 @@ def process_file(file_path: Path, db: sqlite_utils.Database, current_scan_timest
 
     # 2. Visit nodes to populate classes and functions
     visitor = MapVisitor(db, relative_path, module_id, current_scan_timestamp)
+    # Add the module itself to the set of processed items for auditing
+    visitor.processed_in_scan.add(("module", relative_path, None, None))
     visitor.visit(tree)
 
     return visitor.processed_in_scan
@@ -415,77 +471,95 @@ def process_file(file_path: Path, db: sqlite_utils.Database, current_scan_timest
 
 def audit_database_against_scan(db: sqlite_utils.Database, processed_in_scan: set) -> list:
     """Compares DB state with the scan results to find potentially stale items (Audit Step).
-    Returns a list of tuples representing stale items: e.g., ('module', path) or ('class', path, name)
+    Returns a list of tuples representing stale items: e.g., ('module', id, path) or ('class', id, path, name)
     """
     log.info("Auditing database against current scan to find potentially stale entries...")
     stale_items = []
+    stale_module_ids = set()
+    stale_class_ids = set()
 
-    # Check modules
-    db_modules = {(row["id"], row["path"]) for row in db["modules"].rows}
+    # --- Check Modules --- Get all modules from DB first
+    db_modules = {row["path"]: row["id"] for row in db["modules"].rows}
     processed_modules_paths = {item[1] for item in processed_in_scan if item[0] == "module"}
-    stale_modules = {(mid, mpath) for mid, mpath in db_modules if mpath not in processed_modules_paths}
-    if stale_modules:
-        stale_module_paths = {mpath for _, mpath in stale_modules}
+    stale_module_paths = set(db_modules.keys()) - processed_modules_paths
+
+    if stale_module_paths:
         log.warning(f"Stale Module found in DB (Code likely removed/moved): {stale_module_paths}")
-        stale_items.extend([("module", mid, mpath) for mid, mpath in stale_modules])  # Store ID for deletion
+        for mpath in stale_module_paths:
+            mid = db_modules[mpath]
+            stale_module_ids.add(mid)
+            stale_items.append(("module", mid, mpath)) # Store ID for deletion
 
-    # Check classes
-    db_classes_query = """
-    SELECT c.id, m.path, c.name
-    FROM classes c JOIN modules m ON c.module_id = m.id
-    """
-    db_classes = {(row["id"], row["path"], row["name"]) for row in db.query(db_classes_query)}
-    processed_classes = {(item[1], item[2]) for item in processed_in_scan if item[0] == "class"}
-    stale_classes = {
-        (cid, cpath, cname)
-        for cid, cpath, cname in db_classes
-        if (cpath, cname) not in processed_classes and cpath not in stale_module_paths
-    }
-    if stale_classes:
-        stale_class_tuples = {(cpath, cname) for _, cpath, cname in stale_classes}
+    # --- Check Classes --- Query classes whose module is NOT stale
+    non_stale_module_ids_tuple = tuple(set(db_modules.values()) - stale_module_ids)
+    if not non_stale_module_ids_tuple: # Handle case where ALL modules are stale or DB is empty
+        log.debug("Skipping class audit: No non-stale modules found.")
+        db_classes_tuples = {}
+    else:
+        db_classes_query = f"""
+        SELECT c.id, m.path, c.name
+        FROM classes c JOIN modules m ON c.module_id = m.id
+        WHERE m.id IN ({",".join("?" * len(non_stale_module_ids_tuple))})
+        """
+        db_classes_tuples = {(row["path"], row["name"]): row["id"] for row in db.query(db_classes_query, non_stale_module_ids_tuple)}
+
+    processed_classes_tuples = {(item[1], item[2]) for item in processed_in_scan if item[0] == "class"}
+    stale_class_tuples = set(db_classes_tuples.keys()) - processed_classes_tuples
+
+    if stale_class_tuples:
         log.warning(f"Stale Class found in DB (Code likely removed/moved): {stale_class_tuples}")
-        stale_items.extend([("class", cid, cpath, cname) for cid, cpath, cname in stale_classes])  # Store ID
+        for cpath, cname in stale_class_tuples:
+            cid = db_classes_tuples[(cpath, cname)]
+            stale_class_ids.add(cid)
+            stale_items.append(("class", cid, cpath, cname)) # Store ID
 
-    # Check functions
-    db_functions_query = """
-    SELECT f.id, m.path, c.name as class_name, f.name
-    FROM functions f
-    JOIN modules m ON f.module_id = m.id
-    LEFT JOIN classes c ON f.class_id = c.id
-    """
-    db_functions = {(row["id"], row["path"], row["class_name"], row["name"]) for row in db.query(db_functions_query)}
-    processed_functions = {(item[1], item[2], item[3]) for item in processed_in_scan if item[0] == "function"}
-    # Exclude functions whose module or class is already marked stale
-    stale_class_ids = {cid for type, cid, *_ in stale_items if type == "class"}
-    stale_functions = {
-        (fid, fpath, fcname, fname)
-        for fid, fpath, fcname, fname in db_functions
-        if (fpath, fcname, fname) not in processed_functions
-        and fpath not in stale_module_paths
-        and not (
-            fcname
-            and any(
-                c[1] == fid
-                for c in db.query(f"SELECT class_id from functions where id={fid}")
-                if c["class_id"] in stale_class_ids
-            )
-        )  # Check if function's class_id is stale
-    }
+    # --- Check Functions --- Query functions whose module AND class (if applicable) are NOT stale
+    non_stale_class_ids_tuple = tuple(stale_class_ids)
 
-    if stale_functions:
-        stale_func_tuples = {(fpath, fcname, fname) for _, fpath, fcname, fname in stale_functions}
-        log.warning(f"Stale Function found in DB (Code likely removed/moved): {stale_func_tuples}")
-        stale_items.extend(
-            [("function", fid, fpath, fcname, fname) for fid, fpath, fcname, fname in stale_functions]
-        )  # Store ID
+    if not non_stale_module_ids_tuple: # Handle case where ALL modules are stale or DB is empty
+        log.debug("Skipping function audit: No non-stale modules found.")
+        db_functions_tuples = {}
+    else:
+        # Start query, filtering by non-stale modules
+        db_functions_query = f"""
+        SELECT f.id, m.path, c.name as class_name, f.name
+        FROM functions f
+        JOIN modules m ON f.module_id = m.id
+        LEFT JOIN classes c ON f.class_id = c.id
+        WHERE m.id IN ({",".join("?" * len(non_stale_module_ids_tuple))})
+        """
+        params = list(non_stale_module_ids_tuple)
 
+        # Add filter for non-stale classes (only if there ARE stale classes)
+        if stale_class_ids:
+            db_functions_query += f"""
+            AND (f.class_id IS NULL OR f.class_id NOT IN ({",".join("?" * len(non_stale_class_ids_tuple))})
+            """
+            params.extend(non_stale_class_ids_tuple)
+
+        db_functions_tuples = {(row["path"], row["class_name"], row["name"]): row["id"] for row in db.query(db_functions_query, tuple(params))}
+
+    processed_functions_tuples = {(item[1], item[2], item[3]) for item in processed_in_scan if item[0] == "function"}
+    stale_function_tuples = set(db_functions_tuples.keys()) - processed_functions_tuples
+
+    if stale_function_tuples:
+        log.warning(f"Stale Function found in DB (Code likely removed/moved): {stale_function_tuples}")
+        for fpath, fcname, fname in stale_function_tuples:
+             fid = db_functions_tuples[(fpath, fcname, fname)]
+             # We don't need to add function IDs to a set for further checks
+             stale_items.append(("function", fid, fpath, fcname, fname)) # Store ID
+
+    # --- Final Summary --- (Modified log message slightly for clarity)
     if stale_items:
+        # Count unique types of stale items found (ignoring IDs)
+        unique_stale_elements = {tuple(item[2:]) for item in stale_items} # Get unique (path, class, func) tuples
         log.warning(
-            f'Audit complete. Found {len(stale_items)} stale entries. Verify these code elements were intentionally removed or moved. If confirmed, rerun with --prune-stale-entries "{PRUNE_CONFIRMATION_STRING}" to remove them from the database map.'
+            f'Audit complete. Found {len(stale_items)} potentially stale DB entries corresponding to {len(unique_stale_elements)} unique code elements. Verify these were intentionally removed/moved. Rerun with --prune-stale-entries "<confirmation_string>" to remove them.'
         )
     else:
         log.info("Audit complete. No stale entries found in database.")
-    return stale_items  # Return list of stale items with IDs
+
+    return stale_items # Return list of stale items with IDs
 
 
 def prune_stale_entries(db: sqlite_utils.Database, stale_items: list):
@@ -550,7 +624,8 @@ def generate_map(db_path: Path, schema_path: Path, src_dir: Path, prune_confirma
         # Using db.conn context manager for transaction
         with db.conn:
             for file_path in python_files:
-                processed_in_file = process_file(file_path, db, current_scan_timestamp)
+                # Pass src_dir to process_file
+                processed_in_file = process_file(file_path, src_dir, db, current_scan_timestamp)
                 all_processed_in_scan.update(processed_in_file)
         log.info("Database population complete.")
 
@@ -581,45 +656,48 @@ def generate_map(db_path: Path, schema_path: Path, src_dir: Path, prune_confirma
 
 
 # --- MAIN EXECUTION --- (Allow running as script)
-if __name__ == "__main__":
-    # Define defaults here before parser uses them
-    # These might need adjustment based on where the script is expected to be run from
-    # Assuming script might be run from project root or tests/codebase_map
-    _default_src_dir = Path("src")
-    _default_db_path = Path("tests/codebase_map/code_map.db")
-    _default_schema_path = Path("tests/codebase_map/schema.sql")
-
-    parser = argparse.ArgumentParser(
-        description="Generate/Update the ZLF Codebase Map SQLite database.",
-    )
+def main():
+    parser = argparse.ArgumentParser(description="Generate or update the codebase map database.")
+    add_common_db_arguments(parser)
+    add_common_logging_arguments(parser)
     parser.add_argument(
-        "--src", type=Path, default=_default_src_dir, help=f"Source directory to scan (default: {_default_src_dir})"
-    )
-    parser.add_argument(
-        "--db", type=Path, default=_default_db_path, help=f"Database file path (default: {_default_db_path})"
-    )
-    parser.add_argument(
-        "--schema", type=Path, default=_default_schema_path, help=f"Schema file path (default: {_default_schema_path})"
+        "--src",
+        type=Path,
+        # Default src relative to detected project root
+        default=detect_project_root() / "src",
+        help="Source directory to scan (default: <project_root>/src)"
     )
     parser.add_argument(
         "--prune-stale-entries",
         type=str,
-        default=None,
-        help=f"REQUIRED confirmation string to delete stale entries: '{PRUNE_CONFIRMATION_STRING}'",
+        metavar='CONFIRMATION_STRING',
+        help=f"REQUIRED TO PRUNE: Must provide exact confirmation string: '{PRUNE_CONFIRMATION_STRING}'"
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()
 
-    if args.verbose:
+    # Configure logging based on args AFTER parsing them
+    # Set logger level based on verbosity
+    if args.verbose or args.debug_sql:
         log.setLevel(logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)  # Set root logger level too
-        log.debug("Verbose logging enabled.")
+        logging.getLogger("sqlite_utils").setLevel(logging.DEBUG if args.debug_sql else logging.WARNING)
+    else:
+        log.setLevel(logging.INFO)
+        logging.getLogger("sqlite_utils").setLevel(logging.WARNING)
 
-    log.info("Starting Codebase Map Generator Script")
-    # IMPORTANT: The global SRC_DIR_DEFAULT used in process_file needs the runtime value
-    # We should ideally pass args.src down instead of relying on a global.
-    # For now, update the global, but this is a refactoring target.
-    SRC_DIR_DEFAULT = args.src
-    generate_map(args.db, args.schema, args.src, prune_confirmation=args.prune_stale_entries)
-    log.info("Codebase Map Generator Script Finished")
+    log.debug("Logging configured based on arguments.")
+
+    try:
+        args = resolve_paths(args) # Resolve and validate paths
+        log.info(f"Starting Codebase Map Generator Script...")
+        generate_map(args.db, args.schema, args.src, args.prune_stale_entries)
+        log.info(f"Codebase Map Generator Script Finished")
+    except (FileNotFoundError, NotADirectoryError) as e:
+        log.critical(f"Path error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        log.exception(f"An unexpected error occurred: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

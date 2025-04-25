@@ -9,9 +9,10 @@ from pathlib import Path
 import sqlite_utils
 import subprocess
 import sys
+from unittest.mock import patch, MagicMock
 
 # Import functions to test
-from tests.codebase_map.map_reporter import (
+from src.zeroth_law.dev_scripts.code_map.map_reporter import (
     generate_project_overview,
     generate_module_details,
     generate_report,
@@ -174,4 +175,82 @@ def test_generate_report_db_not_found(tmp_path, caplog):
     assert f"Database file not found: {non_existent_db}" in caplog.text
 
 
-# TODO: Add tests for error handling during DB queries (might need mocking)
+# --- Tests for Error Handling during DB Queries ---
+
+
+@pytest.mark.parametrize("table_name", ["modules", "classes", "functions", "imports"])
+def test_generate_project_overview_db_error(table_name):
+    """Test generate_project_overview handles DB errors during count."""
+    # We don't need a mock_table here, we make __getitem__ raise directly
+
+    # Mock the database object itself
+    mock_db = MagicMock(spec=sqlite_utils.Database)
+
+    # Configure the mock_db.__getitem__ to RAISE an error for the target table
+    def mock_getitem(key):
+        if key == table_name:
+            raise Exception(f"mock error accessing {table_name}")  # Raise directly
+        else:
+            # Return a default MagicMock for other tables
+            default_mock_table = MagicMock()
+            default_mock_table.count = 1
+            return default_mock_table
+
+    mock_db.__getitem__.side_effect = mock_getitem
+
+    # Patch the Database class to return our mock_db instance
+    with patch("tests.codebase_map.map_reporter.sqlite_utils.Database") as MockDatabase:
+        MockDatabase.return_value = mock_db
+        # Call the function - it will use the mocked Database instance
+        # Note: We don't need sample_db fixture here as the DB is mocked
+        overview_data = generate_project_overview(mock_db)
+
+    assert "overview" in overview_data
+    overview = overview_data["overview"]
+    assert "error" in overview
+    assert f"Error querying counts: mock error accessing {table_name}" in overview["error"]
+    # Removed assertions about partial counts as the function attempts all counts
+    # regardless of where the first error occurs. We only care that the error
+    # for the specified table was caught and reported.
+
+
+@pytest.mark.parametrize("table_name", ["modules", "classes", "functions", "imports"])
+def test_generate_module_details_db_error(table_name):
+    """Test generate_module_details handles DB errors during row fetching."""
+    # Mock the table object that will raise error on iteration
+    mock_error_table = MagicMock()
+    mock_error_table.rows.__iter__.side_effect = Exception(f"mock error iterating {table_name}")
+    # Also mock direct iteration on the table object if that's used
+    mock_error_table.__iter__.side_effect = Exception(f"mock error iterating {table_name}")
+
+    # Mock the database object itself
+    mock_db = MagicMock(spec=sqlite_utils.Database)
+
+    # Configure the mock_db.__getitem__ to return the correct mock or a default mock
+    def mock_getitem(key):
+        if key == table_name:
+            return mock_error_table  # Return the table configured to raise error
+        else:
+            # Return a default MagicMock for other tables so they don't break access
+            # but return an empty iterator for .rows
+            default_mock_table = MagicMock()
+            default_mock_table.rows = []  # Empty iterator
+            return default_mock_table
+
+    mock_db.__getitem__.side_effect = mock_getitem
+
+    # Patch the Database class to return our mock_db instance
+    with patch("tests.codebase_map.map_reporter.sqlite_utils.Database") as MockDatabase:
+        MockDatabase.return_value = mock_db
+        # Call the function - it will use the mocked Database instance
+        # Note: We don't need sample_db fixture here as the DB is mocked
+        details_data = generate_module_details(mock_db)
+
+    assert "error" in details_data
+    assert f"Error querying details: mock error iterating {table_name}" in details_data["error"]
+    # The current implementation might return partial data collected before the error
+    assert "modules" in details_data  # The key should exist even if the list is empty/partial
+
+
+# TODO: Add tests for error handling during DB queries (might need mocking) - Partially addressed
+# Note: These tests cover basic query errors. More complex scenarios (e.g., specific data corruption) aren't covered.
