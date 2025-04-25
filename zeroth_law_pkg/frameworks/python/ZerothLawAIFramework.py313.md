@@ -1,7 +1,7 @@
 # Zeroth Law Framework (ZLF): AI-Driven Python Code Quality
 
 **Co-Author**: Trahloc colDhart
-**Version**: 2025-04-18T14:29:24+08:00 # AI run `date --iso-8601=seconds` to update
+**Version**: 2025-04-25T13:14:17+08:00 # AI run `date --iso-8601=seconds` to update
 
 ---
 
@@ -240,6 +240,24 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
 *   **Vetting**: **Prefer** standard libraries and reputable PyPI packages compatible with Python 3.13+. Check licenses.
 *   **Justification**: Document reasons for significant third-party dependencies in `NOTES.md` or relevant docstrings.
 *   **Locking:** **Recommend** using a lock file (`uv lock > uv.lock` or using `poetry.lock`) for reproducible environments, especially in CI.
+
+### 4.13 Command-Based Module Organization
+*(Supports Principles #3, #8)*
+
+* **Command-Directed Directory Structure (CDDS):** **Require** organizing CLI subcommand implementations into dedicated directories named after the subcommand itself.
+  * **Standard Pattern:** `src/zeroth_law/commands/<subcommand>/<subcommand>.py` contains the primary implementation of `zlt <subcommand>`.
+  * **Related Functionality:** Place supporting modules specific to that subcommand in the same directory (e.g., `src/zeroth_law/commands/analyze/parsers.py`).
+  * **Test Mirroring:** Tests **must** follow a parallel structure: `tests/commands/test_<subcommand>/test_<subcommand>.py`.
+
+* **Enforced Localization:** Each subcommand directory **must** act as a cohesive unit with clear responsibilities:
+  * **Limit Cross-Imports:** Subcommand implementations should minimize imports from other subcommand directories.
+  * **Shared Utilities:** Common functionality needed across commands belongs in a separate `src/zeroth_law/common/` directory.
+  * **Explicit Public API:** Each `<subcommand>/<subcommand>.py` module **must** export a well-defined interface via its `__all__` list.
+
+* **Self-Healing Mechanism:** When code is inadvertently written outside this structure:
+  * **Detection:** ZLT's structure verification tests **must** flag violations of the CDDS pattern.
+  * **Recovery Process:** The recovery procedure **must** include moving misplaced code to its proper location, updating imports, and running tests to verify functionality.
+  * **Test-First Migration:** Any structural reorganization **must** be preceded by tests that verify the desired behavior, following standard TDD practices.
 
 ---
 
