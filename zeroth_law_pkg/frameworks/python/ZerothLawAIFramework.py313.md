@@ -422,66 +422,51 @@ project_pkg/            # Project Root (e.g., zeroth_law_pkg)
 ├── src/                # Source code root
 │   └── project/        # Primary Python package (e.g., zeroth_law)
 │       ├── __init__.py
-│       │
-│       ├── common/     # Shared utilities across the project
-│       │   ├── __init__.py
-│       │   └── utils.py # Example utility module
-│       │
-│       ├── commands/   # CLI commands (following CDDS - Sec 4.14)
-│       │   ├── __init__.py
-│       │   │
-│       │   └── <cmd>/  # Directory for a specific command (e.g., analyze)
-│       │       ├── __init__.py
-│       │       ├── <cmd>.py       # Main command orchestrator/Click definition
-│       │       └── helpers.py     # Example helper module for the command
-│       │
-│       └── <area>/     # Other functional areas of the project
-│           ├── __init__.py
-│           └── component.py # Example component module
+│       ├── common/     # Example: Shared utilities
+│       ├── commands/   # Example: CLI commands (CDDS)
+│       │   └── <cmd>/
+│       ├── dev_scripts/ # Example: Development scripts
+│       └── <area>/     # Example: Other functional areas
 │
 ├── tests/              # Root directory for all tests
-│   ├── __init__.py     # Usually empty, marks tests as a package
-│   ├── conftest.py     # Global pytest fixtures
+│   ├── __init__.py
+│   ├── conftest.py     # Global fixtures
 │   │
-│   ├── test_common/    # Mirrors src/project/common/, prefixed
+│   ├── test_data/      # TOP-LEVEL: External data files for testing
+│   │   └── ... (Structure mirrors tests/zeroth_law/ hierarchy)
+│   │
+│   ├── test_interaction/ # TOP-LEVEL: Tests for interactions BETWEEN components
 │   │   ├── __init__.py
-│   │   └── test_utils.py # Unit tests for common/utils.py
+│   │   └── ... (Structure mirrors src/project/ hierarchy, prefixed)
 │   │
-│   ├── test_commands/  # Mirrors src/project/commands/, prefixed
-│   │   ├── __init__.py
-│   │   │
-│   │   └── test_<cmd>/ # Mirrors src/project/commands/<cmd>/, prefixed
-│   │       ├── __init__.py
-│   │       ├── conftest.py     # Fixtures specific to testing <cmd>
-│   │       │
-│   │       ├── test_<cmd>.py   # Unit tests for <cmd>.py orchestrator, CLI/E2E tests
-│   │       ├── test_helpers.py # Unit tests for helpers.py
-│   │       │
-│   │       └── integration/  # Explicit subdirectory for integration tests
-│   │           ├── __init__.py
-│   │           └── test_<cmd>_component_interaction.py # Example integration test
+│   ├── test_project_integrity/ # TOP-LEVEL: Tests for project health/rules
+│   │   └── ...
 │   │
-│   ├── test_<area>/    # Mirrors src/project/<area>/, prefixed
-│   │   ├── __init__.py
-│   │   └── test_component.py # Unit tests for component.py
-│   │
-│   └── test_data/      # External data files for testing
-│       └── test_commands/
-│           └── test_<cmd>/
-│               └── helpers/
-│                   └── sample_input.txt # Example test data mirroring test structure
+│   └── test_zeroth_law/     # <<<< CONTAINER for MIRRORED Unit/CLI Tests >>>>
+│       ├── __init__.py
+│       ├── test_common/    # Mirrors src/project/common/
+│       ├── test_commands/  # Mirrors src/project/commands/
+│       │   └── test_<cmd>/ # Mirrors src/project/commands/<cmd>/
+│       │       ├── test_<cmd>.py   # Unit tests for orchestrator + CLI tests
+│       │       └── test_helpers.py # Unit tests for helpers.py
+│       ├── test_dev_scripts/ # Mirrors src/project/dev_scripts/
+│       │   └── ...
+│       ├── test_<area>/    # Mirrors src/project/<area>/
+│       │   └── test_component.py
+│       └── test_*.py       # For files directly under src/project/
 │
 ├── .gitignore
-├── .pre-commit-config.yaml # Project-specific pre-commit hooks (Sec 6.4)
-├── pyproject.toml      # Project metadata, dependencies, tool configs (PEP 621)
-├── uv.lock             # Optional but recommended lock file (uv lock > uv.lock)
+├── .pre-commit-config.yaml # Sec 6.4
+├── pyproject.toml      # PEP 621
+├── uv.lock             # Optional lock file
 ├── README.md
-├── NOTES.md            # Decision log & rationale (Sec 8)
-└── TODO.md             # High-level goals & task tracking (Sec 8)
+├── NOTES.md            # Sec 8
+└── TODO.md             # Sec 8
 
 ```
-*(Note: The fuzzing structure (`tests/fuzz/`, `tests/fuzz/corpus/`) previously shown remains valid but is omitted here for brevity, focusing on the core source/test mirroring.)*
-*(Note: For monorepos where Git root != project root, custom Git hooks managed by ZLT might be needed to invoke the project-specific ZLT validation. See Section [8](#8-project-knowledge-management) & NOTES.md for context).)*
+*(Note: Detailed contents of src/ and tests/test_zeroth_law/ subdirs omitted for brevity)*
+*(Note: Fuzzing structure omitted.)*
+*(Note: Monorepo considerations still apply.)*
 
 ### 6.4 Pre-Commit Configuration (`.pre-commit-config.yaml`)
 *   **Location:** **Must** reside in the project root (alongside `pyproject.toml`).

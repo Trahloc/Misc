@@ -616,4 +616,35 @@ Implement a system that maintains an automated, persistent "map" of the codebase
     3.  **Verification:** The failure message explicitly instructs the AI/developer: "Database contains stale entry for `[module.function]` (not found in scan). Verify this deletion/move was intentional (check recent Git history). If intentional, remove the corresponding tests (if any) and then approve the pruning action."
     4.  **Pruning (Cleanup):** Rerun the generator script, adding the `--prune-stale-entries` flag followed by the *exact required confirmation string* (e.g., `--prune-stale-entries "Yes I have reviewed..."`). The script verifies the string before executing `DELETE` statements for verified stale entries.
 
-**Verification Tests (`
+**Verification Tests (`test_map_code_consistency`):**
+*   **Purpose:** To ensure the codebase map accurately reflects the current code structure and that no unexpected changes have occurred.
+*   **Implementation:** The test compares the current codebase structure against the map stored in the database.
+*   **Expected Result:** If the test passes, it indicates that the codebase map is consistent with the actual code structure.
+
+## ZLF Test Structure Convention (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - AI: Run `date --iso-8601=seconds`)
+
+**Decision:** Finalized the mandatory test structure for ZLF projects to ensure clarity, maintainability, and alignment with TDD/SRP principles, prioritizing explicitness for AI comprehension over external conventions.
+
+**Core Rules:**
+
+1.  **Source Naming:** Source files (`src/project/`) MUST NOT be prefixed with `test_`.
+2.  **Test Naming (Prefix Everything):** All test directories and files within `tests/` that correspond to source code MUST be prefixed with `test_`.
+3.  **Unit Test Mirroring (Containerized):** Unit tests MUST reside within a dedicated `tests/test_zeroth_law/` directory. Inside `tests/test_zeroth_law/`, the structure mirrors the source package (`src/project/`), using the `test_` prefixes for both directories and files. Each `test_*.py` file primarily tests its corresponding `*.py` source file.
+    *   Example: `src/project/commands/<cmd>/helpers.py` -> `tests/test_zeroth_law/test_commands/test_<cmd>/test_helpers.py`
+4.  **Interaction Tests (Top-Level Separation):** Tests verifying interactions *between* modules are located in a dedicated top-level `tests/test_interaction/` directory. The internal structure of `tests/test_interaction/` mirrors the `src/` structure (prefixed) to group related interaction tests.
+    *   Example: `tests/test_interaction/test_commands/test_<cmd>/test_orchestrator_helper_interaction.py`
+5.  **CLI/E2E Tests:** Tests invoking the command-line interface belong in the *mirrored* test file corresponding to the CLI module being exercised (within `tests/test_zeroth_law/`).
+    *   Example: `tests/test_zeroth_law/test_commands/test_<cmd>/test_<cmd>.py` (for `zlt <cmd> ...`)
+    *   Example: `tests/test_zeroth_law/test_cli/test_main.py` (for main `zlt` entry point tests)
+6.  **Project Integrity Tests:** Tests checking overall repository health, meta-rules, or framework compliance reside in the top-level `tests/test_project_integrity/` directory.
+7. **Framework Structure Tests:** Tests validating the project layout itself reside in `tests/test_project_integrity/` (e.g., `test_framework_structure.py`).
+8.  **Test Data:** Test data resides in the top-level `tests/test_data/`, ideally mirroring the `tests/test_zeroth_law/` structure for clarity.
+
+**Rationale:** This structure uses the `tests/test_zeroth_law/` container to maintain a pure, unambiguous mirror for unit tests and associated CLI tests, fully adhering to the 'Prefix Everything' convention. Top-level directories (`test_interaction`, `test_project_integrity`, `test_data`) provide clear, separate locations for non-unit tests and data, enhancing clarity for AI and automated tooling.
+
+**Implementation:**
+*   The `tests/` directory has been restructured accordingly, moving mirrored tests into `tests/test_zeroth_law/`.
+*   `ZerothLawAIFramework.py313.md` (Section 6.3) has been updated.
+*   The structural verification test (`test_framework_structure.py`) was moved and updated.
+
+---
