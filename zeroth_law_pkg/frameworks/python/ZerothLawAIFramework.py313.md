@@ -107,6 +107,12 @@ These principles form the foundation of the ZLF and guide the AI developer's act
     *   **Runtime:** Applications **must** store user-specific files according to the XDG Base Directory Specification (using environment variables like `$XDG_CONFIG_HOME`). Write tests verifying correct file placement.
     *   **Tooling:** Development/CI tooling **must**, where configurable, be set up to use XDG-compliant directories for caches/config, enforced via `pyproject.toml` and only rely on environment variables as a last resort. (Verification via configuration checks, potentially by ZLT).
 15. **Input Robustness (Where Applicable)**: Modules processing complex or untrusted external data (e.g., parsers, network handlers) **must** demonstrate resilience against malformed or unexpected inputs. (Enforced via fuzz testing orchestrated by ZLT, see Section [4.X](#4x-input-robustness-verification-via-fuzz-testing) - *To be added*).
+16. **Complexity Decoupling via Immutability**
+    **Mandate:** Software complexity must be decoupled and constrained through immutability as the default approach.
+    * **Values Over Variables:** Data structures must be immutable by default. Any mutable state must be explicitly justified with a documented rationale.
+    * **State Isolation:** Stateful components must be isolated behind pure interfaces, allowing the majority of the codebase to operate on immutable values.
+    * **Final Collections:** Prefer immutable/frozen collections (`tuple`, `frozenset`, `types.MappingProxyType`) over their mutable counterparts.
+    * **Data Flow > State Change:** Design systems to transform data through pipelines rather than modifying state in place.
 
 ---
 
@@ -159,6 +165,11 @@ This section details specific practices and metrics used to assess compliance wi
     *   **Prefer** tuples over lists for fixed collections.
     *   **Prefer** functional style (return new values) over in-place modification.
     *   **Require** writing tests specifically verifying the absence of unintended side effects for functions intended to be pure.
+*   **Function Purity Metrics**:
+    *   **Pure Function Density:** At least 80% of functions must be pure (no side effects, deterministic output based solely on inputs).
+    *   **Effect Isolation:** Side effects (I/O, state mutation) must be isolated to specific boundary functions, clearly marked in docstrings.
+    *   **Referential Transparency:** Functions should strive for referential transparency - the ability to replace a function call with its return value without changing program behavior.
+    *   **ZLT Verification:** The ZLT must include tools to measure function purity through static analysis.
 
 ### 4.6 Error Reporting & Logging
 *(Supports Principle #10)*
@@ -258,6 +269,31 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
   * **Detection:** ZLT's structure verification tests **must** flag violations of the CDDS pattern.
   * **Recovery Process:** The recovery procedure **must** include moving misplaced code to its proper location, updating imports, and running tests to verify functionality.
   * **Test-First Migration:** Any structural reorganization **must** be preceded by tests that verify the desired behavior, following standard TDD practices.
+
+### 4.15 Conditional Simplification
+  * **Data-Driven Conditionals:** Replace complex conditional chains with data structures (dictionaries, lookup tables).
+  * **Pattern Matching:** When appropriate, use Python 3.10+ pattern matching instead of nested if/else chains.
+  * **Declarative Rules:** For complex business logic, express rules declaratively using rule engines or specialized DSLs rather than imperative conditionals.
+  * **Single Exit Point:** Prefer functions with a single return statement that follows linear data transformation steps.
+
+### 4.16 Module Organization via Namespaces
+  * **Functional Domains:** Organize code into namespaces that reflect functional domains rather than technical divisions.
+  * **Command-Directed Directory Structure:** Following Rich Hickey's namespacing principle, each subcommand resides in its own namespace (`src/zeroth_law/commands/<subcommand>/`) with related functionality.
+  * **Infrastructure/Domain Separation:** Strictly separate infrastructure concerns (CLI parsing, logging) from domain logic.
+  * **Complects Avoidance:** Modules must not "complect" (intertwine) multiple responsibilities. Each module should transform data in a specific, well-defined way.
+
+### 4.17 Data Structure Simplicity
+  * **Maps as Primary Structure:** Prefer dictionary/mapping structures for representing domain entities.
+  * **Value Objects:** Use `@dataclass(frozen=True)` to create value objects with named fields.
+  * **Composition Over Inheritance:** Build complex structures through composition of simple data types.
+  * **Data Format Consistency:** External data must be normalized to consistent internal representations immediately upon entry to the system.
+  * **Schema-Driven Development:** Define Pydantic models before implementing logic that uses them, ensuring data structure clarity.
+
+### 4.18 Complexity Boundary Documentation
+  * **Complexity Annotations:** Mark unavoidable complex components with explicit `# COMPLEXITY: [reason]` comments.
+  * **Complexity Isolation:** Complex subsystems must be isolated behind simple interfaces.
+  * **Complecting Prevention:** When AI code review detects "complecting" (intertwining of separate concerns), the code must be refactored before merging.
+  * **Tests as Specifications:** Tests must serve as clear specifications of behavior, written in terms of inputs and outputs rather than implementation details.
 
 ---
 
