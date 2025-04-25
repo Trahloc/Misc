@@ -6,7 +6,8 @@ from pathlib import Path
 
 # --- Configuration ---
 try:
-    WORKSPACE_ROOT = Path(__file__).parent.parent.resolve()
+    # Go up 4 levels to reach project root (zeroth_law_pkg)
+    WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 except NameError:
     WORKSPACE_ROOT = Path.cwd().resolve()
 

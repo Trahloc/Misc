@@ -11,7 +11,7 @@ current_dir = Path(__file__).parent
 src_path = current_dir.parent.parent.parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-from tests.analyzer.python.analyzer_test_cases import (  # noqa: E402
+from tests.test_data.test_analyzer.python.analyzer_test_cases import (  # noqa: E402
     complexity_test_cases,
     docstring_test_cases,
     footer_test_cases,
@@ -20,7 +20,7 @@ from tests.analyzer.python.analyzer_test_cases import (  # noqa: E402
     parameter_test_cases,
     statement_test_cases,
 )
-from tests.analyzer.python.case_types import AnalyzerCase  # noqa: E402
+from tests.test_data.test_analyzer.python.case_types import AnalyzerCase  # noqa: E402
 from zeroth_law.analyzer.python.analyzer import (  # noqa: E402
     analyze_complexity,
     analyze_docstrings,

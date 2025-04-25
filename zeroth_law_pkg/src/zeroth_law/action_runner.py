@@ -1,13 +1,14 @@
 # FILE: src/zeroth_law/action_runner.py
 """Handles the execution of underlying developer tools based on mapping."""
 
-import logging
+# import logging # Remove standard logging
 import os
 import subprocess
 from pathlib import Path
 from typing import Any
+import structlog  # Import structlog
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()  # Use structlog
 
 # Constants
 # MAPPING_FILE_NAME = "tool_mapping.json" # Keep commented out or remove definition if defined elsewhere
@@ -165,11 +166,11 @@ def _execute_tool(
             env=env_vars,
         )
 
-        # Handle output/logging based on json_output flag
-        json_output = cli_args.get("json", False)
+        # Handle output/logging based on output_json flag from cli_args
+        output_json_flag = cli_args.get("output_json", False)
         stdout = result.stdout.strip()
 
-        if json_output:
+        if output_json_flag:
             if stdout:  # Only print if there is something to print
                 print(stdout)  # Print raw output for JSON flag
         else:

@@ -199,7 +199,7 @@ def test_generate_project_overview_db_error(table_name):
     mock_db.__getitem__.side_effect = mock_getitem
 
     # Patch the Database class to return our mock_db instance
-    with patch("tests.codebase_map.map_reporter.sqlite_utils.Database") as MockDatabase:
+    with patch("src.zeroth_law.dev_scripts.code_map.map_reporter.sqlite_utils.Database") as MockDatabase:
         MockDatabase.return_value = mock_db
         # Call the function - it will use the mocked Database instance
         # Note: We don't need sample_db fixture here as the DB is mocked
@@ -240,7 +240,7 @@ def test_generate_module_details_db_error(table_name):
     mock_db.__getitem__.side_effect = mock_getitem
 
     # Patch the Database class to return our mock_db instance
-    with patch("tests.codebase_map.map_reporter.sqlite_utils.Database") as MockDatabase:
+    with patch("src.zeroth_law.dev_scripts.code_map.map_reporter.sqlite_utils.Database") as MockDatabase:
         MockDatabase.return_value = mock_db
         # Call the function - it will use the mocked Database instance
         # Note: We don't need sample_db fixture here as the DB is mocked

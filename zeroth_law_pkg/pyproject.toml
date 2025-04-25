@@ -227,25 +227,16 @@ blacklist = [
 
 # Add pytest configuration section
 [tool.pytest.ini_options]
-addopts = [
-    "--color=yes",
-    "--log-format='%(levelname)s:%(name)s:%(message)s'", # Use single quotes inside double for TOML
-    "--log-level=WARNING",
-    #    "--cov=src/zeroth_law",
-    #    "--cov-report=term-missing",
-    #    "-n", "auto",
-]
-testpaths = ["tests"]
-# Add the markers list INSIDE this section
+# directories to search for tests
+# testpaths = [
+#     "tests",
+# ]
+# Add custom markers here
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "needs_network: marks tests that require network access",
-    "skip_in_ci: marks tests to be skipped in CI environments",
-    "wip: marks tests as work-in-progress",
-    "coverage_check: marks tests related to coverage checks",
+    "zlf_compliance: marks tests related to Zeroth Law Framework compliance checks",
 ]
-# python_files = "tests.py test_*.py *_test.py" # Example if needed
+# Default options
+addopts = "-ra -q --color=yes --disable-warnings"
 
 [tool.ruff]
 # Allow fixing errors automatically.

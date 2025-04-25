@@ -26,9 +26,10 @@ class AnalyzerCase:
     def get_content(self) -> str:
         """Get the content of the test data file."""
         # Calculate path relative to this file's location to find tests/test_data/
-        # tests/analyzer/python/ -> tests/analyzer/ -> tests/
-        tests_dir = Path(__file__).parent.parent.parent
-        test_data_dir = tests_dir / "test_data" / "analyzer" / "python"
+        # tests/test_data/test_analyzer/python -> tests/test_data/test_analyzer -> tests/test_data
+        base_test_data_dir = Path(__file__).parent.parent  # Should point to tests/test_data/test_analyzer
+        # Now construct the specific path for python analyzer test data
+        test_data_dir = base_test_data_dir / "python"
         file_path = test_data_dir / self.input_file
         # Add error handling for missing test data file
         if not file_path.is_file():

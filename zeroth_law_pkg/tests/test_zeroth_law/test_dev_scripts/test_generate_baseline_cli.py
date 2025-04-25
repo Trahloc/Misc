@@ -35,8 +35,10 @@ from src.zeroth_law.dev_scripts.tool_index_utils import get_index_entry
 
 # --- Helper to get path to test data helper script --- #
 def get_helper_script_path(script_name: str) -> Path:
-    # Assumes scripts are in tests/test_data/dev_scripts/dummy_outputs/
-    return Path(__file__).parent.parent / "test_data" / "dev_scripts" / "dummy_outputs" / script_name
+    # Go up to project root and then specify path to test data
+    project_root = Path(__file__).resolve().parents[3]
+    # Correct the subdirectory name
+    return project_root / "tests" / "test_data" / "test_dev_scripts" / "dummy_outputs" / script_name
 
 
 # --- Helper to copy and prepare script in tmp_path --- #

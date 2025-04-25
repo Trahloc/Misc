@@ -5,7 +5,8 @@ Core logic for generating/verifying baseline files (TXT, index entry, skeleton J
 Called by tests (e.g., test_ensure_txt_baselines_exist.py) and potentially CLI wrappers.
 """
 
-import logging
+# import logging # Remove standard logging
+import structlog  # Import structlog
 import subprocess
 import time
 import json
@@ -25,7 +26,7 @@ from src.zeroth_law.dev_scripts.tool_index_utils import (
     load_tool_index,
 )
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()  # Use structlog
 
 
 class BaselineStatus(Enum):

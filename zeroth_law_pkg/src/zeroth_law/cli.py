@@ -2,20 +2,21 @@
 """Command Line Interface for Zeroth Law Auditor."""
 
 import json
-import logging
+import structlog
+import sys
+import os
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from importlib.metadata import version, PackageNotFoundError
 
 import click
+import logging
 
 from zeroth_law.action_runner import run_action
 from zeroth_law.common.config_loader import load_config
-from zeroth_law.file_processor import find_files_to_audit, process_files
-from zeroth_law.exceptions import ConfigError, GitError
-from zeroth_law import __version__ as zlt_version  # Get version from __init__
-from zeroth_law.logging_utils import setup_logging, log_invocation
+from zeroth_law.file_processor import find_files_to_audit
 from zeroth_law.common.git_utils import find_git_root, get_staged_files, identify_project_roots_from_files
 from zeroth_law.common.path_utils import find_project_root
 
@@ -39,28 +40,59 @@ from zeroth_law.commands.audit.audit import audit
 # Import the pre-commit analyzer
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 
-# --- Early Logging Setup --- START
-# Configure root logger early to prevent premature debug logs (e.g., during --help)
-# Set a sensible default level here.
-DEFAULT_LOG_LEVEL = logging.WARNING
-log_format = "%(asctime)s [%(levelname)-8s] %(message)s"
-log_datefmt = "%Y-%m-%d %H:%M:%S"
-logging.basicConfig(level=DEFAULT_LOG_LEVEL, format=log_format, datefmt=log_datefmt, force=True)
+# --- Early Structlog Setup --- START
+# Configure structlog early with basic console output
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        # Use ConsoleRenderer for initial setup, might be adjusted later based on flags
+        structlog.dev.ConsoleRenderer(),
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
 
-# Setup logger for this module *after* basicConfig
-log = logging.getLogger(__name__)
-log.debug("Initial basicConfig set to %s", logging.getLevelName(DEFAULT_LOG_LEVEL))
-# --- Early Logging Setup --- END
+# Define default log level equivalent (using structlog levels implicitly handled by filtering later)
+DEFAULT_LOG_LEVEL_NAME = "warning"  # Use names for clarity
+
+# Get the logger using structlog
+log = structlog.get_logger()
+log.debug("Initial structlog configuration applied.")
+# --- Early Structlog Setup --- END
+
+# --- Determine Version ---
+try:
+    zlt_version = version("zeroth-law")
+except PackageNotFoundError:
+    zlt_version = "unknown"  # Fallback if package is not installed properly
 
 # Context settings for Click
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 
-# --- Logging Setup ---
-# Placeholder - Basic config done in cli_group for now
-def setup_logging(log_level: int, use_color: bool) -> None:
-    """Set up logging based on verbosity and color preference."""
-    # This function might be needed if more complex setup (like colorama) is added
+# --- Logging Setup Function (May need adjustment for structlog) ---
+def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
+    """Set up structlog logging based on level and color preference."""
+    # Convert level name to standard logging level number for filtering
+    level_num = getattr(logging, level_name.upper(), logging.WARNING)
+
+    # Reconfigure structlog based on CLI args
+    # TODO: Add more sophisticated configuration based on flags
+    # For now, just set the minimum level filter on the underlying stdlib logger
+    # This requires getting the actual root logger configured by structlog
+    # Note: structlog doesn't directly set the level, it relies on stdlib filtering
+    stdlib_root_logger = logging.getLogger()  # Get the standard lib root logger
+    stdlib_root_logger.setLevel(level_num)
+
+    # TODO: Implement color handling
+    # Maybe swap ConsoleRenderer based on `use_color`
+    log.debug("Structlog logging level filter adjusted (via stdlib) to %s", level_name.upper())
 
 
 # --- Core File Finding Logic ---
@@ -127,7 +159,7 @@ def run_audit(
 
 # === Main CLI Group Definition ===
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.version_option(package_name="zeroth-law", prog_name="zeroth-law")
+@click.version_option(version=zlt_version, package_name="zeroth-law", prog_name="zeroth-law")
 @click.option(
     "-v",
     "--verbose",
@@ -163,26 +195,18 @@ def cli_group(
     ctx: click.Context, verbosity: int, quiet: bool, color: bool | None, config_path_override: Path | None
 ) -> None:
     """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
-    # Determine effective log level based on flags
+    # Determine effective log level name based on flags
     if quiet:
-        log_level = logging.ERROR
+        level_name = "error"
     elif verbosity == 1:
-        log_level = logging.INFO
+        level_name = "info"
     elif verbosity >= 2:
-        log_level = logging.DEBUG
+        level_name = "debug"
     else:
-        # Keep the default level set by basicConfig if no flags are specified
-        log_level = DEFAULT_LOG_LEVEL  # Use the default established earlier
+        level_name = DEFAULT_LOG_LEVEL_NAME
 
-    # Adjust the level of the root logger
-    current_level = logging.getLogger().getEffectiveLevel()
-    if log_level != current_level:
-        logging.getLogger().setLevel(log_level)
-        log.debug("Log level adjusted by CLI args to: %s", logging.getLevelName(log_level))
-    else:
-        log.debug("Log level remains at default: %s", logging.getLevelName(current_level))
-
-    # TODO: Add color handling based on 'color' option
+    # Setup/Adjust structlog logging based on determined level and color option
+    setup_structlog_logging(level_name, color)
 
     # Find project root (might be needed by commands)
     project_root = find_project_root(start_path=Path.cwd())

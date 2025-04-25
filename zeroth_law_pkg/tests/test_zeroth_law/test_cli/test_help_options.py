@@ -256,25 +256,27 @@ def test_option_help_text_appears_in_output():
                     ), f"Help text for {param.name} missing key words: {key_words}"
 
     # Check each subcommand's help text
-    for cmd_name, cmd in cli_group.commands.items():
-        result = runner.invoke(cli_group, [cmd_name, "--help"], catch_exceptions=False)
-        # Temporarily ONLY assert the exit code to isolate the failure
-        assert (
-            result.exit_code == 0
-        ), f"Invoking '{cmd_name} --help' failed with exit code {result.exit_code}. Output:\n{result.output}"
+    # Iterate over a copy of the items to avoid RuntimeError
+    for cmd_name, cmd in list(cli_group.commands.items()):
+        if hasattr(cmd, "params"):
+            cmd_result = runner.invoke(cli_group, [cmd_name, "--help"], catch_exceptions=False)
+            # Temporarily ONLY assert the exit code to isolate the failure
+            assert (
+                cmd_result.exit_code == 0
+            ), f"Invoking '{cmd_name} --help' failed with exit code {cmd_result.exit_code}. Output:\n{cmd_result.output}"
 
-        # --- Temporarily Commented Out Help Text Check ---
-        # # Check each option's help text for the subcommand
-        # for param in cmd.params:
-        #     if hasattr(param, "help") and param.help and not param.hidden:
-        #         # Extract key words (words with 5+ chars are likely significant)
-        #         key_words = {w for w in param.help.lower().split() if len(w) >= 5 and w.isalnum()}
-        #         if not key_words: # If help text is short, use all words
-        #             key_words = set(param.help.lower().split())
-        #
-        #         help_text_lower = result.output.lower()
-        #         assert any(kw in help_text_lower for kw in key_words), (
-        #             f"Help text keyword(s) for option '{param.name}' ('{key_words}') "
-        #             f"not found in '{cmd_name} --help' output.\nOutput:\n{result.output}"
-        #         )
-        # --- End Temporarily Commented Out ---
+            # --- Temporarily Commented Out Help Text Check ---
+            # # Check each option's help text for the subcommand
+            # for param in cmd.params:
+            #     if hasattr(param, "help") and param.help and not param.hidden:
+            #         # Extract key words (words with 5+ chars are likely significant)
+            #         key_words = {w for w in param.help.lower().split() if len(w) >= 5 and w.isalnum()}
+            #         if not key_words: # If help text is short, use all words
+            #             key_words = set(param.help.lower().split())
+            #
+            #         help_text_lower = cmd_result.output.lower()
+            #         assert any(kw in help_text_lower for kw in key_words), (
+            #             f"Help text keyword(s) for option '{param.name}' ('{key_words}') "
+            #             f"not found in '{cmd_name} --help' output.\nOutput:\n{cmd_result.output}"
+            #         )
+            # --- End Temporarily Commented Out ---

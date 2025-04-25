@@ -388,16 +388,6 @@ def command_sequence_to_id(command_parts: tuple[str, ...]) -> str:
     return "_".join(command_parts)
 
 
-def calculate_crc32(text_content: str) -> str:  # Ensure using correct name if defined here, or import
-    """Calculates the CRC32 checksum of text content and returns it as a hex string."""
-    # Assuming this function is needed by tests directly, otherwise it could be removed
-    # If kept, ensure it matches the implementation in lib/crc.py if necessary.
-    CRC32_HEX_WIDTH = 8
-    crc_val = zlib.crc32(text_content.encode("utf-8", errors="replace"))
-    hex_str = format(crc_val & 0xFFFFFFFF, f"0{CRC32_HEX_WIDTH}x")
-    return f"0x{hex_str.upper()}"
-
-
 # --- ADDED: Fixture to auto-fix JSON files --- #
 @pytest.fixture(scope="session", autouse=True)
 def auto_fix_json_files(WORKSPACE_ROOT):

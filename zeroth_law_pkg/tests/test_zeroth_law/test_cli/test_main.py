@@ -15,8 +15,9 @@ from click.testing import CliRunner
 
 # Import cli_module itself
 import src.zeroth_law.cli as cli_module
-from src.zeroth_law.config_loader import load_config
-from src.zeroth_law.file_finder import find_python_files
+from zeroth_law.common.config_loader import load_config
+
+# from src.zeroth_law.file_finder import find_python_files # Removed erroneous import
 from src.zeroth_law.cli import add_dynamic_commands
 
 # Ensure src is in path
@@ -25,6 +26,9 @@ sys.path.insert(0, str(current_dir.parent / "src"))
 
 # Setup basic logging for tests that might use it implicitly
 logger = logging.getLogger(__name__)
+
+# Add logger instance
+log = logging.getLogger(__name__)
 
 
 # Helper to get path to CLI test data file
@@ -47,12 +51,13 @@ def test_restore_hooks_not_git_repo(mocker, tmp_path: Path, caplog):
     original_cwd = Path.cwd()
     os.chdir(tmp_path)  # Change CWD to the temp dir
     try:
-        from src.zeroth_law.git_utils import restore_standard_hooks
+        from zeroth_law.common.git_utils import restore_standard_hooks
 
-        restore_standard_hooks(tmp_path)
+        restore_standard_hooks(git_root_path=tmp_path)
+        pytest.fail("restore_standard_hooks did not raise ValueError for non-repo path")
     except ValueError as e:
-        # Expected exception due to pre-commit install failure
-        pass
+        assert "pre-commit install" in str(e) or "pre-commit' command not found" in str(e)
+        log.info(f"Caught expected error: {e}")
     finally:
         os.chdir(original_cwd)
 
@@ -81,7 +86,8 @@ def test_zlt_lint_loads_and_runs(tmp_path, monkeypatch):
     # Create dummy pyproject.toml in tmp_path (which is the CWD due to fixture)
     config_content_str = """
 [tool.zeroth-law]
-actions = { lint = { description = "Run check-yaml.", tools = ["check-yaml"] } }
+# Provide tools as a dictionary with a dummy command
+actions = { lint = { description = "Run check-yaml.", tools = { "check-yaml" = { command = ["echo", "dummy-check-yaml"] } } } }
 """
     config_file = tmp_path / "pyproject.toml"
     config_file.write_text(config_content_str)

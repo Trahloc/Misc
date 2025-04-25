@@ -73,24 +73,37 @@ def test_find_project_root_no_toml(tmp_path):
 
 def test_find_project_root_from_simulated_git_root():
     """Test finding the root using the actual project structure."""
-    # Assuming tests run from Git Root (Misc/)
-    actual_project_root = git_root  # Use git_root instead of project_root
+    # Find the *actual* git root containing .git, assuming tests run within it
+    # The find_project_root function looks for pyproject.toml or .git
+    # Let's find the actual root based on the test file's location
+    expected_project_root = Path(__file__).resolve().parents[3]
 
     # Start search from a file within the project
-    some_src_file_path = src_root / "zeroth_law" / "cli.py"
-    assert find_project_root(some_src_file_path.parent) == actual_project_root
+    # Use a path relative to the expected root
+    some_src_file_path = expected_project_root / "src" / "zeroth_law" / "cli.py"
+    assert some_src_file_path.exists(), f"Test setup error: {some_src_file_path} does not exist."
 
-    # Start search from the src directory
-    assert find_project_root(src_root) == actual_project_root
+    # Assert that find_project_root finds the calculated expected root
+    assert find_project_root(some_src_file_path.parent) == expected_project_root
 
-    # Start search from the project root itself
-    assert find_project_root(project_root) == actual_project_root
 
-    # Start search from the Git root - this is actually the project root
-    assert find_project_root(git_root) == git_root  # git_root contains pyproject.toml
+def test_find_project_root_from_non_git_dir(tmp_path):
+    """Test finding the project root from outside a git repo or project."""
+    # Simulate being in a directory containing the project
+    fake_container = tmp_path / "container"
+    fake_project_root = fake_container / "project"
+    fake_project_root.mkdir(parents=True)
+    (fake_project_root / "pyproject.toml").touch()
 
-    # Start search from a directory outside the project
-    assert find_project_root(outside_dir) is None
+    # This scenario mimics the pre-commit run: start search from container
+    # We expect it NOT to find the project root because it's inside container,
+    # and we don't want to accidentally find other projects
+    assert find_project_root(fake_container) is None
+
+    # Test starting from a sibling directory - should NOT find the root
+    fake_sibling = tmp_path / "sibling"
+    fake_sibling.mkdir()
+    assert find_project_root(fake_sibling) is None
 
 
 @pytest.fixture

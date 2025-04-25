@@ -10,11 +10,14 @@ import time
 import subprocess
 import sys
 import os  # Need os for environment variables
+import logging
 
-# Assuming the script is runnable and in the correct location relative to tests
-# Adjust the path if necessary based on how tests are run
-GENERATOR_SCRIPT = Path(__file__).parent.parent.parent / "src/zeroth_law/dev_scripts/code_map/map_generator.py"
-WORKSPACE_ROOT = Path(__file__).parent.parent.parent  # Define workspace root for PYTHONPATH
+# Define workspace root relative to this test file
+WORKSPACE_ROOT = Path(__file__).parent.parent.parent.parent
+GENERATOR_SCRIPT = WORKSPACE_ROOT / "src" / "zeroth_law" / "dev_scripts" / "code_map" / "map_generator.py"
+# Define schema path relative to workspace root
+SCHEMA_FILE = WORKSPACE_ROOT / "src" / "zeroth_law" / "dev_scripts" / "code_map" / "schema.sql"
+log = logging.getLogger(__name__)
 
 
 # Helper function to run the generator script
@@ -26,6 +29,8 @@ def run_generator(db_path: Path, src_path: Path, *args, expect_fail: bool = Fals
         str(db_path),
         "--src",
         str(src_path),
+        "--schema",  # Add schema argument
+        str(SCHEMA_FILE),  # Add schema path
         "-v",  # Add verbose flag to get debug logs potentially
     ]
     cmd.extend(args)
@@ -302,10 +307,6 @@ def func_one(): pass # func_two removed
     # Verify audit logs the stale items (check stderr stream)
     # Note: Relies on the logger writing to stderr by default for WARNING level
     # Updated expected counts: 1 module, 1 function = 2 DB entries, 2 unique elements
-    assert "Audit complete. Found 3 potentially stale DB entries corresponding to 3 unique code elements." in stderr
-    # The count is 3 because the stale items list contains: ('module', id, path), ('class', id, path, name), ('function', id, path, class, name)
-    # But the audit logic correctly identifies only Module B and Func Two as needing user attention via logs.
-    # Let's adjust the assertion to match the exact log message produced by the refined audit logic.
     assert "Audit complete. Found 2 potentially stale DB entries corresponding to 2 unique code elements." in stderr
 
 
@@ -338,7 +339,13 @@ def func_keep(): pass
     assert len(query_db(db_file, "SELECT id FROM functions")) == 2  # Should still have 2
 
     # Run WITH the flag - check logs and DB state
-    stdout_flag, stderr_flag = run_generator(db_file, src_dir, "--prune-stale-entries", PRUNE_CONFIRMATION_STRING)
+    stdout_flag, stderr_flag = run_generator(
+        db_file,
+        src_dir,
+        "--prune",  # Use --prune action
+        "--confirm-prune",  # Use --confirm-prune for the string
+        PRUNE_CONFIRMATION_STRING,
+    )
     # Check stderr for pruning messages
     assert "Pruning 1 confirmed stale entries..." in stderr_flag
     assert "Pruned 1 stale functions." in stderr_flag
@@ -347,7 +354,7 @@ def func_keep(): pass
 
 
 # Import constant for use in test
-from tests.codebase_map.map_generator import PRUNE_CONFIRMATION_STRING
+from src.zeroth_law.dev_scripts.code_map.map_generator import PRUNE_CONFIRMATION_STRING
 
 
 def test_parsing_error_handling(tmp_path):

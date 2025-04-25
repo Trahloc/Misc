@@ -3,17 +3,20 @@ Handles loading the tool index and dynamically generating Click commands.
 """
 
 import json
-import logging
+
+# import logging # Remove standard logging
 from pathlib import Path
 from typing import Any, Dict, Callable, Optional, Type
 import click
 import importlib.resources  # Import importlib.resources
+import structlog  # Import structlog
 
 from zeroth_law.common.path_utils import find_project_root
-from zeroth_law.managed_tools import get_tool_mapping
+
+# from zeroth_law.managed_tools import get_tool_mapping # Removed unused import
 from zeroth_law.action_runner import run_action
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()  # Use structlog
 
 GLOBAL_OPTIONS = {"verbose", "quiet", "config"}
 GLOBAL_SHORT_OPTIONS = {"-v", "-q", "-c"}

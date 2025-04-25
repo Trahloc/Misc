@@ -12,7 +12,7 @@ MODULES_TO_CHECK = [
     "zeroth_law.cli",
     "zeroth_law.action_runner",
     "zeroth_law.dynamic_commands",
-    "zeroth_law.config_loader",
+    "zeroth_law.common.config_loader",
     "zeroth_law.dev_scripts.baseline_generator",  # Example of checking dev scripts too
     # Add other core modules as needed
 ]
@@ -58,7 +58,9 @@ def test_enforce_structlog_usage():
     as mandated by ZLF Section 4.6.
     """
     violations = []
-    project_root = Path(__file__).resolve().parents[2]  # Assumes tests/test_zlf_compliance/
+    project_root = (
+        Path(__file__).resolve().parents[4]
+    )  # Go up 4 levels from tests/test_zeroth_law/test_common/test_zlf_compliance
     src_root = project_root / "src"
 
     for module_base_name in MODULES_TO_CHECK:

@@ -8,20 +8,20 @@ The module supports both tomllib (Python 3.11+) and tomli (for older versions)
 for parsing TOML configuration files.
 """
 
-import logging
+# import logging # Remove standard logging import
 import os
 import tomllib
 from pathlib import Path
 from typing import Any
 
-import structlog
+import structlog  # Import structlog
 
 # Import defaults from shared module
 from zeroth_law.config_defaults import DEFAULT_CONFIG
 from zeroth_law.common.config_validation import validate_config
 
 # Setup logging
-log = structlog.get_logger()
+log = structlog.get_logger()  # Use structlog
 
 # Constants
 _CONFIG_SECTION = "tool.zeroth-law"

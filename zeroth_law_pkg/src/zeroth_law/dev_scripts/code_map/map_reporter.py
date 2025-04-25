@@ -10,12 +10,7 @@ from pathlib import Path
 import logging
 import sys
 import sqlite_utils
-from tests.codebase_map.cli_utils import (
-    add_common_db_arguments,
-    add_common_logging_arguments,
-    configure_logging,
-    resolve_paths,
-)
+from tabulate import tabulate
 
 # --- CONSTANTS ---
 DB_PATH_DEFAULT = Path("tests/codebase_map/code_map.db")

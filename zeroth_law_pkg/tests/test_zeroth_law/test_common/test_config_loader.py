@@ -8,11 +8,18 @@ from unittest import mock
 import pytest
 import toml
 
+# Import necessary components from the config_loader module
 from zeroth_law.common.config_loader import (
     DEFAULT_CONFIG,
     load_config,
-    merge_configs,
-    ConfigError,
+    merge_with_defaults,
+    find_pyproject_toml,  # Add missing function
+    parse_toml_file,  # Add missing function
+    extract_config_section,  # Add missing function
+    TomlDecodeError,  # Add missing exception base class
+    # Import constants used in tests (consider if they should be exposed or tests refactored)
+    _CONFIG_PATH_ENV_VAR,  # Add missing constant
+    _XDG_CONFIG_HOME_ENV_VAR,  # Add missing constant
 )
 
 
@@ -49,7 +56,7 @@ def test_parse_toml_file_import_error(tmp_path):
 
     # Mock the TOML loader to raise ImportError
     with mock.patch(
-        "zeroth_law.config_loader._TOML_LOADER.load",
+        "src.zeroth_law.common.config_loader._TOML_LOADER.load",
         side_effect=ImportError("No module named 'tomli'"),
     ):
         with pytest.raises(ImportError):
@@ -68,7 +75,9 @@ def test_parse_toml_file_decode_error(tmp_path):
         pass
 
     # Mock the dependencies - mock tomllib.load
-    with mock.patch("tomllib.load", side_effect=MockTOMLDecodeError("Mock decode error")) as mock_load:
+    with mock.patch(
+        "src.zeroth_law.common.config_loader.tomllib.load", side_effect=MockTOMLDecodeError("Mock decode error")
+    ) as mock_load:
         # Act & Assert
         with pytest.raises(TomlDecodeError, match="Invalid TOML"):
             parse_toml_file(config_file)
@@ -133,7 +142,7 @@ def test_merge_with_defaults_validation_error():
     invalid_config = {"max_complexity": "not an int"}
 
     # Merge with defaults (should not raise, but log a warning)
-    with mock.patch("zeroth_law.config_loader.validate_config") as mock_validate:
+    with mock.patch("src.zeroth_law.common.config_loader.validate_config") as mock_validate:
         # Setup mock to raise exception with errors method
         class MockValidationError(Exception):
             def errors(self):

@@ -4,14 +4,17 @@
 import pytest  # Import pytest for fixtures
 from pathlib import Path
 from unittest.mock import MagicMock  # Keep MagicMock for analyzer tests
+
 # Remove patch as we aim to eliminate internal patching here
 # from unittest.mock import MagicMock, patch
+from click.testing import CliRunner
 
 from src.zeroth_law.cli import analyze_files, find_files_to_audit
 
 # Import the *real* find_python_files to potentially test its behavior if needed,
 # although the primary target is testing find_files_to_audit's integration.
-from src.zeroth_law.file_finder import find_python_files
+from zeroth_law.common.file_finder import find_python_files
+from src.zeroth_law.cli import cli_group
 
 
 # --- Tests for find_files_to_audit ---
