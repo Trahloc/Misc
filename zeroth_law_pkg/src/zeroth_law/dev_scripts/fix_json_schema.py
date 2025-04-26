@@ -9,15 +9,12 @@ from pathlib import Path
 from zeroth_law.common.path_utils import find_project_root
 
 # Add project root to sys.path to ensure correct module resolution
-project_root = find_project_root()
+project_root = find_project_root(start_path=Path(__file__).resolve())
 
 # Add project root to sys.path to allow importing 'src.zeroth_law'
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # dev_scripts -> src -> workspace
+_PROJECT_ROOT = project_root  # Use the determined project root
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
-
-# Now import path_utils
-from zeroth_law.path_utils import find_project_root
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -27,6 +24,18 @@ REQUIRED_TOP_LEVEL_KEYS = ["command", "description", "usage", "options", "argume
 REQUIRED_METADATA_KEYS = ["ground_truth_crc"]
 EXPECTED_ARRAY_KEYS = ["options", "arguments"]
 EXPECTED_OBJECT_KEYS = ["metadata", "subcommands_detail"]  # Add others if needed
+
+# Define the set of allowed top-level keys based on the schema
+ALLOWED_TOP_LEVEL_KEYS = {
+    "command",
+    "subcommand",
+    "description",
+    "usage",
+    "options",
+    "arguments",
+    "subcommands_detail",
+    "metadata",
+}
 
 
 def fix_json_file_structure(file_path: Path, tool_name: str, command_id: str) -> bool:
@@ -92,6 +101,15 @@ def fix_json_file_structure(file_path: Path, tool_name: str, command_id: str) ->
             log.info(f"[{command_id}] Adding missing 'command': {tool_name}")
             data["command"] = tool_name
             changed = True
+        # --- NEW: Explicitly check and fix type of existing 'command' key ---
+        elif not isinstance(data.get("command"), str) and data.get("command") is not None:
+            log.warning(f"[{command_id}] Fixing non-string type for 'command' key: {data.get('command')}")
+            # Attempt recovery if it's a list with one string element
+            if isinstance(data["command"], list) and len(data["command"]) == 1 and isinstance(data["command"][0], str):
+                data["command"] = data["command"][0]
+            else:
+                data["command"] = tool_name  # Fallback to tool_name
+            changed = True
 
         if subcommand_key_missing:
             # Infer subcommand only if it wasn't already present and tool_id differs from tool_name
@@ -104,6 +122,21 @@ def fix_json_file_structure(file_path: Path, tool_name: str, command_id: str) ->
 
             log.info(f"[{command_id}] Adding missing 'subcommand' during standard fixes: {inferred_subcommand}")
             data["subcommand"] = inferred_subcommand  # Will be None if not inferred
+            changed = True
+        # --- NEW: Explicitly check and fix type of existing 'subcommand' key ---
+        elif not isinstance(data.get("subcommand"), (str, type(None))):
+            log.warning(
+                f"[{command_id}] Fixing non-string/non-null type for 'subcommand' key: {data.get('subcommand')}"
+            )
+            # Attempt recovery if it's a list with one string element
+            if (
+                isinstance(data["subcommand"], list)
+                and len(data["subcommand"]) == 1
+                and isinstance(data["subcommand"][0], str)
+            ):
+                data["subcommand"] = data["subcommand"][0]
+            else:
+                data["subcommand"] = None  # Fallback to None
             changed = True
 
         # --- Fix 2: Ensure top-level keys exist with placeholders ---
@@ -145,9 +178,30 @@ def fix_json_file_structure(file_path: Path, tool_name: str, command_id: str) ->
             metadata["tool_name"] = tool_name
             changed = True
         if "command_name" not in metadata:
-            inferred_cmd_name = data.get("subcommand") or data.get("command")  # Use subcommand if exists, else command
-            log.info(f"[{command_id}] Adding missing metadata.command_name: {inferred_cmd_name}")
-            metadata["command_name"] = inferred_cmd_name
+            # Infer command name, ensuring it's a string
+            inferred_cmd_value = data.get("subcommand") or data.get("command")
+            final_cmd_name = None
+            if isinstance(inferred_cmd_value, list) and inferred_cmd_value:
+                # If it's a non-empty list, take the first element
+                final_cmd_name = str(inferred_cmd_value[0])
+                log.warning(
+                    f"[{command_id}] Inferred command/subcommand was a list ({inferred_cmd_value}). Using first element: {final_cmd_name}"
+                )
+            elif isinstance(inferred_cmd_value, str):
+                final_cmd_name = inferred_cmd_value
+            elif inferred_cmd_value is not None:
+                # Handle other unexpected types by converting to string
+                final_cmd_name = str(inferred_cmd_value)
+                log.warning(
+                    f"[{command_id}] Inferred command/subcommand had unexpected type ({type(inferred_cmd_value)}). Converting to string: {final_cmd_name}"
+                )
+            else:
+                # Fallback if command/subcommand are missing or null
+                final_cmd_name = tool_name  # Use tool_name as last resort
+                log.warning(f"[{command_id}] Could not infer command/subcommand, using tool_name: {final_cmd_name}")
+
+            log.info(f"[{command_id}] Adding missing metadata.command_name: {final_cmd_name}")
+            metadata["command_name"] = final_cmd_name
             changed = True
         if "ground_truth_crc" not in metadata:
             log.info(f"[{command_id}] Adding missing metadata.ground_truth_crc with skeleton value.")
@@ -176,6 +230,14 @@ def fix_json_file_structure(file_path: Path, tool_name: str, command_id: str) ->
         if "command_sequence" in data:
             log.info(f"[{command_id}] Removing invalid top-level 'command_sequence' key.")
             del data["command_sequence"]
+            changed = True
+
+        # --- NEW Fix: Remove *any* unexpected top-level keys ---
+        keys_to_remove = set(data.keys()) - ALLOWED_TOP_LEVEL_KEYS
+        if keys_to_remove:
+            for key in keys_to_remove:
+                log.info(f"[{command_id}] Removing unexpected top-level key: '{key}'")
+                del data[key]
             changed = True
 
         # --- Fix 9: Remove options where 'name' is null or missing ---

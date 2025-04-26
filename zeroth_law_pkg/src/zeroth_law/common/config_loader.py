@@ -224,18 +224,21 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
     if config_path_override is None:
         found_path = find_pyproject_toml()
         if found_path is None:
-            log.warning("No config file found (XDG or upwards search). Using defaults.")
+            log.warning("No config file found (XDG or upwards search). Using defaults + empty actions/managed.")
+            # Return structure including expected keys, even if empty
             final_config = DEFAULT_CONFIG.copy()
             final_config["actions"] = {}
+            final_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Ensure managed-tools exists
             return final_config
     else:
         found_path = Path(config_path_override)
 
     if not found_path or not found_path.exists():
-        # If no config file found, return defaults + empty actions
-        log.debug("No config file found. Returning default config with empty actions.")
+        # If no config file found, return defaults + empty actions/managed
+        log.warning(f"Config file not found at {found_path}. Using defaults + empty actions/managed.")
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
+        final_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Ensure managed-tools exists
         return final_config
 
     try:
@@ -244,30 +247,39 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         # Extract the main tool section
         config_section = extract_config_section(toml_data, _TOOL_SECTION_PATH)
 
-        # Separate actions from the rest of the config
-        actions_config = load_action_definitions(config_section)  # Use the dedicated function
-        # Create a copy of the section without actions for merging with defaults
-        config_section_without_actions = {k: v for k, v in config_section.items() if k != "actions"}
+        # Get the core config settings (excluding actions and managed-tools initially)
+        core_config_settings = {k: v for k, v in config_section.items() if k not in ("actions", "managed-tools")}
 
-        # Merge the non-actions part with defaults and validate
-        merged_validated_config = merge_with_defaults(config_section_without_actions, DEFAULT_CONFIG)
+        # Merge core settings with defaults and validate
+        merged_core_config = merge_with_defaults(core_config_settings, DEFAULT_CONFIG)
 
-        # Combine the validated/merged part with the original actions
-        final_config = merged_validated_config
+        # Extract actions and managed-tools separately
+        actions_config = load_action_definitions(config_section)
+        managed_tools_config = config_section.get("managed-tools", {"whitelist": [], "blacklist": []})
+        if not isinstance(managed_tools_config, dict):
+            log.warning(
+                f"Invalid type for '[{_TOOL_SECTION_PATH}.managed-tools]' section: "
+                f"{type(managed_tools_config).__name__}. Using empty lists.",
+            )
+            managed_tools_config = {"whitelist": [], "blacklist": []}
+
+        # Combine validated core config, actions, and managed-tools
+        final_config = merged_core_config
         final_config["actions"] = actions_config
+        final_config["managed-tools"] = managed_tools_config  # Add managed-tools back
 
+        log.debug(f"Successfully loaded and processed config from: {found_path}")
         return final_config
 
-    except (FileNotFoundError, TomlDecodeError, ImportError, OSError) as e:
-        log.error(f"Failed to load config from {found_path}: {e}")
-        # Return defaults + empty actions on load error
-        final_config = DEFAULT_CONFIG.copy()
-        final_config["actions"] = {}
-        return final_config
     except Exception as e:
-        log.exception(f"Unexpected error loading config from {found_path}. Returning defaults.", exc_info=e)
+        log.error(
+            f"Failed to load or process config file {found_path}: {e}. Using defaults.",
+            exc_info=True,
+        )
+        # Return defaults + empty actions/managed on any load error
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
+        final_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Ensure managed-tools exists
         return final_config
 
 

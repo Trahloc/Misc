@@ -1,18 +1,15 @@
 {
-    "command": [
-        "pycodestyle"
+  "command": "pycodestyle",
+  "description": "Tool definition for pycodestyle (auto-generated skeleton)",
+  "metadata": {
+    "tool_name": "pycodestyle",
+    "command_name": [
+      "pycodestyle"
     ],
-    "description": "Tool definition for pycodestyle (auto-generated skeleton)",
-    "version_command": "pycodestyle --version",
-    "metadata": {
-        "tool_name": "pycodestyle"
-    },
-    "args": {},
-    "subcommands": null,
-    "baseline_file": "pycodestyle.txt",
-    "json_skeleton_file": "pycodestyle.json",
-    "crc": "0x866EC57C",
-    "updated_timestamp": 1745645661.5613613,
-    "checked_timestamp": 1745645661.5613613,
-    "source": "baseline_script_skeleton"
+    "ground_truth_crc": "0x00000000"
+  },
+  "subcommand": null,
+  "usage": "['pycodestyle']  [OPTIONS]",
+  "options": [],
+  "arguments": []
 }

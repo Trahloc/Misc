@@ -590,6 +590,9 @@ try:
     from zeroth_law.lib.tool_index_handler import ToolIndexHandler
     from zeroth_law.dev_scripts.reconciliation_logic import perform_tool_reconciliation, ReconciliationError
     from zeroth_law.dev_scripts.tool_reconciler import ToolStatus  # Assuming this is the correct location
+
+    # Attempt to import the path helper
+    from zeroth_law.lib.tool_path_utils import command_sequence_to_filepath
     # Note: These might not be strictly needed by the moved fixtures but are related
     # from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
     # from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_tool
@@ -620,6 +623,11 @@ except ImportError as e:
         pytest.fail("perform_tool_reconciliation import failed")
         return {}, set()
 
+    # Define dummy path helper if import failed
+    def command_sequence_to_filepath(*args, **kwargs):
+        pytest.fail("command_sequence_to_filepath import failed")
+        return Path("dummy/path.json"), Path("dummy/path.txt")  # Return dummy paths to allow definition
+
     class ReconciliationError(Exception):
         pass
 
@@ -635,18 +643,9 @@ MAX_WORKERS = os.cpu_count() or 4  # Default to 4 if cpu_count returns None
 LOG_LINE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[[^]]+\]")
 
 
-# --- Helper Functions Moved from tool_defs/conftest.py ---
-def command_sequence_to_id(command_parts: tuple[str, ...]) -> str:
-    """Creates a file/tool ID from a command sequence tuple."""
-    if not command_parts:  # Add check for empty tuple
-        return "_EMPTY_SEQUENCE_"
-    return "_".join(command_parts)
-
-
-def calculate_crc32_hex(content_bytes: bytes) -> str:
-    """Calculate the CRC32 checksum of byte content and return as a hex string."""
-    crc_val = zlib.crc32(content_bytes) & 0xFFFFFFFF
-    return f"0x{crc_val:08X}"
+# --- REMOVED Helper Functions (Moved to lib/tool_path_utils.py) --- #
+# def command_sequence_to_id(command_parts: tuple[str, ...]) -> str: ...
+# def calculate_crc32_hex(content_bytes: bytes) -> str: ...
 
 
 def _update_baseline_and_index_entry(
@@ -673,25 +672,20 @@ def _update_baseline_and_index_entry(
             - A boolean indicating if any skeleton file (JSON or baseline) was created.
     """
     log = logging.getLogger(__name__)
+    # --- Use imported helpers --- #
+    from zeroth_law.lib.tool_path_utils import command_sequence_to_id, command_sequence_to_filepath, calculate_crc32_hex
+
     command_id = command_sequence_to_id(command_sequence)
     command_name = command_sequence[0]  # Primary command name for logging/description
 
     # Define paths using helper (assuming command_sequence_to_filepath exists and is correct)
-    # Or implement the path logic directly if the helper isn't defined/imported here
-    try:
-        # Assuming command_sequence_to_filepath exists and handles the structure
-        # from src.zeroth_law.lib.tool_path_utils import command_sequence_to_filepath # If needed
-        relative_json_path, relative_baseline_path = command_sequence_to_filepath(command_sequence)
-        json_file_path = tools_dir / relative_json_path
-        # Baseline path needs to be relative to the generated_outputs_dir
-        baseline_file_path = generated_outputs_dir / relative_baseline_path
-    except NameError:
-        # Fallback/Inline path logic if command_sequence_to_filepath is not available
-        log.warning("command_sequence_to_filepath helper not found/imported in conftest, using inline path logic.")
-        first_letter = command_name[0].lower() if command_name else "_"
-        filename_base = command_id
-        json_file_path = tools_dir / first_letter / f"{filename_base}.json"
-        baseline_file_path = generated_outputs_dir / f"{filename_base}.txt"
+    # If command_sequence_to_filepath failed to import, this call will raise a NameError,
+    # causing the fixture setup to fail explicitly as required by ZLF principle 4.6.
+    # No internal fallback logic is permitted.
+    relative_json_path, relative_baseline_path = command_sequence_to_filepath(command_sequence)
+    json_file_path = tools_dir / relative_json_path
+    # Baseline path needs to be relative to the generated_outputs_dir
+    baseline_file_path = generated_outputs_dir / relative_baseline_path
 
     # Ensure parent directories exist
     json_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -823,35 +817,35 @@ def tool_index_handler(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path):
 
 
 @pytest.fixture(scope="session")
-def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> Set[str]:
+def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]:  # Removed TOOLS_DIR dependency
     """Discovers managed tool *names* based on reconciliation logic.
 
-    Performs reconciliation within the fixture scope.
+    Performs reconciliation within the fixture scope by calling the core logic
+    from the reconcile subcommand.
 
     Returns:
         A set of managed tool names.
     """
     log.info("Discovering managed tool names within managed_sequences fixture scope...")
     try:
-        # Perform reconciliation to get the definitive list of managed tools
-        reconciliation_results, _, _ = perform_tool_reconciliation(
-            project_root_dir=WORKSPACE_ROOT, tool_defs_dir=TOOLS_DIR
+        # Need to load config first, mimicking cli.py context setup
+        config_data = {}
+        effective_config_path = WORKSPACE_ROOT / "pyproject.toml"
+        if effective_config_path.is_file():
+            # --- FORCE Corrected Import Path (from common) --- #
+            from zeroth_law.common.config_loader import load_config  # Use common loader
+
+            config_data = load_config(effective_config_path)
+        else:
+            log.warning("managed_sequences fixture: pyproject.toml not found, using empty config.")
+
+        # Call the internal reconciliation logic directly
+        from zeroth_law.subcommands.tools.reconcile import _perform_reconciliation_logic, ReconciliationError
+
+        _results, managed_set, _blacklist, _errors, _warnings, _has_errors = _perform_reconciliation_logic(
+            project_root_dir=WORKSPACE_ROOT, config_data=config_data
         )
 
-        # Extract only the names of tools that are considered 'managed'
-        managed_set = {
-            name
-            for name, status in reconciliation_results.items()
-            if status
-            in {
-                ToolStatus.MANAGED_OK,
-                ToolStatus.MANAGED_MISSING_ENV,
-                ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
-                # ToolStatus.OK_CONFIG_ONLY, # Obsolete
-                # ToolStatus.OK_MATCH, # Obsolete
-                # ToolStatus.OK_MATCH_NEEDS_BASELINE, # Obsolete
-            }
-        }
         if not managed_set:
             log.warning("Fixture 'managed_sequences' determined the set of managed tools is empty.")
         else:
@@ -861,76 +855,11 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> Set[str]:
     except ReconciliationError as e:
         # Fail the test setup if reconciliation itself fails
         pytest.fail(f"Tool reconciliation failed within managed_sequences fixture: {e}")
+    except ImportError as e:
+        pytest.fail(f"Failed to import reconciliation logic or config loader within managed_sequences fixture: {e}")
     except Exception as e:
         log.error(f"Unexpected error during managed_sequences fixture setup: {e}", exc_info=True)
         pytest.fail(f"Unexpected error in managed_sequences fixture: {e}")
-
-
-@pytest.fixture(scope="session", autouse=True)  # Keep autouse=True
-def ensure_baselines_updated(
-    WORKSPACE_ROOT: Path,
-    TOOLS_DIR: Path,
-    TOOL_INDEX_PATH: Path,
-    tool_index_handler: ToolIndexHandler,
-    managed_sequences: set,
-):
-    """
-    Ensures that baseline files and JSON definitions exist for all managed tools,
-    creating skeletons if necessary, and updates the tool index accordingly.
-    Runs once per session before tests that might depend on these files.
-    """
-    log = logging.getLogger(__name__)
-    log.info("Starting session-wide baseline/JSON/index synchronization for managed tools...")
-
-    # Define the directory for generated baseline files
-    generated_outputs_dir = WORKSPACE_ROOT / "generated_command_outputs"
-    generated_outputs_dir.mkdir(parents=True, exist_ok=True)  # Ensure it exists
-
-    updated_count = 0
-    created_skeleton_count = 0
-
-    if not managed_sequences:
-        log.warning("No managed sequences found. Skipping baseline/JSON sync.")
-        return
-
-    log.info(f"Checking/updating {len(managed_sequences)} managed tool sequences...")
-
-    # Assume tool_index_handler is already loaded by its fixture
-    for sequence_str in managed_sequences:
-        # Convert the string representation back to a tuple
-        # try:
-        # Handle potential single quotes if string came from repr or similar
-        # Safely evaluate the string literal to a tuple
-        # command_sequence = ast.literal_eval(sequence_str)
-        # if not isinstance(command_sequence, tuple):
-        #     raise ValueError("Parsed sequence is not a tuple")
-        # except (ValueError, SyntaxError) as e:
-        #     log.error(f"Failed to parse command sequence string: '{sequence_str}'. Error: {e}. Skipping.")
-        #     continue # Skip this sequence
-
-        # CORRECTED: Simply create a tuple from the tool name string
-        if not isinstance(sequence_str, str) or not sequence_str:
-            log.warning(f"Skipping invalid sequence string: {sequence_str!r}")
-            continue
-        command_sequence = (sequence_str,)  # Create a single-element tuple
-
-        try:
-            _, created = _update_baseline_and_index_entry(
-                command_sequence, TOOLS_DIR, tool_index_handler, WORKSPACE_ROOT, generated_outputs_dir
-            )
-            if created:
-                created_skeleton_count += 1
-            updated_count += 1
-        except Exception as e:
-            # Catch potential errors from the helper to avoid stopping the whole sync process
-            log.error(f"Error processing sequence {command_sequence}: {e}", exc_info=True)
-            # Optionally re-raise or fail depending on desired strictness
-            # pytest.fail(f"Critical error during baseline sync for {command_sequence}: {e}", pytrace=False)
-
-    log.info(
-        f"Baseline/JSON/index synchronization complete. "
-        f"Processed: {updated_count}, Skeletons Created: {created_skeleton_count}"
-    )
 
 
 # --- END Moved/Added Fixtures ---

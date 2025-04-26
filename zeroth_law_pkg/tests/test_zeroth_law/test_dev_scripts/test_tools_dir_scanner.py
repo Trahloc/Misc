@@ -8,19 +8,32 @@ from zeroth_law.dev_scripts.tools_dir_scanner import get_tool_dirs
 def test_scan_with_tool_dirs(tmp_path):
     """Test scanning a directory containing valid tool directories under alphabetical dirs."""
     tools_base_dir = tmp_path / "tools"
-    expected_tools = {"tool_a", "tool_b", "another_tool"}
+    # Define expected tools and their parent grouping dirs
+    expected_tools_map = {
+        "a": ["tool_a"],
+        "b": ["tool_b"],
+        "direct": ["another_tool"],  # Tool directly under tools/
+    }
+    expected_tools = set()
 
-    # Create dummy tool directories directly under the base path
-    for tool_name in expected_tools:
-        # Removed the logic for creating nested alphabetical directories
-        tool_dir = tools_base_dir / tool_name
-        tool_dir.mkdir(parents=True, exist_ok=True)
+    # Create dummy tool directories based on the map
+    for group_letter, tool_names in expected_tools_map.items():
+        if len(group_letter) == 1 and group_letter.isalpha():  # Grouping dir
+            group_dir = tools_base_dir / group_letter
+        else:  # Direct tool dir
+            group_dir = tools_base_dir
 
-    # Create a dummy file in the root to ensure only dirs are picked up
+        for tool_name in tool_names:
+            tool_dir = group_dir / tool_name
+            tool_dir.mkdir(parents=True, exist_ok=True)
+            # Create the required .json file for direct tools
+            if group_dir == tools_base_dir:
+                (tool_dir / f"{tool_name}.json").touch()
+            expected_tools.add(tool_name)
+
+    # Create dummy files to ensure only dirs are picked up
     (tools_base_dir / "some_file.txt").touch()
-    # Removed creation of nested dummy file
-    # (tools_base_dir / "t").mkdir(parents=True, exist_ok=True)
-    # (tools_base_dir / "t" / "another_file.txt").touch()
+    (tools_base_dir / "a" / "another_file.txt").touch()
 
     found_tools = get_tool_dirs(tools_base_dir)
 

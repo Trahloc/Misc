@@ -186,7 +186,43 @@
 - [x] **Update Schema Guidelines:** Add guidance to `tools/zlt_schema_guidelines.md` emphasizing the AI\'s responsibility to maintain consistency for unchanged options/args when updating `.json` files.
 - [x] **Separate Capabilities:** Create `src/zeroth_law/tools/tool_capabilities.yaml` to store functional categories (Formatter, Linter, etc.), separate from CLI structure.
 - [ ] **AI Task: Populate `.json` Definitions:** Systematically process `.txt` files and populate the corresponding `.json` skeleton files according to the guidelines.
--   [ ] **Review `poetry.json`:** The current `poetry.txt` seems to contain help for `poetry list` rather than the main command.
-    -   Regenerate the baseline using `poetry --help` (or similar) to capture the correct help text.
-    -   Repopulate `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`.
--   [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate `value_name` structure, `nargs` consistency, and whitespace rules in names/flags.
+    - [ ] **Review `poetry.json`:** The current `poetry.txt` seems to contain help for `poetry list` rather than the main command.
+        - Regenerate the baseline using `poetry --help` (or similar) to capture the correct help text.
+        - Repopulate `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`.
+- [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate `value_name` structure, `nargs` consistency, and whitespace rules in names/flags.
+
+## Phase W: Tool Management Refactor (`zlt tools`)
+# Goal: Centralize tool management logic into a dedicated subcommand group.
+- [x] 1. Rename `src/zeroth_law/commands/` to `src/zeroth_law/subcommands/`.
+- [x] 2. Remove duplicate `audit.py` file.
+- [x] 3. Create `src/zeroth_law/subcommands/tools/` directory.
+- [x] 4. Create `src/zeroth_law/subcommands/tools/__init__.py`.
+- [x] 5. Create `src/zeroth_law/subcommands/tools/tools.py` with main `click.group`.
+- [x] 6. Register `tools_group` in `src/zeroth_law/cli.py`.
+- [x] 7. Implement `zlt tools reconcile` subcommand.
+  - [x] Migrate core logic from `reconciliation_logic.py`.
+  - [ ] Migrate logic from `tool_discovery.py`.
+  - [ ] Migrate logic from `tools_dir_scanner.py`.
+  - [x] Implement reporting of discrepancies (new tools, orphans, missing files).
+- [ ] 8. Implement `zlt tools add/remove-whitelist` subcommands.
+  - [ ] Implement `pyproject.toml` parsing/writing (using `tomlkit`).
+  - [ ] Implement hierarchical logic (tool vs. tool:subcommand).
+  - [ ] Implement `--all` flag logic.
+  - [ ] Implement INFO message for conflicting entries.
+- [ ] 9. Implement `zlt tools add/remove-blacklist` subcommands (similar to whitelist).
+  - [x] Implement `pyproject.toml` parsing/writing (using `tomlkit`).
+  - [x] Implement hierarchical logic (tool vs. tool:subcommand).
+  - [x] Implement `--all` flag logic.
+  - [x] Implement INFO message for conflicting entries.
+- [x] 10. Implement `zlt tools sync` subcommand.
+  - [ ] Migrate baseline generation logic (`generate_baseline_cli.py`).
+  - [ ] Migrate skeleton JSON creation logic.
+  - [ ] Migrate index update logic (`ToolIndexHandler`).
+  - [x] Implement `--tool`, `--force`, `--since` options.
+- [x] 11. Refactor/Remove redundant dev scripts (`reconciliation_logic.py`, `generate_baseline_cli.py`, `tool_discovery.py`, `tools_dir_scanner.py`).
+- [x] 12. Refactor/Remove redundant test fixtures (`ensure_baselines_updated`, `managed_sequences` - replace with direct calls or new fixtures if needed).
+- [x] 13. Update tests to use or test the new `zlt tools` commands.
+  - [x] Refactor `test_check_for_new_tools` to use `zlt tools reconcile`.
+  - [x] Update `get_tool_dirs` import in `test_no_orphan_tool_directories`.
+  - [ ] Verify tests pass or fail for expected reasons (e.g., `ToolIndexHandler` import).
+  - [ ] Add new tests for `zlt tools reconcile`, `sync`, `add/remove-whitelist/blacklist`.

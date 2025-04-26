@@ -35,6 +35,7 @@ KNOWN_GOOD_PATTERNS = {
     "CODE_TODOS.md",  # Keep
     "package.json",  # For npm/prettier
     "project_structure.json",  # Generated structure data
+    "mock_whitelist.toml",
     "conftest.py",  # Root conftest
     "__init__.py",  # Allow root __init__ if needed
     # Top-level Dirs (use ** for recursive matching)

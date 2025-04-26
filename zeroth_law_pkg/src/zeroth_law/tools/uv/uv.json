@@ -83,14 +83,5 @@
       "json_definition": "src/zeroth_law/tools/uv/uv_version.json"
     }
   },
-  "usage": "uv [OPTIONS] <COMMAND>",
-  "version_command": "uv --version",
-  "args": {},
-  "subcommands": null,
-  "baseline_file": "uv.txt",
-  "json_skeleton_file": "uv.json",
-  "crc": "0xF83FE7C6",
-  "updated_timestamp": 1745645661.6669846,
-  "checked_timestamp": 1745645661.6669846,
-  "source": "baseline_script_skeleton"
+  "usage": "uv [OPTIONS] <COMMAND>"
 }

@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from importlib.metadata import version, PackageNotFoundError
 
 import click
+import logging
 
 from zeroth_law.action_runner import run_action
 from zeroth_law.common.config_loader import load_config
@@ -31,13 +32,16 @@ from zeroth_law.analysis_runner import (
 from zeroth_law.dynamic_commands import add_dynamic_commands
 
 # Import the Git hook commands
-from zeroth_law.commands.git_hooks import install_git_hook, restore_git_hooks
+from .subcommands.git_hooks import install_git_hook, restore_git_hooks
 
 # Import the new Audit command
-from zeroth_law.commands.audit.audit import audit
+from .subcommands.audit.audit import audit
 
 # Import the pre-commit analyzer
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
+
+# Import the new tools group
+from .subcommands.tools.tools import tools_group
 
 # --- Early Structlog Setup --- START
 # Configure structlog early with basic console output
@@ -262,6 +266,9 @@ cli_group.add_command(install_git_hook)
 cli_group.add_command(restore_git_hooks)
 # Add the audit command
 cli_group.add_command(audit)
+
+# Add the new tools group
+cli_group.add_command(tools_group)
 
 
 # === Standalone Audit Command (Phase 2/3 Goal) ===
