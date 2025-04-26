@@ -24,6 +24,7 @@ from tests.test_data.test_analyzer.python.case_types import AnalyzerCase  # noqa
 from zeroth_law.analyzer.python.analyzer import (  # noqa: E402
     analyze_complexity,
     analyze_docstrings,
+    analyze_file_compliance,
     analyze_line_counts,
     analyze_parameters,
     analyze_statements,
@@ -51,6 +52,22 @@ def create_test_file(tmp_path: Path, filename: str, content: str) -> Path:
 def get_test_data_path(filename: str) -> Path:
     """Get the path to a test data file."""
     return Path(__file__).parent.parent.parent / "test_data" / "zeroth_law" / "analyzer" / "python" / filename
+
+
+# --- Combine all test cases for full file analysis --- #
+# Ensure all imported lists are actually lists before combining
+all_test_cases = (
+    header_test_cases
+    + footer_test_cases
+    + docstring_test_cases
+    + complexity_test_cases
+    + parameter_test_cases
+    + statement_test_cases
+    + line_test_cases
+)
+
+
+# --- Tests for individual analyzer components --- #
 
 
 # Data-driven tests for each analyzer component
@@ -108,3 +125,52 @@ def test_line_analysis(test_case: AnalyzerCase, tmp_path: Path) -> None:
     file_path = create_test_file(tmp_path, "test.py", test_case.get_content())
     result = analyze_line_counts(file_path, test_case.config["max_lines"])
     assert result == test_case.expected_violations
+
+
+# --- Test for the main orchestration function --- #
+
+
+@pytest.mark.parametrize("test_case", all_test_cases)
+def test_file_analysis(test_case: AnalyzerCase, tmp_path: Path) -> None:
+    """Test full file analysis orchestration with data-driven test cases."""
+    # NOTE: This test relies on the structure of AnalyzerCase and the combined test cases.
+    # It assumes the necessary test case files exist at the imported path.
+
+    file_path = create_test_file(tmp_path, "test.py", test_case.get_content())
+
+    # Call the main orchestration function
+    result = analyze_file_compliance(
+        file_path,
+        max_complexity=test_case.config["max_complexity"],
+        max_params=test_case.config["max_params"],
+        max_statements=test_case.config["max_statements"],
+        max_lines=test_case.config["max_lines"],
+        # ignore_rules=test_case.config.get("ignore_rules") # Optional: If ignore rules are part of test cases
+    )
+
+    # Assert based on the combined expected violations across all relevant categories for this case.
+    # This assertion logic needs to be carefully defined based on how expected violations
+    # are structured in the AnalyzerCase objects for combined tests.
+    # Example (simple check for *any* expected violation type defined in the case):
+    expected_violation_found = False
+    for category, expected in test_case.expected_violations.items():
+        if expected:  # If there are expected violations for this category
+            assert (
+                result.get(category, []) == expected
+            ), f"Mismatch in category '{category}' for test case {test_case.name}"
+            expected_violation_found = True
+
+    # If the case expected violations but none were matched above, fail.
+    # Also check if the result contained unexpected violations.
+    if test_case.expected_violations and not expected_violation_found:
+        pytest.fail(
+            f"Test case {test_case.name} expected violations but none matched categories: {list(test_case.expected_violations.keys())}"
+        )
+
+    # Check for unexpected violation categories in the result
+    unexpected_categories = set(result.keys()) - set(test_case.expected_violations.keys())
+    # Filter out categories that might have empty lists if no violations were found
+    unexpected_categories = {cat for cat in unexpected_categories if result[cat]}
+    assert (
+        not unexpected_categories
+    ), f"Found unexpected violation categories {unexpected_categories} for test case {test_case.name}"

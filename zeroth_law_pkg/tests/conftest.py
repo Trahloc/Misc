@@ -7,6 +7,12 @@ import sys
 from pathlib import Path
 import logging
 from typing import Any, Generator, List, Optional, Tuple
+import concurrent.futures
+import json
+import warnings
+import yaml
+import zlib
+import os
 
 import pytest
 
@@ -15,6 +21,8 @@ from zeroth_law.common.path_utils import find_project_root
 
 # Explicitly import the session-scoped fixture
 # from tests.test_tool_defs.conftest import WORKSPACE_ROOT
+
+log = logging.getLogger(__name__)
 
 
 # --- ADDED WORKSPACE_ROOT Fixture --- #
@@ -575,3 +583,299 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
 
 
 # --- END ADDED UV Environment Check Fixture --- #
+
+
+# --- Import ZLT Components (add try-except block) ---
+try:
+    from zeroth_law.lib.tool_index_handler import ToolIndexHandler
+    from zeroth_law.dev_scripts.reconciliation_logic import perform_tool_reconciliation, ReconciliationError
+    from zeroth_law.dev_scripts.tool_reconciler import ToolStatus  # Assuming this is the correct location
+    # Note: These might not be strictly needed by the moved fixtures but are related
+    # from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
+    # from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_tool
+except ImportError as e:
+    # Define dummy classes/functions if imports fail, preventing test collection errors
+    print(
+        f"CRITICAL ERROR in conftest.py: Failed to import ZLT components. Check PYTHONPATH/install. Details: {e}",
+        file=sys.stderr,
+    )
+
+    class ToolIndexHandler:
+        def __init__(*args, **kwargs):
+            pytest.fail("ToolIndexHandler import failed")
+
+        def get_raw_index_data(*args, **kwargs):
+            return {}
+
+        def reload(*args, **kwargs):
+            pass
+
+        def get_entry(*args, **kwargs):
+            return None
+
+        def update_entry(*args, **kwargs):
+            pass
+
+    def perform_tool_reconciliation(*args, **kwargs):
+        pytest.fail("perform_tool_reconciliation import failed")
+        return {}, set()
+
+    class ReconciliationError(Exception):
+        pass
+
+    class ToolStatus:  # Define dummy statuses if needed by tests
+        MANAGED_OK = object()
+        MANAGED_MISSING_ENV = object()
+        WHITELISTED_NOT_IN_TOOLS_DIR = object()
+
+
+# --- Constants ---
+UV_BIN = os.environ.get("UV_BIN_PATH", "uv")
+MAX_WORKERS = os.cpu_count() or 4  # Default to 4 if cpu_count returns None
+LOG_LINE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[[^]]+\]")
+
+
+# --- Helper Functions Moved from tool_defs/conftest.py ---
+def command_sequence_to_id(command_parts: tuple[str, ...]) -> str:
+    """Creates a file/tool ID from a command sequence tuple."""
+    if not command_parts:  # Add check for empty tuple
+        return "_EMPTY_SEQUENCE_"
+    return "_".join(command_parts)
+
+
+def calculate_crc32_hex(content_bytes: bytes) -> str:
+    """Calculates the CRC32 checksum and returns it as an uppercase hex string prefixed with 0x."""
+    crc_val = zlib.crc32(content_bytes) & 0xFFFFFFFF
+    return f"0x{crc_val:08X}"
+
+
+def _update_baseline_and_index_entry(
+    command_sequence: tuple[str, ...], tools_dir: Path, handler: ToolIndexHandler
+) -> tuple[str, bool]:
+    """Worker function: Generates TXT, calculates CRC, updates index via handler if needed. Handles subcommands."""
+    tool_id = command_sequence_to_id(command_sequence)  # e.g., 'safety' or 'ruff_check'
+    tool_name = command_sequence[0]  # Base tool name, e.g., 'safety' or 'ruff'
+    tool_dir = tools_dir / tool_name
+    txt_file_path = tool_dir / f"{tool_id}.txt"
+    update_occurred = False
+    current_time = time.time()
+
+    # print(f"Starting baseline/index update for: {tool_id}") # Maybe too verbose for fixture
+
+    try:
+        tool_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        log.error(f"Error creating directory {tool_dir} for {tool_id}: {e}")
+        return tool_id, update_occurred  # Return False for update_occurred on error
+
+    cmd_list_part1 = [UV_BIN, "run", "--"]
+    # Construct help command for tool or subcommand
+    cmd_list_tool_help = list(command_sequence) + ["--help"]
+    full_cmd_str = f"{shlex.join(cmd_list_part1 + cmd_list_tool_help)} | cat"
+    log.debug(f"Running command for {tool_id}: {full_cmd_str}")
+
+    try:
+        process = subprocess.run(
+            full_cmd_str,
+            shell=True,
+            capture_output=True,
+            check=False,
+            encoding="utf-8",
+            errors="replace",
+            timeout=60,  # Added timeout
+        )
+
+        # Handle command failures more robustly
+        if process.returncode != 0:
+            # Check if the failure is expected (e.g., subcommand doesn't support --help directly)
+            # Heuristic: If stderr mentions 'no such option' or 'unrecognized arguments: --help',
+            # and stdout is empty, maybe skip baseline generation for this subcommand?
+            # For now, just log a warning and skip update. Refine later if needed.
+            stderr_lower = process.stderr.lower() if process.stderr else ""
+            if (
+                "no such option" in stderr_lower
+                or "unrecognized arguments: --help" in stderr_lower
+                or "unexpected argument '--help'" in stderr_lower
+            ):
+                log.warning(
+                    f"Command for '{tool_id}' failed, possibly due to no direct --help support for subcommand. Skipping baseline/index update. Stderr: {process.stderr.strip()}"
+                )
+            else:
+                log.warning(
+                    f"Command for '{tool_id}' failed (exit code {process.returncode}). Skipping baseline/index update. Stderr: {process.stderr.strip()}"
+                )
+            return tool_id, update_occurred
+
+        # --- Filter out log lines --- START
+        raw_output_lines = process.stdout.splitlines()
+        filtered_output_lines = []
+        for line in raw_output_lines:
+            if not LOG_LINE_PATTERN.match(line):
+                filtered_output_lines.append(line)
+            else:
+                log.debug(f"Filtered out log line for {tool_id}: {line}")
+
+        # Join the filtered lines back, normalize line endings, and strip trailing whitespace
+        output_normalized_str = "\n".join(filtered_output_lines).replace("\r\n", "\n").replace("\r", "\n").rstrip()
+        # --- Filter out log lines --- END
+
+        # Handle cases where command succeeds but produces no *filtered* output
+        if not output_normalized_str:
+            log.info(
+                f"Command for '{tool_id}' succeeded but produced no non-log stdout. Skipping baseline/index update."
+            )
+            # Update checked timestamp only?
+            entry_update_data = {"checked_timestamp": current_time}
+            handler.update_entry(command_sequence, entry_update_data)  # Best effort update
+            return tool_id, update_occurred
+
+        output_normalized_bytes = output_normalized_str.encode("utf-8")
+
+        # Write the .txt file (now filtered)
+        txt_file_path.write_bytes(output_normalized_bytes)
+
+        new_crc = calculate_crc32_hex(output_normalized_bytes)
+
+        # Check against index via handler
+        existing_entry = handler.get_entry(command_sequence)
+        existing_crc = existing_entry.get("crc") if existing_entry else None
+
+        if existing_crc != new_crc:
+            log.info(f"CRC mismatch for {tool_id}: Index={existing_crc}, New={new_crc}. Updating index.")
+            entry_data = {
+                "crc": new_crc,
+                "updated_timestamp": current_time,
+                "checked_timestamp": current_time,
+                "source": "baseline_script",  # Indicate source
+            }
+            handler.update_entry(command_sequence, entry_data)
+            update_occurred = True
+        else:
+            log.debug(f"CRC consistent for {tool_id}. Updating checked timestamp.")
+            # Only update checked timestamp if CRC matches
+            entry_update_data = {"checked_timestamp": current_time}
+            handler.update_entry(command_sequence, entry_update_data)  # Update only checked time
+
+    except subprocess.TimeoutExpired:
+        log.error(f"Command timed out for {tool_id}. Skipping.")
+    except FileNotFoundError:
+        log.error(f"Command not found for {tool_id} (is '{UV_BIN}' in PATH?). Skipping.")
+    except Exception as e:
+        log.exception(f"Unexpected error processing {tool_id}: {e}")
+
+    return tool_id, update_occurred
+
+
+# --- Fixtures Moved/Added from tool_defs/conftest.py ---
+
+
+@pytest.fixture(scope="session")  # Changed scope to session
+def tool_index_handler(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path):
+    """Provides a session-scoped ToolIndexHandler instance."""
+    if not TOOL_INDEX_PATH.parent.is_dir():
+        pytest.fail(f"Tool index directory not found: {TOOL_INDEX_PATH.parent}")
+    # Ensure file exists, create empty JSON object if not
+    if not TOOL_INDEX_PATH.is_file():
+        log.warning(f"Tool index file not found at {TOOL_INDEX_PATH}, creating empty index.")
+        try:
+            TOOL_INDEX_PATH.write_text("{}", encoding="utf-8")
+        except OSError as e:
+            pytest.fail(f"Failed to create empty tool index file at {TOOL_INDEX_PATH}: {e}")
+
+    handler = ToolIndexHandler(TOOL_INDEX_PATH)
+    return handler  # Yield not strictly needed for simple object creation
+
+
+@pytest.fixture(scope="session")
+def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> List[Tuple[str, ...]]:
+    """Discovers all managed tool sequences based on reconciliation logic."""
+    log.info("Discovering managed tool sequences for session...")
+    try:
+        # Pass WORKSPACE_ROOT first for project config, then TOOLS_DIR for definitions
+        reconciliation_results, managed_tools, _ = perform_tool_reconciliation(WORKSPACE_ROOT, TOOLS_DIR)
+        # Errors are handled by ReconciliationError exception below.
+        # Log managed tools discovered (optional)
+        log.info(f"Reconciliation identified managed tools: {managed_tools}")
+
+        all_sequences = []
+        # Extract sequences from the results (which now should include subcommand sequences)
+        for tool_name, data in reconciliation_results.items():
+            if isinstance(data, dict) and "sequences" in data:
+                # Handle potential None value from sequences
+                tool_sequences = data.get("sequences")
+                if tool_sequences:
+                    all_sequences.extend(tool_sequences)
+            else:
+                # Log unexpected structure
+                log.warning(f"Unexpected structure in reconciliation results for {tool_name}: {data}")
+
+        # Ensure sequences are tuples
+        all_sequences = [tuple(seq) for seq in all_sequences]
+        log.info(f"Discovered {len(all_sequences)} managed sequences.")
+        return all_sequences
+    except ReconciliationError as e:
+        pytest.fail(f"Tool reconciliation failed during test setup: {e}")
+    except Exception as e:
+        log.exception("Unexpected error during managed sequence discovery")
+        pytest.fail(f"Unexpected error during managed sequence discovery: {e}")
+    return []  # Return empty list on failure
+
+
+@pytest.fixture(scope="session", autouse=True)  # Keep autouse=True
+def ensure_baselines_updated(
+    WORKSPACE_ROOT: Path,
+    TOOLS_DIR: Path,
+    TOOL_INDEX_PATH: Path,
+    tool_index_handler: ToolIndexHandler,
+    managed_sequences: list,
+):
+    """Session-scoped fixture to ensure all tool help baselines (.txt) and tool_index.json are up-to-date."""
+    start_time = time.monotonic()
+    log.info(f"Starting baseline generation/verification for {len(managed_sequences)} sequences...")
+
+    # Ensure the handler reflects the current index state before updates
+    tool_index_handler.reload()
+
+    updated_count = 0
+    processed_count = 0
+    skipped_count = 0  # Count commands skipped due to --help issues
+    error_list = []
+
+    # Use ThreadPoolExecutor for parallel execution
+    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        # Create futures for each sequence
+        future_to_sequence = {
+            executor.submit(_update_baseline_and_index_entry, seq, TOOLS_DIR, tool_index_handler): seq
+            for seq in managed_sequences
+        }
+
+        for future in concurrent.futures.as_completed(future_to_sequence):
+            sequence = future_to_sequence[future]
+            tool_id = command_sequence_to_id(sequence)
+            processed_count += 1
+            try:
+                _tool_id_returned, update_occurred = future.result()
+                if _tool_id_returned != tool_id:
+                    # This indicates a potential issue in the worker if tool_id doesn't match
+                    log.error(f"Worker returned unexpected tool_id '{_tool_id_returned}' for sequence {sequence}")
+                if update_occurred:
+                    updated_count += 1
+            except Exception as exc:
+                log.error(f"Sequence '{tool_id}' generated an exception during baseline update: {exc}")
+                error_list.append(tool_id)
+
+    # Reload handler again after all updates are done to reflect changes
+    tool_index_handler.reload()
+
+    end_time = time.monotonic()
+    duration = end_time - start_time
+    log.info(f"Baseline generation/verification finished in {duration:.2f}s.")
+    log.info(f"Processed: {processed_count}, Updated/Mismatch: {updated_count}, Errors: {len(error_list)}")
+
+    if error_list:
+        log.error(f"Errors occurred during baseline generation for: {error_list}")
+        # Optionally fail the test session if baseline generation had errors
+        # pytest.fail(f"Baseline generation failed for {len(error_list)} tools.")
+
+
+# --- END Moved/Added Fixtures ---

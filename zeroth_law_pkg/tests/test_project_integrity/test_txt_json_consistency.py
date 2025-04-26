@@ -13,7 +13,7 @@ import jsonschema
 from typing import List, Tuple, Dict, Any
 
 # Import command_sequence_to_id from the conftest in the same directory
-from .conftest import command_sequence_to_id
+# from .conftest import command_sequence_to_id # REMOVE THIS - Fixtures/helpers moved to root conftest
 
 # Comment out the failing import for now
 # from zeroth_law.dev_scripts.consistency_checker import check_crc_consistency, ConsistencyStatus
@@ -32,7 +32,7 @@ class ConsistencyStatus:
 
 # Import fixtures from this directory's conftest
 # (WORKSPACE_ROOT, TOOLS_DIR, TOOL_INDEX_PATH, tool_index_handler, managed_sequences)
-from .conftest import managed_sequences  # Import the fixture
+# from .conftest import managed_sequences  # REMOVE THIS - Fixture now in root conftest
 
 # Assuming refactored consistency checker component exists
 # Assuming managed_sequences fixture is available from conftest

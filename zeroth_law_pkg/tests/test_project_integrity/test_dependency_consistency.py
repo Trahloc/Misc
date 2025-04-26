@@ -7,7 +7,8 @@ import sys
 import tomllib  # Import tomllib
 
 # Assuming tests run from the workspace root or have access to it
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+# Calculate project root relative to the new location
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT_TOML = PROJECT_ROOT / "pyproject.toml"
 # Correct path to managed_tools.yaml within the src directory
 MANAGED_TOOLS_YAML = PROJECT_ROOT / "src" / "zeroth_law" / "managed_tools.yaml"

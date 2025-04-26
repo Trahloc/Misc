@@ -7,7 +7,7 @@ import json
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, List, Tuple  # Corrected import for Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Set
 
 log = logging.getLogger(__name__)
 
@@ -27,51 +27,79 @@ def run_all_checks(file_path: Path, **kwargs: Any) -> dict[str, list[Any]]:
 # --- Core Analysis Logic ---
 def analyze_files(
     files: list[Path], config: dict[str, Any], analyzer_func: Callable
-) -> tuple[dict[Path, dict[str, list[Any]]], dict[str, int]]:
-    """Analyzes multiple files for compliance using the provided analyzer function.
+) -> tuple[dict[Path, dict[str, list]], dict[str, int]]:
+    """
+    Analyzes a list of files using the provided analyzer function and configuration.
 
     Args:
-    ----
-        files: List of files to analyze.
-        config: The loaded configuration.
-        analyzer_func: Function to analyze each file.
+        files: A list of Path objects representing the files to analyze.
+        config: A dictionary containing configuration for the analyzer.
+        analyzer_func: The function to use for analyzing each file.
 
     Returns:
-    -------
-        A tuple containing violations by file and statistics.
-
+        A tuple containing:
+        - A dictionary mapping file paths to their violation results.
+        - A dictionary containing statistics about the analysis run.
     """
-    violations_by_file: dict[Path, dict[str, list[Any]]] = {}
-    stats: dict[str, int] = {
-        "files_analyzed": len(files),
-        "files_with_violations": 0,
-        "compliant_files": 0,
+    violations_by_file: dict[Path, dict[str, list]] = {}
+    unique_files: list[Path] = sorted(list(set(files)))  # Ensure uniqueness and order
+    total_files: int = len(unique_files)
+
+    stats = {
+        "files_analyzed": 0,  # Total files attempted (will match total_files if no errors)
+        "files_with_violations": 0,  # Files with actual violations reported by analyzer
+        "compliant_files": 0,  # Files with no violations reported
+        "files_with_errors": 0,  # Files that caused an error during analysis
     }
 
-    for file_path in files:
-        try:
-            violations = analyzer_func(file_path, **config.get("analyzer_settings", {}))
-            if violations:
-                violations_by_file[file_path] = violations
-                stats["files_with_violations"] += 1
-            else:
-                stats["compliant_files"] += 1
-        except FileNotFoundError:
-            violations_by_file[file_path] = {"error": ["File not found during analysis"]}
-            stats["files_with_violations"] += 1
-        except SyntaxError as e:
-            violations_by_file[file_path] = {"error": [f"SyntaxError: {e} during analysis"]}
-            stats["files_with_violations"] += 1
-        except Exception as e:
-            log.exception(f"Unexpected error analyzing file {file_path}", exc_info=e)  # Improved logging
-            violations_by_file[file_path] = {"error": [f"{e.__class__.__name__}: {e} during analysis"]}
-            stats["files_with_violations"] += 1
+    log.info(f"Starting analysis of {total_files} unique files.")  # Log total unique files
 
+    for i, file_path in enumerate(unique_files):  # Iterate over unique files
+        log.debug(f"Analyzing file {i+1}/{total_files}: {file_path}")  # Use total_files
+        error_occurred = False
+        violations = {}  # Initialize violations for the current file scope
+        error_msg = ""  # Initialize error message
+
+        try:
+            # Ensure file exists before attempting analysis
+            if not file_path.is_file():
+                raise FileNotFoundError(f"File not found: {file_path}")
+
+            violations = analyzer_func(file_path, **config.get("analyzer_settings", {}))
+
+        except FileNotFoundError as e:
+            error_occurred = True
+            error_msg = str(e)
+            log.error(error_msg)  # Log the specific error
+        except SyntaxError as e:
+            error_occurred = True
+            error_msg = f"Syntax error: {e}"
+            log.error(f"Syntax error analyzing {file_path}: {e}")
+        except Exception as e:
+            # Catch unexpected errors during analysis
+            error_occurred = True
+            error_msg = f"Unexpected error analyzing {file_path}: {type(e).__name__}: {e}"
+            log.exception(error_msg)  # Use logger.exception to include stack trace
+        finally:
+            # This ensures files_analyzed is always incremented
+            stats["files_analyzed"] += 1
+
+        # Process results and update stats *after* try-except-finally
+        if error_occurred:
+            violations_by_file[file_path] = {"error": [error_msg]}
+            stats["files_with_errors"] += 1
+        elif violations:  # Check the result from the try block if no error occurred
+            violations_by_file[file_path] = violations
+            stats["files_with_violations"] += 1
+        else:  # No error and no violations
+            stats["compliant_files"] += 1
+
+    log.info(f"Analysis complete. Stats: {stats}")
     return violations_by_file, stats
 
 
 def format_violations_as_json(
-    violations_by_file: dict[Path, dict[str, list[Any]]],
+    violations_by_file: dict[Path, dict[str, list]],
     total_files: int,
     files_with_violations: int,
     compliant_files: int,
@@ -118,7 +146,7 @@ def format_violations_as_json(
 
 
 def log_violations_as_text(
-    violations_by_file: dict[Path, dict[str, list[Any]]],
+    violations_by_file: dict[Path, dict[str, list]],
 ) -> None:
     """Log violations as formatted text using the logger.
 

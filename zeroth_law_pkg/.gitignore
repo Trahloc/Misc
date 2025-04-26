@@ -138,6 +138,20 @@ cython_debug/
 # Ruff cache
 .ruff_cache/
 
+# Coverage Artifacts
+.coverage.*
+coverage.json
+coverage.xml
+coverage_html_report/
+coverage_report.txt
+coverage_total.txt
+
+# Pytest Cache
+.pytest_cache/
+
+# Temporary Directory
+tmp/
+
 # Tool-specific
 environment.yml
 

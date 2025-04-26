@@ -168,9 +168,10 @@ SOURCE_FILE_IDS = [str(p.relative_to(SRC_PKG_ROOT.parent)) for p in SOURCE_FILES
 def test_test_structure_mirrors_source(src_file: Path):
     """Verify that for every source .py file, a corresponding test_*.py file exists inside tests/test_zeroth_law/."""
     expected_test_file = _expected_test_path(src_file)
-    assert expected_test_file.is_file(), f"Source file {src_file.relative_to(SRC_PKG_ROOT.parent)} \
-        lacks corresponding test file at {expected_test_file.relative_to(TESTS_ROOT)} \
-        (Based on ZLF 'Prefix Everything' Convention inside tests/test_zeroth_law/)"
+    assert expected_test_file.is_file(), f"Missing Test File: Source file {src_file.relative_to(SRC_PKG_ROOT.parent)} \
+        requires a corresponding test file at {expected_test_file.relative_to(TESTS_ROOT)} \
+        according to ZLF structure conventions (See NOTES.md: ZLF Test Structure Convention). \
+        If this source file is unused or shouldn't be tested, consider removing it or adding an exception."
 
 
 def _get_test_py_files() -> Set[Path]:
@@ -195,11 +196,12 @@ TEST_FILE_IDS = [str(p.relative_to(TESTS_ROOT)) for p in TEST_FILES]
 def test_no_orphaned_test_files(test_file: Path):
     """Verify that every test file mirrors an existing source file."""
     expected_source_file = _expected_source_path(test_file)
-    assert expected_source_file.is_file(), (
-        f"Test file {test_file.relative_to(TESTS_ROOT)} exists but corresponding "
-        f"source file {expected_source_file.relative_to(WORKSPACE_ROOT / 'src')} "
-        f"does not."
-    )
+    assert (
+        expected_source_file.is_file()
+    ), f"Orphaned Test File: Test file {test_file.relative_to(TESTS_ROOT)} exists, but the expected \
+        corresponding source file {expected_source_file.relative_to(WORKSPACE_ROOT / 'src')} \
+        was not found. Check if the source file was moved, renamed, or deleted intentionally. \
+        If deleted, remove this test file. If moved/renamed, update its location or this test's logic."
 
 
 # --- Naming Convention Tests (Existing + New) ---
