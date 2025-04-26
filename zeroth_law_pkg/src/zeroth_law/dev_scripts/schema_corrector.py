@@ -168,7 +168,7 @@ def correct_schema(file_path):
     try:
         with open(file_path, "w") as f:
             json.dump(data, f, indent=4)
-            f.write("\\n")  # Add trailing newline
+            f.write("\n")  # Add trailing newline
         print(f"Corrected schema for: {file_path}")
         return True
     except Exception as e:
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     print(f"Found {len(json_files_to_check)} potential tool JSON files.")
-    # print("\\n".join(json_files_to_check)) # Optional: list files
+    # print("\n".join(json_files_to_check)) # Optional: list files
 
     corrected_count = 0
     checked_count = 0
@@ -229,6 +229,6 @@ if __name__ == "__main__":
             print(f"Script stopped due to error in file: {file_path}", file=sys.stderr)
             sys.exit(1)  # Stop script on first error
 
-    print(f"\\nScan complete. Checked {checked_count} files.")
+    print(f"\nScan complete. Checked {checked_count} files.")
     print(f"Corrected {corrected_count} files.")
     sys.exit(0)

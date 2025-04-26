@@ -1,0 +1,37 @@
+# mock_whitelist.toml
+# Defines internal mock targets allowed ONLY in specific test files.
+# Targets must start with 'src.zeroth_law.'
+
+[files."tests/test_zeroth_law/test_dev_scripts/test_reconciliation_logic.py"]
+justification = "Isolate reconciliation orchestrator from underlying helpers during unit testing."
+allowed_targets = [
+    "src.zeroth_law.dev_scripts.reconciliation_logic.load_tool_lists_from_toml",
+    "src.zeroth_law.dev_scripts.reconciliation_logic.get_tool_dirs",
+    "src.zeroth_law.dev_scripts.reconciliation_logic.get_executables_from_env",
+    "src.zeroth_law.dev_scripts.reconciliation_logic.reconcile_tools",
+]
+
+[files."tests/test_zeroth_law/test_dev_scripts/test_tool_index_utils.py"]
+justification = "Isolate load/update/save wrapper logic from file I/O and specific update implementation."
+allowed_targets = [
+    "src.zeroth_law.dev_scripts.tool_index_utils.update_index_entry",
+    "src.zeroth_law.dev_scripts.tool_index_utils.save_tool_index",
+]
+
+[files."tests/test_zeroth_law/test_dev_scripts/test_baseline_writers.py"]
+justification = "Avoid filesystem side effects (directory creation) in unit tests."
+allowed_targets = ["src.zeroth_law.dev_scripts.baseline_writers.Path.mkdir"]
+
+[files."tests/test_zeroth_law/test_common/test_config_loader.py"]
+justification = "Isolate config loading logic from underlying file parsing (tomllib) and validation logic."
+allowed_targets = [
+    "src.zeroth_law.common.config_loader._TOML_LOADER.load", # Note: Mocking potentially private API
+    "src.zeroth_law.common.config_loader.tomllib.load",
+    "src.zeroth_law.common.config_loader.validate_config",
+]
+
+[files."tests/test_zeroth_law/test_dev_scripts/test_code_map/test_map_reporter.py"]
+justification = "Isolate reporter logic from external database interaction (sqlite_utils)."
+allowed_targets = [
+    "src.zeroth_law.dev_scripts.code_map.map_reporter.sqlite_utils.Database",
+]

@@ -15,7 +15,8 @@ log = logging.getLogger(__name__)
 # Determine the project root and tools directory
 try:
     SCRIPT_DIR = Path(__file__).resolve().parent
-    WORKSPACE_ROOT = SCRIPT_DIR.parent
+    # Go up 3 levels: dev_scripts -> zeroth_law -> src -> workspace
+    WORKSPACE_ROOT = SCRIPT_DIR.parent.parent.parent
     TOOLS_DIR = WORKSPACE_ROOT / "src" / "zeroth_law" / "tools"
 except Exception as e:
     log.error(f"Error determining script/workspace directories: {e}")

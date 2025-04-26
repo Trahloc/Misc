@@ -15,60 +15,15 @@ try:
 except NameError:
     WORKSPACE_ROOT = Path.cwd().resolve()
 
-STRUCTURE_DATA_PATH = WORKSPACE_ROOT / "project_structure.json"  # Assuming this path
+# STRUCTURE_DATA_PATH = WORKSPACE_ROOT / "project_structure.json"  # Old path
+STRUCTURE_DATA_PATH = WORKSPACE_ROOT / "tests" / "test_data" / "project_structure.json"  # New path
 
 # Files/patterns explicitly allowed to exist even if not in structure data
 # Use fnmatch patterns (similar to .gitignore) relative to WORKSPACE_ROOT
-KNOWN_GOOD_PATTERNS = {
-    # Project files (exact match)
-    "pyproject.toml",
-    "poetry.lock",
-    "uv.lock",
-    "README.md",
-    ".gitignore",
-    ".gitattributes",  # Keep if used
-    ".editorconfig",  # Keep if used
-    "LICENSE",  # Keep if used
-    ".pre-commit-config.yaml",  # Keep
-    "NOTES.md",  # Keep
-    "TODO.md",  # Keep
-    "CODE_TODOS.md",  # Keep
-    "package.json",  # For npm/prettier
-    "project_structure.json",  # Generated structure data
-    "mock_whitelist.toml",
-    "conftest.py",  # Root conftest
-    "__init__.py",  # Allow root __init__ if needed
-    # Top-level Dirs (use ** for recursive matching)
-    ".git/**",
-    ".venv/**",
-    ".vscode/**",
-    ".cursor/**",
-    ".github/**",
-    ".pytest_cache/**",
-    "build/**",
-    "dist/**",
-    "src/**",  # Allow everything under src (checked against structure.json)
-    "tests/**",  # Allow everything under tests (including test_data, etc.)
-    "test_data/**",  # Explicitly allow test_data and its contents
-    "docs/**",
-    "scripts/**",
-    "templates/**",
-    "tool_defs/**",
-    "tools/**",  # Contains generated files + index
-    "frameworks/**",
-    "generated_command_outputs/**",
-    "coverage_html_report/**",
-    "*.egg-info/**",
-    "__pycache__/**",
-    # Specific generated files (if not covered by dir patterns)
-    ".coverage",  # Note: .coverage* pattern might be better if names vary
-    "coverage.json",
-    "coverage.xml",
-    "coverage_report.txt",
-    "coverage_total.txt",
-    # Temporary files/dirs (if tracked, usually should be gitignored)
-    "tmp/**",
-}
+# --- REMOVED HARDCODED LIST - Now loaded from STRUCTURE_DATA_PATH --- #
+# KNOWN_GOOD_PATTERNS = {
+#    ...
+# }
 
 # --- Helper ---
 
@@ -182,9 +137,10 @@ def test_no_unexpected_files_in_repo():
         pytest.skip("Could not retrieve tracked files from git.")
         return
 
-    # 2. Load expected source files from structure data (handle if missing)
+    # 2. Load expected source files and allowed patterns from structure data
     expected_source_files = set()
-    # print(f"DEBUG: Checking STRUCTURE_DATA_PATH: {STRUCTURE_DATA_PATH.resolve()}", file=sys.stderr) # Removed debug line
+    allowed_root_patterns = set()
+    # print(f"DEBUG: Checking STRUCTURE_DATA_PATH: {STRUCTURE_DATA_PATH.resolve()}", file=sys.stderr)
     if STRUCTURE_DATA_PATH.is_file():
         try:
             with open(STRUCTURE_DATA_PATH, "r") as f:
@@ -192,23 +148,19 @@ def test_no_unexpected_files_in_repo():
             # Assume paths in JSON are relative to WORKSPACE_ROOT or easily convertible
             # Normalize to POSIX paths for consistent matching
             expected_source_files = {Path(p).as_posix() for p in data.get("source_files", [])}
+            # --- ADDED: Load allowed root patterns --- #
+            allowed_root_patterns = {Path(p).as_posix() for p in data.get("allowed_root_patterns", [])}
         except json.JSONDecodeError:
             pytest.fail(f"Could not decode JSON from {STRUCTURE_DATA_PATH}")
         except Exception as e:
             pytest.fail(f"Error reading structure data {STRUCTURE_DATA_PATH}: {e}")
     else:
-        # If the structure file doesn't exist, we can't know expected source files.
-        # Depending on policy, you might fail here, or just rely on KNOWN_GOOD_PATTERNS
-        print(
-            f"Warning: Structure data file not found at {STRUCTURE_DATA_PATH}. "
-            "Cruft detection will rely solely on KNOWN_GOOD_PATTERNS.",
-            file=sys.stderr,
-        )
-        # pytest.fail(f"Structure data file not found: {STRUCTURE_DATA_PATH}") # Option to fail
+        # If the structure file doesn't exist, we can't proceed reliably.
+        pytest.fail(f"Structure data file not found at {STRUCTURE_DATA_PATH}")
 
-    # 3. Combine expected source and known good patterns/files
-    allowed_files_patterns = {Path(p).as_posix() for p in KNOWN_GOOD_PATTERNS}
-    all_expected_or_allowed = expected_source_files.union(allowed_files_patterns)
+    # 3. Combine expected source and allowed root patterns
+    # allowed_files_patterns = {Path(p).as_posix() for p in KNOWN_GOOD_PATTERNS} # Removed
+    all_expected_or_allowed = expected_source_files.union(allowed_root_patterns)
 
     # 4. Find unexpected files using is_allowed (which uses fnmatch)
     unexpected_files = set()
@@ -222,11 +174,10 @@ def test_no_unexpected_files_in_repo():
         file_list = "\n - ".join(sorted(list(unexpected_files)))
         pytest.fail(
             "Found unexpected files tracked by git that are not defined in "
-            f"{STRUCTURE_DATA_PATH.name} or listed/matched in the test's KNOWN_GOOD_PATTERNS:\n"
+            f"{STRUCTURE_DATA_PATH.name} under 'source_files' or 'allowed_root_patterns':\n"
             f" - {file_list}\n"
-            "Please investigate these files. Add them to KNOWN_GOOD_PATTERNS in "
-            f"{Path(__file__).name} if they should be allowed, ensure they are included "
-            f"in {STRUCTURE_DATA_PATH.name} if they are source code, or remove them if they are cruft."
+            "Please investigate these files. Ensure they are included correctly "
+            f"in {STRUCTURE_DATA_PATH.name} or remove them if they are cruft."
         )
     else:
         print("No unexpected tracked files found.")

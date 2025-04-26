@@ -1,9 +1,10 @@
 #!/bin/bash
 set -euo pipefail # Strict mode
 
-# Ensure script is run from project root
+# Ensure script is run from project root based on script location
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
+# Go up 3 levels: dev_scripts -> zeroth_law -> src -> workspace
+PROJECT_ROOT=$( cd -- "$SCRIPT_DIR/../../.." &> /dev/null && pwd )
 cd "$PROJECT_ROOT"
 
 echo "Generating requirements.txt and requirements-dev.txt from pyproject.toml using poetry export..."

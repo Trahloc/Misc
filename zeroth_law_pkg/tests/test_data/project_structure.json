@@ -1,0 +1,93 @@
+{
+    "schema_version": "1.1_structure_definition",
+    "source_files": [
+        "src/zeroth_law/action_runner.py",
+        "src/zeroth_law/actions/lint/python.py",
+        "src/zeroth_law/analysis_runner.py",
+        "src/zeroth_law/analyzer/python/analyzer.py",
+        "src/zeroth_law/analyzer/python/ast_utils.py",
+        "src/zeroth_law/analyzer/python/complexity.py",
+        "src/zeroth_law/analyzer/python/docstrings.py",
+        "src/zeroth_law/analyzer/python/line_counts.py",
+        "src/zeroth_law/analyzer/python/parameters.py",
+        "src/zeroth_law/analyzer/python/statements.py",
+        "src/zeroth_law/analyzers/precommit_analyzer.py",
+        "src/zeroth_law/cli.py", # Updated
+    # "src/zeroth_law/commands/audit.py", # Removed
+    # "src/zeroth_law/commands/audit/audit.py", # Removed
+    # "src/zeroth_law/commands/git_hooks.py", # Removed
+    "src/zeroth_law/common/config_loader.py",
+        "src/zeroth_law/common/config_validation.py",
+        "src/zeroth_law/common/file_finder.py",
+        "src/zeroth_law/common/git_utils.py",
+        "src/zeroth_law/common/path_utils.py",
+        "src/zeroth_law/config_defaults.py",
+        "src/zeroth_law/dynamic_commands.py",
+        "src/zeroth_law/file_processor.py",
+        "src/zeroth_law/lib/crc.py",
+        "src/zeroth_law/lib/tool_index_handler.py",
+        "src/zeroth_law/lib/tool_path_utils.py", # Added
+    "src/zeroth_law/lib/tooling/baseline_generator.py", # Added
+    "src/zeroth_law/lib/tooling/environment_scanner.py", # Added
+    "src/zeroth_law/lib/tooling/tool_reconciler.py", # Added
+    "src/zeroth_law/lib/tooling/tools_dir_scanner.py", # Added
+    # "src/zeroth_law/main.py", # Removed
+    "src/zeroth_law/subcommands/audit/audit.py", # Added
+    "src/zeroth_law/subcommands/git_hooks.py", # Added
+    "src/zeroth_law/subcommands/tools/blacklist_cmd.py", # Added
+    "src/zeroth_law/subcommands/tools/list_utils.py", # Added
+    "src/zeroth_law/subcommands/tools/reconcile.py", # Added
+    "src/zeroth_law/subcommands/tools/sync.py", # Added
+    "src/zeroth_law/subcommands/tools/tools.py", # Added
+    "src/zeroth_law/subcommands/tools/whitelist_cmd.py", # Added
+    "src/zeroth_law/utils/subprocess_utils.py"
+    ],
+    "allowed_root_patterns": [
+    # Project files (exact match)
+    "pyproject.toml",
+    # "poetry.lock", # Removed
+    "uv.lock",
+        "README.md",
+        ".gitignore",
+        ".gitattributes",
+        ".editorconfig",
+        "LICENSE",
+        ".pre-commit-config.yaml",
+        "NOTES.md",
+        "TODO.md",
+        "CODE_TODOS.md",
+        "package.json",
+        "project_structure.json", # This file itself needs to be allowed at root temporarily
+    "conftest.py",
+        "__init__.py",
+    # Top-level Dirs (use ** for recursive matching)
+    ".git/**",
+        ".venv/**",
+        ".vscode/**",
+        ".cursor/**",
+        ".github/**",
+        ".pytest_cache/**",
+        "build/**",
+        "dist/**",
+        "src/**",
+        "tests/**",
+        "docs/**",
+        "scripts/**", # Keep for now until clarified
+    "templates/**",
+        "tool_defs/**", # Keep for now until clarified
+    "tools/**", # Keep for now until clarified
+    "frameworks/**",
+        "generated_command_outputs/**", # Keep for now until gitignored
+    "coverage_html_report/**", # Keep for now until gitignored
+    "*.egg-info/**",
+        "__pycache__/**",
+    # Specific generated files (if not covered by dir patterns)
+    ".coverage",
+        "coverage.json",
+        "coverage.xml",
+        "coverage_report.txt",
+        "coverage_total.txt",
+    # Temporary files/dirs (if tracked, usually should be gitignored)
+    "tmp/**"
+    ]
+}

@@ -73,7 +73,10 @@ def update_command_sequence(json_file_path: Path, base_tools_dir: Path):
 
 
 def main():
-    workspace_root = Path(".")  # Assume script is run from workspace root
+    # workspace_root = Path(".")  # Assume script is run from workspace root
+    # Get script dir, go up 3 levels (dev_scripts -> zeroth_law -> src -> workspace)
+    script_dir = Path(__file__).resolve().parent
+    workspace_root = script_dir.parent.parent.parent
     tools_dir = workspace_root / "src/zeroth_law/tools"
     modified_count = 0
     processed_count = 0

@@ -262,56 +262,6 @@ blacklist = [
 
 ]
 
-# --- ZLT Allowed Project Root Items ---
-[tool.zeroth-law.allowed-project-roots]
-items = [
-    # Dotfiles / Dirs
-    ".cursor",
-    ".git",
-    ".github",
-    ".gitignore",
-    ".ignore",
-    ".pre-commit-config.yaml",
-    ".pytest_cache",
-    ".venv",
-    ".vscode",
-    ".coverage",
-    # Source and Test Dirs
-    "src",
-    "tests",
-    # Config / Metadata
-    "pyproject.toml",
-    "poetry.lock",
-    "uv.lock",
-    "LICENSE",
-    "README.md",
-    "TODO.md",
-    "NOTES.md",
-    "CODE_TODOS.md",
-    "package.json",
-    "project_structure.json",
-    "mock_whitelist.toml",
-    # Build / Output Dirs
-    "build",
-    "dist",
-    "coverage_html_report",
-    "zeroth_law.egg-info",
-    # Coverage files
-    "coverage.xml",
-    "coverage.json",
-    "coverage_report.txt",
-    "coverage_total.txt",
-    # Other Project Dirs
-    "docs",
-    "frameworks",
-    "generated_command_outputs",
-    "scripts",
-    "templates",
-    "tool_defs",
-    "tools",
-    "tmp",
-]
-
 # ----------------------------------------- #
 
 # Add pytest configuration section

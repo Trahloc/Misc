@@ -173,3 +173,14 @@ __pycache__/
 
 # Generated/Temp Files
 tmp
+
+# Node modules
+node_modules/
+
+# Zeroth Law Artifacts
+coverage_html_report/
+generated_command_outputs/
+# tool_index.json # Often generated, but should maybe be tracked?
+# code_map.db # Test artifact, should live in tests/codebase_map
+
+# OS generated files #

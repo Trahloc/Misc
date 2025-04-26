@@ -16,7 +16,7 @@ import pytest
 SRC_PREFIX = "src.zeroth_law"  # The prefix indicating internal modules
 TESTS_DIR = Path(__file__).parent.parent
 PROJECT_ROOT = TESTS_DIR.parent  # Assumes tests/ is one level down from root
-MOCK_WHITELIST_PATH = PROJECT_ROOT / "mock_whitelist.toml"
+MOCK_WHITELIST_PATH = TESTS_DIR / "test_data" / "mock_whitelist.toml"
 
 log = logging.getLogger(__name__)
 
