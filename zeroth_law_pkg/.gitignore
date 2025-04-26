@@ -165,3 +165,11 @@ CODE_TODOS.md
 .github/
 .cursor/
 .vscode/
+
+# Cache files
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# Generated/Temp Files
+tmp
