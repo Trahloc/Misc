@@ -33,8 +33,8 @@ def load_tool_lists_from_toml(toml_path: Path) -> Tuple[Set[str], Set[str]]:
         # Catch other potential file reading errors
         raise IOError(f"Error reading file {toml_path}: {e}") from e
 
-    # Safely navigate the dictionary structure
-    tools_config: dict[str, Any] = data.get("tool", {}).get("zeroth-law", {}).get("managed-tools", {})
+    # Safely navigate the dictionary structure - Corrected path
+    tools_config: dict[str, Any] = data.get("tool", {}).get("zeroth-law", {}).get("tools", {})
 
     # Get lists, default to empty list if key is missing
     raw_whitelist: Any = tools_config.get("whitelist", [])

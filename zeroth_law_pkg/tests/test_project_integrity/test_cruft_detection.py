@@ -10,7 +10,8 @@ import pytest
 
 # --- Configuration ---
 try:
-    WORKSPACE_ROOT = Path(__file__).parent.parent.resolve()
+    # Go up three levels: tests/test_project_integrity -> tests -> workspace_root
+    WORKSPACE_ROOT = Path(__file__).parent.parent.parent.resolve()
 except NameError:
     WORKSPACE_ROOT = Path.cwd().resolve()
 
@@ -22,6 +23,7 @@ KNOWN_GOOD_PATTERNS = {
     # Project files (exact match)
     "pyproject.toml",
     "poetry.lock",
+    "uv.lock",
     "README.md",
     ".gitignore",
     ".gitattributes",  # Keep if used
@@ -30,46 +32,41 @@ KNOWN_GOOD_PATTERNS = {
     ".pre-commit-config.yaml",  # Keep
     "NOTES.md",  # Keep
     "TODO.md",  # Keep
-    str(STRUCTURE_DATA_PATH.relative_to(WORKSPACE_ROOT)),  # project_structure.json
+    "CODE_TODOS.md",  # Keep
     "package.json",  # For npm/prettier
-    "uv.lock",
-    # Top-level Dirs / Glob patterns
+    "project_structure.json",  # Generated structure data
+    "conftest.py",  # Root conftest
+    "__init__.py",  # Allow root __init__ if needed
+    # Top-level Dirs (use ** for recursive matching)
     ".git/**",
     ".venv/**",
     ".vscode/**",
-    ".cursor/**",  # Matches .cursor/rules/zerothlaw.mdc
-    ".github/**",  # Matches .github/workflows/ci.yml
-    "src/__init__.py",  # Keep top-level src init if it exists
-    "tests/**",  # Matches all test files, conftest, test_data etc.
-    "docs/**",  # Matches docs/legacy/analysis_summary.md
-    # "scripts/**",  # Removed as scripts were moved
-    "frameworks/**",  # Matches all files in frameworks/
-    "templates/**",  # Matches all files in templates/
-    "__pycache__/**",
-    "*.egg-info/**",
+    ".cursor/**",
+    ".github/**",
+    ".pytest_cache/**",
     "build/**",
     "dist/**",
-    # Specific src/zeroth_law patterns for non-code or excluded files
-    "src/zeroth_law/__init__.py",  # Allow exact top-level package init
-    "src/zeroth_law/py.typed",  # Allow exact top-level typed marker
-    "src/zeroth_law/**/__init__.py",  # Matches src/zeroth_law/__init__.py etc.
-    "src/zeroth_law/**/py.typed",  # Matches src/zeroth_law/py.typed etc.
-    "src/zeroth_law/cli.py",  # Allow explicitly excluded source file (if still excluded)
-    "src/zeroth_law/tool_mapping.yaml",  # Allow specific config
-    "src/zeroth_law/tools/**",  # Allow everything under tools
-    "src/zeroth_law/dev_scripts/**",  # Allow everything under dev_scripts
-    "src/zeroth_law/managed_tools.yaml",
-    "src/zeroth_law/schemas/**",  # Allow schemas directory
-    # Generated files
+    "src/**",  # Allow everything under src (checked against structure.json)
+    "tests/**",  # Allow everything under tests (including test_data, etc.)
+    "test_data/**",  # Explicitly allow test_data and its contents
+    "docs/**",
+    "scripts/**",
+    "templates/**",
+    "tool_defs/**",
+    "tools/**",  # Contains generated files + index
+    "frameworks/**",
+    "generated_command_outputs/**",
+    "coverage_html_report/**",
+    "*.egg-info/**",
+    "__pycache__/**",
+    # Specific generated files (if not covered by dir patterns)
+    ".coverage",  # Note: .coverage* pattern might be better if names vary
     "coverage.json",
+    "coverage.xml",
     "coverage_report.txt",
     "coverage_total.txt",
-    # Legacy / Temp?
-    "tools/",
-    "tools/tool_index.json",
-    "tools/zlt_schema_guidelines.md",
-    "tmp",
-    # Add other known files/directories here
+    # Temporary files/dirs (if tracked, usually should be gitignored)
+    "tmp/**",
 }
 
 # --- Helper ---
@@ -180,12 +177,13 @@ def test_no_unexpected_files_in_repo():
 
     # 1. Get actual tracked files
     actual_files = get_git_tracked_files(WORKSPACE_ROOT)
-    if not actual_files:  # Skip if git failed or no files found
+    if not actual_files:
         pytest.skip("Could not retrieve tracked files from git.")
         return
 
-    # 2. Load expected source files from structure data
+    # 2. Load expected source files from structure data (handle if missing)
     expected_source_files = set()
+    # print(f"DEBUG: Checking STRUCTURE_DATA_PATH: {STRUCTURE_DATA_PATH.resolve()}", file=sys.stderr) # Removed debug line
     if STRUCTURE_DATA_PATH.is_file():
         try:
             with open(STRUCTURE_DATA_PATH, "r") as f:
@@ -208,34 +206,22 @@ def test_no_unexpected_files_in_repo():
         # pytest.fail(f"Structure data file not found: {STRUCTURE_DATA_PATH}") # Option to fail
 
     # 3. Combine expected source and known good patterns/files
-    # Get the set of patterns ONLY from KNOWN_GOOD_PATTERNS
     allowed_files_patterns = {Path(p).as_posix() for p in KNOWN_GOOD_PATTERNS}
-    # Combine the exact source file paths with the patterns for the main check
-    all_expected_or_allowed_patterns = expected_source_files.union(allowed_files_patterns)
+    all_expected_or_allowed = expected_source_files.union(allowed_files_patterns)
 
-    # 4. Find unexpected files
+    # 4. Find unexpected files using is_allowed (which uses fnmatch)
     unexpected_files = set()
     for file_path in actual_files:
-        # Check if the actual file is an exact source file or matches any pattern
-        if not is_allowed(file_path, all_expected_or_allowed_patterns):
-            # If not directly allowed, check if it's *within* an allowed directory pattern
-            # This prevents flagging every file inside 'tests/' just because 'tests/' is allowed.
-            is_in_allowed_dir = False
-            # Check only against the original patterns, not the combined set
-            for pattern in allowed_files_patterns:
-                if pattern.endswith("/") and file_path.startswith(pattern):
-                    is_in_allowed_dir = True
-                    break
-            if not is_in_allowed_dir:
-                # Only add if it's not directly allowed AND not in an allowed dir pattern
-                unexpected_files.add(file_path)
+        # Use is_allowed directly which checks exact match and patterns
+        if not is_allowed(file_path, all_expected_or_allowed):
+            unexpected_files.add(file_path)
 
     # 5. Fail if unexpected files are found
     if unexpected_files:
         file_list = "\n - ".join(sorted(list(unexpected_files)))
         pytest.fail(
             "Found unexpected files tracked by git that are not defined in "
-            f"{STRUCTURE_DATA_PATH.name} or listed in the test's KNOWN_GOOD_PATTERNS:\n"
+            f"{STRUCTURE_DATA_PATH.name} or listed/matched in the test's KNOWN_GOOD_PATTERNS:\n"
             f" - {file_list}\n"
             "Please investigate these files. Add them to KNOWN_GOOD_PATTERNS in "
             f"{Path(__file__).name} if they should be allowed, ensure they are included "

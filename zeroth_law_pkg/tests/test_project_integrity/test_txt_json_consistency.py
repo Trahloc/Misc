@@ -11,6 +11,10 @@ from pathlib import Path
 import warnings
 import jsonschema
 from typing import List, Tuple, Dict, Any
+import zlib
+
+# Import the helper function from the root conftest
+from tests.conftest import command_sequence_to_id, calculate_crc32_hex
 
 # Import command_sequence_to_id from the conftest in the same directory
 # from .conftest import command_sequence_to_id # REMOVE THIS - Fixtures/helpers moved to root conftest

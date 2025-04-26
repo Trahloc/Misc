@@ -148,6 +148,10 @@ def _get_source_py_files() -> Set[Path]:
 
 def _expected_test_path(src_file: Path) -> Path:
     """Calculates the expected corresponding test file path based on ZLF convention."""
+    # Handle the special case for src/zeroth_law/commands/audit.py
+    if src_file == SRC_PKG_ROOT / "commands" / "audit.py":
+        return TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py"
+
     relative_path = src_file.relative_to(SRC_PKG_ROOT)
     parts = list(relative_path.parts)
     # Prefix directory parts
@@ -182,6 +186,10 @@ def _get_test_py_files() -> Set[Path]:
 
 def _expected_source_path(test_file: Path) -> Path:
     """Calculates the expected corresponding source file path."""
+    # Handle the special case for the renamed audit test file
+    if test_file == TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py":
+        return SRC_PKG_ROOT / "commands" / "audit.py"
+
     relative_path = test_file.relative_to(TESTS_MIRROR_ROOT)
     # Remove 'test_' prefix from all parts
     src_parts = [p.removeprefix("test_") for p in relative_path.parts]
@@ -196,12 +204,19 @@ TEST_FILE_IDS = [str(p.relative_to(TESTS_ROOT)) for p in TEST_FILES]
 def test_no_orphaned_test_files(test_file: Path):
     """Verify that every test file mirrors an existing source file."""
     expected_source_file = _expected_source_path(test_file)
-    assert (
-        expected_source_file.is_file()
-    ), f"Orphaned Test File: Test file {test_file.relative_to(TESTS_ROOT)} exists, but the expected \
-        corresponding source file {expected_source_file.relative_to(WORKSPACE_ROOT / 'src')} \
-        was not found. Check if the source file was moved, renamed, or deleted intentionally. \
-        If deleted, remove this test file. If moved/renamed, update its location or this test's logic."
+    assert expected_source_file.is_file(), (
+        f"Misplaced/Orphaned Test File: Test file '{test_file.relative_to(TESTS_ROOT)}' exists, but the expected \
+"
+        f"corresponding source file '{expected_source_file.relative_to(WORKSPACE_ROOT / 'src')}' \
+"
+        f"was not found at that specific location.\n"
+        f"Potential Causes & Actions:\n"
+        f"  1. Source File Deleted: If the source file was intentionally deleted, remove this test file ({test_file.relative_to(WORKSPACE_ROOT)}).\n"
+        f"  2. Source File Renamed/Moved: If the source file still exists but was moved or renamed, update this test file's location/name to mirror the new source path (e.g., using 'mv'), OR update the test logic to find the correct source.\n"
+        f"  3. Source File Misplaced (Not in src/): Ensure the corresponding source file is located within the 'src/zeroth_law/' directory structure. Move it to 'src/zeroth_law/...' (e.g., using 'mv') if necessary.\n"
+        f"  4. Test File Misplaced (within test_zeroth_law/): Ensure this test file ({test_file.relative_to(WORKSPACE_ROOT)}) is in the correct sub-directory within 'tests/test_zeroth_law/' mirroring the source structure (use 'mv' to relocate if needed).\n"
+        f"  5. Test File Misplaced (Wrong Category): This test might belong in a different top-level test directory (e.g., test_data/, test_interaction/, test_project_integrity/, test_utils/) if it doesn't directly mirror a file in 'src/zeroth_law/'. Use the 'mv' command to move the test file to the appropriate category directory if necessary."
+    )
 
 
 # --- Naming Convention Tests (Existing + New) ---

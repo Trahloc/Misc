@@ -8,6 +8,9 @@ from unittest.mock import patch, mock_open
 import pytest
 import yaml  # Import yaml if needed for config loading tests (if any)
 from filelock import FileLock, Timeout  # Import Timeout here
+from typing import List, Tuple, Dict, Any  # Ensure List and Tuple are here
+import time
+import os
 
 # Import functions to test
 from src.zeroth_law.dev_scripts.tool_index_utils import (
@@ -465,3 +468,25 @@ def test_load_update_save_lock_release_on_timeout(mock_acquire, mock_release, mo
 
 # We might need to mock Timeout from filelock if it's not automatically mocked
 # from filelock import Timeout # Removed from here
+
+
+def test_index_contains_all_managed_sequences(
+    managed_sequences: List[Tuple[str, ...]], tool_index_handler: "ToolIndexHandler"
+):
+    """Verify that every sequence identified as managed has an entry in the index."""
+    # Fixture provides Set[str], not List[Tuple[str, ...]]. Adjusting loop.
+    if not managed_sequences:
+        pytest.skip("No managed sequences provided by fixture.")
+
+    missing_entries = []
+    # The fixture likely provides a set of strings, iterate through them directly.
+    for tool_name in managed_sequences:
+        # Convert the tool name string into a tuple for get_entry
+        command_sequence_tuple = (tool_name,)
+        if tool_index_handler.get_entry(command_sequence_tuple) is None:
+            # Append the tool name string directly if missing
+            missing_entries.append(tool_name)
+
+    assert (
+        not missing_entries
+    ), f"The following managed tools are missing from the tool index: {sorted(missing_entries)}"

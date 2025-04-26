@@ -53,6 +53,12 @@ def reconcile_tools(
         is_whitelisted = tool in whitelist
         is_blacklisted = tool in blacklist
 
+        # --- ADDED FILTER: Ignore likely spurious single-character tools --- START
+        if len(tool) == 1 and not is_whitelisted:
+            log.debug(f"Ignoring potential single-character non-whitelisted tool: '{tool}'")
+            continue  # Skip further processing for this entry
+        # --- ADDED FILTER: Ignore likely spurious single-character tools --- END
+
         status: ToolStatus | None = None
 
         # --- Error States First ---
@@ -84,6 +90,9 @@ def reconcile_tools(
 
         if status:
             reconciliation_status[tool] = status
+            # --- ADDED DEBUG LOG --- START
+            log.debug(f"Reconciled tool: '{tool}' -> Status: {status.name}")
+            # --- ADDED DEBUG LOG --- END
         else:
             # This case should ideally not be reached if logic is exhaustive,
             # but log a warning if it does.

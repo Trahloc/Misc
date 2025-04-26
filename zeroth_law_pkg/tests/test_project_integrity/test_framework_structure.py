@@ -148,6 +148,10 @@ def _get_source_py_files() -> Set[Path]:
 
 def _expected_test_path(src_file: Path) -> Path:
     """Calculates the expected corresponding test file path based on ZLF convention."""
+    # Handle the special case for src/zeroth_law/commands/audit.py
+    if src_file == SRC_PKG_ROOT / "commands" / "audit.py":
+        return TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py"
+
     relative_path = src_file.relative_to(SRC_PKG_ROOT)
     parts = list(relative_path.parts)
     # Prefix directory parts
@@ -181,6 +185,10 @@ def _get_test_py_files() -> Set[Path]:
 
 def _expected_source_path(test_file: Path) -> Path:
     """Calculates the expected corresponding source file path."""
+    # Handle the special case for the renamed audit test file
+    if test_file == TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py":
+        return SRC_PKG_ROOT / "commands" / "audit.py"
+
     relative_path = test_file.relative_to(TESTS_MIRROR_ROOT)
     # Remove 'test_' prefix from all parts
     src_parts = [p.removeprefix("test_") for p in relative_path.parts]

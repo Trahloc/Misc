@@ -8,7 +8,7 @@ import pytest
 
 # --- Configuration ---
 try:
-    WORKSPACE_ROOT = Path(__file__).parent.parent.resolve()
+    WORKSPACE_ROOT = Path(__file__).parent.parent.parent.resolve()
 except NameError:
     WORKSPACE_ROOT = Path.cwd().resolve()
 

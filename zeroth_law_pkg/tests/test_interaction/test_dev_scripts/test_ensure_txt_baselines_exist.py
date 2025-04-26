@@ -22,6 +22,8 @@ from zeroth_law.dev_scripts.tool_reconciler import ToolStatus
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+# Assuming WORKSPACE_ROOT and managed_sequences are fixtures from a root conftest
+# from conftest import WORKSPACE_ROOT, managed_sequences
 
 # Determine project root and tool definitions directory relative to this test file
 # tests/integration/test_this_file.py -> project_root
@@ -29,81 +31,42 @@ logger = logging.getLogger(__name__)
 # tests -> parent -> parent = project_root
 PROJECT_ROOT_DIR = Path(__file__).resolve().parents[2]
 TOOL_DEFS_DIR = PROJECT_ROOT_DIR / "tool_defs"
-BASELINE_DIR = PROJECT_ROOT_DIR / "generated_command_outputs"
+
+# Define the directory where baseline files are stored, relative to WORKSPACE_ROOT
+BASELINE_DIR_NAME = "generated_command_outputs"
 
 
-def test_ensure_txt_baselines_exist():
+# Helper function to convert command sequence tuple to filename
+def command_sequence_to_filename(command_sequence: tuple[str, ...]) -> str:
+    """Converts a command tuple (e.g., ('ruff', 'check')) to a filename ('ruff_check.txt')."""
+    return "_".join(command_sequence) + ".txt"
+
+
+@pytest.mark.baseline_check
+def test_ensure_txt_baselines_exist(WORKSPACE_ROOT: Path, managed_sequences: set[tuple[str, ...]]):
     """
     Checks that a .txt baseline file exists in generated_command_outputs
     for every command sequence defined for managed tools.
     """
     logger.info("Starting baseline existence check...")
+    # Correctly calculate BASELINE_DIR using WORKSPACE_ROOT fixture
+    BASELINE_DIR = WORKSPACE_ROOT / BASELINE_DIR_NAME
+
     if not BASELINE_DIR.is_dir():
         pytest.fail(f"Baseline directory not found: {BASELINE_DIR}")
 
-    # --- Refactored Reconciliation Section ---
-    try:
-        # Call the helper function to get results and managed tools
-        reconciliation_results, managed_tools_for_processing = perform_tool_reconciliation(
-            project_root_dir=PROJECT_ROOT_DIR, tool_defs_dir=TOOL_DEFS_DIR
-        )
-        logger.info(f"Managed tools identified for baseline check: {managed_tools_for_processing}")
+    if not managed_sequences:
+        pytest.skip("No managed sequences provided by the fixture.")
 
-    except ReconciliationError as e:
-        # Fail the test if reconciliation itself had errors
-        pytest.fail(f"Tool reconciliation failed: {e}")
-    except FileNotFoundError as e:
-        # Fail if necessary inputs (pyproject.toml, tool_defs) were missing
-        pytest.fail(f"Required directory or file not found during reconciliation: {e}")
-    except Exception as e:
-        # Catch any other unexpected errors during reconciliation
-        pytest.fail(f"An unexpected error occurred during reconciliation: {e}", pytrace=True)
-    # --- End Refactored Section ---
+    missing_files = []
+    for sequence in managed_sequences:
+        expected_filename = command_sequence_to_filename(sequence)
+        expected_path = BASELINE_DIR / expected_filename
+        if not expected_path.is_file():
+            missing_files.append(expected_filename)
 
-    # --- Logic Using Refactored Results (Mostly Unchanged) ---
-    missing_baselines = []
-    tools_with_issues = []  # Tools that are managed but might have definition issues
-
-    # Iterate through the managed tools identified by the helper function
-    for tool_name in managed_tools_for_processing:
-        tool_status = reconciliation_results.get(tool_name)  # Get status from the returned results
-
-        # If the tool is managed but missing from the env, we still expect a baseline
-        # generated from the definition. If it's whitelisted but missing defs, skip.
-        if tool_status == ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR:
-            logger.warning(
-                f"Skipping baseline check for whitelisted tool '{tool_name}' - no definition found in {TOOL_DEFS_DIR}"
-            )
-            continue  # Cannot generate sequences without definition
-
-        tool_def_dir = TOOL_DEFS_DIR / tool_name
-        if not tool_def_dir.is_dir():
-            # This case should ideally be covered by WHITELISTED_NOT_IN_TOOLS_DIR status check,
-            # but kept as a safeguard.
-            logger.error(f"Tool '{tool_name}' is managed but definition directory missing: {tool_def_dir}")
-            tools_with_issues.append(tool_name)
-            continue
-
-        # Assume existence of a function to get command sequences from tool defs
-        # (This would likely live in another module, e.g., sequence_generator.py)
-        # For now, simulate based on expected baseline filenames
-        # A real implementation would parse JSONs etc.
-        expected_sequences = find_expected_baseline_sequences(tool_name, tool_def_dir)
-
-        for sequence_tuple, baseline_filename in expected_sequences:
-            baseline_path = BASELINE_DIR / baseline_filename
-            if not baseline_path.is_file():
-                missing_baselines.append(
-                    f"Missing baseline for {tool_name} sequence {sequence_tuple}: expected {baseline_path}"
-                )
-            else:
-                logger.debug(f"Found baseline for {tool_name} sequence {sequence_tuple}: {baseline_path}")
-
-    if tools_with_issues:
-        pytest.fail(f"Found issues with tool definitions for managed tools: {tools_with_issues}")
-
-    if missing_baselines:
-        pytest.fail("Missing baseline files:\\n" + "\\n".join(missing_baselines))
+    if missing_files:
+        pytest.fail(f"Missing baseline output files in {BASELINE_DIR}:\n" + "\n".join(sorted(missing_files)))
     else:
         logger.info("All expected baseline files found.")
 

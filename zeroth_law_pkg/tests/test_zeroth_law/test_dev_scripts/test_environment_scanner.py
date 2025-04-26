@@ -31,7 +31,8 @@ def test_scan_successful_unix(mock_subprocess_run, tmp_path):
     mock_result.stderr = ""
     mock_subprocess_run.return_value = mock_result
 
-    found_executables = get_executables_from_env()
+    # Pass the expected executables as the whitelist
+    found_executables = get_executables_from_env(whitelist=set(executables), dir_tools=set())
 
     # Assert subprocess was called correctly, including defaults from helper
     mock_subprocess_run.assert_called_once_with(
@@ -66,7 +67,8 @@ def test_scan_successful_windows(mock_subprocess_run, tmp_path):
     mock_result.stderr = ""
     mock_subprocess_run.return_value = mock_result
 
-    found_executables = get_executables_from_env()
+    # Pass the expected executable base names as the whitelist
+    found_executables = get_executables_from_env(whitelist=set(executable_bases), dir_tools=set())
 
     # Assert subprocess was called correctly, including defaults from helper
     mock_subprocess_run.assert_called_once_with(
@@ -93,9 +95,8 @@ def test_scan_uv_which_fails(mock_subprocess_run):
     mock_result.stderr = "uv command failed"
     mock_subprocess_run.return_value = mock_result
 
-    # Expect the function to handle this, perhaps returning empty set or raising
-    # Assuming it returns an empty set on failure to find python
-    found_executables = get_executables_from_env()
+    # Pass empty sets for whitelist and dir_tools
+    found_executables = get_executables_from_env(whitelist=set(), dir_tools=set())
     assert found_executables == set()
 
     # Or if it should raise an error:
@@ -108,8 +109,8 @@ def test_scan_uv_command_not_found(mock_subprocess_run):
     """Test scenario where 'uv' command itself is not found."""
     mock_subprocess_run.side_effect = FileNotFoundError("uv command not found")
 
-    # Assuming it returns an empty set on failure
-    found_executables = get_executables_from_env()
+    # Pass empty sets for whitelist and dir_tools
+    found_executables = get_executables_from_env(whitelist=set(), dir_tools=set())
     assert found_executables == set()
 
     # Or if it should raise an error:
@@ -131,8 +132,8 @@ def test_scan_derived_bin_path_missing(mock_subprocess_run, tmp_path):
     mock_result.stderr = ""
     mock_subprocess_run.return_value = mock_result
 
-    # Assuming it returns an empty set if bin path is invalid
-    found_executables = get_executables_from_env()
+    # Pass empty sets for whitelist and dir_tools
+    found_executables = get_executables_from_env(whitelist=set(), dir_tools=set())
     assert found_executables == set()
 
     # Assert subprocess was still called
@@ -153,7 +154,8 @@ def test_scan_empty_bin_directory(mock_subprocess_run, tmp_path):
     mock_result.stderr = ""
     mock_subprocess_run.return_value = mock_result
 
-    found_executables = get_executables_from_env()
+    # Pass empty sets for whitelist and dir_tools
+    found_executables = get_executables_from_env(whitelist=set(), dir_tools=set())
     assert found_executables == set()
 
     # Assert subprocess was called

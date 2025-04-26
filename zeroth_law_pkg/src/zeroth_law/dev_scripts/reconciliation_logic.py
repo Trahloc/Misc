@@ -51,8 +51,10 @@ def perform_tool_reconciliation(
     logger.info(f"Whitelist: {whitelist}, Blacklist: {blacklist}")
 
     # 2. Scan Environment
-    env_tools = get_executables_from_env()
-    logger.info(f"Found {len(env_tools)} executables in environment.")
+    dir_tools = get_tool_dirs(tool_defs_dir)
+    logger.info(f"Found {len(dir_tools)} tool definitions in {tool_defs_dir}.")
+    env_tools = get_executables_from_env(whitelist, dir_tools)
+    logger.info(f"Found {len(env_tools)} relevant executables in environment after filtering.")
 
     # 3. Scan Tool Definitions Directory
     if not tool_defs_dir.is_dir():
@@ -61,6 +63,11 @@ def perform_tool_reconciliation(
     logger.info(f"Found {len(dir_tools)} tool definitions in {tool_defs_dir}.")
 
     # 4. Reconcile
+    logger.debug(f"Reconciling with:")
+    logger.debug(f"  Whitelist: {whitelist}")
+    logger.debug(f"  Blacklist: {blacklist}")
+    logger.debug(f"  Env Tools (filtered): {env_tools}")
+    logger.debug(f"  Dir Tools: {dir_tools}")
     reconciliation_results = reconcile_tools(
         whitelist=whitelist,
         blacklist=blacklist,

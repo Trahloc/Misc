@@ -6,7 +6,7 @@ import time
 import sys
 from pathlib import Path
 import logging
-from typing import Any, Generator, List, Optional, Tuple
+from typing import Any, Generator, List, Optional, Tuple, Set
 import concurrent.futures
 import json
 import warnings
@@ -657,6 +657,7 @@ def _update_baseline_and_index_entry(
     tool_name = command_sequence[0]  # Base tool name, e.g., 'safety' or 'ruff'
     tool_dir = tools_dir / tool_name
     txt_file_path = tool_dir / f"{tool_id}.txt"
+    json_file_path = tool_dir / f"{tool_id}.json"
     update_occurred = False
     current_time = time.time()
 
@@ -740,6 +741,31 @@ def _update_baseline_and_index_entry(
         existing_entry = handler.get_entry(command_sequence)
         existing_crc = existing_entry.get("crc") if existing_entry else None
 
+        # --- ADD JSON Skeleton Creation --- START
+        if not json_file_path.is_file():
+            log.info(f"JSON definition missing for {tool_id}, creating skeleton: {json_file_path}")
+            skeleton_data = {
+                "command": list(command_sequence),
+                "description": f"Tool definition for {tool_id} (auto-generated skeleton)",
+                "version_command": f"{tool_name} --version",  # Basic guess
+                "args": {},
+                "subcommands": None,
+                "baseline_file": txt_file_path.name,
+                "json_skeleton_file": json_file_path.name,
+                "crc": new_crc,  # Use the CRC from the TXT baseline
+                "updated_timestamp": current_time,
+                "checked_timestamp": current_time,
+                "source": "baseline_script_skeleton",
+            }
+            try:
+                with open(json_file_path, "w", encoding="utf-8") as f_json:
+                    json.dump(skeleton_data, f_json, indent=4)
+                # Mark update occurred if JSON was created
+                # update_occurred = True # Optional: decide if this counts as an "update" for reporting
+            except Exception as json_e:
+                log.error(f"Failed to create skeleton JSON for {tool_id}: {json_e}")
+        # --- ADD JSON Skeleton Creation --- END
+
         if existing_crc != new_crc:
             log.info(f"CRC mismatch for {tool_id}: Index={existing_crc}, New={new_crc}. Updating index.")
             entry_data = {
@@ -747,14 +773,23 @@ def _update_baseline_and_index_entry(
                 "updated_timestamp": current_time,
                 "checked_timestamp": current_time,
                 "source": "baseline_script",  # Indicate source
+                "baseline_file": txt_file_path.name,  # Ensure baseline filename is in index
+                "json_skeleton_file": json_file_path.name
+                if json_file_path.exists()
+                else None,  # Add JSON filename if exists
             }
             handler.update_entry(command_sequence, entry_data)
             update_occurred = True
         else:
             log.debug(f"CRC consistent for {tool_id}. Updating checked timestamp.")
             # Only update checked timestamp if CRC matches
-            entry_update_data = {"checked_timestamp": current_time}
-            handler.update_entry(command_sequence, entry_update_data)  # Update only checked time
+            # Also ensure baseline/json filenames are present
+            entry_update_data = {
+                "checked_timestamp": current_time,
+                "baseline_file": txt_file_path.name,
+                "json_skeleton_file": json_file_path.name if json_file_path.exists() else None,
+            }
+            handler.update_entry(command_sequence, entry_update_data)  # Update checked time + filenames
 
     except subprocess.TimeoutExpired:
         log.error(f"Command timed out for {tool_id}. Skipping.")
@@ -787,38 +822,27 @@ def tool_index_handler(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path):
 
 
 @pytest.fixture(scope="session")
-def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> List[Tuple[str, ...]]:
-    """Discovers all managed tool sequences based on reconciliation logic."""
-    log.info("Discovering managed tool sequences for session...")
+def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> Set[str]:
+    """Discovers managed tool *names* based on reconciliation logic.
+
+    Performs reconciliation within the fixture scope.
+
+    Returns:
+        A set of managed tool names.
+    """
+    log.info("Discovering managed tool names within managed_sequences fixture scope...")
     try:
-        # Pass WORKSPACE_ROOT first for project config, then TOOLS_DIR for definitions
-        reconciliation_results, managed_tools, _ = perform_tool_reconciliation(WORKSPACE_ROOT, TOOLS_DIR)
-        # Errors are handled by ReconciliationError exception below.
-        # Log managed tools discovered (optional)
-        log.info(f"Reconciliation identified managed tools: {managed_tools}")
+        _reconciliation_results, managed_tool_names, _blacklist = perform_tool_reconciliation(WORKSPACE_ROOT, TOOLS_DIR)
+        log.info(f"Fixture scope reconciliation identified managed tool names: {managed_tool_names}")
+        return managed_tool_names  # Return the set of names
 
-        all_sequences = []
-        # Extract sequences from the results (which now should include subcommand sequences)
-        for tool_name, data in reconciliation_results.items():
-            if isinstance(data, dict) and "sequences" in data:
-                # Handle potential None value from sequences
-                tool_sequences = data.get("sequences")
-                if tool_sequences:
-                    all_sequences.extend(tool_sequences)
-            else:
-                # Log unexpected structure
-                log.warning(f"Unexpected structure in reconciliation results for {tool_name}: {data}")
-
-        # Ensure sequences are tuples
-        all_sequences = [tuple(seq) for seq in all_sequences]
-        log.info(f"Discovered {len(all_sequences)} managed sequences.")
-        return all_sequences
     except ReconciliationError as e:
-        pytest.fail(f"Tool reconciliation failed during test setup: {e}")
+        pytest.fail(f"Tool reconciliation failed within managed_sequences fixture: {e}")
     except Exception as e:
-        log.exception("Unexpected error during managed sequence discovery")
-        pytest.fail(f"Unexpected error during managed sequence discovery: {e}")
-    return []  # Return empty list on failure
+        log.exception("Unexpected error during managed sequence discovery within fixture")
+        pytest.fail(f"Unexpected error during managed sequence discovery within fixture: {e}")
+
+    return set()  # Return empty set on failure
 
 
 @pytest.fixture(scope="session", autouse=True)  # Keep autouse=True
@@ -827,7 +851,7 @@ def ensure_baselines_updated(
     TOOLS_DIR: Path,
     TOOL_INDEX_PATH: Path,
     tool_index_handler: ToolIndexHandler,
-    managed_sequences: list,
+    managed_sequences: set,
 ):
     """Session-scoped fixture to ensure all tool help baselines (.txt) and tool_index.json are up-to-date."""
     start_time = time.monotonic()

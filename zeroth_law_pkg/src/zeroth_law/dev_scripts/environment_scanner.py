@@ -15,13 +15,19 @@ log = logging.getLogger(__name__)
 DEFAULT_TIMEOUT = 15
 
 
-def get_executables_from_env() -> Set[str]:
+def get_executables_from_env(whitelist: Set[str], dir_tools: Set[str]) -> Set[str]:
     """Gets a set of executable base names from the active uv environment's bin/Scripts dir.
 
     Uses 'uv run which python' to find the interpreter and deduce the bin directory.
+    Filters results to include only stems that are whitelisted or match a tool directory name,
+    and excludes dotfiles.
+
+    Args:
+        whitelist: Set of whitelisted tool names from configuration.
+        dir_tools: Set of tool directory names found in the tools definition directory.
 
     Returns:
-        A set of strings representing the base names of found executables (e.g., 'ruff').
+        A set of strings representing the base names of likely relevant executables.
         Returns an empty set if errors occur (uv not found, python not found, bin dir missing).
     """
     command = ["uv", "run", "--quiet", "--", "which", "python"]
@@ -76,18 +82,28 @@ def get_executables_from_env() -> Set[str]:
 
     # Scan the bin/Scripts directory
     found_executables: Set[str] = set()
+    likely_executables: Set[str] = set()
     try:
         for item in bin_path.iterdir():
-            # Check if it's a file and consider executable status (tricky cross-platform)
-            # For simplicity, we might just check if it's a file initially.
-            # A more robust check might involve os.access(item, os.X_OK) on Unix,
-            # or checking extensions like .exe, .bat, .cmd on Windows.
-            # For now, just list files and get base names.
+            # Ignore hidden files/directories (starting with .)
+            if item.name.startswith("."):
+                log.debug(f"Ignoring hidden item: {item.name}")
+                continue
+
+            # Basic check: is it a file?
             if item.is_file():
-                # Use Path.stem to get the name without the final suffix (e.g., .exe)
-                found_executables.add(item.stem)
-        log.debug(f"Found {len(found_executables)} potential executables in {bin_path}.")
-        return found_executables
+                stem = item.stem  # Get name without final suffix
+                # --- MODIFIED FILTER --- START
+                # Keep only if stem is whitelisted OR matches a tool directory
+                if stem in whitelist or stem in dir_tools:
+                    likely_executables.add(stem)
+                    log.debug(f"Keeping likely tool executable: {stem} (from {item.name})")
+                else:
+                    log.debug(f"Ignoring file stem '{stem}' (from {item.name}) - not whitelisted or in dir_tools.")
+                # --- MODIFIED FILTER --- END
+
+        log.debug(f"Found {len(likely_executables)} likely tool executables in {bin_path}.")
+        return likely_executables
 
     except Exception as e:
         log.exception(f"Error scanning executable directory {bin_path}: {e}")

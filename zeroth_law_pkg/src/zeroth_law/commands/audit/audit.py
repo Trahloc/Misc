@@ -1,4 +1,8 @@
 # FILE: src/zeroth_law/commands/audit/audit.py
+"""Performs analysis on source files based on configured rules."""
+
+__all__ = ["audit"]  # Assuming 'audit' is the main function/entry point
+
 """Implements the audit command for ZLT."""
 
 import json
