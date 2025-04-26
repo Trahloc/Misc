@@ -41,11 +41,11 @@ To reiterate the mandate above for absolute clarity: The ONLY non-deterministic 
         *   **Ensures Minimal Skeleton JSON:** Checks if `src/zeroth_law/tools/<tool>/<id>.json` exists. If not, creates it with basic keys and `metadata.ground_truth_crc = "0x00000000"`. It *does not* modify an existing JSON or populate the skeleton.
 
 3.  **AI Interpretation & Synchronization (`.json` Population):**
-    *   Triggered by a failing `test_txt_json_consistency.py` (see Step 4).
+    *   Triggered by a failing `test_txt_json_consistency.py` (see Step 4) or `test_json_schema_validation.py` indicating a need for structure update.
     *   **Me (the AI)** reads the existing `.json` file (which might be a skeleton or partially populated).
     *   **Me (the AI)** reads the ground-truth `.txt` file (which was updated in Step 2 if necessary).
-    *   **Me (the AI)** holistically compares the `.txt` content to the `.json` structure. Update the `.json` content (filling `description`, `usage`, `options`, `arguments`, `subcommands` etc.) based on the `.txt` content and schema guidelines (`tools/zlt_schema_guidelines.md`), ensuring the entire JSON structure accurately reflects the interpretation of the TXT baseline. Preserve existing unchanged elements where appropriate.
-    *   **Me (the AI)** **ONLY AFTER** ensuring the JSON content is fully updated and consistent with the `.txt` interpretation, update the `metadata.ground_truth_crc` field *inside the `.json` file* to match the authoritative `crc` value from `tool_index.json`. **Updating the CRC in isolation without verifying/updating the content first is incorrect procedure.**
+    *   **Me (the AI)** holistically compares the `.txt` content to the `.json` structure. Update the `.json` content (filling `description`, `usage`, `options`, `arguments`, `subcommands` etc.) based **solely** on the `.txt` content, interpreting it **strictly according to the rules and structure defined in `tools/zlt_schema_guidelines.md`**. Preserve existing unchanged elements where appropriate.
+    *   **Me (the AI)** **AFTER** ensuring the JSON structure is fully updated and consistent with the `.txt` interpretation and the schema guidelines, **MUST NOT** read `tool_index.json` or manually set the CRC. Instead, **MUST** execute the designated CRC update script: `uv run python scripts/update_json_crc_tool.py --file <path_to_updated.json>`. This script handles reading the index and updating the `metadata.ground_truth_crc` field in the specified JSON file.
 
 4.  **Verification (Separate Tests):**
     *   **`test_txt_json_consistency.py`:**
@@ -54,7 +54,7 @@ To reiterate the mandate above for absolute clarity: The ONLY non-deterministic 
     *   `test_json_schema_validation.py`:
         *   Validates the structure and content rules of the populated `.json` files against the defined schema.
 
-**Rationale & Consumption:** This workflow uses automated tests for discovery and ground-truth (`.txt`, index CRC) updates. It relies on the AI for the interpretation step (`.json` content population and internal CRC sync), clearly signaled by the `test_txt_json_consistency.py` failure. The AI-populated and validated `.json` files serve as the machine-readable knowledge base for ZLT, defining the capabilities and interface of each tool. This knowledge base informs the configuration in `tool_mapping.yaml` (see next section).
+**Rationale & Consumption:** This workflow uses automated tests for discovery and ground-truth (`.txt`, index CRC) updates. Automated fix scripts (e.g., `fix_json_schema.py`) should handle deterministic errors flagged by tests like `test_json_schema_validation.py`. The AI performs the interpretation step (`.json` content population based on `.txt` and schema) when signaled by `test_txt_json_consistency.py` or when automated fixes are insufficient. The final CRC sync **must** be performed using the `update_json_crc_tool.py` script. The AI-populated and validated `.json` files serve as the machine-readable knowledge base for ZLT.
 
 ---
 
@@ -533,30 +533,32 @@ format:
     *   Execute `uv run pytest tests/test_tool_defs/`
     *   This automatically runs `test_ensure_txt_baselines_exist.py` which calls `generate_or_verify_baseline`.
     *   This ensures all `.txt` files and `tool_index.json` CRCs/timestamps are up-to-date, and skeleton `.json` files exist.
-2.  **Identify AI Task Triggers:**
-    *   Look for failures specifically in `test_txt_json_consistency.py::test_json_crc_matches_index`.
-    *   A failure here means the `metadata.ground_truth_crc` inside a `.json` file is outdated (likely `0x00000000` or an old value) compared to the `tool_index.json`.
-    *   Also note failures in `test_json_schema_validation.py` which indicate structural issues in the JSON content itself.
-
-3.  **Iterate Through Failing Files (AI Task):**
-    *   For each tool ID failing `test_txt_json_consistency.py` or `test_json_schema_validation.py`:
+2.  **Run Automated Fixers (Should be triggered by tests, check if mechanism exists/works):**
+    *   When tests like `test_json_schema_validation.py` fail due to *deterministic structural issues*, the test framework should ideally trigger fix scripts like `src/zeroth_law/dev_scripts/fix_json_schema.py`. **(AI Task: Investigate if this auto-triggering works).**
+3.  **Identify AI Task Triggers:**
+    *   Look for failures specifically in `test_txt_json_consistency.py::test_all_txt_json_consistency` (CRC mismatch).
+    *   Also consider failures in `test_json_schema_validation.py` if automated fixers (Step 2) didn't resolve them, indicating a need for manual interpretation.
+4.  **Iterate Through Failing Files (AI Interpretation Task):**
+    *   For each tool ID failing the relevant tests:
         *   **Locate Files:**
             *   JSON: `src/zeroth_law/tools/<tool>/<id>.json`
             *   Help Text: `src/zeroth_law/tools/<tool>/<id>.txt`
-            *   Index: `src/zeroth_law/tools/tool_index.json`
+            *   Schema Guidelines: `tools/zlt_schema_guidelines.md`
+            *   CRC Update Script: `scripts/update_json_crc_tool.py`
         *   **Read Existing JSON:** Use `read_file` on the `.json` file.
         *   **Read Help Text:** Use `read_file` on the `.txt` file.
-        *   **Get Index CRC:** Extract the authoritative `crc` for the tool ID from `tool_index.json`.
-        *   **Populate/Correct JSON:**
+        *   **Populate/Correct JSON Structure:**
             *   Use `edit_file` on the `.json` file.
             *   Carefully compare `.txt` to the existing JSON structure.
-            *   Incrementally fill/update `description`, `usage`, `options`, `arguments`, `subcommands` based on the `.txt` help text and schema guidelines (`tools/zlt_schema_guidelines.md`), preserving unchanged elements.
-            *   **Crucially:** Update `metadata.ground_truth_crc` within the JSON *with the correct CRC value extracted from the index*.
+            *   Incrementally fill/update `description`, `usage`, `options`, `arguments`, `subcommands_detail` based **solely** on the `.txt` help text interpreted according to the rules and structure defined in **`tools/zlt_schema_guidelines.md`**. Preserve unchanged elements where appropriate.
             *   Ensure the final JSON structure adheres to the schema (`test_json_schema_validation.py` failures provide guidance).
-        *   **Handle Edit Failures:** If `edit_file` reports "no changes" but `pytest` still fails the file, use `reapply` on the target `.json` file.
-        *   **Verify:** Rerun `uv run pytest tests/test_tool_defs/` to confirm the test(s) for the specific tool ID now pass.
+            *   **DO NOT** touch `metadata.ground_truth_crc` during this edit.
+        *   **Run CRC Update Script:**
+            *   **AFTER** the JSON structure is confirmed correct via interpretation, run the command: `uv run python scripts/update_json_crc_tool.py --file src/zeroth_law/tools/<tool>/<id>.json`.
+        *   **Handle Edit Failures:** If `edit_file` reports "no changes" but `pytest` still fails the file's structure/consistency, use `reapply` on the target `.json` file.
+        *   **Verify:** Rerun the relevant `pytest` tests (e.g., `uv run pytest tests/test_project_integrity/test_txt_json_consistency.py tests/test_project_integrity/test_json_schema_validation.py -k <tool_id>`) to confirm the tests for the specific tool ID now pass.
 
-4.  **Repeat:** Continue until all tests in `tests/test_tool_defs/` pass.
+5.  **Repeat:** Continue until all tests in `tests/test_project_integrity/` related to JSON definitions pass.
 
 ### Testing Techniques: Using External Helper Scripts as Test Doubles
 
@@ -661,3 +663,29 @@ Implement a system that maintains an automated, persistent "map" of the codebase
 **Decision:** To resolve the test failure and remove redundant, unused code, the source file `src/zeroth_law/analyzer/python/analyzer_refactor.py` was deleted.
 
 **Impact:** This cleanup simplifies the analyzer codebase and ensures the project integrity tests accurately reflect the active code structure.
+
+---
+
+## Mock Allow-Listing Strategy: Contextual Enforcement via TOML (2025-04-26T13:26:28+08:00)
+
+**Problem:** The ZLF mandates minimizing internal mocking (`test_no_internal_mocks.py` enforces this), but some unit tests require mocking justified dependencies (e.g., file I/O, sibling functions, external libraries accessed via internal paths) to isolate the unit under test. A simple, flat allow-list (e.g., a Python set of allowed targets) is prone to "allow-list decay" – targets added for one justified case could be inadvertently misused elsewhere, or easily added just to bypass the test.
+
+**Exploration:**
+1.  **Flat Allow-List:** Rejected due to lack of context and ease of bypass.
+2.  **Filename Convention (`test_mock_*.py`):** Considered but rejected. Enforcement based on filename is complex (requires extensive AST analysis for type-specific checks) and potentially brittle (renames, mocks added to files not matching convention).
+3.  **Function Name Convention (`test_mock_*()`):** Considered but rejected. Offers finer granularity but significantly increases AST analysis complexity to map mocks to specific functions and leads to potentially unwieldy function names.
+4.  **In-Code Contextual Dictionary:** A dictionary within the test file mapping test file paths to allowed mock targets (`Dict[str, Set[str]]`). Provides contextual enforcement but keeps configuration coupled with test code.
+5.  **External TOML File:** A dedicated `mock_whitelist.toml` file mapping test file paths to allowed mock targets and justifications.
+
+**Decision:** Adopt the external `mock_whitelist.toml` approach.
+
+**Rationale:**
+*   **Contextual Enforcement:** Ensures an internal mock target is only allowed if explicitly listed for the *specific test file* using it. Prevents a target allowed for File A being used in File B without explicit configuration.
+*   **Increased Rigidity/Friction:** Modifying a separate TOML configuration file requires a more deliberate action than editing a Python dictionary in the test code, making bypass less likely.
+*   **Clear Separation:** Decouples the allow-list configuration from the test execution logic.
+*   **Structured Justification:** The TOML structure allows justifications to be clearly associated with the allowed mocks for each file.
+*   **Maintainable:** While requiring TOML parsing, it centralizes the mock permissions clearly.
+
+**Implementation:**
+*   Created `mock_whitelist.toml` in the project root.
+*   Modified `tests/test_project_integrity/test_no_internal_mocks.py` to load this file, parse it, and use the resulting contextual map in its `MockFinder` logic.

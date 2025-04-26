@@ -1,0 +1,1 @@
+# Auto-generated empty baseline for pipdeptree\n# Run baseline generation script to populate.\n

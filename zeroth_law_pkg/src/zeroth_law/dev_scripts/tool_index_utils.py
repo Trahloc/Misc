@@ -331,7 +331,7 @@ if __name__ == "__main__":
 
         # Test updating/creating nested entry
         nested_id_tuple = ("_test_dummy_tool", "sub")
-        log.info(f"Updating/creating nested entry: {"_" .join(nested_id_tuple)}")
+        log.info(f"Updating/creating nested entry: {'_'.join(nested_id_tuple)}")
         nested_update_success = update_index_entry(
             reloaded_index, nested_id_tuple, {"crc": "0xnested", "checked_timestamp": time.time()}
         )

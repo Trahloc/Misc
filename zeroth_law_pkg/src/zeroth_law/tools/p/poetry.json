@@ -1,0 +1,20 @@
+{
+    "command": [
+        "poetry"
+    ],
+    "description": "Tool definition for poetry (auto-generated skeleton)",
+    "usage": "poetry [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "poetry",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

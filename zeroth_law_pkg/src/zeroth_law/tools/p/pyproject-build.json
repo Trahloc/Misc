@@ -1,0 +1,20 @@
+{
+    "command": [
+        "pyproject-build"
+    ],
+    "description": "Tool definition for pyproject-build (auto-generated skeleton)",
+    "usage": "pyproject-build [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "pyproject-build",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

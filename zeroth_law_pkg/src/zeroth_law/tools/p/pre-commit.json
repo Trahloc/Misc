@@ -1,0 +1,20 @@
+{
+    "command": [
+        "pre-commit"
+    ],
+    "description": "Tool definition for pre-commit (auto-generated skeleton)",
+    "usage": "pre-commit [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "pre-commit",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

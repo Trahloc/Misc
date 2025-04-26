@@ -1,0 +1,20 @@
+{
+    "command": [
+        "vulture"
+    ],
+    "description": "Tool definition for vulture (auto-generated skeleton)",
+    "usage": "vulture [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "vulture",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

@@ -9,7 +9,7 @@ import sys
 # --- Calculate paths relative to the new file location --- #
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TOOLS_DIR = PROJECT_ROOT / "src" / "zeroth_law" / "tools"
-WORKSPACE_ROOT = PROJECT_ROOT # In this context, PROJECT_ROOT is the workspace root
+WORKSPACE_ROOT = PROJECT_ROOT  # In this context, PROJECT_ROOT is the workspace root
 
 # Remove the problematic import attempt for now
 # try:
@@ -22,6 +22,7 @@ WORKSPACE_ROOT = PROJECT_ROOT # In this context, PROJECT_ROOT is the workspace r
 #     TOOLS_DIR = Path(__file__).resolve().parents[1] / "src" / "zeroth_law" / "tools"
 #     WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 #     print(f"Falling back to manually defined TOOLS_DIR: {TOOLS_DIR}", file=sys.stderr)
+
 
 def test_no_json_or_txt_subdirectories():
     """

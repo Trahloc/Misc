@@ -7,19 +7,67 @@ enforcing the ZLF principle of testing against real implementations.
 import ast
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Set
+import toml  # Import toml
 
 import pytest
 
 # --- Constants ---
 SRC_PREFIX = "src.zeroth_law"  # The prefix indicating internal modules
 TESTS_DIR = Path(__file__).parent.parent
-ALLOWED_MOCK_TARGETS = {
-    # Add specific external targets or builtins if mocking them is ever strictly necessary and approved.
-    # E.g., 'builtins.open' # ONLY if absolutely unavoidable.
-}
+PROJECT_ROOT = TESTS_DIR.parent  # Assumes tests/ is one level down from root
+MOCK_WHITELIST_PATH = PROJECT_ROOT / "mock_whitelist.toml"
 
 log = logging.getLogger(__name__)
+
+# --- Load and Process Whitelist --- #
+
+
+def _load_and_process_whitelist(whitelist_path: Path) -> Dict[str, Set[str]]:
+    """Loads the TOML whitelist and transforms it into a lookup dictionary."""
+    allowed_mocks_by_rel_file: Dict[str, Set[str]] = {}
+    if not whitelist_path.is_file():
+        log.warning(f"Mock whitelist file not found: {whitelist_path}. No internal mocks will be allowed.")
+        return allowed_mocks_by_rel_file
+
+    try:
+        data = toml.load(whitelist_path)
+        files_config = data.get("files", {})
+        if not isinstance(files_config, dict):
+            log.error(f"Invalid structure in {whitelist_path}: 'files' key is not a table/dictionary.")
+            return {}
+
+        for rel_path, config in files_config.items():
+            if not isinstance(config, dict):
+                log.warning(f"Skipping invalid entry for file '{rel_path}' in {whitelist_path}: value is not a table.")
+                continue
+
+            targets = config.get("allowed_targets", [])
+            if not isinstance(targets, list):
+                log.warning(
+                    f"Skipping invalid entry for file '{rel_path}' in {whitelist_path}: 'allowed_targets' is not a list."
+                )
+                continue
+
+            # Normalize path separators for consistency (e.g., Windows vs Linux)
+            normalized_rel_path = str(Path(rel_path)).replace("\\", "/")
+            allowed_mocks_by_rel_file[normalized_rel_path] = set(targets)
+            log.debug(f"Loaded {len(targets)} allowed mocks for {normalized_rel_path}")
+
+    except toml.TomlDecodeError as e:
+        log.error(f"Error parsing mock whitelist file {whitelist_path}: {e}")
+        # Return empty dict on parse error to prevent allowing mocks unintentionally
+        return {}
+    except Exception as e:
+        log.error(f"Unexpected error loading mock whitelist {whitelist_path}: {e}", exc_info=True)
+        return {}
+
+    return allowed_mocks_by_rel_file
+
+
+# Load the whitelist at module scope
+ALLOWED_MOCKS_BY_FILE = _load_and_process_whitelist(MOCK_WHITELIST_PATH)
+
 
 # --- Helper Functions ---
 
@@ -40,12 +88,30 @@ class MockFinder(ast.NodeVisitor):
     def __init__(self, file_path: Path):
         self.file_path = file_path
         self.forbidden_mocks: List[Tuple[int, str]] = []
+        # Pre-calculate relative path for lookups
+        try:
+            self.relative_file_path = str(file_path.relative_to(PROJECT_ROOT)).replace("\\", "/")
+        except ValueError:
+            # Handle cases where the file might not be under PROJECT_ROOT (shouldn't happen ideally)
+            log.warning(f"Could not determine relative path for {file_path} against {PROJECT_ROOT}")
+            self.relative_file_path = None
 
     def _is_forbidden_target(self, target_str: str) -> bool:
-        """Checks if a mock target string refers to an internal module."""
+        """Checks if a mock target string refers to an internal module
+        and is not specifically allowed for the current file."""
         is_internal = target_str.startswith(SRC_PREFIX)
-        is_allowed = target_str in ALLOWED_MOCK_TARGETS
-        return is_internal and not is_allowed
+        if not is_internal:
+            return False  # Not internal, so not forbidden by this checker
+
+        # Check against the contextual whitelist
+        is_allowed_for_this_file = False
+        if self.relative_file_path:
+            allowed_targets_for_file = ALLOWED_MOCKS_BY_FILE.get(self.relative_file_path, set())
+            if target_str in allowed_targets_for_file:
+                is_allowed_for_this_file = True
+
+        # Forbidden if internal AND NOT allowed for this specific file
+        return not is_allowed_for_this_file
 
     def _check_patch_call(self, node: ast.Call):
         """Checks if an ast.Call node is a patch call with a forbidden target."""
@@ -69,16 +135,23 @@ class MockFinder(ast.NodeVisitor):
 
             if target_str and self._is_forbidden_target(target_str):
                 self.forbidden_mocks.append((node.lineno, target_str))
-                return  # Don't check keywords if positional target is bad
+                # Don't check keywords if positional target is bad
+                # NOTE: We return here to avoid potentially double-counting if target is also in keywords,
+                # BUT we might miss a *different* forbidden target in keywords.
+                # Let's check keywords regardless for completeness.
+                # return
 
-        # Also check keyword arguments if positional wasn't a forbidden string
+        # Also check keyword arguments
         if is_patch_call:
             for kw in node.keywords:
                 if kw.arg == "target" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, str):
                     target_str = kw.value.value
                     if self._is_forbidden_target(target_str):
-                        self.forbidden_mocks.append((node.lineno, target_str))
-                    break  # Found target keyword
+                        # Avoid adding duplicate if already found in args
+                        if not any(m[1] == target_str for m in self.forbidden_mocks):
+                            self.forbidden_mocks.append((node.lineno, target_str))
+                    # We only care about the 'target=' keyword for this check
+                    # break # Don't break, check all keywords? No, target is specific.
 
     def visit_Call(self, node: ast.Call):
         """Visit function calls."""
@@ -115,10 +188,11 @@ TEST_FILES = find_test_files()
 
 
 @pytest.mark.parametrize("test_file_path", TEST_FILES, ids=lambda p: str(p.relative_to(TESTS_DIR)) if p else "None")
-@pytest.mark.skip(reason="Temporarily skipping due to justified internal mocks needing allow-listing.")
+# @pytest.mark.skip(reason="Temporarily skipping due to justified internal mocks needing allow-listing.")
 def test_no_forbidden_internal_mocks(test_file_path: Path):
     """
-    Verify that a test file does not contain mocks patching internal modules.
+    Verify that a test file does not contain mocks patching internal modules
+    unless explicitly allowed for that specific file in mock_whitelist.toml.
     """
     if not test_file_path:
         pytest.skip("No test files found for mock checking.")
@@ -140,15 +214,17 @@ def test_no_forbidden_internal_mocks(test_file_path: Path):
         pytest.fail(f"Error visiting AST nodes in {test_file_path}: {e}")
 
     if finder.forbidden_mocks:
-        test_file_rel = test_file_path.relative_to(TESTS_DIR)
+        test_file_rel = finder.relative_file_path or str(test_file_path)  # Use calculated relative path
         found_mocks_str = "\n".join(
             f"  - Line {lineno}: patch('{target}')" for lineno, target in finder.forbidden_mocks
         )
         pytest.fail(
-            f"{found_mocks_str}",
-            (
-                f"Forbidden internal mocks found in {test_file_rel}:\n{found_mocks_str}\n"
-                f"Internal mocking is not allowed by ZLF (Sec 3, Principle 6). "
-                f"Test against real implementations."
-            ),
+            # Use the formatted string directly as the short failure message for clarity in pytest output
+            f"Forbidden internal mock(s) found in {test_file_rel}:\n{found_mocks_str}",
+            pytrace=False,  # Keep pytrace False for cleaner output
+            # (
+            #     f"Forbidden internal mocks found in {test_file_rel}:\n{found_mocks_str}\n"
+            #     f"Internal mocking is only allowed if explicitly listed for this file in mock_whitelist.toml. "
+            #     f"Refer to ZLF (Sec 3, Principle 6). Test against real implementations where possible."
+            # ),
         )

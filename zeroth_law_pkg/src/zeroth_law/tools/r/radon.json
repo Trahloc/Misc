@@ -1,0 +1,20 @@
+{
+    "command": [
+        "radon"
+    ],
+    "description": "Tool definition for radon (auto-generated skeleton)",
+    "usage": "radon [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "radon",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

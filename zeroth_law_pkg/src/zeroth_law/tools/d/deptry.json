@@ -1,0 +1,20 @@
+{
+    "command": [
+        "deptry"
+    ],
+    "description": "Tool definition for deptry (auto-generated skeleton)",
+    "usage": "deptry [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "deptry",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

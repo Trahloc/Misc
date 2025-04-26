@@ -1,0 +1,20 @@
+{
+    "command": [
+        "py-spy"
+    ],
+    "description": "Tool definition for py-spy (auto-generated skeleton)",
+    "usage": "py-spy [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "py-spy",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

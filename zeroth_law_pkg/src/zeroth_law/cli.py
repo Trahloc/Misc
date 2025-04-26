@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 from importlib.metadata import version, PackageNotFoundError
 
 import click
-import logging
 
 from zeroth_law.action_runner import run_action
 from zeroth_law.common.config_loader import load_config
@@ -79,8 +78,19 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 # --- Logging Setup Function (May need adjustment for structlog) ---
 def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
     """Set up structlog logging based on level and color preference."""
-    # Convert level name to standard logging level number for filtering
-    level_num = getattr(logging, level_name.upper(), logging.WARNING)
+    # Map level names to standard logging level numbers
+    level_map = {
+        "debug": 10,
+        "info": 20,
+        "warning": 30,
+        "error": 40,
+        "critical": 50,  # Add critical just in case
+    }
+    # Use WARNING (30) as default if level_name is unknown
+    level_num = level_map.get(level_name.lower(), 30)
+
+    # Import logging locally ONLY for setting the stdlib root logger level
+    import logging
 
     # Reconfigure structlog based on CLI args
     # TODO: Add more sophisticated configuration based on flags
@@ -92,7 +102,7 @@ def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
 
     # TODO: Implement color handling
     # Maybe swap ConsoleRenderer based on `use_color`
-    log.debug("Structlog logging level filter adjusted (via stdlib) to %s", level_name.upper())
+    log.debug("Structlog logging level filter adjusted (via stdlib) to %s (%d)", level_name.upper(), level_num)
 
 
 # --- Core File Finding Logic ---

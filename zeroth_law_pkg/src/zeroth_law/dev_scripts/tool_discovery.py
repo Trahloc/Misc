@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Dict, List, Set
 
 import yaml  # Requires PyYAML
+import toml  # Add TOML import
+import logging  # Add logging import
 
 # --- Constants ---
 # Assume this script runs from the workspace root or src/zeroth_law/dev_scripts
@@ -19,48 +21,46 @@ except NameError:
     # Fallback if __file__ not defined (e.g., interactive import)
     WORKSPACE_ROOT = Path.cwd().resolve()
 
-TOOLS_CONFIG_PATH = WORKSPACE_ROOT / "src" / "zeroth_law" / "managed_tools.yaml"
 TOOLS_DIR = WORKSPACE_ROOT / "src" / "zeroth_law" / "tools"
+PYPROJECT_PATH = WORKSPACE_ROOT / "pyproject.toml"
+
+log = logging.getLogger(__name__)  # Add logger
 
 # --- Configuration Loading ---
 
 
 def load_tools_config() -> Dict[str, List[str]]:
-    """Loads the managed tools configuration from YAML."""
+    """Loads the managed and excluded tools configuration from pyproject.toml."""
     default_config: Dict[str, List[str]] = {"managed_tools": [], "excluded_executables": []}
-    if not TOOLS_CONFIG_PATH.is_file():
-        print(f"Warning: Config file not found at {TOOLS_CONFIG_PATH}. Using defaults.")
-        return default_config
-    try:
-        with open(TOOLS_CONFIG_PATH, "r", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
-            if not isinstance(config, dict):
-                raise ValueError("Config root must be a dictionary.")
-            # Basic validation
-            managed = config.get("managed_tools", [])
-            excluded = config.get("excluded_executables", [])
-            if not isinstance(managed, list) or not all(isinstance(i, str) for i in managed):
-                raise ValueError("'managed_tools' must be a list of strings.")
-            if not isinstance(excluded, list) or not all(isinstance(i, str) for i in excluded):
-                raise ValueError("'excluded_executables' must be a list of strings.")
-            return {"managed_tools": managed, "excluded_executables": excluded}
-    except (yaml.YAMLError, ValueError, IOError) as e:
-        print(f"Error loading or parsing {TOOLS_CONFIG_PATH}: {e}. Using defaults.")
+
+    if not PYPROJECT_PATH.is_file():
+        log.error(f"Configuration file not found: {PYPROJECT_PATH}")
         return default_config
 
-
-def save_tools_config(config: Dict[str, List[str]]) -> None:
-    """Saves the tools configuration to YAML."""
     try:
-        # Ensure lists are sorted for consistency
-        config["managed_tools"] = sorted(list(set(config.get("managed_tools", []))))
-        config["excluded_executables"] = sorted(list(set(config.get("excluded_executables", []))))
-        TOOLS_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with open(TOOLS_CONFIG_PATH, "w", encoding="utf-8") as f:
-            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-        print(f"Successfully saved configuration to {TOOLS_CONFIG_PATH}")
-    except (IOError, TypeError) as e:
-        print(f"Error saving configuration to {TOOLS_CONFIG_PATH}: {e}")
+        with open(PYPROJECT_PATH, "r", encoding="utf-8") as f:
+            data = toml.load(f)
+
+        # Navigate to the correct section
+        zlt_config = data.get("tool", {}).get("zeroth-law", {})
+        managed_tools_config = zlt_config.get("managed-tools", {})
+
+        # Extract lists using the keys from pyproject.toml
+        managed = managed_tools_config.get("whitelist", [])
+        excluded = managed_tools_config.get("blacklist", [])
+
+        # Basic validation
+        if not isinstance(managed, list) or not all(isinstance(i, str) for i in managed):
+            raise ValueError("'[tool.zeroth-law.managed-tools].whitelist' must be a list of strings.")
+        if not isinstance(excluded, list) or not all(isinstance(i, str) for i in excluded):
+            raise ValueError("'[tool.zeroth-law.managed-tools].blacklist' must be a list of strings.")
+
+        # Return in the expected format
+        return {"managed_tools": managed, "excluded_executables": excluded}
+
+    except (toml.TomlDecodeError, ValueError, IOError) as e:
+        log.error(f"Error loading or parsing {PYPROJECT_PATH}: {e}", exc_info=True)
+        return default_config
 
 
 # --- Discovery Logic (Refactored from test_tool_integration.py) ---

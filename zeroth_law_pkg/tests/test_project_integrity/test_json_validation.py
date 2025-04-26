@@ -7,13 +7,13 @@ import os
 from pathlib import Path
 
 import pytest
-from jsonschema import validate, ValidationError
+# from jsonschema import validate, ValidationError # Remove schema validation
 
 
 def test_json_files_validity():
     """
-    Test to ensure all JSON files under src/zeroth_law/tools/ are valid and properly formatted.
-    This test checks for schema compliance and ignores generic formatting issues like trailing newlines.
+    Test to ensure all JSON files under src/zeroth_law/tools/ are syntactically valid JSON.
+    Schema compliance is checked by test_json_schema_validation.py.
     """
     json_files = []
     tools_dir = Path("src/zeroth_law/tools")
@@ -24,26 +24,6 @@ def test_json_files_validity():
                     json_files.append(Path(root) / file)
 
     assert json_files, "No JSON files found in src/zeroth_law/tools/ directory."
-
-    # Define a basic JSON schema for tool definition files
-    tool_schema = {
-        "type": "object",
-        "properties": {
-            "description": {"type": "string"},
-            "usage": {"type": "string"},
-            "arguments": {"type": ["array", "object"]},
-            "options": {"type": ["array", "object"]},
-            "examples": {"type": "array"},
-            "metadata": {"type": "object"},
-            "command": {"type": "string"},
-            "subcommand": {"type": ["string", "null"]},
-            "subcommands_detail": {"type": ["array", "object"]},
-        },
-        "required": ["description", "usage", "arguments", "options", "metadata"],
-    }
-
-    # Define a schema for tool_index.json which has a different structure
-    index_schema = {"type": "object"}
 
     for json_file in json_files:
         with open(json_file, "r", encoding="utf-8") as f:
@@ -70,17 +50,14 @@ def test_json_files_validity():
                             print(f"Skipping invalid JSON in {json_file} even after trimming: {str(e2)}")
                             continue
                     else:
-                        print(f"Skipping invalid JSON in {json_file}: {str(e)}")
-                        continue
+                        # If trimming didn't help, report original error and fail
+                        pytest.fail(f"Invalid JSON in {json_file}: {str(e)}")
                 else:
-                    print(f"Skipping invalid JSON in {json_file}: {str(e)}")
-                    continue
-            # Apply different schema based on filename
-            if json_file.name == "tool_index.json":
-                schema = index_schema
-            else:
-                schema = tool_schema
-            try:
-                validate(instance=data, schema=schema)
-            except ValidationError as ve:
-                pytest.fail(f"JSON schema validation failed for {json_file}: {str(ve)}")
+                    # Report other JSONDecodeErrors and fail
+                    pytest.fail(f"Invalid JSON in {json_file}: {str(e)}")
+
+            # At this point, 'data' should hold the loaded JSON content
+            # We are removing the schema validation part
+
+        # Optional: Add a simple log or print upon successful load
+        # print(f"Successfully loaded JSON: {json_file}")

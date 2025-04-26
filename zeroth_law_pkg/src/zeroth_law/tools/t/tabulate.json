@@ -1,0 +1,20 @@
+{
+    "command": [
+        "tabulate"
+    ],
+    "description": "Tool definition for tabulate (auto-generated skeleton)",
+    "usage": "tabulate [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "tabulate",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

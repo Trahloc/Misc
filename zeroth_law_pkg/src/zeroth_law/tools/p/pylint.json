@@ -1,0 +1,20 @@
+{
+    "command": [
+        "pylint"
+    ],
+    "description": "Tool definition for pylint (auto-generated skeleton)",
+    "usage": "pylint [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "pylint",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "command": [
+        "mypy"
+    ],
+    "description": "Tool definition for mypy (auto-generated skeleton)",
+    "usage": "mypy [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "mypy",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

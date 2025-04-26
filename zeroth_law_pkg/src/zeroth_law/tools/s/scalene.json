@@ -1,0 +1,20 @@
+{
+    "command": [
+        "scalene"
+    ],
+    "description": "Tool definition for scalene (auto-generated skeleton)",
+    "usage": "scalene [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "scalene",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

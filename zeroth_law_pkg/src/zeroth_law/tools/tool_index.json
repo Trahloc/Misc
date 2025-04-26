@@ -1,260 +1,302 @@
 {
+  "autopep8": {
+    "args": [],
+    "baseline_file": "autopep8.txt",
+    "checked_timestamp": 1745652828.875031,
+    "command": "autopep8",
+    "crc": "0x1FBFC363",
+    "json_skeleton_file": "autopep8.json",
+    "updated_timestamp": 1745652828.875031
+  },
   "bandit": {
     "args": [
       "-r",
       "."
     ],
     "baseline_file": "bandit_report.txt",
-    "checked_timestamp": 1745572227.3440957,
+    "checked_timestamp": 1745652829.269184,
     "command": "bandit",
     "crc": "0xFB779DF1",
     "json_skeleton_file": "bandit_report_skeleton.json",
-    "updated_timestamp": 1745572227.3440957
+    "updated_timestamp": 1745652829.269184
   },
   "bandit-baseline": {
     "args": [],
     "baseline_file": "bandit-baseline.txt",
-    "checked_timestamp": 1745572227.7421045,
+    "checked_timestamp": 1745652829.6455145,
     "command": "bandit-baseline",
     "crc": "0x2A2C3E5E",
     "json_skeleton_file": "bandit-baseline.json",
-    "updated_timestamp": 1745572227.7421045
+    "updated_timestamp": 1745652829.6455145
   },
   "bandit-config-generator": {
     "args": [],
     "baseline_file": "bandit-config-generator.txt",
-    "checked_timestamp": 1745572228.140316,
+    "checked_timestamp": 1745652830.0088549,
     "command": "bandit-config-generator",
     "crc": "0x9EAE605C",
     "json_skeleton_file": "bandit-config-generator.json",
-    "updated_timestamp": 1745572228.140316
+    "updated_timestamp": 1745652830.0088549
   },
   "black": {
     "args": [],
     "baseline_file": "black.txt",
-    "checked_timestamp": 1745572228.416269,
+    "checked_timestamp": 1745652830.2757816,
     "command": "black",
     "crc": "0xF83E45B7",
     "json_skeleton_file": "black.json",
-    "updated_timestamp": 1745572228.416269
+    "updated_timestamp": 1745652830.2757816
   },
   "coverage": {
     "args": [],
     "baseline_file": "coverage.txt",
-    "checked_timestamp": 1745572228.659677,
+    "checked_timestamp": 1745652830.5208528,
     "command": "coverage",
     "crc": "0x891C20F3",
     "json_skeleton_file": "coverage.json",
-    "updated_timestamp": 1745572228.659677
+    "updated_timestamp": 1745652830.5208528
   },
   "deptry": {
     "args": [],
     "baseline_file": "deptry.txt",
-    "checked_timestamp": 1745572228.9091835,
+    "checked_timestamp": 1745652830.7617981,
     "command": "deptry",
     "crc": "0x7DEC14BC",
     "json_skeleton_file": "deptry.json",
-    "updated_timestamp": 1745572228.9091835
+    "updated_timestamp": 1745652830.7617981
   },
   "flake8": {
     "args": [],
     "baseline_file": "flake8.txt",
-    "checked_timestamp": 1745572229.261936,
+    "checked_timestamp": 1745652831.0826623,
     "command": "flake8",
     "crc": "0x87ACFCE1",
     "json_skeleton_file": "flake8.json",
-    "updated_timestamp": 1745572229.261936
+    "updated_timestamp": 1745652831.0826623
   },
   "isort": {
     "args": [],
     "baseline_file": "isort.txt",
-    "checked_timestamp": 1745572229.5279078,
+    "checked_timestamp": 1745652831.333746,
     "command": "isort",
     "crc": "0x3736B0EA",
     "json_skeleton_file": "isort.json",
-    "updated_timestamp": 1745572229.5279078
+    "updated_timestamp": 1745652831.333746
   },
   "isort-identify-imports": {
     "args": [],
     "baseline_file": "isort-identify-imports.txt",
-    "checked_timestamp": 1745572229.7943368,
+    "checked_timestamp": 1745652831.5870264,
     "command": "isort-identify-imports",
     "crc": "0xBA808EAA",
     "json_skeleton_file": "isort-identify-imports.json",
-    "updated_timestamp": 1745572229.7943368
+    "updated_timestamp": 1745652831.5870264
   },
   "jsonschema": {
     "args": [],
     "baseline_file": "jsonschema.txt",
-    "checked_timestamp": 1745572230.1103985,
+    "checked_timestamp": 1745652831.8868158,
     "command": "jsonschema",
     "crc": "0x08DD5625",
     "json_skeleton_file": "jsonschema.json",
-    "updated_timestamp": 1745572230.1103985
+    "updated_timestamp": 1745652831.8868158
   },
   "mutmut": {
     "args": [],
     "baseline_file": "mutmut.txt",
-    "checked_timestamp": 1745572230.3807976,
+    "checked_timestamp": 1745652832.156348,
     "command": "mutmut",
     "crc": "0x43DB6A8D",
     "json_skeleton_file": "mutmut.json",
-    "updated_timestamp": 1745572230.3807976
+    "updated_timestamp": 1745652832.156348
   },
   "mypy": {
     "args": [],
     "baseline_file": "mypy.txt",
-    "checked_timestamp": 1745572230.6674557,
+    "checked_timestamp": 1745652832.3962967,
     "command": "mypy",
     "crc": "0x4D4CC23B",
     "json_skeleton_file": "mypy.json",
-    "updated_timestamp": 1745572230.6674557
+    "updated_timestamp": 1745652832.3962967
   },
   "pipdeptree": {
     "args": [],
     "baseline_file": "pipdeptree.txt",
-    "checked_timestamp": 1745572231.035138,
+    "checked_timestamp": 1745652832.73636,
     "command": "pipdeptree",
     "crc": "0x34985295",
     "json_skeleton_file": "pipdeptree.json",
-    "updated_timestamp": 1745572231.035138
+    "updated_timestamp": 1745652832.73636
+  },
+  "poetry": {
+    "args": [],
+    "baseline_file": "poetry.txt",
+    "checked_timestamp": 1745652833.4646976,
+    "command": "poetry",
+    "crc": "0xDE061514",
+    "json_skeleton_file": "poetry.json",
+    "updated_timestamp": 1745652833.4646976
   },
   "pre-commit": {
     "args": [],
     "baseline_file": "pre-commit.txt",
-    "checked_timestamp": 1745572231.3875966,
+    "checked_timestamp": 1745652833.8009815,
     "command": "pre-commit",
     "crc": "0x426124A0",
     "json_skeleton_file": "pre-commit.json",
-    "updated_timestamp": 1745572231.3875966
+    "updated_timestamp": 1745652833.8009815
   },
   "py-spy": {
     "args": [],
     "baseline_file": "py-spy.txt",
-    "checked_timestamp": 1745572231.405043,
+    "checked_timestamp": 1745652833.8176825,
     "command": "py-spy",
     "crc": "0xDC4DE986",
     "json_skeleton_file": "py-spy.json",
-    "updated_timestamp": 1745572231.405043
+    "updated_timestamp": 1745652833.8176825
+  },
+  "pycodestyle": {
+    "args": [],
+    "baseline_file": "pycodestyle.txt",
+    "checked_timestamp": 1745652833.933109,
+    "command": "pycodestyle",
+    "crc": "0xA9DCCD17",
+    "json_skeleton_file": "pycodestyle.json",
+    "updated_timestamp": 1745652833.933109
   },
   "pydocstyle": {
     "args": [],
     "baseline_file": "pydocstyle.txt",
-    "checked_timestamp": 1745572231.72793,
+    "checked_timestamp": 1745652834.2440355,
     "command": "pydocstyle",
     "crc": "0x57340659",
     "json_skeleton_file": "pydocstyle.json",
-    "updated_timestamp": 1745572231.72793
+    "updated_timestamp": 1745652834.2440355
   },
   "pyflakes": {
     "args": [],
     "baseline_file": "pyflakes.txt",
-    "checked_timestamp": 1745572231.912128,
+    "checked_timestamp": 1745652834.424573,
     "command": "pyflakes",
     "crc": "0x11B74AC5",
     "json_skeleton_file": "pyflakes.json",
-    "updated_timestamp": 1745572231.912128
+    "updated_timestamp": 1745652834.424573
   },
   "pylint": {
     "args": [],
     "baseline_file": "pylint.txt",
-    "checked_timestamp": 1745572232.4950674,
+    "checked_timestamp": 1745652834.9959567,
     "command": "pylint",
     "crc": "0x239DCAA8",
     "json_skeleton_file": "pylint.json",
-    "updated_timestamp": 1745572232.4950674
+    "updated_timestamp": 1745652834.9959567
+  },
+  "pyproject-build": {
+    "args": [],
+    "baseline_file": "pyproject-build.txt",
+    "checked_timestamp": 1745652835.1917603,
+    "command": "pyproject-build",
+    "crc": "0x91EE1A8E",
+    "json_skeleton_file": "pyproject-build.json",
+    "updated_timestamp": 1745652835.1917603
   },
   "pytest": {
     "args": [],
     "baseline_file": "pytest.txt",
-    "checked_timestamp": 1745572233.2847657,
+    "checked_timestamp": 1745652835.6883585,
     "command": "pytest",
-    "crc": "0xE255467B",
+    "crc": "0x063C1748",
     "json_skeleton_file": "pytest.json",
-    "updated_timestamp": 1745572233.2847657
+    "updated_timestamp": 1745652835.6883585
   },
   "radon": {
     "args": [],
     "baseline_file": "radon.txt",
-    "checked_timestamp": 1745572233.4734132,
+    "checked_timestamp": 1745652835.8704793,
     "command": "radon",
     "crc": "0x825609B9",
     "json_skeleton_file": "radon.json",
-    "updated_timestamp": 1745572233.4734132
+    "updated_timestamp": 1745652835.8704793
   },
   "ruff": {
     "args": [],
     "baseline_file": "ruff.txt",
-    "checked_timestamp": 1745572233.4928403,
+    "checked_timestamp": 1745652835.8901122,
     "command": "ruff",
-    "crc": "0xBE82B770",
+    "crc": "0xEA7FF3CC",
     "json_skeleton_file": "ruff.json",
-    "updated_timestamp": 1745572233.4928403
+    "updated_timestamp": 1745652835.8901122
   },
   "safety": {
     "args": [],
     "baseline_file": "safety.txt",
-    "checked_timestamp": 1745572234.5829787,
+    "checked_timestamp": 1745652836.8284113,
     "command": "safety",
-    "crc": "0xC9234583",
+    "crc": "0xE671B7D0",
     "json_skeleton_file": "safety.json",
-    "updated_timestamp": 1745572234.5829787
+    "updated_timestamp": 1745652836.8284113
   },
   "scalene": {
     "args": [],
     "baseline_file": "scalene.txt",
-    "checked_timestamp": 1745572235.1880062,
+    "checked_timestamp": 1745652837.3979645,
     "command": "scalene",
-    "crc": "0xCDA04DD8",
+    "crc": "0xCBA24B19",
     "json_skeleton_file": "scalene.json",
-    "updated_timestamp": 1745572235.1880062
+    "updated_timestamp": 1745652837.3979645
+  },
+  "sqlite-utils": {
+    "args": [],
+    "baseline_file": "sqlite-utils.txt",
+    "checked_timestamp": 1745652837.8076606,
+    "command": "sqlite-utils",
+    "crc": "0x01085E01",
+    "json_skeleton_file": "sqlite-utils.json",
+    "updated_timestamp": 1745652837.8076606
+  },
+  "tabulate": {
+    "args": [],
+    "baseline_file": "tabulate.txt",
+    "checked_timestamp": 1745652837.918579,
+    "command": "tabulate",
+    "crc": "0x38E3AA30",
+    "json_skeleton_file": "tabulate.json",
+    "updated_timestamp": 1745652837.918579
+  },
+  "typer": {
+    "args": [],
+    "baseline_file": "typer.txt",
+    "checked_timestamp": 1745652838.3052251,
+    "command": "typer",
+    "crc": "0x815DB28B",
+    "json_skeleton_file": "typer.json",
+    "updated_timestamp": 1745652838.3052251
   },
   "uv": {
     "args": [],
     "baseline_file": "uv.txt",
-    "checked_timestamp": 1745572235.2092857,
+    "checked_timestamp": 1745652838.3248675,
     "command": "uv",
-    "crc": "0x257D5291",
+    "crc": "0x300F58BD",
     "json_skeleton_file": "uv.json",
-    "updated_timestamp": 1745572235.2092857
+    "updated_timestamp": 1745652838.3248675
   },
   "vulture": {
     "args": [],
     "baseline_file": "vulture.txt",
-    "checked_timestamp": 1745572235.3413181,
+    "checked_timestamp": 1745652838.454535,
     "command": "vulture",
     "crc": "0xE007FA0B",
     "json_skeleton_file": "vulture.json",
-    "updated_timestamp": 1745572235.3413181
+    "updated_timestamp": 1745652838.454535
   },
   "yamllint": {
     "args": [],
     "baseline_file": "yamllint.txt",
-    "checked_timestamp": 1745572235.5322652,
+    "checked_timestamp": 1745652838.6350508,
     "command": "yamllint",
     "crc": "0x77351DE5",
     "json_skeleton_file": "yamllint.json",
-    "updated_timestamp": 1745572235.5322652
-  },
-  "zeroth-law": {
-    "args": [],
-    "baseline_file": "zeroth-law.txt",
-    "checked_timestamp": 1745572300.0,
-    "command": "zeroth-law",
-    "crc": "0xC7E11DC3",
-    "json_skeleton_file": "zeroth-law.json",
-    "updated_timestamp": 1745572300.0,
-    "subcommands": {
-      "install-git-hook": {
-        "crc": "0x73A47C44",
-        "updated_timestamp": 1745419333.825252,
-        "checked_timestamp": 1745461826.0276618
-      },
-      "restore-git-hooks": {
-        "crc": "0x68C369B8",
-        "updated_timestamp": 1745419333.832855,
-        "checked_timestamp": 1745461826.061853
-      }
-    }
+    "updated_timestamp": 1745652838.6350508
   }
 }

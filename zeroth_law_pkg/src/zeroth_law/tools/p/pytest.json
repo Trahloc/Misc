@@ -1,0 +1,20 @@
+{
+    "command": [
+        "pytest"
+    ],
+    "description": "Tool definition for pytest (auto-generated skeleton)",
+    "usage": "pytest [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "pytest",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

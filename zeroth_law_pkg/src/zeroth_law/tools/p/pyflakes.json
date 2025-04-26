@@ -1,0 +1,20 @@
+{
+    "command": [
+        "pyflakes"
+    ],
+    "description": "Tool definition for pyflakes (auto-generated skeleton)",
+    "usage": "pyflakes [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "pyflakes",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

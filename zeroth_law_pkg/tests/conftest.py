@@ -560,7 +560,7 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
         if result.returncode != 0:
             error_message = (
                 "Failed to verify uv environment.\n"
-                f"Command '{" ".join(command)}' failed with exit code {result.returncode}.\n"
+                f"Command '{' '.join(command)}' failed with exit code {result.returncode}.\n"
                 f"Stderr: {result.stderr}\n"
                 "Ensure 'uv' is installed and the environment is active/managed correctly."
             )
@@ -568,7 +568,7 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
         # Optionally, check if the python path seems reasonable (e.g., contains .venv)
         python_path = result.stdout.strip()
         if not python_path:
-            pytest.fail(f"Command '{" ".join(command)}' succeeded but returned an empty path.", pytrace=False)
+            pytest.fail(f"Command '{' '.join(command)}' succeeded but returned an empty path.", pytrace=False)
         # Add more sophisticated path checks if needed
         logging.info(f"UV Environment Check PASSED. Using Python at: {python_path}")
 
@@ -577,7 +577,7 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
             "Failed to verify uv environment: 'uv' command not found. Is uv installed and in PATH?", pytrace=False
         )
     except subprocess.TimeoutExpired:
-        pytest.fail(f"Failed to verify uv environment: Command '{" ".join(command)}' timed out.", pytrace=False)
+        pytest.fail(f"Failed to verify uv environment: Command '{' '.join(command)}' timed out.", pytrace=False)
     except Exception as e:
         pytest.fail(f"Unexpected error during uv environment check: {e}", pytrace=False)
 
@@ -644,161 +644,162 @@ def command_sequence_to_id(command_parts: tuple[str, ...]) -> str:
 
 
 def calculate_crc32_hex(content_bytes: bytes) -> str:
-    """Calculates the CRC32 checksum and returns it as an uppercase hex string prefixed with 0x."""
+    """Calculate the CRC32 checksum of byte content and return as a hex string."""
     crc_val = zlib.crc32(content_bytes) & 0xFFFFFFFF
     return f"0x{crc_val:08X}"
 
 
 def _update_baseline_and_index_entry(
-    command_sequence: tuple[str, ...], tools_dir: Path, handler: ToolIndexHandler
+    command_sequence: tuple[str, ...],
+    tools_dir: Path,
+    handler: ToolIndexHandler,
+    workspace_root: Path,  # Added workspace_root for baseline path
+    generated_outputs_dir: Path,  # Added generated_outputs_dir
 ) -> tuple[str, bool]:
-    """Worker function: Generates TXT, calculates CRC, updates index via handler if needed. Handles subcommands."""
-    tool_id = command_sequence_to_id(command_sequence)  # e.g., 'safety' or 'ruff_check'
-    tool_name = command_sequence[0]  # Base tool name, e.g., 'safety' or 'ruff'
-    tool_dir = tools_dir / tool_name
-    txt_file_path = tool_dir / f"{tool_id}.txt"
-    json_file_path = tool_dir / f"{tool_id}.json"
-    update_occurred = False
-    current_time = time.time()
+    """
+    Checks for baseline and JSON definition. Creates skeleton files and updates
+    the tool index if either is missing. Ensures the index entry is always updated.
 
-    # print(f"Starting baseline/index update for: {tool_id}") # Maybe too verbose for fixture
+    Args:
+        command_sequence: The tuple representing the tool command (e.g., ('black',)).
+        tools_dir: Path to the base tools directory.
+        handler: The ToolIndexHandler instance.
+        workspace_root: Path to the workspace root.
+        generated_outputs_dir: Path to the directory for generated baselines.
 
+    Returns:
+        A tuple containing:
+            - The command sequence ID (string).
+            - A boolean indicating if any skeleton file (JSON or baseline) was created.
+    """
+    log = logging.getLogger(__name__)
+    command_id = command_sequence_to_id(command_sequence)
+    command_name = command_sequence[0]  # Primary command name for logging/description
+
+    # Define paths using helper (assuming command_sequence_to_filepath exists and is correct)
+    # Or implement the path logic directly if the helper isn't defined/imported here
     try:
-        tool_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as e:
-        log.error(f"Error creating directory {tool_dir} for {tool_id}: {e}")
-        return tool_id, update_occurred  # Return False for update_occurred on error
+        # Assuming command_sequence_to_filepath exists and handles the structure
+        # from src.zeroth_law.lib.tool_path_utils import command_sequence_to_filepath # If needed
+        relative_json_path, relative_baseline_path = command_sequence_to_filepath(command_sequence)
+        json_file_path = tools_dir / relative_json_path
+        # Baseline path needs to be relative to the generated_outputs_dir
+        baseline_file_path = generated_outputs_dir / relative_baseline_path
+    except NameError:
+        # Fallback/Inline path logic if command_sequence_to_filepath is not available
+        log.warning("command_sequence_to_filepath helper not found/imported in conftest, using inline path logic.")
+        first_letter = command_name[0].lower() if command_name else "_"
+        filename_base = command_id
+        json_file_path = tools_dir / first_letter / f"{filename_base}.json"
+        baseline_file_path = generated_outputs_dir / f"{filename_base}.txt"
 
-    cmd_list_part1 = [UV_BIN, "run", "--"]
-    # Construct help command for tool or subcommand
-    cmd_list_tool_help = list(command_sequence) + ["--help"]
-    full_cmd_str = f"{shlex.join(cmd_list_part1 + cmd_list_tool_help)} | cat"
-    log.debug(f"Running command for {tool_id}: {full_cmd_str}")
+    # Ensure parent directories exist
+    json_file_path.parent.mkdir(parents=True, exist_ok=True)
+    baseline_file_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure baseline dir exists
 
+    json_exists = json_file_path.exists()
+    baseline_exists = baseline_file_path.exists()
+    created_skeleton = False
+
+    # Create Skeleton JSON if missing
+    if not json_exists:
+        log.info(f"Skeleton Action: Creating skeleton JSON for {command_id} at {json_file_path}")
+        # Schema-compliant skeleton
+        skeleton_data = {
+            "command": list(command_sequence),
+            "description": f"Tool definition for {command_name} (auto-generated skeleton)",
+            "usage": f"{command_name} [options] [arguments]",  # Basic usage placeholder
+            "options": [],  # Required: list
+            "arguments": [],  # Required: list
+            "metadata": {  # Required: dict
+                "name": command_name,
+                "version": None,  # Placeholder
+                "language": "unknown",  # Placeholder
+                "categories": [],  # Placeholder
+                "tags": ["skeleton"],
+                "url": "",  # Placeholder
+                "other": {},  # Placeholder for future/custom metadata
+            },
+            # Add other REQUIRED fields from schema with default/empty values if necessary
+            # Ensure NO non-schema fields are included unless schema allows additionalProperties
+        }
+        try:
+            with json_file_path.open("w", encoding="utf-8") as f:
+                json.dump(skeleton_data, f, indent=4)
+            log.info(f"Skeleton Action: Successfully created skeleton JSON: {json_file_path}")
+            created_skeleton = True
+        except IOError as e:
+            log.error(f"Skeleton Action Error: Failed to write skeleton JSON {json_file_path}: {e}")
+            # Decide if this should be a hard failure for tests
+            pytest.fail(f"Failed to create skeleton JSON for {command_id}: {e}", pytrace=False)
+
+    # Create Empty Baseline File if missing
+    if not baseline_exists:
+        log.info(f"Skeleton Action: Creating empty baseline file for {command_id} at {baseline_file_path}")
+        try:
+            with baseline_file_path.open("w", encoding="utf-8") as f:
+                f.write(f"# Auto-generated empty baseline for {command_id}\\n")
+                f.write("# Run baseline generation script to populate.\\n")
+            log.info(f"Skeleton Action: Successfully created empty baseline: {baseline_file_path}")
+            created_skeleton = True
+        except IOError as e:
+            log.error(f"Skeleton Action Error: Failed to write empty baseline {baseline_file_path}: {e}")
+            pytest.fail(f"Failed to create empty baseline for {command_id}: {e}", pytrace=False)
+
+    # --- Always Update Tool Index Entry ---
+    log.debug(f"Index Update: Ensuring index entry exists/is updated for {command_id}")
     try:
-        process = subprocess.run(
-            full_cmd_str,
-            shell=True,
-            capture_output=True,
-            check=False,
-            encoding="utf-8",
-            errors="replace",
-            timeout=60,  # Added timeout
-        )
-
-        # Handle command failures more robustly
-        if process.returncode != 0:
-            # Check if the failure is expected (e.g., subcommand doesn't support --help directly)
-            # Heuristic: If stderr mentions 'no such option' or 'unrecognized arguments: --help',
-            # and stdout is empty, maybe skip baseline generation for this subcommand?
-            # For now, just log a warning and skip update. Refine later if needed.
-            stderr_lower = process.stderr.lower() if process.stderr else ""
-            if (
-                "no such option" in stderr_lower
-                or "unrecognized arguments: --help" in stderr_lower
-                or "unexpected argument '--help'" in stderr_lower
-            ):
-                log.warning(
-                    f"Command for '{tool_id}' failed, possibly due to no direct --help support for subcommand. Skipping baseline/index update. Stderr: {process.stderr.strip()}"
-                )
-            else:
-                log.warning(
-                    f"Command for '{tool_id}' failed (exit code {process.returncode}). Skipping baseline/index update. Stderr: {process.stderr.strip()}"
-                )
-            return tool_id, update_occurred
-
-        # --- Filter out log lines --- START
-        raw_output_lines = process.stdout.splitlines()
-        filtered_output_lines = []
-        for line in raw_output_lines:
-            if not LOG_LINE_PATTERN.match(line):
-                filtered_output_lines.append(line)
-            else:
-                log.debug(f"Filtered out log line for {tool_id}: {line}")
-
-        # Join the filtered lines back, normalize line endings, and strip trailing whitespace
-        output_normalized_str = "\n".join(filtered_output_lines).replace("\r\n", "\n").replace("\r", "\n").rstrip()
-        # --- Filter out log lines --- END
-
-        # Handle cases where command succeeds but produces no *filtered* output
-        if not output_normalized_str:
-            log.info(
-                f"Command for '{tool_id}' succeeded but produced no non-log stdout. Skipping baseline/index update."
-            )
-            # Update checked timestamp only?
-            entry_update_data = {"checked_timestamp": current_time}
-            handler.update_entry(command_sequence, entry_update_data)  # Best effort update
-            return tool_id, update_occurred
-
-        output_normalized_bytes = output_normalized_str.encode("utf-8")
-
-        # Write the .txt file (now filtered)
-        txt_file_path.write_bytes(output_normalized_bytes)
-
-        new_crc = calculate_crc32_hex(output_normalized_bytes)
-
-        # Check against index via handler
-        existing_entry = handler.get_entry(command_sequence)
-        existing_crc = existing_entry.get("crc") if existing_entry else None
-
-        # --- ADD JSON Skeleton Creation --- START
-        if not json_file_path.is_file():
-            log.info(f"JSON definition missing for {tool_id}, creating skeleton: {json_file_path}")
-            skeleton_data = {
+        # Get existing entry or create a default one
+        current_entry = handler.get_entry(command_sequence)
+        if current_entry is None:
+            log.info(f"Index Update: No existing entry for {command_id}, creating default.")
+            current_entry = {
                 "command": list(command_sequence),
-                "description": f"Tool definition for {tool_id} (auto-generated skeleton)",
-                "version_command": f"{tool_name} --version",  # Basic guess
-                "args": {},
-                "subcommands": None,
-                "baseline_file": txt_file_path.name,
-                "json_skeleton_file": json_file_path.name,
-                "crc": new_crc,  # Use the CRC from the TXT baseline
-                "updated_timestamp": current_time,
-                "checked_timestamp": current_time,
-                "source": "baseline_script_skeleton",
+                "baseline_file": str(baseline_file_path.relative_to(generated_outputs_dir)),
+                "json_definition_file": str(json_file_path.relative_to(tools_dir)),
+                # Initialize other fields required by index structure if necessary
+                "crc": None,
+                "updated_timestamp": 0.0,
+                "checked_timestamp": 0.0,
+                "source": "test_fixture_skeleton",
             }
-            try:
-                with open(json_file_path, "w", encoding="utf-8") as f_json:
-                    json.dump(skeleton_data, f_json, indent=4)
-                # Mark update occurred if JSON was created
-                # update_occurred = True # Optional: decide if this counts as an "update" for reporting
-            except Exception as json_e:
-                log.error(f"Failed to create skeleton JSON for {tool_id}: {json_e}")
-        # --- ADD JSON Skeleton Creation --- END
-
-        if existing_crc != new_crc:
-            log.info(f"CRC mismatch for {tool_id}: Index={existing_crc}, New={new_crc}. Updating index.")
-            entry_data = {
-                "crc": new_crc,
-                "updated_timestamp": current_time,
-                "checked_timestamp": current_time,
-                "source": "baseline_script",  # Indicate source
-                "baseline_file": txt_file_path.name,  # Ensure baseline filename is in index
-                "json_skeleton_file": json_file_path.name
-                if json_file_path.exists()
-                else None,  # Add JSON filename if exists
-            }
-            handler.update_entry(command_sequence, entry_data)
-            update_occurred = True
         else:
-            log.debug(f"CRC consistent for {tool_id}. Updating checked timestamp.")
-            # Only update checked timestamp if CRC matches
-            # Also ensure baseline/json filenames are present
-            entry_update_data = {
-                "checked_timestamp": current_time,
-                "baseline_file": txt_file_path.name,
-                "json_skeleton_file": json_file_path.name if json_file_path.exists() else None,
-            }
-            handler.update_entry(command_sequence, entry_update_data)  # Update checked time + filenames
+            log.debug(f"Index Update: Found existing entry for {command_id}, updating timestamps/paths.")
+            # Ensure paths are up-to-date even if entry existed
+            current_entry["baseline_file"] = str(baseline_file_path.relative_to(generated_outputs_dir))
+            current_entry["json_definition_file"] = str(json_file_path.relative_to(tools_dir))
 
-    except subprocess.TimeoutExpired:
-        log.error(f"Command timed out for {tool_id}. Skipping.")
-    except FileNotFoundError:
-        log.error(f"Command not found for {tool_id} (is '{UV_BIN}' in PATH?). Skipping.")
+        # Update timestamp (important!)
+        update_time = time.time()
+        current_entry["updated_timestamp"] = update_time
+        # Maybe reset checked_timestamp if structure changed? For now, just update.
+        # current_entry["checked_timestamp"] = update_time
+
+        # Calculate CRC of the JSON definition (even if it's a skeleton)
+        if json_file_path.exists():
+            try:
+                content_bytes = json_file_path.read_bytes()
+                current_entry["crc"] = calculate_crc32_hex(content_bytes)
+            except IOError as e:
+                log.warning(f"Index Update Error: Could not read JSON file {json_file_path} to calculate CRC: {e}")
+                current_entry["crc"] = None  # Indicate CRC calculation failed
+        else:
+            # Should not happen if skeleton logic worked, but handle defensively
+            log.warning(
+                f"Index Update Warning: JSON file {json_file_path} not found after skeleton check for CRC calculation."
+            )
+            current_entry["crc"] = None
+
+        # Write the updated entry back to the index
+        handler.update_entry(command_sequence, current_entry)
+        log.debug(f"Index Update: Successfully updated index entry for {command_id}")
+
     except Exception as e:
-        log.exception(f"Unexpected error processing {tool_id}: {e}")
+        log.error(f"Index Update Error: Failed to update tool index for {command_id}: {e}")
+        # Potentially fail the test if index update is critical
+        pytest.fail(f"Failed to update tool index for {command_id}: {e}", pytrace=False)
 
-    return tool_id, update_occurred
+    return command_id, created_skeleton
 
 
 # --- Fixtures Moved/Added from tool_defs/conftest.py ---
@@ -832,17 +833,37 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOLS_DIR: Path) -> Set[str]:
     """
     log.info("Discovering managed tool names within managed_sequences fixture scope...")
     try:
-        _reconciliation_results, managed_tool_names, _blacklist = perform_tool_reconciliation(WORKSPACE_ROOT, TOOLS_DIR)
-        log.info(f"Fixture scope reconciliation identified managed tool names: {managed_tool_names}")
-        return managed_tool_names  # Return the set of names
+        # Perform reconciliation to get the definitive list of managed tools
+        reconciliation_results, _, _ = perform_tool_reconciliation(
+            project_root_dir=WORKSPACE_ROOT, tool_defs_dir=TOOLS_DIR
+        )
+
+        # Extract only the names of tools that are considered 'managed'
+        managed_set = {
+            name
+            for name, status in reconciliation_results.items()
+            if status
+            in {
+                ToolStatus.MANAGED_OK,
+                ToolStatus.MANAGED_MISSING_ENV,
+                ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
+                # ToolStatus.OK_CONFIG_ONLY, # Obsolete
+                # ToolStatus.OK_MATCH, # Obsolete
+                # ToolStatus.OK_MATCH_NEEDS_BASELINE, # Obsolete
+            }
+        }
+        if not managed_set:
+            log.warning("Fixture 'managed_sequences' determined the set of managed tools is empty.")
+        else:
+            log.info(f"Fixture 'managed_sequences' identified {len(managed_set)} managed tools.")
+        return managed_set
 
     except ReconciliationError as e:
+        # Fail the test setup if reconciliation itself fails
         pytest.fail(f"Tool reconciliation failed within managed_sequences fixture: {e}")
     except Exception as e:
-        log.exception("Unexpected error during managed sequence discovery within fixture")
-        pytest.fail(f"Unexpected error during managed sequence discovery within fixture: {e}")
-
-    return set()  # Return empty set on failure
+        log.error(f"Unexpected error during managed_sequences fixture setup: {e}", exc_info=True)
+        pytest.fail(f"Unexpected error in managed_sequences fixture: {e}")
 
 
 @pytest.fixture(scope="session", autouse=True)  # Keep autouse=True
@@ -853,53 +874,63 @@ def ensure_baselines_updated(
     tool_index_handler: ToolIndexHandler,
     managed_sequences: set,
 ):
-    """Session-scoped fixture to ensure all tool help baselines (.txt) and tool_index.json are up-to-date."""
-    start_time = time.monotonic()
-    log.info(f"Starting baseline generation/verification for {len(managed_sequences)} sequences...")
+    """
+    Ensures that baseline files and JSON definitions exist for all managed tools,
+    creating skeletons if necessary, and updates the tool index accordingly.
+    Runs once per session before tests that might depend on these files.
+    """
+    log = logging.getLogger(__name__)
+    log.info("Starting session-wide baseline/JSON/index synchronization for managed tools...")
 
-    # Ensure the handler reflects the current index state before updates
-    tool_index_handler.reload()
+    # Define the directory for generated baseline files
+    generated_outputs_dir = WORKSPACE_ROOT / "generated_command_outputs"
+    generated_outputs_dir.mkdir(parents=True, exist_ok=True)  # Ensure it exists
 
     updated_count = 0
-    processed_count = 0
-    skipped_count = 0  # Count commands skipped due to --help issues
-    error_list = []
+    created_skeleton_count = 0
 
-    # Use ThreadPoolExecutor for parallel execution
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        # Create futures for each sequence
-        future_to_sequence = {
-            executor.submit(_update_baseline_and_index_entry, seq, TOOLS_DIR, tool_index_handler): seq
-            for seq in managed_sequences
-        }
+    if not managed_sequences:
+        log.warning("No managed sequences found. Skipping baseline/JSON sync.")
+        return
 
-        for future in concurrent.futures.as_completed(future_to_sequence):
-            sequence = future_to_sequence[future]
-            tool_id = command_sequence_to_id(sequence)
-            processed_count += 1
-            try:
-                _tool_id_returned, update_occurred = future.result()
-                if _tool_id_returned != tool_id:
-                    # This indicates a potential issue in the worker if tool_id doesn't match
-                    log.error(f"Worker returned unexpected tool_id '{_tool_id_returned}' for sequence {sequence}")
-                if update_occurred:
-                    updated_count += 1
-            except Exception as exc:
-                log.error(f"Sequence '{tool_id}' generated an exception during baseline update: {exc}")
-                error_list.append(tool_id)
+    log.info(f"Checking/updating {len(managed_sequences)} managed tool sequences...")
 
-    # Reload handler again after all updates are done to reflect changes
-    tool_index_handler.reload()
+    # Assume tool_index_handler is already loaded by its fixture
+    for sequence_str in managed_sequences:
+        # Convert the string representation back to a tuple
+        # try:
+        # Handle potential single quotes if string came from repr or similar
+        # Safely evaluate the string literal to a tuple
+        # command_sequence = ast.literal_eval(sequence_str)
+        # if not isinstance(command_sequence, tuple):
+        #     raise ValueError("Parsed sequence is not a tuple")
+        # except (ValueError, SyntaxError) as e:
+        #     log.error(f"Failed to parse command sequence string: '{sequence_str}'. Error: {e}. Skipping.")
+        #     continue # Skip this sequence
 
-    end_time = time.monotonic()
-    duration = end_time - start_time
-    log.info(f"Baseline generation/verification finished in {duration:.2f}s.")
-    log.info(f"Processed: {processed_count}, Updated/Mismatch: {updated_count}, Errors: {len(error_list)}")
+        # CORRECTED: Simply create a tuple from the tool name string
+        if not isinstance(sequence_str, str) or not sequence_str:
+            log.warning(f"Skipping invalid sequence string: {sequence_str!r}")
+            continue
+        command_sequence = (sequence_str,)  # Create a single-element tuple
 
-    if error_list:
-        log.error(f"Errors occurred during baseline generation for: {error_list}")
-        # Optionally fail the test session if baseline generation had errors
-        # pytest.fail(f"Baseline generation failed for {len(error_list)} tools.")
+        try:
+            _, created = _update_baseline_and_index_entry(
+                command_sequence, TOOLS_DIR, tool_index_handler, WORKSPACE_ROOT, generated_outputs_dir
+            )
+            if created:
+                created_skeleton_count += 1
+            updated_count += 1
+        except Exception as e:
+            # Catch potential errors from the helper to avoid stopping the whole sync process
+            log.error(f"Error processing sequence {command_sequence}: {e}", exc_info=True)
+            # Optionally re-raise or fail depending on desired strictness
+            # pytest.fail(f"Critical error during baseline sync for {command_sequence}: {e}", pytrace=False)
+
+    log.info(
+        f"Baseline/JSON/index synchronization complete. "
+        f"Processed: {updated_count}, Skeletons Created: {created_skeleton_count}"
+    )
 
 
 # --- END Moved/Added Fixtures ---

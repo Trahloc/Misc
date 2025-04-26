@@ -6,16 +6,21 @@ from zeroth_law.dev_scripts.tools_dir_scanner import get_tool_dirs
 
 
 def test_scan_with_tool_dirs(tmp_path):
-    """Test scanning a directory containing valid tool directories."""
+    """Test scanning a directory containing valid tool directories under alphabetical dirs."""
     tools_base_dir = tmp_path / "tools"
     expected_tools = {"tool_a", "tool_b", "another_tool"}
 
-    # Create dummy tool directories
+    # Create dummy tool directories directly under the base path
     for tool_name in expected_tools:
-        (tools_base_dir / tool_name).mkdir(parents=True)
+        # Removed the logic for creating nested alphabetical directories
+        tool_dir = tools_base_dir / tool_name
+        tool_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create a dummy file to ensure only directories are picked up
+    # Create a dummy file in the root to ensure only dirs are picked up
     (tools_base_dir / "some_file.txt").touch()
+    # Removed creation of nested dummy file
+    # (tools_base_dir / "t").mkdir(parents=True, exist_ok=True)
+    # (tools_base_dir / "t" / "another_file.txt").touch()
 
     found_tools = get_tool_dirs(tools_base_dir)
 

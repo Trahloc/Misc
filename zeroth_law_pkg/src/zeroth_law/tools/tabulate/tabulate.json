@@ -1,0 +1,18 @@
+{
+    "command": [
+        "tabulate"
+    ],
+    "description": "Tool definition for tabulate (auto-generated skeleton)",
+    "version_command": "tabulate --version",
+    "metadata": {
+        "tool_name": "tabulate"
+    },
+    "args": {},
+    "subcommands": null,
+    "baseline_file": "tabulate.txt",
+    "json_skeleton_file": "tabulate.json",
+    "crc": "0x5014C577",
+    "updated_timestamp": 1745645661.6565504,
+    "checked_timestamp": 1745645661.6565504,
+    "source": "baseline_script_skeleton"
+}

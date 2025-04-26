@@ -1,0 +1,20 @@
+{
+    "command": [
+        "isort"
+    ],
+    "description": "Tool definition for isort (auto-generated skeleton)",
+    "usage": "isort [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "isort",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

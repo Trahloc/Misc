@@ -1,0 +1,20 @@
+{
+    "command": [
+        "black"
+    ],
+    "description": "Tool definition for black (auto-generated skeleton)",
+    "usage": "black [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "black",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

@@ -1,8 +1,0 @@
-Usage: zlt install-git-hook [OPTIONS]
-
-  Installs the custom ZLT pre-commit hook for multi-project support.
-
-Options:
-  --git-root DIRECTORY  Path to the Git repository root (auto-detected if not
-                        specified).
-  -h, --help            Show this message and exit.

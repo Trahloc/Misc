@@ -3,6 +3,7 @@
 import logging
 from pathlib import Path
 from typing import Any, Dict, Set, Tuple
+from pprint import pprint
 
 from .config_reader import load_tool_lists_from_toml
 from .environment_scanner import get_executables_from_env
@@ -56,11 +57,12 @@ def perform_tool_reconciliation(
     env_tools = get_executables_from_env(whitelist, dir_tools)
     logger.info(f"Found {len(env_tools)} relevant executables in environment after filtering.")
 
-    # 3. Scan Tool Definitions Directory
-    if not tool_defs_dir.is_dir():
-        raise FileNotFoundError(f"Tool definitions directory not found: {tool_defs_dir}")
-    dir_tools = get_tool_dirs(tool_defs_dir)
-    logger.info(f"Found {len(dir_tools)} tool definitions in {tool_defs_dir}.")
+    # 3. Scan Tool Definitions Directory - REMOVED Redundant Scan
+    # We already scanned dir_tools in step 2, use that result.
+    # if not tool_defs_dir.is_dir():
+    #     raise FileNotFoundError(f\"Tool definitions directory not found: {tool_defs_dir}\")
+    # dir_tools = get_tool_dirs(tool_defs_dir) # Redundant scan removed
+    # logger.info(f\"Found {len(dir_tools)} tool definitions in {tool_defs_dir}.\") # Logged in step 2
 
     # 4. Reconcile
     logger.debug(f"Reconciling with:")
@@ -82,23 +84,58 @@ def perform_tool_reconciliation(
 
     for tool, status in reconciliation_results.items():
         # Check only for valid error statuses defined in ToolStatus
-        if status in (
-            ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR,
-            ToolStatus.ERROR_MISSING_WHITELISTED,
+        # Using explicit OR instead of tuple membership for clarity
+        if (
+            status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR
+            or status == ToolStatus.ERROR_MISSING_WHITELISTED
+            # CRITICAL: Treat newly discovered, unmanaged tools in env as errors
+            or status == ToolStatus.NEW_ENV_TOOL
         ):
-            logger.error(f"Reconciliation Error! Tool: {tool}, Status: {status.name}")
+            # Default message structure, will be overwritten by specific conditions
+            log_message = f"Reconciliation Error! Tool: {tool}, Status: {status.name}."
+
+            # Specific messages for clarity
+            if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
+                log_message = (
+                    f"Reconciliation Error! Tool: {tool}, Status: {status.name}. "
+                    f"A directory exists in '{tool_defs_dir.relative_to(project_root_dir)}' "
+                    "but the tool is blacklisted in pyproject.toml. Remove the directory."
+                )
+            elif status == ToolStatus.ERROR_MISSING_WHITELISTED:
+                log_message = (
+                    f"Reconciliation Error! Tool: {tool}, Status: {status.name}. "
+                    f"Tool is whitelisted in pyproject.toml but no directory found in '{tool_defs_dir.relative_to(project_root_dir)}'. "
+                    "Run regeneration scripts or remove from whitelist."
+                )
+            elif status == ToolStatus.NEW_ENV_TOOL:
+                log_message = (
+                    f"Reconciliation Error! Tool: {tool}, Status: {status.name}. "
+                    "Found in environment but not in pyproject.toml whitelist or blacklist. "
+                    "Please assess its long-term utility and add to either list."
+                )
+
+            logger.error(log_message)
             errors_found = True
         elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
             # Warn about orphan tools instead of treating as error
-            logger.warning(f"Reconciliation Warning! Orphan Tool Found: {tool}, Status: {status.name}")
-        elif status in (
-            ToolStatus.MANAGED_OK,
-            ToolStatus.MANAGED_MISSING_ENV,
-            ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
+            logger.warning(
+                f"Reconciliation Warning! Orphan Tool Found: {tool}, Status: {status.name}. "
+                f"Directory exists in '{tool_defs_dir.relative_to(project_root_dir)}' but tool is not in whitelist or blacklist. "
+                "Assess and add to pyproject.toml or remove directory."
+            )
+        elif (
+            status == ToolStatus.MANAGED_OK
+            or status == ToolStatus.MANAGED_MISSING_ENV
+            or status == ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR
         ):
             managed_tools_for_processing.add(tool)
 
+    # --- REMOVED DEBUG --- Print the final dict before raising error
     if errors_found:
+        # from pprint import pprint
+        # print("\n--- DEBUG: Reconciliation results BEFORE raising error: ---")
+        # pprint(reconciliation_results)
+        # print("--- END DEBUG ---")
         raise ReconciliationError("Errors detected during tool reconciliation. See logs.")
 
     logger.info(f"Identified {len(managed_tools_for_processing)} managed tools for processing.")

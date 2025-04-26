@@ -11,6 +11,7 @@ from filelock import FileLock, Timeout  # Import Timeout here
 from typing import List, Tuple, Dict, Any  # Ensure List and Tuple are here
 import time
 import os
+from pprint import pprint
 
 # Import functions to test
 from src.zeroth_law.dev_scripts.tool_index_utils import (
@@ -475,11 +476,11 @@ def test_index_contains_all_managed_sequences(
 ):
     """Verify that every sequence identified as managed has an entry in the index."""
     # Fixture provides Set[str], not List[Tuple[str, ...]]. Adjusting loop.
+
     if not managed_sequences:
         pytest.skip("No managed sequences provided by fixture.")
 
     missing_entries = []
-    # The fixture likely provides a set of strings, iterate through them directly.
     for tool_name in managed_sequences:
         # Convert the tool name string into a tuple for get_entry
         command_sequence_tuple = (tool_name,)

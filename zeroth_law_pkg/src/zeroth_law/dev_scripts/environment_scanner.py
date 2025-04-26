@@ -40,14 +40,14 @@ def get_executables_from_env(whitelist: Set[str], dir_tools: Set[str]) -> Set[st
 
         if result.returncode != 0:
             log.error(
-                f"Command '{" ".join(command)}' failed with code {result.returncode}. "
+                f"Command '{' '.join(command)}' failed with code {result.returncode}. "
                 f"Cannot determine environment bin path. Stderr: {result.stderr.strip() if result.stderr else '[None]'}"
             )
             return set()
 
         python_path_str = result.stdout.strip()
         if not python_path_str:
-            log.error(f"Command '{" ".join(command)}' succeeded but returned empty path.")
+            log.error(f"Command '{' '.join(command)}' succeeded but returned empty path.")
             return set()
         log.debug(f"Found python interpreter via uv: {python_path_str}")
 
@@ -55,7 +55,7 @@ def get_executables_from_env(whitelist: Set[str], dir_tools: Set[str]) -> Set[st
         log.error(f"Command 'uv' not found. Is uv installed and in PATH?")
         return set()
     except subprocess.TimeoutExpired:
-        log.error(f"Command '{" ".join(command)}' timed out after {DEFAULT_TIMEOUT}s.")
+        log.error(f"Command '{' '.join(command)}' timed out after {DEFAULT_TIMEOUT}s.")
         return set()
     except Exception as e:
         log.exception(f"Unexpected error finding python via uv: {e}")  # Use log.exception

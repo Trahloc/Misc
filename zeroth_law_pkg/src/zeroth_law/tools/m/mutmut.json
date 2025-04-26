@@ -1,0 +1,20 @@
+{
+    "command": [
+        "mutmut"
+    ],
+    "description": "Tool definition for mutmut (auto-generated skeleton)",
+    "usage": "mutmut [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "mutmut",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

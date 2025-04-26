@@ -1,0 +1,20 @@
+{
+    "command": [
+        "typer"
+    ],
+    "description": "Tool definition for typer (auto-generated skeleton)",
+    "usage": "typer [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "typer",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

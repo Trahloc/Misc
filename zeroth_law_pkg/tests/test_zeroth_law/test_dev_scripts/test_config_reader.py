@@ -7,14 +7,14 @@ from zeroth_law.dev_scripts.config_reader import load_tool_lists_from_toml
 
 # Define a sample valid pyproject.toml content
 VALID_TOML_CONTENT = """
-[tool.zeroth-law.tools]
+[tool.zeroth-law.managed-tools]
 whitelist = ["tool_a", "tool_b"]
 blacklist = ["tool_c", "tool_d"]
 """
 
 # Define sample TOML with missing keys
 MISSING_KEYS_TOML_CONTENT = """
-[tool.zeroth-law.tools]
+[tool.zeroth-law.managed-tools]
 # whitelist = ["tool_a", "tool_b"]
 # blacklist = ["tool_c", "tool_d"]
 """
@@ -27,7 +27,7 @@ name = "test"
 
 # Define sample TOML with invalid data types
 INVALID_TYPE_TOML_CONTENT = """
-[tool.zeroth-law.tools]
+[tool.zeroth-law.managed-tools]
 whitelist = "not_a_list"
 blacklist = 123
 """

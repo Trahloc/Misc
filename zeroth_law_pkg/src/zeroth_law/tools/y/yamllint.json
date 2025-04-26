@@ -1,0 +1,20 @@
+{
+    "command": [
+        "yamllint"
+    ],
+    "description": "Tool definition for yamllint (auto-generated skeleton)",
+    "usage": "yamllint [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "yamllint",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

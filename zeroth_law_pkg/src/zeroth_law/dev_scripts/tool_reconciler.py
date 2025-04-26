@@ -3,6 +3,7 @@
 from enum import Enum, auto
 from typing import Set, Dict
 import logging
+from pprint import pprint
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +60,12 @@ def reconcile_tools(
             continue  # Skip further processing for this entry
         # --- ADDED FILTER: Ignore likely spurious single-character tools --- END
 
+        # --- DETAILED DEBUG LOGGING --- START
+        log.debug(
+            f"Processing tool: '{tool}' - InEnv={in_env}, InDir={in_dir}, WL={is_whitelisted}, BL={is_blacklisted}"
+        )
+        # --- DETAILED DEBUG LOGGING --- END
+
         status: ToolStatus | None = None
 
         # --- Error States First ---
@@ -102,4 +109,9 @@ def reconcile_tools(
             )
 
     log.debug(f"Reconciliation complete: {reconciliation_status}")
+    # --- REMOVED DEBUG --- Print the dict just before returning
+    # from pprint import pprint
+    # print("\n--- DEBUG: Reconciliation results INSIDE reconcile_tools (before return): ---")
+    # pprint(reconciliation_status)
+    # print("--- END DEBUG ---")
     return reconciliation_status

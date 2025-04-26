@@ -1,0 +1,20 @@
+{
+    "command": [
+        "bandit-baseline"
+    ],
+    "description": "Tool definition for bandit-baseline (auto-generated skeleton)",
+    "usage": "bandit-baseline [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "bandit-baseline",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

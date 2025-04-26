@@ -11,6 +11,7 @@ import io  # Import io for capturing report output
 import coverage  # Import coverage API
 import logging
 from typing import Set
+import os
 
 # Assuming tool_discovery.py is now in src/zeroth_law/dev_scripts/
 # Add the src directory to the path to allow importing the discovery script
@@ -73,58 +74,52 @@ def test_check_for_new_tools():
 # --- Test for Orphan Directories (Optional but good sanity check) ---
 
 
-def _find_actual_tool_dirs(base_tools_dir: Path) -> Set[str]:
-    """Finds leaf directories within the tool directory structure, assuming they represent tools."""
+def _find_actual_tool_dirs(base_tools_dir: Path) -> set[str]:
+    """
+    Helper to find leaf directories under the base_tools_dir.
+    Now assumes a flat structure like tools/actual_tool1, tools/actual_tool2.
+    Ignores files and only considers directories as actual tools.
+    """
     actual_tool_dirs = set()
     if not base_tools_dir.is_dir():
         return actual_tool_dirs
 
-    for letter_dir in base_tools_dir.iterdir():
-        if letter_dir.is_dir() and len(letter_dir.name) == 1:  # Check it's an alphabetical dir
-            for tool_dir in letter_dir.iterdir():
-                if tool_dir.is_dir():
-                    # Check if it's a leaf directory (no further subdirs)
-                    # A simple check could be if it contains a tool_def.json or similar
-                    # Or assume any dir at this level is a tool dir for now
-                    actual_tool_dirs.add(tool_dir.name)
+    # Iterate through items directly under base_tools_dir
+    for item in base_tools_dir.iterdir():
+        if item.is_dir():
+            tool_name = item.name
+            actual_tool_dirs.add(tool_name)
+
     return actual_tool_dirs
 
 
-def test_no_orphan_tool_directories():
+def test_no_orphan_tool_directories(managed_sequences: set[str], TOOLS_DIR: Path):
     """
-    Verify that all leaf directories within the tools directory structure correspond to
-    tools listed as managed in the configuration.
+    Test that there are no directories under TOOLS_DIR that do not
+    correspond to a managed tool defined in the configuration (e.g., pyproject.toml).
+    Uses the updated tools_dir_scanner logic to find actual tool directories.
     """
-    if not TOOLS_DIR.is_dir():
-        pytest.skip(f"Base tools directory not found: {TOOLS_DIR}")
-        return
-
-    # Use the new helper to find actual tool dirs
-    actual_tool_dirs_on_disk = _find_actual_tool_dirs(TOOLS_DIR)
-    # existing_tool_dirs = get_existing_tool_dirs() # Old way
-
-    config = load_tools_config()
-    # Assuming config comes from pyproject.toml now
-    # known_managed_tools = set(config.get("managed_tools", []))
-    # Get managed tools from pyproject.toml using load_pyproject_config if available
-    # For simplicity, let's assume load_tools_config gets the correct list for now
-    # If load_tools_config reads managed_tools.yaml, that needs updating/removal.
-    known_managed_tools = set(config.get("managed_tools", []))  # Keep using this for now
-
-    # Find dirs that exist but aren't listed as managed
-    # orphan_dirs = existing_tool_dirs - known_managed_tools # Old way
-    orphan_dirs = actual_tool_dirs_on_disk - known_managed_tools
-
-    if orphan_dirs:
-        orphan_list = ", ".join(sorted(list(orphan_dirs)))
-        error_message = (
-            f"Orphan tool directories found under '{TOOLS_DIR.relative_to(WORKSPACE_ROOT)}' that are not listed as 'managed_tools' in the configuration: [{orphan_list}]. "
-            f"Please investigate and decide whether to remove these directories or add the corresponding tool name(s) to the configuration (e.g., pyproject.toml)."
+    # Import the corrected function
+    try:
+        from zeroth_law.dev_scripts.tools_dir_scanner import get_tool_dirs
+    except ImportError:
+        pytest.fail(
+            "Could not import get_tool_dirs from tools_dir_scanner. Check sys.path setup in conftest or test file."
         )
-        pytest.fail(error_message, pytrace=False)
-    else:
-        print("No orphan tool directories found.")
-        assert True  # Explicit pass
+
+    # Use the corrected scanner function
+    actual_tool_dirs = get_tool_dirs(TOOLS_DIR)
+
+    known_managed_tools = managed_sequences
+
+    orphan_dirs = actual_tool_dirs - known_managed_tools
+
+    assert not orphan_dirs, (
+        f"Orphan tool directories found under '{TOOLS_DIR.relative_to(Path.cwd())}' "
+        f"that are not listed as 'managed_tools' in the configuration: {sorted(list(orphan_dirs))}. "
+        "Please investigate and decide whether to remove these directories or add the "
+        "corresponding tool name(s) to the configuration (e.g., pyproject.toml)."
+    )
 
 
 # --- Test for Project Coverage (Moved to end) ---

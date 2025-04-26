@@ -1,0 +1,20 @@
+{
+    "command": [
+        "ruff"
+    ],
+    "description": "Tool definition for ruff (auto-generated skeleton)",
+    "usage": "ruff [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "ruff",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

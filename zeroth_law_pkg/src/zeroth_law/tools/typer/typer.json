@@ -1,0 +1,18 @@
+{
+    "command": [
+        "typer"
+    ],
+    "description": "Tool definition for typer (auto-generated skeleton)",
+    "version_command": "typer --version",
+    "metadata": {
+        "tool_name": "typer"
+    },
+    "args": {},
+    "subcommands": null,
+    "baseline_file": "typer.txt",
+    "json_skeleton_file": "typer.json",
+    "crc": "0x9E3B55AF",
+    "updated_timestamp": 1745645661.6621833,
+    "checked_timestamp": 1745645661.6621833,
+    "source": "baseline_script_skeleton"
+}

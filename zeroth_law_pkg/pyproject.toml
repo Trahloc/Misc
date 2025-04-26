@@ -145,6 +145,7 @@ git_root = ".."
 # --- ZLT Tool Whitelist/Blacklist ---
 [tool.zeroth-law.managed-tools]
 whitelist = [
+    "autopep8",
     "bandit",
     "bandit-baseline",
     "bandit-config-generator",
@@ -158,16 +159,22 @@ whitelist = [
     "mutmut",
     "mypy",
     "pipdeptree",
+    "poetry",
     "pre-commit",
     "py-spy",
+    "pycodestyle",
     "pydocstyle",
     "pyflakes",
     "pylint",
+    "pyproject-build",
     "pytest",
     "radon",
     "ruff",
     "safety",
     "scalene",
+    "sqlite-utils",
+    "tabulate",
+    "typer",
     "uv",
     "vulture",
     "yamllint",
@@ -176,44 +183,60 @@ whitelist = [
 
 blacklist = [
     # Common system / env tools
+    "activate_this",
+    "activate",
+    "activate.csh",
+    "activate.fish",
+    "Activate.ps1",
+    "deactivate",
     "python",
     "python3",
     "python3.13",
     "pip",
     "pip3",
-    "activate",      # Virtualenv activate script
-    "activate.csh",  # Virtualenv activate script (csh)
-    "activate.fish", # Virtualenv activate script (fish)
-    "Activate.ps1",  # Virtualenv activate script (powershell)
-    "f2py",          # numpy Fortran wrapper
-    "wheel",         # Build tool often present
+    "wheel",
+    "virtualenv",
+    "nodeenv",
+    "findpython",
 
-    # Dev script helpers (not primary tools)
+    # Tool internals / helpers / secondary entry points
+    "blackd",
+    "coverage-3",
+    "coverage3",
+    "dmypy",
+    "doesitcache",
+    "dul-receive-pack",
+    "dul-upload-pack",
+    "dulwich",
+    "get_gprof",
+    "get_objgraph",
+    "httpx",
+    "identify-cli",
+    "keyring",
+    "markdown-it",
+    "mypyc",
+    "normalizer",
+    "numpy-config",
+    "pbr",
+    "pbs-install",
+    "pkginfo",
+    "py",
+    "pydoc",
+    "pygmentize",
+    "pylint-config",
+    "pyreverse",
+    "stubgen",
+    "stubtest",
+    "symilar",
+    "undill",
+    "uvx",
+
+    # Project dev script helpers (not primary tools)
+    "chardetect",
     "fix-json-schema",
     "fix-json-whitespace",
     "generate-baselines",
     "regenerate-index",
-    "sync-dev",
-    "update-json-crc",     # Assuming update_json_crc_tool.py is the actual script
-    # "zlt", # REMOVED - Keep dir for now, treat as orphan
-
-    # Linters/Formatters often used via pre-commit
-    # "autopep8", # REMOVED - Keep dir for now, treat as orphan
-    "autoinit", # Optional __init__.py generator
-
-    # Build/Distribution related
-    "build",
-    # "pyproject-build", # REMOVED - Keep dir for now, treat as orphan
-
-    # Test helpers
-    "pytest-bisect-tests",
-
-    # Poetry specific (if installed globally or managed separately)
-    # "poetry", # REMOVED - Keep dir for now, treat as orphan
-
-    # Recently added via dependencies (to unblock tests)
-    "chardetect",
-    "docutils",
     "rst2html",
     "rst2html4",
     "rst2html5",
@@ -224,10 +247,19 @@ blacklist = [
     "rst2s5",
     "rst2xetex",
     "rst2xml",
+    "safety_check",
+    "sync-dev",
     "tox",
     "twine",
-    "uvx",
-    "safety_check",  # Add deprecated command
+    "update-json-crc",
+    "zlt",
+
+    # Other misc from dependencies
+    "docutils",
+    "f2py",
+    "pytest-bisect-tests",
+    "autoinit",
+
 ]
 
 # --- ZLT Allowed Project Root Items ---
@@ -258,6 +290,7 @@ items = [
     "CODE_TODOS.md",
     "package.json",
     "project_structure.json",
+    "mock_whitelist.toml",
     # Build / Output Dirs
     "build",
     "dist",

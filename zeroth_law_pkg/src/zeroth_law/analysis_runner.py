@@ -55,7 +55,7 @@ def analyze_files(
     log.info(f"Starting analysis of {total_files} unique files.")  # Log total unique files
 
     for i, file_path in enumerate(unique_files):  # Iterate over unique files
-        log.debug(f"Analyzing file {i+1}/{total_files}: {file_path}")  # Use total_files
+        log.debug(f"Analyzing file {i + 1}/{total_files}: {file_path}")  # Use total_files
         error_occurred = False
         violations = {}  # Initialize violations for the current file scope
         error_msg = ""  # Initialize error message

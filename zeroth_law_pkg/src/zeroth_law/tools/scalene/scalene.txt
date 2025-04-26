@@ -48,19 +48,16 @@ options:
   --cpu-only            profile CPU time (deprecated: use --cpu )
   --gpu                 profile GPU time and memory (default: True )
   --memory              profile memory (default: True )
-  --profile-all         profile all executed code, not just the target program (default: only 
-the target program)
+  --profile-all         profile all executed code, not just the target program (default: only the target program)
   --profile-only PROFILE_ONLY
-                        profile only code in filenames that contain the given strings, 
-separated by commas (default: no restrictions)
+                        profile only code in filenames that contain the given strings, separated by commas 
+(default: no restrictions)
   --profile-exclude PROFILE_EXCLUDE
-                        do not profile code in filenames that contain the given strings, 
-separated by commas (default: no restrictions)
-  --use-virtual-time    measure only CPU time, not time spent in I/O or blocking (default: 
-False)
+                        do not profile code in filenames that contain the given strings, separated by commas 
+(default: no restrictions)
+  --use-virtual-time    measure only CPU time, not time spent in I/O or blocking (default: False)
   --cpu-percent-threshold CPU_PERCENT_THRESHOLD
-                        only report profiles with at least this percent of CPU time (default: 
-1%)
+                        only report profiles with at least this percent of CPU time (default: 1%)
   --cpu-sampling-rate CPU_SAMPLING_RATE
                         CPU sampling rate (default: every 0.01s)
   --allocation-sampling-window ALLOCATION_SAMPLING_WINDOW
@@ -68,8 +65,7 @@ False)
   --malloc-threshold MALLOC_THRESHOLD
                         only report profiles with at least this many allocations (default: 100)
   --program-path PROGRAM_PATH
-                        The directory containing the code to profile (default: the path to the 
-profiled program)
+                        The directory containing the code to profile (default: the path to the profiled program)
   --memory-leak-detector
                         EXPERIMENTAL: report likely memory leaks (default: True)
   --on                  start with profiling on (default)
@@ -82,3 +78,4 @@ for the process ID that Scalene reports. For example:
  Scalene now profiling process 12345
    to suspend profiling: python3 -m scalene.profile --off --pid 12345
    to resume profiling:  python3 -m scalene.profile --on  --pid 12345
+

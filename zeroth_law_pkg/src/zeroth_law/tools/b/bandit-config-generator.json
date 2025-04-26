@@ -1,0 +1,20 @@
+{
+    "command": [
+        "bandit-config-generator"
+    ],
+    "description": "Tool definition for bandit-config-generator (auto-generated skeleton)",
+    "usage": "bandit-config-generator [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "bandit-config-generator",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

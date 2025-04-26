@@ -1,0 +1,18 @@
+{
+    "command": [
+        "sqlite-utils"
+    ],
+    "description": "Tool definition for sqlite-utils (auto-generated skeleton)",
+    "version_command": "sqlite-utils --version",
+    "metadata": {
+        "tool_name": "sqlite-utils"
+    },
+    "args": {},
+    "subcommands": null,
+    "baseline_file": "sqlite-utils.txt",
+    "json_skeleton_file": "sqlite-utils.json",
+    "crc": "0xED03BCB5",
+    "updated_timestamp": 1745645661.561703,
+    "checked_timestamp": 1745645661.561703,
+    "source": "baseline_script_skeleton"
+}
