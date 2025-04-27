@@ -12,11 +12,11 @@ if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 # pylint: disable=import-error,wrong-import-position
-from zeroth_law.dev_scripts.reconciliation_logic import (
-    ReconciliationError,
-    perform_tool_reconciliation,
-)
-from zeroth_law.dev_scripts.tool_reconciler import ToolStatus
+# from zeroth_law.dev_scripts.reconciliation_logic import (
+#     ReconciliationError,
+#     perform_tool_reconciliation,
+# )
+from zeroth_law.lib.tooling.tool_reconciler import ToolStatus
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

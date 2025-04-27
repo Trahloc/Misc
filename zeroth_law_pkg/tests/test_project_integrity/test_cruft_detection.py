@@ -56,7 +56,10 @@ def get_git_tracked_files(repo_root: Path) -> set[str]:
         return set()
     except Exception as e:
         # This should now hopefully only catch errors during output processing
-        print(f"Unexpected error type during output processing: {type(e)}", file=sys.stderr)
+        print(
+            f"Unexpected error type during output processing: {type(e)}",
+            file=sys.stderr,
+        )
         print(f"Unexpected error args during output processing: {e.args}", file=sys.stderr)
         print(f"Unexpected error processing git output: {e}", file=sys.stderr)
         pytest.skip("Unexpected error processing git output.")
@@ -91,7 +94,12 @@ def test_no_unexpected_files_in_repo():
         cmd_status = ["git", "status", "--porcelain", str(structure_file_rel_path)]
         print(f"\nChecking git status for: {structure_file_rel_path}")
         result_status = subprocess.run(
-            cmd_status, capture_output=True, text=True, check=True, cwd=WORKSPACE_ROOT, env=os.environ
+            cmd_status,
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=WORKSPACE_ROOT,
+            env=os.environ,
         )
         if result_status.stdout.strip():  # If output is not empty, file has changes
             status_lines = result_status.stdout.strip()

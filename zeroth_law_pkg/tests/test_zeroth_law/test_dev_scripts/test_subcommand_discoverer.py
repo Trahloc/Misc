@@ -19,15 +19,28 @@ VALID_JSON_WITH_SUBCOMMANDS = {
     "command": "tool_a",
     "description": "...",
     "subcommands_detail": {
-        "sub1": {"description": "Subcommand 1", "json_definition_path": "path/sub1.json"},
+        "sub1": {
+            "description": "Subcommand 1",
+            "json_definition_path": "path/sub1.json",
+        },
         "sub2": {"description": "Subcommand 2"},
     },
     "metadata": {},
 }
 
-VALID_JSON_NO_SUBCOMMANDS = {"command": "tool_b", "description": "...", "options": [], "metadata": {}}
+VALID_JSON_NO_SUBCOMMANDS = {
+    "command": "tool_b",
+    "description": "...",
+    "options": [],
+    "metadata": {},
+}
 
-VALID_JSON_NULL_SUBCOMMANDS = {"command": "tool_c", "description": "...", "subcommands_detail": None, "metadata": {}}
+VALID_JSON_NULL_SUBCOMMANDS = {
+    "command": "tool_c",
+    "description": "...",
+    "subcommands_detail": None,
+    "metadata": {},
+}
 
 VALID_JSON_SUBCOMMANDS_NOT_DICT = {
     "command": "tool_d",

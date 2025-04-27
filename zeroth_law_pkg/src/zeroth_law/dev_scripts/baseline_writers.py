@@ -48,7 +48,9 @@ DEFAULT_ENCODING = "utf-8"
 # --- Internal Skeleton Helper ---
 
 
-def _generate_basic_skeleton(command_sequence: List[str]) -> Dict[str, Any]:  # pragma: no cover
+def _generate_basic_skeleton(
+    command_sequence: List[str],
+) -> Dict[str, Any]:  # pragma: no cover
     """
     Creates a generic skeleton JSON structure with enhanced guidance.
     Neither file_status nor ground_truth_crc are included in skeleton metadata.
@@ -195,7 +197,10 @@ def main():  # pragma: no cover # Exclude the entire main function
     """Runs the test/example logic for the baseline writers."""
     # Setup basic logging for direct execution test
     # This might configure logging globally, consider if that's okay
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
     log.info("Testing baseline_writers...")
     test_tool_name = "_test_writer_tool"

@@ -256,7 +256,10 @@ def run_action(
 
         # Build arguments based on zlt options and tool's mapping
         tool_args = _build_tool_arguments(
-            maps_options=maps_options, zlt_options=zlt_options_config, cli_args=cli_args, tool_name=tool_name
+            maps_options=maps_options,
+            zlt_options=zlt_options_config,
+            cli_args=cli_args,
+            tool_name=tool_name,
         )
 
         # Build path arguments

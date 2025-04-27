@@ -38,7 +38,12 @@ def add_blacklist(ctx: click.Context, tool_names: tuple[str, ...], apply_all: bo
 
 @click.command("remove-blacklist")
 @click.argument("tool_names", nargs=-1, required=True)
-@click.option("--all", "apply_all", is_flag=True, help="Apply action to the tool and all its subcommands.")
+@click.option(
+    "--all",
+    "apply_all",
+    is_flag=True,
+    help="Apply action to the tool and all its subcommands.",
+)
 @click.pass_context
 def remove_blacklist(ctx: click.Context, tool_names: tuple[str, ...], apply_all: bool) -> None:
     """Removes one or more tools/subcommands from the managed tools blacklist."""

@@ -54,7 +54,10 @@ def get_main_and_dev_dependencies_from_toml(toml_path: Path) -> set[str]:
                 if match:
                     dependencies.add(match.group(1))
         else:
-            print(f"Warning: [project].dependencies in {toml_path} is not a list.", file=sys.stderr)
+            print(
+                f"Warning: [project].dependencies in {toml_path} is not a list.",
+                file=sys.stderr,
+            )
 
         # Extract dev dependencies
         dev_deps_list = data.get("project", {}).get("optional-dependencies", {}).get("dev", [])
@@ -66,7 +69,10 @@ def get_main_and_dev_dependencies_from_toml(toml_path: Path) -> set[str]:
                 if match:
                     dependencies.add(match.group(1))
         else:
-            print(f"Warning: [project.optional-dependencies].dev in {toml_path} is not a list.", file=sys.stderr)
+            print(
+                f"Warning: [project.optional-dependencies].dev in {toml_path} is not a list.",
+                file=sys.stderr,
+            )
 
         if not dependencies:
             print(

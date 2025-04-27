@@ -15,14 +15,21 @@ from .reconcile import _perform_reconciliation_logic, ReconciliationError
 
 # Need baseline generation logic
 # TODO: Move baseline_generator to a shared location
-from ...lib.tooling.baseline_generator import generate_or_verify_baseline, BaselineStatus
+from ...lib.tooling.baseline_generator import (
+    generate_or_verify_baseline,
+    BaselineStatus,
+)
 
 # Need ToolIndexHandler and related utils
 # TODO: Move ToolIndexHandler and helpers to shared location if not already
 from ...lib.tool_index_handler import ToolIndexHandler
 
 # --- Updated imports for tool path utils --- #
-from ...lib.tool_path_utils import command_sequence_to_filepath, command_sequence_to_id, calculate_crc32_hex
+from ...lib.tool_path_utils import (
+    command_sequence_to_filepath,
+    command_sequence_to_id,
+    calculate_crc32_hex,
+)
 
 # Need skeleton creation logic (adapted from conftest)
 import json as json_lib  # Alias to avoid conflict
@@ -72,11 +79,19 @@ def _create_skeleton_json_if_missing(json_file_path: Path, command_sequence: tup
 
 @click.command("sync")
 @click.option(
-    "--tool", "specific_tools", multiple=True, help="Sync only specific managed tool(s). Default is all managed tools."
+    "--tool",
+    "specific_tools",
+    multiple=True,
+    help="Sync only specific managed tool(s). Default is all managed tools.",
 )
-@click.option("--force", is_flag=True, help="Force regeneration of baselines and index updates, ignoring timestamps.")
 @click.option(
-    "--since", help="Only update items not updated since <TIMESPEC> (e.g., '24h', '3d', 'YYYY-MM-DDTHH:MM:SSZ')."
+    "--force",
+    is_flag=True,
+    help="Force regeneration of baselines and index updates, ignoring timestamps.",
+)
+@click.option(
+    "--since",
+    help="Only update items not updated since <TIMESPEC> (e.g., '24h', '3d', 'YYYY-MM-DDTHH:MM:SSZ').",
 )
 @click.pass_context
 def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since: str | None) -> None:
@@ -179,7 +194,10 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                 log.debug(f"Running baseline generation/verification for {command_id}...")
                 baseline_status = generate_or_verify_baseline(tool_name)
 
-                if baseline_status not in {BaselineStatus.UP_TO_DATE, BaselineStatus.UPDATED}:
+                if baseline_status not in {
+                    BaselineStatus.UP_TO_DATE,
+                    BaselineStatus.UPDATED,
+                }:
                     err_msg = f"Baseline generation failed for '{tool_name}' with status: {baseline_status.name}"
                     log.error(err_msg)
                     sync_errors.append(err_msg)

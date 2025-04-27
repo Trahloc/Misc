@@ -5,18 +5,20 @@ import sys
 from pathlib import Path
 
 # Add project root to sys.path BEFORE attempting src import
-PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve() # Go up 3 levels: dev_scripts -> zeroth_law -> src
-sys.path.insert(0, str(PROJECT_ROOT.parent)) # Add the directory containing 'src'
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()  # Go up 3 levels: dev_scripts -> zeroth_law -> src
+sys.path.insert(0, str(PROJECT_ROOT.parent))  # Add the directory containing 'src'
 
 # Import the function to test
-from src.zeroth_law.analyzer.python.analyzer import check_header_compliance  # noqa: E402
+from src.zeroth_law.analyzer.python.analyzer import (
+    check_header_compliance,
+)  # noqa: E402
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
 
 # Define paths (relative to project root determined above)
-TARGET_FILE = PROJECT_ROOT / "__init__.py" # Target src/zeroth_law/__init__.py
+TARGET_FILE = PROJECT_ROOT / "__init__.py"  # Target src/zeroth_law/__init__.py
 COMPARISON_DIR = PROJECT_ROOT.parent / ".ruff_cache"  # Use existing ignored dir in workspace root
 COMPARISON_FILE = COMPARISON_DIR / "debug_src_init_expected.py"
 BACKUP_FILE = COMPARISON_DIR / "debug_src_init_backup.py"

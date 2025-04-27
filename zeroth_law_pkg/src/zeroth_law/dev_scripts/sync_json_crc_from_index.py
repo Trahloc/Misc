@@ -23,7 +23,11 @@ def main():
         description="DEPRECATED: Use 'scripts/update_json_crc_tool.py --file <path>' instead.",
         epilog="This script is disabled to enforce the correct workflow.",
     )
-    parser.add_argument("json_files", nargs="*", help="Path(s) to the JSON definition file(s) (ignored).")
+    parser.add_argument(
+        "json_files",
+        nargs="*",
+        help="Path(s) to the JSON definition file(s) (ignored).",
+    )
 
     args = parser.parse_args()
 

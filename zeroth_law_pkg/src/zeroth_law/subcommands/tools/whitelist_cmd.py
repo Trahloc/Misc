@@ -31,7 +31,11 @@ log = logging.getLogger(__name__)
 @click.argument("tool_names", nargs=-1)
 @click.pass_context
 def whitelist(
-    ctx: click.Context, action_add: bool, action_remove: bool, apply_all: bool, tool_names: tuple[str, ...]
+    ctx: click.Context,
+    action_add: bool,
+    action_remove: bool,
+    apply_all: bool,
+    tool_names: tuple[str, ...],
 ) -> None:
     """Manage or list the managed tools whitelist in pyproject.toml.
 

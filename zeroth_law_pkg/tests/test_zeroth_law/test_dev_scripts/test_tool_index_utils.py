@@ -189,7 +189,10 @@ def sample_index_data():
         "tool2": {
             "crc": "0xdef",
             "timestamp": 456,
-            "subcommands": {"subA": {"crc": "0xsubA", "checked": 1}, "subB": {"crc": "0xsubB", "checked": 2}},
+            "subcommands": {
+                "subA": {"crc": "0xsubA", "checked": 1},
+                "subB": {"crc": "0xsubB", "checked": 2},
+            },
         },
         "tool3": {"crc": "0xghi", "timestamp": 789, "subcommands": "not_a_dict"},
         "tool4": "not_a_dict",
@@ -431,7 +434,10 @@ def test_load_update_save_update_failure(mock_update, mock_tool_index_file, samp
 
 
 # Justification for Mock: Testing wrapper's handling of save exception
-@patch("src.zeroth_law.dev_scripts.tool_index_utils.save_tool_index", side_effect=IOError("Disk Full"))  # noqa: E501 ZLF: Test wrapper
+@patch(
+    "src.zeroth_law.dev_scripts.tool_index_utils.save_tool_index",
+    side_effect=IOError("Disk Full"),
+)  # noqa: E501 ZLF: Test wrapper
 def test_load_update_save_save_failure(mock_save, mock_tool_index_file, sample_index_data, caplog):
     """Test load_update_and_save_entry when save_tool_index fails due to IOError."""
     # Prepare initial file state

@@ -25,7 +25,16 @@ coverage_erase_cmd = ["uv", "run", "coverage", "erase"]
 # Build the coverage run command
 # We use '-m pytest' to run pytest as a module via coverage
 # Add -m "not coverage_check" to exclude the meta-test during collection
-coverage_run_cmd = ["uv", "run", "coverage", "run", "-m", "pytest", "-m", "not coverage_check"]
+coverage_run_cmd = [
+    "uv",
+    "run",
+    "coverage",
+    "run",
+    "-m",
+    "pytest",
+    "-m",
+    "not coverage_check",
+]
 if COVERAGE_EXCLUDE_PATTERNS:
     # Add omit flag only if there are patterns
     coverage_run_cmd.extend(["--omit", ",".join(COVERAGE_EXCLUDE_PATTERNS)])
@@ -87,7 +96,12 @@ def main():
 
     # Step 2.5: Generate and capture the coverage report summary
     print("\nStep 2.5: Generating coverage report summary...")
-    coverage_report_summary_cmd = ["uv", "run", "coverage", "report"]  # Basic report for total
+    coverage_report_summary_cmd = [
+        "uv",
+        "run",
+        "coverage",
+        "report",
+    ]  # Basic report for total
     report_result = run_command(
         coverage_report_summary_cmd,
         cwd=WORKSPACE_ROOT,
@@ -114,7 +128,10 @@ def main():
                         pass  # Ignore if parsing fails
 
     if total_percentage is None:
-        print(f"*** ERROR: Could not parse TOTAL percentage from coverage report output! ***", file=sys.stderr)
+        print(
+            f"*** ERROR: Could not parse TOTAL percentage from coverage report output! ***",
+            file=sys.stderr,
+        )
         total_percentage = 0.0
         print(f"Proceeding with 0.0% for threshold check.", file=sys.stderr)
 
@@ -125,7 +142,10 @@ def main():
             f.write(f"{total_percentage:.1f}")  # Write single number
         print(f"Successfully wrote parsed total ({total_percentage:.1f}%) to {total_output_path}")
     except IOError as e:
-        print(f"*** ERROR: Failed to write parsed total to {total_output_path}: {e} ***", file=sys.stderr)
+        print(
+            f"*** ERROR: Failed to write parsed total to {total_output_path}: {e} ***",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # Step 3: Run the threshold test which now reads the total file

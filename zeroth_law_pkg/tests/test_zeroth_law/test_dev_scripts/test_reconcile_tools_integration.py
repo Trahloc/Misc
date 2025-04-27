@@ -1,18 +1,30 @@
-"""Tests for src/zeroth_law/dev_scripts/reconciliation_logic.py"""
-
-import logging
-from pathlib import Path
-from typing import Set, Dict, Tuple
-from unittest.mock import patch, MagicMock
+"""Tests for src/zeroth_law/lib/tooling/tool_reconciler.py logic."""
 
 import pytest
+from pathlib import Path
+from unittest.mock import patch, MagicMock, call
+from typing import Set, Tuple, Dict, List
 
-# Import the target function and related classes/enums
-from src.zeroth_law.dev_scripts.reconciliation_logic import (
-    perform_tool_reconciliation,
-    ReconciliationError,
+# Import from new location
+from zeroth_law.lib.tooling.tool_reconciler import (
+    reconcile_tools,
+    ToolStatus,
+    ReconciliationResult,
 )
-from src.zeroth_law.dev_scripts.tool_reconciler import ToolStatus
+
+# Assume other dependencies like config_loader, get_tool_dirs, get_executables_from_env
+# are correctly imported or mocked if needed within the tests themselves.
+# If these were previously imported here from dev_scripts, they need updating too.
+from zeroth_law.common.config_loader import load_tool_lists_from_toml
+from zeroth_law.lib.tooling.tools_dir_scanner import get_tool_dirs
+from zeroth_law.lib.tooling.environment_scanner import get_executables_from_env
+
+
+# Fixture to provide a base temporary directory structure
+@pytest.fixture
+def temp_env_setup(tmp_path):
+    # Add basic setup if needed, otherwise just pass
+    pass
 
 
 # --- Fixtures ---
@@ -49,7 +61,10 @@ def test_perform_reconciliation_success(
     caplog.set_level(logging.INFO)
 
     # Setup Mocks
-    mock_load_config.return_value = ({"toolA", "toolB"}, {"toolC"})  # whitelist, blacklist
+    mock_load_config.return_value = (
+        {"toolA", "toolB"},
+        {"toolC"},
+    )  # whitelist, blacklist
     mock_get_dirs.return_value = {"toolA"}
     mock_get_env.return_value = {"toolA", "toolB", "toolC"}
     mock_reconcile.return_value = {
@@ -67,7 +82,10 @@ def test_perform_reconciliation_success(
         "toolB": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
         "toolC": ToolStatus.BLACKLISTED_IN_ENV,
     }
-    assert managed == {"toolA", "toolB"}  # Only managed/whitelisted tools for processing
+    assert managed == {
+        "toolA",
+        "toolB",
+    }  # Only managed/whitelisted tools for processing
     assert blacklist == {"toolC"}
     assert "Tool reconciliation complete." in caplog.text
     assert "Identified 2 managed tools for processing." in caplog.text
@@ -129,7 +147,10 @@ def test_perform_reconciliation_error_blacklisted_in_dir(
     caplog.set_level(logging.ERROR)
 
     mock_load_config.return_value = ({"toolA"}, {"blacklistedTool"})
-    mock_get_dirs.return_value = {"toolA", "blacklistedTool"}  # Blacklisted tool exists in dir
+    mock_get_dirs.return_value = {
+        "toolA",
+        "blacklistedTool",
+    }  # Blacklisted tool exists in dir
     mock_get_env.return_value = {"toolA", "blacklistedTool"}
     mock_reconcile.return_value = {
         "toolA": ToolStatus.MANAGED_OK,

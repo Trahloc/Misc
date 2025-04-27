@@ -95,7 +95,13 @@ def _find_cross_imports(command_src_dir: Path) -> List[Tuple[str, int, str]]:
                 if module_str and module_str.startswith(tuple(other_command_modules)):
                     # Check if it starts with any *other* command module path
                     # e.g., importing zeroth_law.commands.analyze from zeroth_law.commands.init
-                    violations.append((str(py_file.relative_to(SRC_PKG_ROOT.parent)), node.lineno, module_str))
+                    violations.append(
+                        (
+                            str(py_file.relative_to(SRC_PKG_ROOT.parent)),
+                            node.lineno,
+                            module_str,
+                        )
+                    )
 
         except Exception as e:
             # Log or handle parsing errors if necessary

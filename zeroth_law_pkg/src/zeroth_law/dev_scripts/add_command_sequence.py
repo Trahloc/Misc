@@ -19,7 +19,10 @@ def update_command_sequence(json_file_path: Path, base_tools_dir: Path):
         print(f"Error opening {json_file_path}: {e}", file=sys.stderr)
         return False
     except Exception as e:
-        print(f"An unexpected error occurred reading {json_file_path}: {e}", file=sys.stderr)
+        print(
+            f"An unexpected error occurred reading {json_file_path}: {e}",
+            file=sys.stderr,
+        )
         return False
 
     # Determine the command sequence from the path relative to the base tools dir
@@ -68,7 +71,10 @@ def update_command_sequence(json_file_path: Path, base_tools_dir: Path):
         print(f"Error writing {json_file_path}: {e}", file=sys.stderr)
         return False
     except Exception as e:
-        print(f"An unexpected error occurred writing {json_file_path}: {e}", file=sys.stderr)
+        print(
+            f"An unexpected error occurred writing {json_file_path}: {e}",
+            file=sys.stderr,
+        )
         return False
 
 

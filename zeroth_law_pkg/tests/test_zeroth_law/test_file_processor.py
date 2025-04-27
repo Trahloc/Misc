@@ -51,7 +51,11 @@ def test_find_files_non_existent_path(tmp_path: Path, caplog):
 
 def test_find_files_in_directory_recursive(tmp_path: Path):
     """Test finding Python files recursively in a directory."""
-    structure = {"main.py": "", "subdir": {"sub.py": "", "data.txt": ""}, "other.txt": ""}
+    structure = {
+        "main.py": "",
+        "subdir": {"sub.py": "", "data.txt": ""},
+        "other.txt": "",
+    }
     create_structure(tmp_path, structure)
 
     config = {}
@@ -111,12 +115,8 @@ def test_find_files_exclude_dir_recursive(tmp_path: Path):
     structure = {
         "main.py": "",
         "src": {"app.py": ""},
-        "tests": {  # Excluded dir
-            "test_app.py": ""
-        },
-        "docs": {  # Excluded dir
-            "conf.py": ""
-        },
+        "tests": {"test_app.py": ""},  # Excluded dir
+        "docs": {"conf.py": ""},  # Excluded dir
     }
     create_structure(tmp_path, structure)
 
@@ -142,7 +142,13 @@ def test_find_files_deduplication_and_sort(tmp_path: Path):
 
     config = {}
     # Provide paths multiple times and out of order
-    paths_to_check = [tmp_path / "subdir", tmp_path / "c.py", tmp_path, tmp_path / "a.py", tmp_path / "subdir" / "a.py"]
+    paths_to_check = [
+        tmp_path / "subdir",
+        tmp_path / "c.py",
+        tmp_path,
+        tmp_path / "a.py",
+        tmp_path / "subdir" / "a.py",
+    ]
     result = find_files_to_audit(paths_to_check, recursive=True, config=config)
 
     expected = sorted(

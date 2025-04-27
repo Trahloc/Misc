@@ -59,7 +59,10 @@ def _load_and_process_whitelist(whitelist_path: Path) -> Dict[str, Set[str]]:
         # Return empty dict on parse error to prevent allowing mocks unintentionally
         return {}
     except Exception as e:
-        log.error(f"Unexpected error loading mock whitelist {whitelist_path}: {e}", exc_info=True)
+        log.error(
+            f"Unexpected error loading mock whitelist {whitelist_path}: {e}",
+            exc_info=True,
+        )
         return {}
 
     return allowed_mocks_by_rel_file
@@ -187,7 +190,11 @@ class MockFinder(ast.NodeVisitor):
 TEST_FILES = find_test_files()
 
 
-@pytest.mark.parametrize("test_file_path", TEST_FILES, ids=lambda p: str(p.relative_to(TESTS_DIR)) if p else "None")
+@pytest.mark.parametrize(
+    "test_file_path",
+    TEST_FILES,
+    ids=lambda p: str(p.relative_to(TESTS_DIR)) if p else "None",
+)
 # @pytest.mark.skip(reason="Temporarily skipping due to justified internal mocks needing allow-listing.")
 def test_no_forbidden_internal_mocks(test_file_path: Path):
     """

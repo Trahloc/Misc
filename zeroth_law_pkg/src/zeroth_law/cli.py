@@ -17,7 +17,11 @@ import logging
 from zeroth_law.action_runner import run_action
 from zeroth_law.common.config_loader import load_config
 from zeroth_law.file_processor import find_files_to_audit
-from zeroth_law.common.git_utils import find_git_root, get_staged_files, identify_project_roots_from_files
+from zeroth_law.common.git_utils import (
+    find_git_root,
+    get_staged_files,
+    identify_project_roots_from_files,
+)
 from zeroth_law.common.path_utils import find_project_root
 
 # Add import for analysis functions
@@ -106,7 +110,11 @@ def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
 
     # TODO: Implement color handling
     # Maybe swap ConsoleRenderer based on `use_color`
-    log.debug("Structlog logging level filter adjusted (via stdlib) to %s (%d)", level_name.upper(), level_num)
+    log.debug(
+        "Structlog logging level filter adjusted (via stdlib) to %s (%d)",
+        level_name.upper(),
+        level_num,
+    )
 
 
 # --- Core File Finding Logic ---
@@ -206,7 +214,11 @@ def run_audit(
 )
 @click.pass_context
 def cli_group(
-    ctx: click.Context, verbosity: int, quiet: bool, color: bool | None, config_path_override: Path | None
+    ctx: click.Context,
+    verbosity: int,
+    quiet: bool,
+    color: bool | None,
+    config_path_override: Path | None,
 ) -> None:
     """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
     # Determine effective log level name based on flags

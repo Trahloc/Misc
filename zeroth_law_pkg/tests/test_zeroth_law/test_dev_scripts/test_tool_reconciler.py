@@ -2,6 +2,7 @@ import pytest
 import sys
 from pathlib import Path
 from enum import Enum, auto
+from unittest.mock import patch, MagicMock
 
 # Add path to import the module under test
 _test_file_path = Path(__file__).resolve()
@@ -12,7 +13,13 @@ if str(_src_path) not in sys.path:
 
 # Module to be tested (will be created next)
 # Assuming it defines an Enum for status and the reconcile function
-from zeroth_law.dev_scripts.tool_reconciler import reconcile_tools, ToolStatus
+from zeroth_law.lib.tooling.tool_reconciler import (
+    reconcile_tools,
+    ToolStatus,
+    ReconciliationResult,
+)
+
+# Fixture for a dummy ReconciliationResult
 
 # --- Test Cases ---
 
@@ -23,7 +30,10 @@ def test_reconcile_managed_ok():
     dir_tools = {"tool_a"}
     whitelist = {"tool_a", "tool_b"}
     blacklist = set()
-    expected = {"tool_a": ToolStatus.MANAGED_OK, "tool_b": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR}
+    expected = {
+        "tool_a": ToolStatus.MANAGED_OK,
+        "tool_b": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
+    }
     # Note: tool_b is whitelisted but not in tools/, which might be another status or handled later.
     # For now, focusing on tool_a's status.
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
@@ -37,7 +47,10 @@ def test_reconcile_managed_missing_in_env():
     dir_tools = {"tool_a"}
     whitelist = {"tool_a", "tool_b"}
     blacklist = set()
-    expected = {"tool_a": ToolStatus.MANAGED_MISSING_ENV, "tool_b": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR}
+    expected = {
+        "tool_a": ToolStatus.MANAGED_MISSING_ENV,
+        "tool_b": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
+    }
     result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
     assert result.get("tool_a") == ToolStatus.MANAGED_MISSING_ENV
 

@@ -227,7 +227,11 @@ def _scan_project_ast(workspace_root: Path):
                 if not is_excluded:
                     py_files.append(file_path)
         else:
-            print(f"AST Scan Warning: Target directory not found: {target_dir}", file=sys.stderr, flush=True)
+            print(
+                f"AST Scan Warning: Target directory not found: {target_dir}",
+                file=sys.stderr,
+                flush=True,
+            )
 
     print(f"AST Scan: Found {len(py_files)} Python files.", flush=True)
 
@@ -242,12 +246,18 @@ def _scan_project_ast(workspace_root: Path):
             ast.parse(content, filename=str(file_path))
             parsed_count += 1
         except SyntaxError as e:
-            print(f"AST Scan SyntaxError in {file_path.relative_to(workspace_root)}: {e}", file=sys.stderr, flush=True)
+            print(
+                f"AST Scan SyntaxError in {file_path.relative_to(workspace_root)}: {e}",
+                file=sys.stderr,
+                flush=True,
+            )
             error_files.append(f"{file_path.relative_to(workspace_root)} (SyntaxError)")
             error_count += 1
         except Exception as e:
             print(
-                f"AST Scan Error processing {file_path.relative_to(workspace_root)}: {e}", file=sys.stderr, flush=True
+                f"AST Scan Error processing {file_path.relative_to(workspace_root)}: {e}",
+                file=sys.stderr,
+                flush=True,
             )
             error_files.append(f"{file_path.relative_to(workspace_root)} ({type(e).__name__})")
             error_count += 1  # Count other errors too
@@ -262,7 +272,10 @@ def _scan_project_ast(workspace_root: Path):
     print(f"Total time taken:        {duration:.4f} seconds", flush=True)
 
     if error_count > 0:
-        pytest.fail(f"AST scan detected {error_count} file(s) with parsing errors: {error_files}", pytrace=False)
+        pytest.fail(
+            f"AST scan detected {error_count} file(s) with parsing errors: {error_files}",
+            pytrace=False,
+        )
 
 
 # Use WORKSPACE_ROOT fixture defined in tests/test_tool_defs/conftest.py
@@ -331,7 +344,11 @@ def auto_format_tool_json_files(TOOLS_DIR: Path, WORKSPACE_ROOT: Path):
     # 1. Check for npx (Node.js/npm)
     try:
         npx_version_proc = subprocess.run(
-            ["npx", "--version"], capture_output=True, check=True, text=True, encoding="utf-8"
+            ["npx", "--version"],
+            capture_output=True,
+            check=True,
+            text=True,
+            encoding="utf-8",
         )
         log.info(f"[JSON Auto-Format] Found npx version: {npx_version_proc.stdout.strip()}")
     except (FileNotFoundError, subprocess.CalledProcessError) as e:
@@ -364,11 +381,22 @@ def auto_format_tool_json_files(TOOLS_DIR: Path, WORKSPACE_ROOT: Path):
     # 3. Check if npx can find/run prettier (quick check)
     # We run --check on a non-existent file to test execution path without formatting anything yet.
     # Exit code 2 from prettier --check usually means formatting is needed, but we only care if it runs (exit 0, 1, or 2 ok here)
-    check_cmd = ["npx", "--no-install", "prettier", "--check", "non_existent_dummy_file_for_check.json"]
+    check_cmd = [
+        "npx",
+        "--no-install",
+        "prettier",
+        "--check",
+        "non_existent_dummy_file_for_check.json",
+    ]
     log.info(f"[JSON Auto-Format] Performing Prettier executability check: {shlex.join(check_cmd)}")
     try:
         check_proc = subprocess.run(
-            check_cmd, capture_output=True, check=False, text=True, encoding="utf-8", cwd=WORKSPACE_ROOT
+            check_cmd,
+            capture_output=True,
+            check=False,
+            text=True,
+            encoding="utf-8",
+            cwd=WORKSPACE_ROOT,
         )
         # Check stderr for common errors like 'command not found' within npx itself
         if check_proc.returncode != 0 and (
@@ -568,16 +596,23 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
         # Optionally, check if the python path seems reasonable (e.g., contains .venv)
         python_path = result.stdout.strip()
         if not python_path:
-            pytest.fail(f"Command '{' '.join(command)}' succeeded but returned an empty path.", pytrace=False)
+            pytest.fail(
+                f"Command '{' '.join(command)}' succeeded but returned an empty path.",
+                pytrace=False,
+            )
         # Add more sophisticated path checks if needed
         logging.info(f"UV Environment Check PASSED. Using Python at: {python_path}")
 
     except FileNotFoundError:
         pytest.fail(
-            "Failed to verify uv environment: 'uv' command not found. Is uv installed and in PATH?", pytrace=False
+            "Failed to verify uv environment: 'uv' command not found. Is uv installed and in PATH?",
+            pytrace=False,
         )
     except subprocess.TimeoutExpired:
-        pytest.fail(f"Failed to verify uv environment: Command '{' '.join(command)}' timed out.", pytrace=False)
+        pytest.fail(
+            f"Failed to verify uv environment: Command '{' '.join(command)}' timed out.",
+            pytrace=False,
+        )
     except Exception as e:
         pytest.fail(f"Unexpected error during uv environment check: {e}", pytrace=False)
 
@@ -588,11 +623,17 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
 # --- Import ZLT Components (add try-except block) ---
 try:
     from zeroth_law.lib.tool_index_handler import ToolIndexHandler
-    from zeroth_law.dev_scripts.reconciliation_logic import perform_tool_reconciliation, ReconciliationError
-    from zeroth_law.dev_scripts.tool_reconciler import ToolStatus  # Assuming this is the correct location
+    from zeroth_law.dev_scripts.reconciliation_logic import (
+        perform_tool_reconciliation,
+        ReconciliationError,
+    )
+    from zeroth_law.dev_scripts.tool_reconciler import (
+        ToolStatus,
+    )  # Assuming this is the correct location
 
     # Attempt to import the path helper
     from zeroth_law.lib.tool_path_utils import command_sequence_to_filepath
+
     # Note: These might not be strictly needed by the moved fixtures but are related
     # from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
     # from zeroth_law.dev_scripts.sequence_generator import generate_sequences_for_tool
@@ -673,7 +714,11 @@ def _update_baseline_and_index_entry(
     """
     log = logging.getLogger(__name__)
     # --- Use imported helpers --- #
-    from zeroth_law.lib.tool_path_utils import command_sequence_to_id, command_sequence_to_filepath, calculate_crc32_hex
+    from zeroth_law.lib.tool_path_utils import (
+        command_sequence_to_id,
+        command_sequence_to_filepath,
+        calculate_crc32_hex,
+    )
 
     command_id = command_sequence_to_id(command_sequence)
     command_name = command_sequence[0]  # Primary command name for logging/description
@@ -840,7 +885,10 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]: 
             log.warning("managed_sequences fixture: pyproject.toml not found, using empty config.")
 
         # Call the internal reconciliation logic directly
-        from zeroth_law.subcommands.tools.reconcile import _perform_reconciliation_logic, ReconciliationError
+        from zeroth_law.subcommands.tools.reconcile import (
+            _perform_reconciliation_logic,
+            ReconciliationError,
+        )
 
         _results, managed_set, _blacklist, _errors, _warnings, _has_errors = _perform_reconciliation_logic(
             project_root_dir=WORKSPACE_ROOT, config_data=config_data
@@ -858,7 +906,10 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]: 
     except ImportError as e:
         pytest.fail(f"Failed to import reconciliation logic or config loader within managed_sequences fixture: {e}")
     except Exception as e:
-        log.error(f"Unexpected error during managed_sequences fixture setup: {e}", exc_info=True)
+        log.error(
+            f"Unexpected error during managed_sequences fixture setup: {e}",
+            exc_info=True,
+        )
         pytest.fail(f"Unexpected error in managed_sequences fixture: {e}")
 
 

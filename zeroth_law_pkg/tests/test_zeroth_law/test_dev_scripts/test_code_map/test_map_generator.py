@@ -89,7 +89,13 @@ class LookupError(Exception):
 
 
 # Helper to get signature hash for a function/method or class
-def get_signature_hash(db_path: Path, item_type: str, item_name: str, module_path: str = None, class_name: str = None):
+def get_signature_hash(
+    db_path: Path,
+    item_type: str,
+    item_name: str,
+    module_path: str = None,
+    class_name: str = None,
+):
     if item_type not in ["function", "class"]:
         raise ValueError("item_type must be 'function' or 'class'")
 
@@ -127,14 +133,16 @@ def test_basic_generation(tmp_path):
 
     # Create a simple test file
     test_file_path = src_dir / "module_one.py"
-    test_file_path.write_text("""
+    test_file_path.write_text(
+        """
 class MyClass:
     def method_one(self, x: int) -> str:
         return str(x)
 
 def top_level_func(y: bool):
     pass
-""")
+"""
+    )
 
     # Run the generator
     run_generator(db_file, src_dir)
@@ -194,7 +202,11 @@ def func_to_change(a):
     run_generator(db_file, src_dir)
 
     # Get initial hash
-    initial_hash_rows = query_db(db_file, "SELECT signature_hash FROM functions WHERE name = ?", ("func_to_change",))
+    initial_hash_rows = query_db(
+        db_file,
+        "SELECT signature_hash FROM functions WHERE name = ?",
+        ("func_to_change",),
+    )
     assert len(initial_hash_rows) == 1
     initial_hash = initial_hash_rows[0][0]
     assert initial_hash is not None
@@ -211,7 +223,11 @@ def func_to_change(a: int) -> None: # Added type hints
     run_generator(db_file, src_dir)
 
     # Get updated hash
-    updated_hash_rows = query_db(db_file, "SELECT signature_hash FROM functions WHERE name = ?", ("func_to_change",))
+    updated_hash_rows = query_db(
+        db_file,
+        "SELECT signature_hash FROM functions WHERE name = ?",
+        ("func_to_change",),
+    )
     assert len(updated_hash_rows) == 1
     updated_hash = updated_hash_rows[0][0]
     assert updated_hash is not None
@@ -227,7 +243,8 @@ def test_async_functions(tmp_path):
     src_dir.mkdir()
 
     test_file_path = src_dir / "module_async.py"
-    test_file_path.write_text("""
+    test_file_path.write_text(
+        """
 import asyncio
 
 async def async_func_one():
@@ -236,7 +253,8 @@ async def async_func_one():
 class AsyncClass:
     async def async_method(self):
         pass
-""")
+"""
+    )
 
     run_generator(db_file, src_dir)
 
@@ -276,23 +294,36 @@ def test_stale_entry_detection(tmp_path):
     file_to_delete = src_dir / "to_delete.py"
     file_to_modify = src_dir / "to_modify.py"
 
-    file_to_delete.write_text("""
+    file_to_delete.write_text(
+        """
 def func_in_deleted_file(): pass
 class ClassInDeletedFile: pass
-""")
-    file_to_modify.write_text("""
+"""
+    )
+    file_to_modify.write_text(
+        """
 def func_present(): pass
 def func_to_be_deleted(): pass
 class ClassPresent: pass
 class ClassToBeDeleted: pass
-""")
+"""
+    )
 
     # Initial run
     run_generator(db_file, src_dir)
 
     # Verify initial state
     assert len(query_db(db_file, "SELECT 1 FROM modules WHERE path=?", ("to_delete.py",))) == 1
-    assert len(query_db(db_file, "SELECT 1 FROM functions WHERE name=?", ("func_in_deleted_file",))) == 1
+    assert (
+        len(
+            query_db(
+                db_file,
+                "SELECT 1 FROM functions WHERE name=?",
+                ("func_in_deleted_file",),
+            )
+        )
+        == 1
+    )
     assert len(query_db(db_file, "SELECT 1 FROM classes WHERE name=?", ("ClassInDeletedFile",))) == 1
     assert len(query_db(db_file, "SELECT 1 FROM functions WHERE name=?", ("func_to_be_deleted",))) == 1
     assert len(query_db(db_file, "SELECT 1 FROM classes WHERE name=?", ("ClassToBeDeleted",))) == 1
@@ -300,10 +331,12 @@ class ClassToBeDeleted: pass
     # Modify the source: delete file, delete func/class from other file
     time.sleep(0.1)
     file_to_delete.unlink()
-    file_to_modify.write_text("""
+    file_to_modify.write_text(
+        """
 def func_present(): pass # func_to_be_deleted removed
 class ClassPresent: pass # ClassToBeDeleted removed
-""")
+"""
+    )
 
     # Run generator again (should prune)
     # Modify the run_generator call if pruning requires a specific flag
@@ -313,9 +346,30 @@ class ClassPresent: pass # ClassToBeDeleted removed
     # Verify pruning
     # Using COUNT(*) as a simpler check for non-existence
     assert query_db(db_file, "SELECT COUNT(*) FROM modules WHERE path=?", ("to_delete.py",))[0][0] == 0
-    assert query_db(db_file, "SELECT COUNT(*) FROM functions WHERE name=?", ("func_in_deleted_file",))[0][0] == 0
-    assert query_db(db_file, "SELECT COUNT(*) FROM classes WHERE name=?", ("ClassInDeletedFile",))[0][0] == 0
-    assert query_db(db_file, "SELECT COUNT(*) FROM functions WHERE name=?", ("func_to_be_deleted",))[0][0] == 0
+    assert (
+        query_db(
+            db_file,
+            "SELECT COUNT(*) FROM functions WHERE name=?",
+            ("func_in_deleted_file",),
+        )[0][0]
+        == 0
+    )
+    assert (
+        query_db(
+            db_file,
+            "SELECT COUNT(*) FROM classes WHERE name=?",
+            ("ClassInDeletedFile",),
+        )[0][0]
+        == 0
+    )
+    assert (
+        query_db(
+            db_file,
+            "SELECT COUNT(*) FROM functions WHERE name=?",
+            ("func_to_be_deleted",),
+        )[0][0]
+        == 0
+    )
     assert query_db(db_file, "SELECT COUNT(*) FROM classes WHERE name=?", ("ClassToBeDeleted",))[0][0] == 0
 
     # Verify remaining items still exist
@@ -405,18 +459,24 @@ def test_import_tracking(tmp_path):
     file_c = src_dir / "sub" / "file_c.py"
     (src_dir / "sub").mkdir()
 
-    file_a.write_text("""
+    file_a.write_text(
+        """
 import os
 import sys as system
-""")
-    file_b.write_text("""
+"""
+    )
+    file_b.write_text(
+        """
 from pathlib import Path
 from file_a import system
 from .sub.file_c import AnotherClass # Relative import
-""")
-    file_c.write_text("""
+"""
+    )
+    file_c.write_text(
+        """
 class AnotherClass: pass
-""")
+"""
+    )
 
     run_generator(db_file, src_dir)
 

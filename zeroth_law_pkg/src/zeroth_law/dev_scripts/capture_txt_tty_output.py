@@ -155,13 +155,21 @@ def main():
         help="Optional file path to save the raw decoded output.",
     )
     parser.add_argument(
-        "--rows", type=int, default=DEFAULT_TERM_ROWS, help=f"Terminal rows for PTY (default: {DEFAULT_TERM_ROWS})"
+        "--rows",
+        type=int,
+        default=DEFAULT_TERM_ROWS,
+        help=f"Terminal rows for PTY (default: {DEFAULT_TERM_ROWS})",
     )
     parser.add_argument(
-        "--cols", type=int, default=DEFAULT_TERM_COLS, help=f"Terminal columns for PTY (default: {DEFAULT_TERM_COLS})"
+        "--cols",
+        type=int,
+        default=DEFAULT_TERM_COLS,
+        help=f"Terminal columns for PTY (default: {DEFAULT_TERM_COLS})",
     )
     parser.add_argument(
-        "--encoding", default="utf-8", help="Encoding to use for decoding the raw byte output (default: utf-8)."
+        "--encoding",
+        default="utf-8",
+        help="Encoding to use for decoding the raw byte output (default: utf-8).",
     )
     parser.add_argument(
         "--encoding-errors",

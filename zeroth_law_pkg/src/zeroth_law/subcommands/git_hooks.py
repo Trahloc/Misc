@@ -11,7 +11,11 @@ from pathlib import Path
 #     find_git_root, install_git_hook_script, restore_git_hooks
 # )
 # from zeroth_law.path_utils import find_project_root
-from zeroth_law.common.git_utils import find_git_root, install_git_hook_script, restore_git_hooks
+from zeroth_law.common.git_utils import (
+    find_git_root,
+    install_git_hook_script,
+    restore_git_hooks,
+)
 from zeroth_law.common.path_utils import find_project_root
 
 log = logging.getLogger(__name__)

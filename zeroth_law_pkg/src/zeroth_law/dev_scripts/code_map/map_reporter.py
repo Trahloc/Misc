@@ -85,7 +85,11 @@ def generate_module_details(db: sqlite_utils.Database) -> dict:
         for row in db["imports"].rows:
             if row["importing_module_id"] in modules:
                 modules[row["importing_module_id"]]["imports"].append(
-                    {"imported_name": row["imported_name"], "alias": row["alias"], "line_number": row["line_number"]}
+                    {
+                        "imported_name": row["imported_name"],
+                        "alias": row["alias"],
+                        "line_number": row["line_number"],
+                    }
                 )
 
         # Convert dict keyed by id to list of module dicts for final output

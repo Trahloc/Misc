@@ -76,7 +76,8 @@ def test_parse_toml_file_decode_error(tmp_path):
 
     # Mock the dependencies - mock tomllib.load
     with mock.patch(
-        "src.zeroth_law.common.config_loader.tomllib.load", side_effect=MockTOMLDecodeError("Mock decode error")
+        "src.zeroth_law.common.config_loader.tomllib.load",
+        side_effect=MockTOMLDecodeError("Mock decode error"),
     ) as mock_load:
         # Act & Assert
         with pytest.raises(TomlDecodeError, match="Invalid TOML"):

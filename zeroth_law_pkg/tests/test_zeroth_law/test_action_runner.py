@@ -26,7 +26,11 @@ TEST_ACTION_CONFIGS = {
         "description": "Action with args.",
         "zlt_options": {
             "verbose": {"type": "flag", "description": "Verbose flag"},
-            "output": {"type": "value", "value_type": "str", "description": "Output file"},
+            "output": {
+                "type": "value",
+                "value_type": "str",
+                "description": "Output file",
+            },
             "paths": {"type": "positional", "default": []},
         },
         "tools": {
@@ -69,7 +73,8 @@ TEST_ACTION_CONFIGS = {
 def mock_subprocess_run(mocker):
     """Fixture to mock subprocess.run"""
     return mocker.patch(
-        "subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="Success", stderr="")
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="Success", stderr=""),
     )
 
 
@@ -83,7 +88,8 @@ def test_run_action_simple_success(tmp_path: Path, mocker):
 
     # Mock subprocess.run for this test
     mock_run = mocker.patch(
-        "subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b"")
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b""),
     )
 
     result = run_action(action_name, action_config, project_root, cli_args, paths)
@@ -108,11 +114,16 @@ def test_run_action_with_args(tmp_path: Path, mocker):
     action_name = "action_with_args"
     action_config = TEST_ACTION_CONFIGS[action_name]
     project_root = tmp_path
-    cli_args: dict[str, Any] = {"verbose": True, "output": "out.txt", "unmapped": "ignore"}
+    cli_args: dict[str, Any] = {
+        "verbose": True,
+        "output": "out.txt",
+        "unmapped": "ignore",
+    }
     paths: list[Path] = []  # No paths
 
     mock_run = mocker.patch(
-        "subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b"")
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b""),
     )
 
     result = run_action(action_name, action_config, project_root, cli_args, paths)
@@ -153,7 +164,8 @@ def test_run_action_with_paths(tmp_path: Path, mocker):
     paths: list[Path] = [path1, path2]
 
     mock_run = mocker.patch(
-        "subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b"")
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b""),
     )
 
     result = run_action(action_name, action_config, project_root, cli_args, paths)
@@ -176,7 +188,8 @@ def test_run_action_failure(tmp_path: Path, mocker):
 
     # Mock subprocess.run to simulate failure
     mock_fail_run = mocker.patch(
-        "subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=1, stderr="Tool Error")
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(args=[], returncode=1, stderr="Tool Error"),
     )
 
     result = run_action(action_name, action_config, project_root, cli_args, paths)
@@ -196,7 +209,8 @@ def test_run_action_mypy_env(tmp_path: Path, mocker):
     src_dir.mkdir()  # Create src dir for MYPYPATH logic
 
     mock_run = mocker.patch(
-        "subprocess.run", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b"")
+        "subprocess.run",
+        return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b""),
     )
 
     # Mock os.environ interaction

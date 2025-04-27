@@ -1,8 +1,9 @@
 from pathlib import Path
 
 import pytest
+from unittest.mock import patch, MagicMock
 
-from zeroth_law.dev_scripts.tools_dir_scanner import get_tool_dirs
+from zeroth_law.lib.tooling.tools_dir_scanner import get_tool_dirs
 
 
 def test_scan_with_tool_dirs(tmp_path):

@@ -128,7 +128,13 @@ def correct_schema(file_path):
         for opt in data["options"]:
             # Check if old keys exist before transforming
             needs_transform = any(
-                k in opt for k in ["short_name", "takes_value", "value_placeholder", "alternative_names"]
+                k in opt
+                for k in [
+                    "short_name",
+                    "takes_value",
+                    "value_placeholder",
+                    "alternative_names",
+                ]
             )
             # Also check if new keys are missing defaults
             needs_transform = needs_transform or any(

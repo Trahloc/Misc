@@ -21,9 +21,11 @@ import pytest
 from pathlib import Path
 from enum import Enum
 
-from src.zeroth_law.dev_scripts.baseline_generator import (
+from zeroth_law.dev_scripts.baseline_generator import (
     generate_or_verify_baseline,
     BaselineStatus,
+    BaselineData,
+    calculate_crc32_hex,
 )
 from src.zeroth_law.dev_scripts.baseline_writers import (
     write_ground_truth_txt as real_write_ground_truth_txt,
@@ -31,6 +33,15 @@ from src.zeroth_law.dev_scripts.baseline_writers import (
 )
 from src.zeroth_law.lib.crc import calculate_crc32 as calculate_hex_crc32
 from src.zeroth_law.dev_scripts.tool_index_utils import get_index_entry
+
+from click.testing import CliRunner
+from src.zeroth_law.lib.tooling.baseline_generator import (
+    BaselineStatus,
+    generate_or_verify_baseline,  # Keep if needed
+)
+from src.zeroth_law.dev_scripts.generate_baseline_cli import main as cli_main
+from src.zeroth_law.lib.tool_index_handler import ToolIndexHandler
+from unittest.mock import patch, MagicMock, mock_open
 
 
 # --- Helper to get path to test data helper script --- #
@@ -82,7 +93,9 @@ def test_generate_baseline_new_tool(tmp_path):
     # Pass original command_sequence_str for ID/paths
     # Pass executable_command_override for actual execution
     status, calculated_crc_hex, _ = generate_or_verify_baseline(
-        command_sequence_str, root_dir=tools_dir, executable_command_override=executable_command
+        command_sequence_str,
+        root_dir=tools_dir,
+        executable_command_override=executable_command,
     )
 
     # Assert
@@ -182,7 +195,9 @@ def test_generate_baseline_crc_mismatch(tmp_path):
 
     # Act
     status, calculated_crc_hex, _ = generate_or_verify_baseline(
-        command_sequence_str, root_dir=tools_dir, executable_command_override=executable_command
+        command_sequence_str,
+        root_dir=tools_dir,
+        executable_command_override=executable_command,
     )
 
     # Assert
@@ -221,7 +236,9 @@ def test_generate_baseline_file_content(tmp_path):
 
     # Act
     status, calculated_crc_hex, _ = generate_or_verify_baseline(
-        command_sequence_str, root_dir=tools_dir, executable_command_override=executable_command
+        command_sequence_str,
+        root_dir=tools_dir,
+        executable_command_override=executable_command,
     )
 
     # Assert

@@ -57,7 +57,10 @@ def main():
     target_src_dir = source_base_path / "zeroth_law"  # Specific target
 
     if not target_src_dir.is_dir():
-        print(f"Error: Target source directory not found: {target_src_dir}", file=sys.stderr)
+        print(
+            f"Error: Target source directory not found: {target_src_dir}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     source_files = []
@@ -71,9 +74,15 @@ def main():
                 relative_to_project_root = path.relative_to(source_base_path.parent)
                 source_files.append(str(relative_to_project_root))
             except ValueError:
-                print(f"Warning: Could not make path relative to source base parent: {path}", file=sys.stderr)
+                print(
+                    f"Warning: Could not make path relative to source base parent: {path}",
+                    file=sys.stderr,
+                )
 
-    output_data = {"schema_version": "1.0_file_list", "source_files": sorted(source_files)}
+    output_data = {
+        "schema_version": "1.0_file_list",
+        "source_files": sorted(source_files),
+    }
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:

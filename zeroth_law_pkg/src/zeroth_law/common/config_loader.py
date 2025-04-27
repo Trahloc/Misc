@@ -228,7 +228,10 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
             # Return structure including expected keys, even if empty
             final_config = DEFAULT_CONFIG.copy()
             final_config["actions"] = {}
-            final_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Ensure managed-tools exists
+            final_config["managed-tools"] = {
+                "whitelist": [],
+                "blacklist": [],
+            }  # Ensure managed-tools exists
             return final_config
     else:
         found_path = Path(config_path_override)
@@ -238,7 +241,10 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         log.warning(f"Config file not found at {found_path}. Using defaults + empty actions/managed.")
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
-        final_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Ensure managed-tools exists
+        final_config["managed-tools"] = {
+            "whitelist": [],
+            "blacklist": [],
+        }  # Ensure managed-tools exists
         return final_config
 
     try:
@@ -279,7 +285,10 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         # Return defaults + empty actions/managed on any load error
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
-        final_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Ensure managed-tools exists
+        final_config["managed-tools"] = {
+            "whitelist": [],
+            "blacklist": [],
+        }  # Ensure managed-tools exists
         return final_config
 
 

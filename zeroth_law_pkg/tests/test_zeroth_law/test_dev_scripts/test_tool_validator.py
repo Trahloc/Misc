@@ -55,7 +55,13 @@ def test_tool_available_failure(mock_subprocess_run):
 
     assert is_tool_available(tool_name) is False
     mock_subprocess_run.assert_called_once_with(
-        expected_command, capture_output=True, text=True, check=False, timeout=10, shell=False, errors="replace"
+        expected_command,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+        shell=False,
+        errors="replace",
     )
 
 

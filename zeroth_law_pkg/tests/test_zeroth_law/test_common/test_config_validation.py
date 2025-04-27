@@ -13,7 +13,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 # from zeroth_law.config_loader import DEFAULT_CONFIG  # noqa: E402
 # from zeroth_law.config_validation import ConfigModel, ViolationRule, validate_config  # noqa: E402
 from zeroth_law.common.config_loader import DEFAULT_CONFIG  # noqa: E402
-from zeroth_law.common.config_validation import ConfigModel, ViolationRule, validate_config  # noqa: E402
+from zeroth_law.common.config_validation import (
+    ConfigModel,
+    ViolationRule,
+    validate_config,
+)  # noqa: E402
 
 
 def test_config_model_basic_validation():

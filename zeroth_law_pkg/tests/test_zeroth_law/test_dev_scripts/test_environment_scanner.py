@@ -4,9 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+import platform
 
-# Module to be tested (will be created next)
-from zeroth_law.dev_scripts.environment_scanner import get_executables_from_env
+# Import the function from its new location
+from zeroth_law.lib.tooling.environment_scanner import get_executables_from_env
 
 
 # Helper function to create dummy executable files

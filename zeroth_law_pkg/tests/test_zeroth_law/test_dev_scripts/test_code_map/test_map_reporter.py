@@ -31,8 +31,22 @@ def sample_db(tmp_path) -> Path:
     db["modules"].insert({"id": 2, "path": "mod_b/sub.py", "last_scanned_timestamp": 123.45}, pk="id")
     db["classes"].insert_all(
         [
-            {"id": 10, "module_id": 1, "name": "ClassA", "signature_hash": "hashA", "start_line": 1, "end_line": 5},
-            {"id": 11, "module_id": 2, "name": "ClassB", "signature_hash": "hashB", "start_line": 3, "end_line": 8},
+            {
+                "id": 10,
+                "module_id": 1,
+                "name": "ClassA",
+                "signature_hash": "hashA",
+                "start_line": 1,
+                "end_line": 5,
+            },
+            {
+                "id": 11,
+                "module_id": 2,
+                "name": "ClassB",
+                "signature_hash": "hashB",
+                "start_line": 3,
+                "end_line": 8,
+            },
         ],
         pk="id",
     )
@@ -70,9 +84,27 @@ def sample_db(tmp_path) -> Path:
     )
     db["imports"].insert_all(
         [
-            {"id": 1000, "importing_module_id": 1, "imported_name": "os", "alias": None, "line_number": 1},
-            {"id": 1001, "importing_module_id": 1, "imported_name": "sys", "alias": None, "line_number": 1},
-            {"id": 1002, "importing_module_id": 2, "imported_name": "mod_a.ClassA", "alias": "CA", "line_number": 1},
+            {
+                "id": 1000,
+                "importing_module_id": 1,
+                "imported_name": "os",
+                "alias": None,
+                "line_number": 1,
+            },
+            {
+                "id": 1001,
+                "importing_module_id": 1,
+                "imported_name": "sys",
+                "alias": None,
+                "line_number": 1,
+            },
+            {
+                "id": 1002,
+                "importing_module_id": 2,
+                "imported_name": "mod_a.ClassA",
+                "alias": "CA",
+                "line_number": 1,
+            },
         ],
         pk="id",
     )

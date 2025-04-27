@@ -31,7 +31,10 @@ log = logging.getLogger(__name__)  # Add logger
 
 def load_tools_config() -> Dict[str, List[str]]:
     """Loads the managed and excluded tools configuration from pyproject.toml."""
-    default_config: Dict[str, List[str]] = {"managed_tools": [], "excluded_executables": []}
+    default_config: Dict[str, List[str]] = {
+        "managed_tools": [],
+        "excluded_executables": [],
+    }
 
     if not PYPROJECT_PATH.is_file():
         log.error(f"Configuration file not found: {PYPROJECT_PATH}")
@@ -77,7 +80,10 @@ def get_potential_managed_tools() -> Set[str]:
         bin_path = venv_path / ("Scripts" if sys.platform == "win32" else "bin")
 
         if not bin_path.is_dir():
-            print(f"Warning: Active venv executable directory not found: {bin_path}", file=sys.stderr)
+            print(
+                f"Warning: Active venv executable directory not found: {bin_path}",
+                file=sys.stderr,
+            )
             return set()  # Return empty if bin not found
 
         all_scripts = [f.name for f in bin_path.iterdir() if f.is_file()]
@@ -108,7 +114,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Discover and manage ZLT tool configurations.")
     parser.add_argument(
-        "--check", action="store_true", help="Check for newly discovered tools that are not managed or excluded."
+        "--check",
+        action="store_true",
+        help="Check for newly discovered tools that are not managed or excluded.",
     )
     # Add --update-list later if needed, requires careful implementation
 

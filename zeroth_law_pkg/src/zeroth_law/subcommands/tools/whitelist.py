@@ -215,7 +215,12 @@ def add_whitelist(ctx: click.Context, tool_names: tuple[str, ...], apply_all: bo
 
 @click.command("remove-whitelist")
 @click.argument("tool_names", nargs=-1, required=True)
-@click.option("--all", "apply_all", is_flag=True, help="Apply action to the tool/subcommand and all its children.")
+@click.option(
+    "--all",
+    "apply_all",
+    is_flag=True,
+    help="Apply action to the tool/subcommand and all its children.",
+)
 @click.pass_context
 def remove_whitelist(ctx: click.Context, tool_names: tuple[str, ...], apply_all: bool) -> None:
     """Removes one or more tools/subcommands from the managed tools whitelist."""

@@ -22,7 +22,10 @@ SUBCOMMANDS_SIMPLE: Dict[str, Any] = {
 SUBCOMMANDS_NESTED: Dict[str, Any] = {
     "config": {
         "description": "Configure settings",
-        "subcommands_detail": {"show": {"description": "Show config"}, "set": {"description": "Set config value"}},
+        "subcommands_detail": {
+            "show": {"description": "Show config"},
+            "set": {"description": "Set config value"},
+        },
     },
     "run": {"description": "Run process"},
 }

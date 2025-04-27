@@ -43,7 +43,13 @@ log.setLevel(logging.INFO)  # Default level, --verbose in main will set to DEBUG
 class MapVisitor(ast.NodeVisitor):
     """Visits AST nodes to extract module, class, function, and import information."""
 
-    def __init__(self, db: sqlite_utils.Database, module_path: str, module_id: int, current_scan_timestamp: float):
+    def __init__(
+        self,
+        db: sqlite_utils.Database,
+        module_path: str,
+        module_id: int,
+        current_scan_timestamp: float,
+    ):
         self.db = db
         self.module_path = module_path
         self.module_id = module_id
@@ -315,7 +321,10 @@ class MapVisitor(ast.NodeVisitor):
                     exc_info=True,
                 )
             except Exception as e:
-                log.error(f"Unexpected error inserting function {func_name} in {self.module_path}: {e}", exc_info=True)
+                log.error(
+                    f"Unexpected error inserting function {func_name} in {self.module_path}: {e}",
+                    exc_info=True,
+                )
         # --- End Explicit Logic ---
 
         self.processed_in_scan.add(("function", self.module_path, self.current_class_name, func_name))
@@ -420,7 +429,12 @@ def find_python_files(src_dir: Path) -> list[Path]:
     return python_files
 
 
-def process_file(file_path: Path, src_dir: Path, db: sqlite_utils.Database, current_scan_timestamp: float) -> set:
+def process_file(
+    file_path: Path,
+    src_dir: Path,
+    db: sqlite_utils.Database,
+    current_scan_timestamp: float,
+) -> set:
     """Parses a single Python file using AST and updates the database via the visitor."""
     # Use the provided src_dir to calculate the relative path
     relative_path = file_path.relative_to(src_dir).as_posix()
@@ -439,7 +453,10 @@ def process_file(file_path: Path, src_dir: Path, db: sqlite_utils.Database, curr
         return set()  # Skip this file, return empty set
 
     # 1. Upsert Module and get ID
-    module_record = {"path": relative_path, "last_scanned_timestamp": current_scan_timestamp}
+    module_record = {
+        "path": relative_path,
+        "last_scanned_timestamp": current_scan_timestamp,
+    }
     modules_table = db["modules"]
 
     try:
@@ -587,7 +604,10 @@ def prune_stale_entries(db: sqlite_utils.Database, stale_items: list):
             if stale_function_ids:
                 # Use parameter substitution to avoid SQL injection vulnerabilities
                 placeholders = ", ".join("?" * len(stale_function_ids))
-                db.conn.execute(f"DELETE FROM functions WHERE id IN ({placeholders})", stale_function_ids)
+                db.conn.execute(
+                    f"DELETE FROM functions WHERE id IN ({placeholders})",
+                    stale_function_ids,
+                )
                 log.info(f"Pruned {len(stale_function_ids)} stale functions.")
 
             if stale_class_ids:
@@ -599,7 +619,10 @@ def prune_stale_entries(db: sqlite_utils.Database, stale_items: list):
             if stale_module_ids:
                 placeholders = ", ".join("?" * len(stale_module_ids))
                 # Note: Classes/Functions depending on these modules should already be caught or Cascade delete handles it
-                db.conn.execute(f"DELETE FROM modules WHERE id IN ({placeholders})", stale_module_ids)
+                db.conn.execute(
+                    f"DELETE FROM modules WHERE id IN ({placeholders})",
+                    stale_module_ids,
+                )
                 log.info(f"Pruned {len(stale_module_ids)} stale modules.")
         log.info("Pruning complete.")
     except Exception as e:
@@ -608,7 +631,12 @@ def prune_stale_entries(db: sqlite_utils.Database, stale_items: list):
         raise  # Re-raise the error
 
 
-def generate_map(db_path: Path, schema_path: Path, src_dir: Path, prune_confirmation: str | None = None):
+def generate_map(
+    db_path: Path,
+    schema_path: Path,
+    src_dir: Path,
+    prune_confirmation: str | None = None,
+):
     """Main function to generate or update the codebase map."""
     db = connect_db(db_path)
     prune_confirmed = False

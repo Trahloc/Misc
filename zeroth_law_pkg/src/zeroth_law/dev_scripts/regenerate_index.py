@@ -75,25 +75,15 @@ def get_venv_executables() -> Set[str]:
 
 
 # --- Helper Functions (Potentially move to utils) ---
-
-
-def command_sequence_to_id(command_parts: Tuple[str, ...]) -> str:
-    """Converts a command sequence to a unique ID (e.g., ('ruff', 'check') -> 'ruff_check')."""
-    # Simple join, assuming this matches test helpers
-    return "_".join(command_parts)
-
-
-def calculate_hex_crc32(data: bytes) -> str:
-    """Calculates the CRC32 hash of byte data and returns it as 0x prefixed hex."""
-    # IMPORTANT: zlib.crc32 can return signed int; ensure unsigned 32-bit
-    crc_int = zlib.crc32(data) & 0xFFFFFFFF
-    return f"0x{crc_int:08X}"
+from zeroth_law.lib.tool_path_utils import command_sequence_to_id, calculate_crc32_hex
 
 
 # --- Core Logic Functions ---
 
 
-def capture_command_output(command_sequence: Tuple[str, ...]) -> Tuple[bytes | None, int]:
+def capture_command_output(
+    command_sequence: Tuple[str, ...],
+) -> Tuple[bytes | None, int]:
     """Captures the raw byte output of command --help | cat."""
     # Ensure --help is added if not present (basic check)
     # This assumes baselines are always generated from --help
@@ -172,7 +162,9 @@ def ensure_skeleton_json(json_path: Path, command_sequence: Tuple[str, ...], too
         return False
 
 
-def generate_baseline_data(command_parts: Tuple[str, ...]) -> Tuple[str, float, float] | None:
+def generate_baseline_data(
+    command_parts: Tuple[str, ...],
+) -> Tuple[str, float, float] | None:
     """Runs baseline generation (capture, CRC calc, TXT write, ensure skeleton JSON).
 
     Returns: Tuple (crc_hex, updated_timestamp, checked_timestamp) or None on failure.
@@ -188,7 +180,7 @@ def generate_baseline_data(command_parts: Tuple[str, ...]) -> Tuple[str, float, 
 
     # 2. Calculate CRC
     try:
-        calculated_crc_hex = calculate_hex_crc32(captured_output_bytes)
+        calculated_crc_hex = calculate_crc32_hex(captured_output_bytes)
         log.info(f"  Calculated CRC: {calculated_crc_hex}")
     except Exception as e:
         log.exception(f"Failed baseline: Error calculating CRC for {command_str_log}: {e}")

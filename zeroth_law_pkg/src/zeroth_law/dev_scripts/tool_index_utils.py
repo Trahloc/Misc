@@ -162,7 +162,9 @@ def get_index_entry(index_data: Dict[str, Any], command_sequence: Tuple[str, ...
 
 
 def update_index_entry(
-    index_data: Dict[str, Any], command_sequence: Tuple[str, ...], update_data: Dict[str, Any]
+    index_data: Dict[str, Any],
+    command_sequence: Tuple[str, ...],
+    update_data: Dict[str, Any],
 ) -> bool:
     """Updates or creates the metadata entry for a command sequence in the index.
 
@@ -281,7 +283,10 @@ def load_update_and_save_entry(command_sequence: Tuple[str, ...], update_data: D
 # Example usage (for testing this module directly)
 if __name__ == "__main__":
     # Setup basic logging for direct execution test
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
     log.info("Testing tool_index_utils...")
 
@@ -321,7 +326,9 @@ if __name__ == "__main__":
         # Test updating existing entry
         log.info(f"Updating existing entry: {dummy_id}")
         update_success = update_index_entry(
-            reloaded_index, (dummy_id,), {"checked_timestamp": time.time(), "new_field": True}
+            reloaded_index,
+            (dummy_id,),
+            {"checked_timestamp": time.time(), "new_field": True},
         )
         assert update_success
         dummy_entry_updated = get_index_entry(reloaded_index, (dummy_id,))
@@ -333,7 +340,9 @@ if __name__ == "__main__":
         nested_id_tuple = ("_test_dummy_tool", "sub")
         log.info(f"Updating/creating nested entry: {'_'.join(nested_id_tuple)}")
         nested_update_success = update_index_entry(
-            reloaded_index, nested_id_tuple, {"crc": "0xnested", "checked_timestamp": time.time()}
+            reloaded_index,
+            nested_id_tuple,
+            {"crc": "0xnested", "checked_timestamp": time.time()},
         )
         assert nested_update_success
         nested_entry = get_index_entry(reloaded_index, nested_id_tuple)

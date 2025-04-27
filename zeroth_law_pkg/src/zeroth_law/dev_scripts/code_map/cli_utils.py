@@ -29,17 +29,32 @@ SCHEMA_PATH_DEFAULT = PROJECT_ROOT_DEFAULT / "tests" / "codebase_map" / "schema.
 
 def add_common_db_arguments(parser: argparse.ArgumentParser):
     """Adds common database and schema path arguments to an ArgumentParser."""
-    parser.add_argument("--db", type=Path, default=DB_PATH_DEFAULT, help=f"Database path (default: {DB_PATH_DEFAULT})")
     parser.add_argument(
-        "--schema", type=Path, default=SCHEMA_PATH_DEFAULT, help=f"Schema path (default: {SCHEMA_PATH_DEFAULT})"
+        "--db",
+        type=Path,
+        default=DB_PATH_DEFAULT,
+        help=f"Database path (default: {DB_PATH_DEFAULT})",
+    )
+    parser.add_argument(
+        "--schema",
+        type=Path,
+        default=SCHEMA_PATH_DEFAULT,
+        help=f"Schema path (default: {SCHEMA_PATH_DEFAULT})",
     )
 
 
 def add_common_logging_arguments(parser: argparse.ArgumentParser):
     """Adds common logging arguments (--verbose, --debug-sql)."""
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging for the script.")
     parser.add_argument(
-        "--debug-sql", action="store_true", help="Enable SQL query logging from sqlite-utils (implies verbose)."
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable debug logging for the script.",
+    )
+    parser.add_argument(
+        "--debug-sql",
+        action="store_true",
+        help="Enable SQL query logging from sqlite-utils (implies verbose).",
     )
 
 
@@ -47,7 +62,11 @@ def configure_logging(args: argparse.Namespace):
     """Configures logging based on parsed arguments."""
     log_level = logging.DEBUG if args.verbose or args.debug_sql else logging.INFO
     # Use force=True to ensure configuration overrides any defaults
-    logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s", force=True)
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s",
+        force=True,
+    )
     # Control sqlite-utils verbosity separately
     logging.getLogger("sqlite_utils").setLevel(logging.DEBUG if args.debug_sql else logging.WARNING)
 

@@ -2,8 +2,8 @@ import pytest
 from pathlib import Path
 import toml
 
-# Now import should work
-from zeroth_law.dev_scripts.config_reader import load_tool_lists_from_toml
+# Import the function from its new location
+from zeroth_law.common.config_loader import load_tool_lists_from_toml
 
 # Define a sample valid pyproject.toml content
 VALID_TOML_CONTENT = """

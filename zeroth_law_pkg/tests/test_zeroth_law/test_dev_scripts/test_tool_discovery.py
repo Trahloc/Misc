@@ -136,10 +136,12 @@ def test_load_tools_config_missing_zlt_section(mock_pyproject_file):
 
 def test_load_tools_config_missing_managed_tools_section(mock_pyproject_file):
     """Test when [tool.zeroth-law.managed-tools] is missing."""
-    content = textwrap.dedent("""
+    content = textwrap.dedent(
+        """
         [tool.zeroth-law]
         # other_config = true
-    """)
+    """
+    )
     mock_pyproject_file.write_text(content)
     config = load_tools_config()
     assert config == {"managed_tools": [], "excluded_executables": []}
@@ -147,10 +149,12 @@ def test_load_tools_config_missing_managed_tools_section(mock_pyproject_file):
 
 def test_load_tools_config_missing_whitelist_blacklist(mock_pyproject_file):
     """Test when whitelist/blacklist keys are missing within managed-tools."""
-    content = textwrap.dedent("""
+    content = textwrap.dedent(
+        """
         [tool.zeroth-law.managed-tools]
         # empty section
-    """)
+    """
+    )
     mock_pyproject_file.write_text(content)
     config = load_tools_config()
     assert config == {"managed_tools": [], "excluded_executables": []}
@@ -158,11 +162,13 @@ def test_load_tools_config_missing_whitelist_blacklist(mock_pyproject_file):
 
 def test_load_tools_config_invalid_whitelist_type(mock_pyproject_file, caplog):
     """Test when whitelist is not a list of strings."""
-    content = textwrap.dedent("""
+    content = textwrap.dedent(
+        """
         [tool.zeroth-law.managed-tools]
         whitelist = "not_a_list"
         blacklist = []
-    """)
+    """
+    )
     mock_pyproject_file.write_text(content)
     caplog.set_level(logging.ERROR)
     config = load_tools_config()
@@ -172,11 +178,13 @@ def test_load_tools_config_invalid_whitelist_type(mock_pyproject_file, caplog):
 
 def test_load_tools_config_invalid_blacklist_type(mock_pyproject_file, caplog):
     """Test when blacklist is not a list of strings."""
-    content = textwrap.dedent("""
+    content = textwrap.dedent(
+        """
         [tool.zeroth-law.managed-tools]
         whitelist = []
         blacklist = 123 # not a list
-    """)
+    """
+    )
     mock_pyproject_file.write_text(content)
     caplog.set_level(logging.ERROR)
     config = load_tools_config()
@@ -186,11 +194,13 @@ def test_load_tools_config_invalid_blacklist_type(mock_pyproject_file, caplog):
 
 def test_load_tools_config_success(mock_pyproject_file):
     """Test successful loading of configuration."""
-    content = textwrap.dedent("""
+    content = textwrap.dedent(
+        """
         [tool.zeroth-law.managed-tools]
         whitelist = ["toolA", "toolB"]
         blacklist = ["toolC"]
-    """)
+    """
+    )
     mock_pyproject_file.write_text(content)
     config = load_tools_config()
     assert config == {

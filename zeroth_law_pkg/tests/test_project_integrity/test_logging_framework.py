@@ -84,7 +84,10 @@ def test_enforce_structlog_usage():
 
             if not module_path.is_file():
                 # Use pytest.skip or log warning instead of fail if a module is optional
-                print(f"Warning: Could not find module source file for check: {module_path}", file=sys.stderr)
+                print(
+                    f"Warning: Could not find module source file for check: {module_path}",
+                    file=sys.stderr,
+                )
                 continue  # Skip this module if not found
 
             with open(module_path, "r", encoding="utf-8") as f:

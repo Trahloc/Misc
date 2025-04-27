@@ -20,7 +20,14 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 # --- Schema Requirements (Simplified) ---
-REQUIRED_TOP_LEVEL_KEYS = ["command", "description", "usage", "options", "arguments", "metadata"]
+REQUIRED_TOP_LEVEL_KEYS = [
+    "command",
+    "description",
+    "usage",
+    "options",
+    "arguments",
+    "metadata",
+]
 REQUIRED_METADATA_KEYS = ["ground_truth_crc"]
 EXPECTED_ARRAY_KEYS = ["options", "arguments"]
 EXPECTED_OBJECT_KEYS = ["metadata", "subcommands_detail"]  # Add others if needed

@@ -14,13 +14,18 @@ from typing import List, Tuple, Dict, Any
 import zlib
 
 # Import the helper function from the root conftest
-from tests.conftest import command_sequence_to_id, calculate_crc32_hex
+# from tests.conftest import command_sequence_to_id, calculate_crc32_hex # REMOVE THIS
 
 # Import command_sequence_to_id from the conftest in the same directory
 # from .conftest import command_sequence_to_id # REMOVE THIS - Fixtures/helpers moved to root conftest
 
 # Comment out the failing import for now
 # from zeroth_law.dev_scripts.consistency_checker import check_crc_consistency, ConsistencyStatus
+
+from zeroth_law.lib.tool_path_utils import calculate_crc32_hex  # Keep this if needed
+from zeroth_law.lib.tool_path_utils import command_sequence_to_id, command_sequence_to_filepath  # KEEP THIS
+
+# from tests.conftest import command_sequence_to_id, calculate_crc32_hex # REMOVE THIS
 
 
 # Define status enum locally
@@ -54,7 +59,7 @@ log = logging.getLogger(__name__)
 #     # Pytest automatically resolves this based on conftest.py
 #     # We need to ensure the fixture itself provides the data for parametrization.
 #     # A direct parametrize like this might require the fixture to be calculated
-#     # *before* parametrization happens, which is tricky.
+#     # *before* parametrize happens, which is tricky.
 #     # Let's restructure to iterate within the test function instead.
 #     # managed_sequences,
 #     argvalues=[
@@ -74,7 +79,7 @@ log = logging.getLogger(__name__)
 #
 #     # Check if the current command_parts is actually in the generated list
 #     # This seems overly complex due to parametrization limitations.
-#     # Let's simplify: remove parametrize and iterate within the function.
+#     # Let's simplify: remove parametrization and iterate within the function.
 #     pass  # Remove parametrization structure
 
 
@@ -182,7 +187,11 @@ def test_all_txt_json_consistency(
                     message = (index_crc, index_crc_source)  # Pass needed info
                 elif str(json_crc).lower() != str(index_crc).lower():
                     status = ConsistencyStatus.MISMATCH
-                    message = (json_crc, index_crc, index_crc_source)  # Pass needed info
+                    message = (
+                        json_crc,
+                        index_crc,
+                        index_crc_source,
+                    )  # Pass needed info
 
         except Exception as e:
             # Catch unexpected errors during the check

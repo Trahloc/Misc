@@ -1,7 +1,15 @@
 """Tests for src/zeroth_law/dev_scripts/baseline_generator.py."""
 
 import pytest
-from src.zeroth_law.dev_scripts.baseline_generator import generate_or_verify_baseline, BaselineStatus
+from pathlib import Path
+from src.zeroth_law.lib.tooling.baseline_generator import (
+    generate_or_verify_baseline,
+    BaselineStatus,
+)
+from src.zeroth_law.lib.tool_index_handler import ToolIndexHandler
+from unittest.mock import patch, MagicMock, mock_open
+import json
+import subprocess
 
 
 # Basic test to satisfy implementation requirement

@@ -122,7 +122,12 @@ def test_get_staged_files_some_staged(tmp_path):
     file2.touch()
 
     # Stage files
-    subprocess.run(["git", "add", "file1.txt", "subdir/file2.py"], cwd=git_root, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "add", "file1.txt", "subdir/file2.py"],
+        cwd=git_root,
+        check=True,
+        capture_output=True,
+    )
 
     # from zeroth_law.git_utils import get_staged_files
     from zeroth_law.common.git_utils import get_staged_files
@@ -171,7 +176,10 @@ def test_identify_project_roots_multiple_files_single_project(tmp_path):
     file2.parent.mkdir()
     file2.touch()
     subprocess.run(
-        ["git", "add", "proj1/file1.txt", "proj1/subdir/file2.py"], cwd=git_root, check=True, capture_output=True
+        ["git", "add", "proj1/file1.txt", "proj1/subdir/file2.py"],
+        cwd=git_root,
+        check=True,
+        capture_output=True,
     )
     staged_files = [Path("proj1/file1.txt"), Path("proj1/subdir/file2.py")]
     # from zeroth_law.git_utils import identify_project_roots_from_files
@@ -197,7 +205,12 @@ def test_identify_project_roots_multiple_projects(tmp_path):
     file2 = proj2_root / "file2.py"
     file2.touch()
 
-    subprocess.run(["git", "add", "proj1/file1.txt", "proj2/file2.py"], cwd=git_root, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "add", "proj1/file1.txt", "proj2/file2.py"],
+        cwd=git_root,
+        check=True,
+        capture_output=True,
+    )
     staged_files = [Path("proj1/file1.txt"), Path("proj2/file2.py")]
     # from zeroth_law.git_utils import identify_project_roots_from_files
     from zeroth_law.common.git_utils import identify_project_roots_from_files
