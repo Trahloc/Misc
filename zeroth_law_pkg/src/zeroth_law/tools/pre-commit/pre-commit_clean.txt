@@ -1,6 +1,0 @@
-usage: pre-commit clean [-h] [--color {auto,always,never}]
-
-options:
-  -h, --help            show this help message and exit
-  --color {auto,always,never}
-                        Whether to use color in output. Defaults to `auto`.

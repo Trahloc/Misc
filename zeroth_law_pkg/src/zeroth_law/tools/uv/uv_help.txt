@@ -1,0 +1,6 @@
+Display documentation for a command
+
+Usage: uv help [OPTIONS] [COMMAND]...
+
+Options:
+  --no-pager Disable pager when printing help

@@ -724,3 +724,25 @@ Implement a system that maintains an automated, persistent "map" of the codebase
 *   Reduces or eliminates the need for the complex `tool_mapping.yaml` file.
 
 **Implementation:** This will be developed using TDD/DDT, focusing on testing the dynamic CLI generation, the capability/filetype dispatch logic, and the option translation mechanism. New ZLT commands (`zlt definition update-metadata`?) will be needed to manage the new metadata fields within the tool definition JSONs.
+
+## Podman Isolation for Baseline Generation (2025-04-28T13:30:00+08:00) # AI: Update timestamp using date --iso-8601=seconds
+
+**Problem:** The previous method of capturing tool `--help` output using `uv run ... | cat` provided virtual environment isolation but limited security sandboxing. Concerns were raised about the potential risk of executing commands from external tools, even just for help capture, especially considering future possibilities like blind execution fallbacks if `--help` fails.
+
+**Decision:** Refactor the baseline generation process (`zlt tools sync` and `baseline_generator.py`) to use Podman for enhanced isolation.
+
+**Rationale:**
+*   **Enhanced Security:** Addresses the "potentially hostile code" concern by running external commands within a containerized environment.
+*   **Filesystem Isolation:** Leverages Podman's containerization with read-only mounts (`.venv` and project root) to prevent accidental or malicious writes during baseline capture.
+*   **Prerequisite for Future Enhancements:** Provides a secure foundation necessary before considering potentially riskier fallbacks like blind command execution (running a command without `--help` if help flags fail).
+*   **Automated Security:** Aligns with the ZLF principle of automating security measures within the development workflow, accepting the necessary complexity.
+*   **Controlled Environment:** Ensures commands run in a consistent, clean environment defined by a specific container image.
+
+**Implementation Details:**
+*   **Container Lifecycle (`sync.py`):** The `sync` command now manages a deterministically named Podman container (`zlt-baseline-runner-${PROJECT_HASH}`). It ensures a clean container is started at the beginning (stopping/removing any previous instances) and stopped/removed in a `finally` block.
+*   **Execution (`baseline_generator.py`):** The `_execute_capture_in_podman` function constructs a `podman exec <container_name> sh -c "..."` command. This command runs inside the container, sets the `PATH` to prioritize `/venv/bin`, uses `timeout` for the command, and pipes output through `cat`.
+*   **Read-Only Mounts:** The project's `.venv` and the project root directory are mounted read-only (`:ro`) into the container (`/venv` and `/app` respectively).
+*   **Dependencies:** Introduces `podman` as a required dependency for running `zlt tools sync`.
+*   **Performance:** This approach is expected to be slower than the previous `uv run` method due to container management and execution overhead.
+
+**Note:** While enhancing security, this change does **not** inherently fix errors caused by asking the baseline generator to process invalid command sequences (e.g., `poetry export`, `poetry shell`). Correcting the source tool definition JSON files remains necessary to resolve those specific errors.

@@ -226,6 +226,11 @@
   - [x] Update `get_tool_dirs` import in `test_no_orphan_tool_directories`.
   - [ ] Verify tests pass or fail for expected reasons (e.g., `ToolIndexHandler` import).
   - [ ] Add new tests for `zlt tools reconcile`, `sync`, `add/remove-whitelist/blacklist`.
+- [ ] **14. Podman Integration Follow-up (Post-Refactor):**
+  - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
+  - [ ] Test the Podman-based baseline capture workflow thoroughly, covering various tools, subcommands, potential errors (container start failure, exec failure, timeouts), and cleanup.
+  - [ ] Investigate and improve shell escaping robustness for command arguments passed to `podman exec sh -c "..."` in `baseline_generator.py`.
+  - [ ] (Post JSON Validation) Re-evaluate implementing a "blind execution" fallback (running command without `--help`) using the Podman sandbox for cases where help flags consistently fail for *valid* commands.
 
 ## **Phase I: Capability-Driven Refactor & Central Definitions**
 # Goal: Refactor ZLT core logic to use capabilities for tool dispatch and dynamically generate CLI options from a central definition.

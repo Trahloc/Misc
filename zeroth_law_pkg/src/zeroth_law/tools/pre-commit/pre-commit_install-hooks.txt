@@ -1,7 +1,0 @@
-usage: pre-commit install-hooks [-h] [--color {auto,always,never}] [-c CONFIG]
-
-options:
-  -h, --help            show this help message and exit
-  --color {auto,always,never}
-                        Whether to use color in output. Defaults to `auto`.
-  -c, --config CONFIG   Path to alternate config file

@@ -85,7 +85,7 @@ Miscellaneous:
   -n, --no-cache
           Disable cache reads [env: RUFF_NO_CACHE=]
       --cache-dir <CACHE_DIR>
-          Path to the cache directory [env: RUFF_CACHE_DIR=/run/user/1000/ruff]
+          Path to the cache directory [env: RUFF_CACHE_DIR=]
       --stdin-filename <STDIN_FILENAME>
           The name of the file when passing it through stdin
   -e, --exit-zero
