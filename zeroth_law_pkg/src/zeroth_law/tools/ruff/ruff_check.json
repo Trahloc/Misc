@@ -14,7 +14,15 @@
     "command_name": "check",
     "description": "Run Ruff on the given files or directories",
     "ground_truth_crc": "0x41897CFC",
+    "provides_capabilities": [
+      "Analyzer",
+      "Linter"
+    ],
     "schema_version": "1.0",
+    "supported_filetypes": [
+      ".py",
+      ".pyi"
+    ],
     "tool_name": "Ruff"
   },
   "options": [

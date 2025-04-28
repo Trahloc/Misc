@@ -6,7 +6,7 @@
 **Next Action:** Re-run `pytest tests/test_cli.py` to verify the fix and CLI dispatch mechanism after the project rename.
 **====**
 
-## Phase 1: Core Setup & Basic Compliance Checks (Initial TDD)
+## **Phase A: Initial Setup & Foundational Checks**
 
 - [x] 1. Initialize project structure (`poetry new`, basic dirs like `src/zeroth_law`, `tests`).
 - [x] 2. Populate `pyproject.toml` (incl. build-system fix)
@@ -24,7 +24,7 @@
 - [x] 14. Integrate checks into `cli.py::run_audit`.
 - [x] 15. Ensure pre-commit hooks pass (resolve initial issues, potentially adjust limits temporarily).
 
-## Phase 2: Advanced Compliance Checks & Refinements
+## **Phase B: Extending Static Analysis & Refinement**
 
 - [x] 1. **Line Count Check:** (`analyzer/python/line_counts.py`) Implement `analyze_line_counts` (TDD). Integrate into `analyze_file_compliance`.
 - [x] 2. **Complexity Check:** (`analyzer/python/complexity.py`, `ast_utils.py`) Implement `analyze_complexity` using `ast` (TDD). Integrate.
@@ -52,7 +52,7 @@
     - [x] Implement JSON output using proper TDD/DDT.
 - [ ] 10. **CI Workflow:** Set up GitHub Actions workflow (`.github/workflows/ci.yml`) using `poetry`.
 
-## Phase 3: Framework Integration & Polish
+## **Phase C: Framework Tooling & Polish**
 
 - [x] 1. **Framework Doc Update:** Update `frameworks/python/ZerothLawAIFramework.py313.md` to reflect `poetry` standardization & ZLF/ZLT vision.
 - [x] 2. **Custom Git Hook Management (TDD):**
@@ -75,7 +75,7 @@
 - [ ] Investigate and fix root cause of `mypy` "Source file found twice" error when executed via `action_runner.py`. Re-enable `mypy` in `tool_mapping.json` for the `lint` action once resolved. (Currently handled by pre-commit hook).
 - [ ] Review and refactor suppressed `E402` (module import not at top of file) errors identified in `CODE_TODOS.md`. Remove `sys.path` modifications if redundant due to Poetry's editable install.
 
-## Phase X: ZLT Core Orchestration Engine
+## **Phase D: ZLT Core Orchestration Engine**
 # Goal: Develop ZLT to directly execute and interpret consultant tools as the primary ZLF enforcement mechanism.
 - [ ] ZLT: Implement initial "pass-through" execution for core consultants (`ruff check`, `ruff format`, `mypy`, `pytest`). ZLT acts as an alias, running the tool and reporting raw results. *(Priority: Get data flowing through ZLT)*.
 - [ ] ZLT: Design core execution loop for iterating through configured checks.
@@ -94,7 +94,7 @@
     - FAIL: Breaks TDD, type coverage, correctness, or structural integrity.
 - [ ] ZLT: Refactor `cli.py::run_audit` to utilize the new orchestration engine.
 
-## Phase Y: ZLT-dev - Capability Mapping & Optimization
+## **Phase E: ZLT-Dev Capability Mapping & Optimization**
 # Goal: Continuously improve ZLT's understanding of consultant tools and optimize its default configuration based on evidence from real tests.
 - [ ] **1. Create Rule-to-Principle Registry:**
     - [ ] Define YAML/JSON schema mapping tool rule IDs (e.g., `ruff:SIM108`) to ZLF Principles (e.g., `[#12]`).
@@ -129,7 +129,7 @@
 - [ ] **7. (Optional) `.zgraph.yaml` Integration:**
     - [ ] Explore modeling principles and rule mappings within `.zgraph.yaml` for high-level coverage visualization.
 
-## Phase Z: Codebase Map & Structural Verification (SQLite Backend)
+## **Phase F: Codebase Map & Structural Verification**
 # Goal: Implement an automated map of the codebase structure (in SQLite) to enhance refactoring safety and ZLT's understanding.
 - [ ] **1. Define SQLite Schema:**
     - [x] Design core tables (`modules`, `classes`, `functions`) and columns.
@@ -161,7 +161,7 @@
     - [ ] Add fixtures or scripts to query the DB upon specific test failures and generate consumable reports for the AI (e.g., list of orphaned functions, signature mismatches).
 - [ ] **7. (Future) ZLT Integration:** Explore having ZLT directly query the `code_map.db`.
 
-## Tool Interface Definition Workflow (v3 - AI Interpretation)
+## **Phase G: Tool Definition Workflow & AI Interpretation**
 # Goal: Refine the process for capturing and verifying tool CLI definitions using AI interpretation.
 #
 # --- MANDATE REMINDER --- #
@@ -191,7 +191,7 @@
         - Repopulate `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`.
 - [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate `value_name` structure, `nargs` consistency, and whitespace rules in names/flags.
 
-## Phase W: Tool Management Refactor (`zlt tools`)
+## **Phase H: Tool Management Subcommand (`zlt tools`)**
 # Goal: Centralize tool management logic into a dedicated subcommand group.
 - [x] 1. Rename `src/zeroth_law/commands/` to `src/zeroth_law/subcommands/`.
 - [x] 2. Remove duplicate `audit.py` file.
@@ -226,3 +226,33 @@
   - [x] Update `get_tool_dirs` import in `test_no_orphan_tool_directories`.
   - [ ] Verify tests pass or fail for expected reasons (e.g., `ToolIndexHandler` import).
   - [ ] Add new tests for `zlt tools reconcile`, `sync`, `add/remove-whitelist/blacklist`.
+
+## **Phase I: Capability-Driven Refactor & Central Definitions**
+# Goal: Refactor ZLT core logic to use capabilities for tool dispatch and dynamically generate CLI options from a central definition.
+- [x] **1. Define Central Files:**
+  - [x] Create `src/zeroth_law/zlt_capabilities.json` (or similar) defining canonical capabilities (e.g., "Formatter", "Linter") with descriptions.
+  - [x] Create `src/zeroth_law/zlt_options_definitions.json` defining canonical ZLT CLI options (`verbose`, `quiet`, `config`, `recursive`, `paths`, etc.) including their type, CLI flags, help text, etc.
+- [x] **2. Update Tool Definition Schema & Guidelines:**
+  - [x] Add `provides_capabilities: [<capability_name>, ...]` to the JSON schema metadata.
+  - [x] Add `supported_filetypes: [<extension>, ...]` (or `"*"`) to the JSON schema metadata.
+  - [x] Add `maps_to_zlt_option: <canonical_option_name>` to the schema for options/arguments within the JSON.
+  - [ ] (Optional) Add `metadata.default_behavior_for_zlt_option: {<canonical_option_name>: <value>}` to schema.
+  - [x] Update `tools/zlt_schema_guidelines.md` to document these new fields.
+- [x] **3. Implement & Verify Dynamic CLI Generation (TDD):**
+  - [x] Write `pytest` tests verifying `zlt --help` output matches the content of `zlt_options_definitions.json`.
+  - [x] Refactor `src/zeroth_law/cli.py` to load `zlt_options_definitions.json` and dynamically add options/arguments using `click` or `typer` APIs.
+  - [x] Expand tests for all defined global options and verify.
+- [x] **4. Implement & Verify Capability/Filetype Dispatch Logic (TDD):**
+  - [x] Write `pytest` tests for the core dispatch logic: given ZLT action -> capability, file types, and mock tool definitions, assert correct tool(s) are selected.
+  - [x] Implement the ZLT logic to scan tool definitions, filter by `provides_capabilities` and `supported_filetypes`, and select the prime tool(s).
+  - [x] Expand tests for various file types, capabilities, and edge cases (no match, `*` type) and verify.
+- [x] **5. Implement & Verify Option Translation Logic (TDD):**
+  - [x] Write `pytest` tests for option translation: given ZLT command options, selected tool definition, assert correct final command arguments are generated using `maps_to_zlt_option` and default behavior data.
+  - [x] Implement the ZLT logic to perform this translation during command execution.
+  - [x] Expand tests for various option types and combinations and verify.
+- [x] **6. Develop Tool Definition Management Commands (TDD):**
+  - [x] Define subcommand structure (e.g., `zlt definition ...`).
+  - [x] Create subcommand module(s) (e.g., `src/zeroth_law/subcommands/definition/`).
+  - [x] Register subcommand group with main CLI.
+  - [x] Write tests for `add-capability`, `remove-capability`, `set-filetypes`, `map-option`, `unmap-option`. (Success cases done)
+  - [x] Implement logic for management commands, including validation against central definitions.

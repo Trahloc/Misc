@@ -33,7 +33,7 @@ from zeroth_law.analysis_runner import (
 )
 
 # Import the dynamic command function
-from zeroth_law.dynamic_commands import add_dynamic_commands
+# from zeroth_law.dynamic_commands import add_dynamic_commands # Might remove if not used
 
 # Import the Git hook commands
 from .subcommands.git_hooks import install_git_hook, restore_git_hooks
@@ -46,6 +46,9 @@ from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 
 # Import the new tools group
 from .subcommands.tools.tools import tools_group
+
+# Import the new definition group
+# from .subcommands.definition.definition import definition_group # <-- REMOVE THIS IMPORT
 
 # --- Early Structlog Setup --- START
 # Configure structlog early with basic console output
@@ -80,7 +83,67 @@ except PackageNotFoundError:
     zlt_version = "unknown"  # Fallback if package is not installed properly
 
 # Context settings for Click
-CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
+CONTEXT_SETTINGS = {
+    "help_option_names": ["-h", "--help"],
+    "ignore_unknown_options": True,
+    "allow_interspersed_args": False,
+}
+
+# --- Path to dynamic options definitions ---
+OPTIONS_DEF_PATH = Path(__file__).parent / "zlt_options_definitions.json"
+
+
+# --- Helper to load option definitions ---
+def load_zlt_option_definitions() -> Dict[str, Dict[str, Any]]:
+    """Loads the canonical ZLT option definitions from JSON."""
+    if not OPTIONS_DEF_PATH.is_file():
+        log.error(f"ZLT options definition file not found: {OPTIONS_DEF_PATH}")
+        return {}
+    try:
+        with open(OPTIONS_DEF_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        log.error(f"Error decoding ZLT options definitions file {OPTIONS_DEF_PATH}: {e}")
+        return {}
+    except Exception as e:
+        log.exception(f"Unexpected error loading ZLT options definitions {OPTIONS_DEF_PATH}: {e}")
+        return {}
+
+
+# --- Helper to create Click option from definition ---
+def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click.Option:
+    """Creates a Click Option object from a definition dictionary."""
+    param_decls = definition.get("cli_names", [f"--{name}"])  # Default to --name if cli_names missing
+    option_type = definition.get("type", "flag")
+    opts = {
+        "help": definition.get("description", ""),
+        "default": definition.get("default"),  # Pass default if defined
+    }
+
+    if option_type == "flag":
+        opts["is_flag"] = True
+    elif option_type == "value":
+        value_type_str = definition.get("value_type")
+        click_type = click.STRING  # Default
+        if value_type_str == "path":
+            click_type = click.Path(path_type=Path)
+        elif value_type_str == "integer":
+            click_type = click.INT
+        # Add more type mappings as needed
+        opts["type"] = click_type
+        opts["metavar"] = definition.get("value_name")  # Use value_name for metavar
+    elif option_type == "positional":
+        # Note: Positional arguments are handled differently (click.Argument)
+        # This helper might need splitting or adjustment for arguments.
+        # For now, assuming global options are not positional.
+        raise ValueError(f"Positional argument definition '{name}' cannot be created as a global Click Option.")
+    else:
+        raise ValueError(f"Unknown option type '{option_type}' for option '{name}'")
+
+    # Remove None values from opts to avoid passing them to click.Option
+    opts = {k: v for k, v in opts.items() if v is not None}
+
+    return click.Option(param_decls, **opts)
 
 
 # --- Logging Setup Function (May need adjustment for structlog) ---
@@ -179,124 +242,93 @@ def run_audit(
     return len(files_to_audit) > 0
 
 
-# === Main CLI Group Definition ===
-@click.group(context_settings=CONTEXT_SETTINGS)
-@click.version_option(version=zlt_version, package_name="zeroth-law", prog_name="zeroth-law")
-@click.option(
-    "-v",
-    "--verbose",
-    "verbosity",
-    count=True,
-    default=0,
-    help="Increase verbosity: -v for INFO, -vv for DEBUG.",
-    type=click.IntRange(0, 2),
-)
-@click.option(
-    "-q",
-    "--quiet",
-    is_flag=True,
-    default=False,
-    help="Suppress all output except errors.",
-)
-@click.option(
-    "--color/--no-color",
-    is_flag=True,
-    default=None,
-    help="Enable/disable colored logging output.",
-)
-@click.option(
-    "-c",
-    "--config",
-    "config_path_override",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, path_type=Path),
-    default=None,
-    help="Path to configuration file (e.g., pyproject.toml). Overrides auto-detection.",
-)
-@click.pass_context
-def cli_group(
-    ctx: click.Context,
-    verbosity: int,
-    quiet: bool,
-    color: bool | None,
-    config_path_override: Path | None,
-) -> None:
-    """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
-    # Determine effective log level name based on flags
-    if quiet:
-        level_name = "error"
-    elif verbosity == 1:
-        level_name = "info"
-    elif verbosity >= 2:
-        level_name = "debug"
-    else:
-        level_name = DEFAULT_LOG_LEVEL_NAME
+# === CLI Group Factory Function ===
+def create_cli_group() -> click.Group:
+    """Factory to create the main CLI group with dynamically added options."""
 
-    # Setup/Adjust structlog logging based on determined level and color option
-    setup_structlog_logging(level_name, color)
+    option_defs = load_zlt_option_definitions()
 
-    # Find project root (might be needed by commands)
-    project_root = find_project_root(start_path=Path.cwd())
-    if not project_root:
-        log.error("Could not determine project root. Some commands might fail.")
+    # Define the base function for the group *without* static options
+    @click.group(context_settings=CONTEXT_SETTINGS)
+    @click.version_option(version=zlt_version, package_name="zeroth-law", prog_name="zeroth-law")
+    @click.pass_context
+    def base_cli_group(ctx: click.Context, **kwargs) -> None:
+        """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
 
-    # Load config (needed by commands)
-    config = load_config(config_path_override=config_path_override)
-    if config is None:
-        log.warning("No valid configuration found. Dynamic commands may not be available.")
-        config = {}  # Use empty config if none found
+        # Extract values from kwargs passed by Click based on dynamic options
+        verbosity = kwargs.get("verbose", 0)  # Using canonical names
+        quiet = kwargs.get("quiet", False)
+        color = kwargs.get("color")  # Allow None for color
+        config_path_override = kwargs.get("config")
 
-    # Store context
-    ctx.ensure_object(dict)
-    ctx.obj["project_root"] = project_root
-    ctx.obj["config"] = config
-    ctx.obj["verbosity"] = verbosity
-    ctx.obj["quiet"] = quiet
+        # Determine effective log level name based on flags
+        if quiet:
+            level_name = "error"
+        elif verbosity == 1:
+            level_name = "info"
+        elif verbosity >= 2:
+            level_name = "debug"
+        else:
+            level_name = DEFAULT_LOG_LEVEL_NAME
 
-    # === Add Commands AFTER config is loaded ===
-    # Add dynamic commands based on the loaded config
-    # Pass the group instance from the context and the loaded config
-    if isinstance(ctx.command, click.Group):
-        # Ensure config is passed to add_dynamic_commands
-        add_dynamic_commands(cli_group=ctx.command, config=config)
-    else:
-        log.error("Internal error: Context command is not a Group, cannot add dynamic commands.")
+        # Setup/Adjust structlog logging based on determined level and color option
+        setup_structlog_logging(level_name, color)
 
-    # Static commands are added below at module level
+        # Find project root (might be needed by commands)
+        project_root = find_project_root(start_path=Path.cwd())
+        if not project_root:
+            log.error("Could not determine project root. Some commands might fail.")
+
+        # Load config (needed by commands)
+        config_data = load_config(config_path_override=config_path_override)
+        if config_data is None:
+            log.warning("No valid configuration found. Dynamic commands may not be available.")
+            config_data = {}  # Use empty config if none found
+
+        # Store context
+        ctx.ensure_object(dict)
+        ctx.obj["project_root"] = project_root
+        ctx.obj["config"] = config_data
+        # Store all dynamic options in context as well for potential use by subcommands
+        ctx.obj["options"] = kwargs
+
+        log.debug("CLI context prepared", options=kwargs)
+
+    # Dynamically add options to the base_cli_group function's parameters
+    # We reverse the definitions so options are added in a consistent order (like top-to-bottom in file)
+    dynamic_options: List[click.Option] = []
+    for name, definition in reversed(option_defs.items()):
+        if definition.get("type") != "positional":  # Skip positional for global options
+            try:
+                option = create_click_option_from_def(name, definition)
+                dynamic_options.append(option)
+            except ValueError as e:
+                log.warning(f"Skipping dynamic option '{name}': {e}")
+
+    # Add the dynamically created options to the command
+    # Modifying __click_params__ is one way, but applying decorators is cleaner if possible.
+    # Let's try modifying the params list directly before the group is finalized.
+    base_cli_group.params.extend(dynamic_options)
+
+    # Add the subcommands (this happens after the group is created)
+    base_cli_group.add_command(audit)
+    base_cli_group.add_command(install_git_hook)
+    base_cli_group.add_command(restore_git_hooks)
+    base_cli_group.add_command(tools_group)  # Add the tools subcommand group
+    # base_cli_group.add_command(definition_group) # <-- REMOVE THIS REGISTRATION
+
+    # TODO: Add dynamic commands based on capabilities/mapping later
+    # add_dynamic_commands(base_cli_group)
+
+    return base_cli_group
 
 
-# === Utility Commands (Defined *after* cli_group is created) ===
-# @cli_group.command("install-git-hook") ... def install_git_hook(...): ...
-# @cli_group.command("restore-git-hooks") ... def restore_git_hooks(...): ...
+# === Create the CLI instance using the factory ===
+main = create_cli_group()
 
-
-# --- Add Commands to Group ---
-# Call moved inside cli_group function
-# add_dynamic_commands(cli_group)
-
-# Add the static Git hook commands (Keep here, added to the group object directly)
-cli_group.add_command(install_git_hook)
-cli_group.add_command(restore_git_hooks)
-# Add the audit command
-cli_group.add_command(audit)
-
-# Add the new tools group
-cli_group.add_command(tools_group)
-
-
-# === Standalone Audit Command (Phase 2/3 Goal) ===
-# @cli_group.command("audit")
-# @click.argument(
-#     "paths",
-# ... (Remove the entire audit function definition here) ...
-#         exit_code = 2 # Use a different exit code for unexpected errors
-#
-#     # Finally, exit with the determined code
-#     ctx.exit(exit_code)
-
-
-# --- Main Execution Guard ---
-if __name__ == "__main__":  # pragma: no cover
-    cli_group()
+# === Entry Point ===
+if __name__ == "__main__":
+    main()
 
 
 # <<< ZEROTH LAW FOOTER >>>

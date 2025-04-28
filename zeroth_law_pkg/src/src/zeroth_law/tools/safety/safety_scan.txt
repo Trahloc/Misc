@@ -1,0 +1,105 @@
+
+ Scans a Python project directory.                                                                                                    
+ Example: safety scan to scan the current directory                                                                                   
+                                                                                                                                      
+ Usage: safety [GLOBAL-OPTIONS] scan [OPTIONS]                                                                                        
+                                                                                                                                      
+                                                               Options                                                                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                          ┃                                                                                                         ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--target']             │ Define a specific project path to scan. (default: current directory)                                    │
+│                          │                                                                                                         │
+│                          │ Example: safety scan --target /path/to/project                                                          │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--output']             │ Set the output format for scan results (default: screen)                                                │
+│                          │                                                                                                         │
+│                          │ Example: safety scan --output json                                                                      │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--detailed-output']    │ Enable a verbose scan report for detailed insights (only for screen output)                             │
+│                          │                                                                                                         │
+│                          │ Example: safety scan --detailed-output                                                                  │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--save-as']            │ In addition to regular output save the scan results to a json, html, text, or spdx file using: FORMAT   │
+│                          │ FILE_PATH                                                                                               │
+│                          │                                                                                                         │
+│                          │ Example: safety scan --save-as json results.json                                                        │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--policy-file']        │ Use a local policy file to configure the scan.                                                          │
+│                          │                                                                                                         │
+│                          │ Note: Project scan policies defined in Safety Platform will override local policy files                 │
+│                          │                                                                                                         │
+│                          │ Example: safety scan --policy-file /path/to/policy.yml                                                  │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--apply-fixes']        │ Update packages listed in requirements.txt files to secure versions where possible                      │
+│                          │                                                                                                         │
+│                          │ Currently supports: requirements.txt files                                                              │
+│                          │                                                                                                         │
+│                          │ Note: this will update your requirements.txt file                                                       │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--install-completion'] │ Install completion for the current shell.                                                               │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--show-completion']    │ Show completion for the current shell, to copy it or customize the installation.                        │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--help']               │ Show this message and exit.                                                                             │
+└──────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     Global-Options                                                      
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                  ┃                                                                                    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--stage']                      │ Assign a development lifecycle stage to your scan (default: development).          │
+│                                  │                                                                                    │
+│                                  │ This labels the scan and its findings in Safety Platform with this stage.          │
+│                                  │                                                                                    │
+│                                  │ Example: safety --stage production scan                                            │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--key']                        │ The API key required for cicd stage or production stage scans.                     │
+│                                  │                                                                                    │
+│                                  │ For development stage scans unset the API key and authenticate using safety auth.  │
+│                                  │                                                                                    │
+│                                  │ Tip: the API key can also be set using the environment variable: SAFETY_API_KEY    │
+│                                  │                                                                                    │
+│                                  │ Example: safety --key API_KEY --stage cicd scan                                    │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-host']                 │ Specify a proxy host for network communications.                                   │
+│                                  │                                                                                    │
+│                                  │ Note: proxy details can be set globally in a config file.                          │
+│                                  │                                                                                    │
+│                                  │ See safety configure --help                                                        │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-port']                 │ Set the proxy port (default: 80).                                                  │
+│                                  │                                                                                    │
+│                                  │ Note: proxy details can be set globally in a config file.                          │
+│                                  │                                                                                    │
+│                                  │ See safety configure --help                                                        │
+│                                  │                                                                                    │
+│                                  │  Requires: [ proxy_host ]                                                          │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-protocol']             │ Choose the proxy protocol (default: https).                                        │
+│                                  │                                                                                    │
+│                                  │ Note: proxy details can be set globally in a config file.                          │
+│                                  │                                                                                    │
+│                                  │ See safety configure --help                                                        │
+│                                  │                                                                                    │
+│                                  │  Requires: [ proxy_host ]                                                          │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--disable-optional-telemetry'] │ Opt-out of sending optional telemetry data. Anonymized telemetry data will remain. │
+│                                  │                                                                                    │
+│                                  │ Example: safety --disable-optional-telemetry scan                                  │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--debug']                      │ Enable debug mode for detailed output.                                             │
+│                                  │                                                                                    │
+│                                  │ Example: safety --debug scan                                                       │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--version']                    │ Show the version and exit.                                                         │
+└──────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────┘
+                                                                                                                                      
+ Safety CLI version: 3.2.9                                                                                                            
+ Documentation: https://docs.safetycli.com                                                                                            
+                                                                                                                                      
+ Made with love by Safety Cybersecurity                                                                                               
+ https://safetycli.com                                                                                                                
+ support@safetycli.com                                                                                                                
+                                                                                                                                      
+

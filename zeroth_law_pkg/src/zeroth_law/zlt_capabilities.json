@@ -1,0 +1,41 @@
+{
+    "Formatter": {
+        "description": "Tools that reformat code to match style guidelines without changing logic."
+    },
+    "Linter": {
+        "description": "Tools that check code for style violations, potential errors, and anti-patterns."
+    },
+    "Analyzer": {
+        "description": "Tools that perform deeper analysis of code structure or logic without execution (distinct from basic linting)."
+    },
+    "TypeCheck": {
+        "description": "Tools that verify static type annotations."
+    },
+    "Tester": {
+        "description": "Tools that execute automated tests."
+    },
+    "Coverage": {
+        "description": "Tools that measure code coverage during test execution."
+    },
+    "Complexity": {
+        "description": "Tools that measure code complexity metrics (e.g., cyclomatic complexity)."
+    },
+    "Deadcode": {
+        "description": "Tools that identify unused code (variables, functions, imports)."
+    },
+    "Security": {
+        "description": "Tools that scan code for potential security vulnerabilities."
+    },
+    "Fuzzer": {
+        "description": "Tools that test code with generated, unexpected inputs to find bugs."
+    },
+    "Docstrings": {
+        "description": "Tools that check documentation string style and completeness."
+    },
+    "Secrets": {
+        "description": "Tools that specifically scan for inadvertently committed secrets."
+    },
+    "Duplication": {
+        "description": "Tools that identify duplicated blocks of code."
+    }
+}

@@ -1,0 +1,58 @@
+{
+    "verbose": {
+        "cli_names": [
+            "--verbose",
+            "-v"
+        ],
+        "type": "flag",
+        "value_type": null,
+        "value_name": null,
+        "nargs": null,
+        "description": "Enable more detailed output.",
+        "help_group": "Output"
+    },
+    "quiet": {
+        "cli_names": [
+            "--quiet",
+            "-q"
+        ],
+        "type": "flag",
+        "value_type": null,
+        "value_name": null,
+        "nargs": null,
+        "description": "Suppress all output except errors.",
+        "help_group": "Output"
+    },
+    "config": {
+        "cli_names": [
+            "--config"
+        ],
+        "type": "value",
+        "value_type": "path",
+        "value_name": "FILE_PATH",
+        "nargs": null,
+        "description": "Path to a tool-specific configuration file.",
+        "help_group": "Configuration"
+    },
+    "recursive": {
+        "cli_names": [
+            "--recursive",
+            "-r"
+        ],
+        "type": "flag",
+        "value_type": null,
+        "value_name": null,
+        "nargs": null,
+        "description": "Process directories recursively.",
+        "help_group": "Input"
+    },
+    "paths": {
+        "cli_names": [],
+        "type": "positional",
+        "value_type": "path",
+        "value_name": "PATHS",
+        "nargs": "*",
+        "description": "Files or directories to process.",
+        "help_group": "Input"
+    }
+}

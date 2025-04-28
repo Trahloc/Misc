@@ -1,0 +1,28 @@
+usage: radon raw [-h] [-e <str>] [-i <str>] [-s] [-j] [-O <str>]
+                 [--include-ipynb] [--ipynb-cells]
+                 paths [paths ...]
+
+Analyze the given Python modules and compute raw metrics.
+
+positional arguments:
+  paths                 The paths where to find modules or packages to
+                        analyze. More than one path is allowed.
+
+options:
+  -h, --help            show this help message and exit
+  -e, --exclude <str>   Exclude files only when their path matches one of
+                        these glob patterns. Usually needs quoting at the
+                        command line.
+  -i, --ignore <str>    Ignore directories when their name matches one of
+                        these glob patterns: radon won't even descend into
+                        them. By default, hidden directories (starting with
+                        '.') are ignored.
+  -s, --summary         If given, at the end of the analysis display the
+                        summary of the gathered metrics. Default to False.
+  -j, --json            Format results in JSON. Note that the JSON export does
+                        not include the summary (enabled with `-s,
+                        --summary`).
+  -O, --output-file <str>
+                        The output file (default to stdout).
+  --include-ipynb       Include IPython Notebook files
+  --ipynb-cells         Include reports for individual IPYNB cells

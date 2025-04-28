@@ -1,0 +1,137 @@
+
+ \[deprecated] Find vulnerabilities at target files or environments. Now replaced by safety scan, and will be unsupported beyond 1    
+ May 2024.                                                                                                                            
+ Example: safety check -r requirements.txt                                                                                            
+                                                                                                                                      
+ Usage: safety check [OPTIONS]                                                                                                        
+                                                                                                                                      
+                                                               Options                                                                
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                            ┃                                                                                       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--proxy-host']                           │ Specify a proxy host for network communications.                                      │
+│                                            │                                                                                       │
+│                                            │ Note: proxy details can be set globally in a config file.                             │
+│                                            │                                                                                       │
+│                                            │ See safety configure --help                                                           │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-port']                           │ Set the proxy port (default: 80).                                                     │
+│                                            │                                                                                       │
+│                                            │ Note: proxy details can be set globally in a config file.                             │
+│                                            │                                                                                       │
+│                                            │ See safety configure --help                                                           │
+│                                            │                                                                                       │
+│                                            │  Requires: [ proxy_host ]                                                             │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-protocol']                       │ Choose the proxy protocol (default: https).                                           │
+│                                            │                                                                                       │
+│                                            │ Note: proxy details can be set globally in a config file.                             │
+│                                            │                                                                                       │
+│                                            │ See safety configure --help                                                           │
+│                                            │                                                                                       │
+│                                            │  Requires: [ proxy_host ]                                                             │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--key']                                  │ The API key required for cicd stage or production stage scans.                        │
+│                                            │                                                                                       │
+│                                            │ For development stage scans unset the API key and authenticate using safety auth.     │
+│                                            │                                                                                       │
+│                                            │ Tip: the API key can also be set using the environment variable: SAFETY_API_KEY       │
+│                                            │                                                                                       │
+│                                            │ Example: safety --key API_KEY --stage cicd scan                                       │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--db']                                   │ Path to a local or remote vulnerability database. Default: empty                      │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--full-report']                          │ Full reports include a security advisory (if available). Default: --short-report      │
+│                                            │ NOTE: This argument is mutually exclusive with  arguments: [output with values        │
+│                                            │ ['json', 'bare'], json with values [True, False], bare with values [True, False]].    │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--stdin']                                │ Read input from stdin. NOTE: This argument is mutually exclusive with  arguments: .   │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--file', '-r']                           │ Read input from one (or multiple) requirement files. Default: empty NOTE: This        │
+│                                            │ argument is mutually exclusive with  arguments: .                                     │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--ignore', '-i']                         │ Ignore one (or multiple) vulnerabilities by ID (coma separated). Default: empty       │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--ignore-unpinned-requirements', '-iur'] │ Check or ignore unpinned requirements found.                                          │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--output', '-o']                         │                                                                                       │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--exit-code']                            │ Output standard exit codes. Default: --exit-code                                      │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--policy-file']                          │ Define the policy file to be used                                                     │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--audit-and-monitor']                    │ Send results back to safetycli.com for viewing on your dashboard. Requires an API     │
+│                                            │ key.                                                                                  │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--project-id', '--project']              │ Project to associate this scan with on safetycli.com. Defaults to a canonicalized     │
+│                                            │ github style name if available, otherwise unknown                                     │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--save-json']                            │ Path to where the output file will be placed; if the path is a directory, Safety will │
+│                                            │ use safety-report.json as filename. Default: empty                                    │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--save-html']                            │ Path to where the output file will be placed; if the path is a directory, Safety will │
+│                                            │ use safety-report.html as the main file. Default: empty                               │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--apply-security-updates', '-asu']       │ Apply security updates in your requirement files.                                     │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--auto-security-updates-limit', '-asul'] │ Define the limit to be used for automatic security updates in your requirement files. │
+│                                            │ Default: patch                                                                        │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--no-prompt', '-np']                     │ Safety won't ask for remediations outside of the remediation limit.                   │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--json-output-format']                   │ Select the JSON version to be used in the output                                      │
+├────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--help']                                 │ Show this message and exit.                                                           │
+└────────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────────┘
+
+                                                     Global-Options                                                      
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                  ┃                                                                                    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--stage']                      │ Assign a development lifecycle stage to your scan (default: development).          │
+│                                  │                                                                                    │
+│                                  │ This labels the scan and its findings in Safety Platform with this stage.          │
+│                                  │                                                                                    │
+│                                  │ Example: safety --stage production scan                                            │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--key']                        │ The API key required for cicd stage or production stage scans.                     │
+│                                  │                                                                                    │
+│                                  │ For development stage scans unset the API key and authenticate using safety auth.  │
+│                                  │                                                                                    │
+│                                  │ Tip: the API key can also be set using the environment variable: SAFETY_API_KEY    │
+│                                  │                                                                                    │
+│                                  │ Example: safety --key API_KEY --stage cicd scan                                    │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-host']                 │ Specify a proxy host for network communications.                                   │
+│                                  │                                                                                    │
+│                                  │ Note: proxy details can be set globally in a config file.                          │
+│                                  │                                                                                    │
+│                                  │ See safety configure --help                                                        │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-port']                 │ Set the proxy port (default: 80).                                                  │
+│                                  │                                                                                    │
+│                                  │ Note: proxy details can be set globally in a config file.                          │
+│                                  │                                                                                    │
+│                                  │ See safety configure --help                                                        │
+│                                  │                                                                                    │
+│                                  │  Requires: [ proxy_host ]                                                          │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--proxy-protocol']             │ Choose the proxy protocol (default: https).                                        │
+│                                  │                                                                                    │
+│                                  │ Note: proxy details can be set globally in a config file.                          │
+│                                  │                                                                                    │
+│                                  │ See safety configure --help                                                        │
+│                                  │                                                                                    │
+│                                  │  Requires: [ proxy_host ]                                                          │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--disable-optional-telemetry'] │ Opt-out of sending optional telemetry data. Anonymized telemetry data will remain. │
+│                                  │                                                                                    │
+│                                  │ Example: safety --disable-optional-telemetry scan                                  │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--debug']                      │ Enable debug mode for detailed output.                                             │
+│                                  │                                                                                    │
+│                                  │ Example: safety --debug scan                                                       │
+├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--version']                    │ Show the version and exit.                                                         │
+└──────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────┘
+

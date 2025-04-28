@@ -1,21 +1,163 @@
 {
-  "command": "ruff",
-  "subcommand": "format",
-  "description": "Run the Ruff formatter on the given files or directories",
-  "usage": "ruff format [OPTIONS] [FILES]...",
-  "options": [],
-  "arguments": [
-    {
-      "name": "FILES",
-      "description": "List of files or directories to format [default: .]",
-      "required": false,
-      "nargs": "*"
+    "command": "ruff",
+    "subcommand": "format",
+    "description": "Run the Ruff formatter on the given files or directories",
+    "usage": "ruff format [OPTIONS] [FILES]...",
+    "options": [
+        {
+            "name": "--check",
+            "description": "Run in 'check' mode. Exits with 0 if formatted code is unmodified or formatting is disabled, 1 if formatted code is modified, and 123 if there was an error.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--diff",
+            "description": "Avoid writing any formatted files to disk; instead, output a diff for each changed file to stdout.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--extension",
+            "description": "The extension to use when formatting files over stdin",
+            "type": "str",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--target-version",
+            "description": "The minimum Python version that should be supported.",
+            "type": "str",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--preview",
+            "description": "Enable preview mode. Note that the formatter is still under development, and preview mode enables unstable formatting changes.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "-h,--help",
+            "description": "Print help",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--no-cache",
+            "description": "Disable cache reads.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--cache-dir",
+            "description": "Path to the cache directory",
+            "type": "str",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--stdin-filename",
+            "description": "The name of the file when passing it through stdin.",
+            "type": "str",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--exit-non-zero-on-format",
+            "description": "Exit with a non-zero status code if any files were formatted.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--respect-gitignore",
+            "description": "Respect gitignore files.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--exclude",
+            "description": "List of paths, globs, or regular expressions to exclude.",
+            "type": "list",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--force-exclude",
+            "description": "Like --exclude, but ignores all configuration and defaults.",
+            "type": "list",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--line-length",
+            "description": "Set the line length.",
+            "type": "int",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--range",
+            "description": "Format a specific range in the source file (e.g., 1:2-3:4).",
+            "type": "str",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "-v,--verbose",
+            "description": "Enable verbose logging.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "-q,--quiet",
+            "description": "Enable quiet mode.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "-s,--silent",
+            "description": "Enable silent mode.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--config",
+            "description": "Path to the `pyproject.toml` or `ruff.toml` file to use for configuration",
+            "type": "str",
+            "required": false,
+            "maps_to_zlt_option": null
+        },
+        {
+            "name": "--isolated",
+            "description": "Ignore all configuration files.",
+            "type": "bool",
+            "required": false,
+            "maps_to_zlt_option": null
+        }
+    ],
+    "arguments": [
+        {
+            "name": "FILES",
+            "description": "List of files or directories to format [default: .]",
+            "required": false,
+            "nargs": "*",
+            "type": "list"
+        }
+    ],
+    "metadata": {
+        "ground_truth_crc": "0xB0F80602",
+        "schema_version": "1.0",
+        "tool_name": "ruff",
+        "command_name": "format"
     }
-  ],
-  "metadata": {
-    "ground_truth_crc": "0x4E31BD8A",
-    "schema_version": "1.0",
-    "tool_name": "ruff",
-    "command_name": "format"
-  }
 }

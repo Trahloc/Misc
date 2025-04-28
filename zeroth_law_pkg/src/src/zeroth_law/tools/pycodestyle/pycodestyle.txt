@@ -1,0 +1,44 @@
+Usage: pycodestyle [options] input ...
+
+Options:
+  --version            show program's version number and exit
+  -h, --help           show this help message and exit
+  -v, --verbose        print status messages, or debug with -vv
+  -q, --quiet          report only file names, or nothing with -qq
+  -r, --repeat         (obsolete) show all occurrences of the same error
+  --first              show first occurrence of each error
+  --exclude=patterns   exclude files or directories which match these comma
+                       separated patterns (default:
+                       .svn,CVS,.bzr,.hg,.git,__pycache__,.tox)
+  --filename=patterns  when parsing directories, only check filenames matching
+                       these comma separated patterns (default: *.py)
+  --select=errors      select errors and warnings (e.g. E,W6)
+  --ignore=errors      skip errors and warnings (e.g. E4,W) (default:
+                       E121,E123,E126,E226,E24,E704,W503,W504)
+  --show-source        show source code for each error
+  --show-pep8          show text of PEP 8 for each error (implies --first)
+  --statistics         count errors and warnings
+  --count              print total number of errors and warnings to standard
+                       error and set exit code to 1 if total is not null
+  --max-line-length=n  set maximum allowed line length (default: 79)
+  --max-doc-length=n   set maximum allowed doc line length and perform these
+                       checks (unchecked if not set)
+  --indent-size=n      set how many spaces make up an indent (default: 4)
+  --hang-closing       hang closing bracket instead of matching indentation of
+                       opening bracket's line
+  --format=format      set the error format [default|pylint|<custom>]
+  --diff               report changes only within line number ranges in the
+                       unified diff received on STDIN
+
+  Testing Options:
+    --benchmark        measure processing speed
+
+  Configuration:
+    The project options are read from the [pycodestyle] section of the
+    tox.ini file or the setup.cfg file located in any parent folder of the
+    path(s) being processed.  Allowed options are: exclude, filename,
+    select, ignore, max-line-length, max-doc-length, indent-size, hang-
+    closing, count, format, quiet, show-pep8, show-source, statistics,
+    verbose.
+
+    --config=path      user config file location

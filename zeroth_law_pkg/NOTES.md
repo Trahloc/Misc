@@ -689,3 +689,38 @@ Implement a system that maintains an automated, persistent "map" of the codebase
 **Implementation:**
 *   Created `mock_whitelist.toml` in the project root.
 *   Modified `tests/test_project_integrity/test_no_internal_mocks.py` to load this file, parse it, and use the resulting contextual map in its `MockFinder` logic.
+
+---
+
+## Pivot to Capability-Driven ZLT Model & Central Option Definitions (2025-04-26T14:55:57+08:00) # AI: Run date --iso-8601=seconds
+
+**Problem:** The previous model relying on `tool_mapping.yaml` to map ZLT actions directly to tool definitions, while functional, showed limitations:
+*   It didn't easily accommodate the concept that a single ZLT action (`format`) might invoke different tools based on file type (`ruff` for Python, `stylua` for Lua).
+*   Mapping ZLT options to tool options (`option_links`) within `tool_mapping.yaml` became complex and separated capability declaration from the tool definition itself.
+*   The tool matrix shared by the user highlighted that tools fundamentally *provide capabilities* (Linter, Formatter) and ZLT actions should invoke these capabilities.
+
+**Decision:** Pivot to a capability-driven architecture for ZLT's core logic and command-line interface.
+
+**Core Concepts:**
+
+1.  **Central Capabilities Definition:** A canonical list of recognized capabilities (e.g., "Formatter", "Linter", "Type Checker") will be maintained, likely in a dedicated file (`src/zeroth_law/tool_capabilities.json` or similar). This forms ZLT's understanding of *what tasks can be performed*.
+2.  **Tool Definitions Declare Capabilities:** Each tool definition `.json` file (`src/zeroth_law/tools/**/*.json`) **must** declare which capabilities it provides (`provides_capabilities: ["Linter", ...]`) and which file types it supports (`supported_filetypes: [".py", ...]`). This moves capability declaration to the tool itself.
+3.  **ZLT Runtime Dispatch:** When a ZLT command runs (e.g., `zlt lint file.py file.sh`):
+    *   ZLT determines the required capability ("Linter").
+    *   ZLT identifies target file types (`.py`, `.sh`).
+    *   ZLT scans all known tool definitions.
+    *   ZLT finds tools matching the capability *and* file type.
+    *   ZLT selects the "prime" (default) tool for each file type based on internal logic/priority.
+4.  **Central Canonical Option Definitions:** Create a single source-of-truth file (`src/zeroth_law/zlt_options_definitions.json`) defining ZLT's universal command-line options (e.g., `verbose`, `config`, `paths`). This file details the option's CLI flags (`["--verbose", "-v"]`), type (`flag`, `value`, `positional`), description, etc.
+5.  **Tool Definitions Map *to* Canonical Options:** Tool definition JSON files will map their specific flags/arguments to the ZLT canonical option names using a `maps_to_zlt_option: "canonical_name"` key within the option/argument definition.
+6.  **Dynamic CLI (`--help`):** ZLT's CLI (`cli.py`) will dynamically load `zlt_options_definitions.json` to build its command-line options and help text, ensuring consistency.
+7.  **Runtime Option Translation:** When executing a tool, ZLT uses the `maps_to_zlt_option` information from the *selected tool's definition* to translate the activated ZLT options into the correct flags/arguments for that specific tool.
+
+**Rationale:**
+*   Aligns ZLT's internal model more closely with the tool matrix concept.
+*   Supports polymorphic behavior based on file types naturally.
+*   Encapsulates tool capabilities and ZLT option mapping within the tool definitions themselves.
+*   Creates a single source of truth (`zlt_options_definitions.json`) for ZLT's own CLI flags and help text.
+*   Reduces or eliminates the need for the complex `tool_mapping.yaml` file.
+
+**Implementation:** This will be developed using TDD/DDT, focusing on testing the dynamic CLI generation, the capability/filetype dispatch logic, and the option translation mechanism. New ZLT commands (`zlt definition update-metadata`?) will be needed to manage the new metadata fields within the tool definition JSONs.

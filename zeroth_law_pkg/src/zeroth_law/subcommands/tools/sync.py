@@ -22,7 +22,14 @@ from ...lib.tooling.baseline_generator import (
 
 # Need ToolIndexHandler and related utils
 # TODO: Move ToolIndexHandler and helpers to shared location if not already
-from ...lib.tool_index_handler import ToolIndexHandler
+# from ...lib.tool_index_handler import ToolIndexHandler # <-- REMOVE THIS
+# --- Corrected imports for index utilities --- #
+from ...dev_scripts.tool_index_utils import (
+    load_tool_index,
+    save_tool_index,
+    get_index_entry,
+    update_index_entry,
+)
 
 # --- Updated imports for tool path utils --- #
 from ...lib.tool_path_utils import (
@@ -156,104 +163,195 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                 log.error(f"Invalid --since format: {since}. Expected format like '24h', '3d', or epoch timestamp.")
                 ctx.exit(1)
 
-        # 4. Instantiate ToolIndexHandler
+        # 4. Instantiate ToolIndexHandler --> Load index data directly
         if not tool_index_path.is_file():
             log.warning(f"Tool index file not found at {tool_index_path}, creating empty index.")
             tool_index_path.write_text("{}", encoding="utf-8")
-        handler = ToolIndexHandler(tool_index_path)
+        # handler = ToolIndexHandler(tool_index_path) # <-- REMOVE THIS
+        index_data = load_tool_index()  # <-- ADD THIS LINE BACK
 
         # 5. Iterate and Sync
         for tool_name in sorted(list(target_tools)):
             processed_count += 1
-            log.debug(f"Processing tool: {tool_name}")
-            # TODO: Handle tool:subcommand hierarchy if tool_name contains ':'
-            command_sequence = (tool_name,)  # Assuming simple tool name for now
-            # --- Use imported helper --- #
-            command_id = command_sequence_to_id(command_sequence)
+            log.info(f"--- Processing Tool: {tool_name} ---")
+
+            # --- Process Base Command --- #
+            base_command_sequence = (tool_name,)
+            base_command_id = command_sequence_to_id(base_command_sequence)
+            log.debug(f"Processing BASE command: {base_command_id}")
 
             try:
-                # Get paths
-                # --- Use imported helper --- #
-                relative_json_path, _ = command_sequence_to_filepath(command_sequence)
-                json_file_path = tool_defs_dir / relative_json_path
-                # Baseline path is handled internally by baseline_generator
+                # Get paths for base command
+                relative_base_json_path, _ = command_sequence_to_filepath(base_command_sequence)
+                base_json_file_path = tool_defs_dir / relative_base_json_path
 
-                # Check skip condition
-                current_entry = handler.get_entry(command_sequence)
-                if not force and current_entry:
-                    last_updated = current_entry.get("updated_timestamp", 0.0)
+                # Check skip condition for base command
+                current_base_entry = get_index_entry(index_data, base_command_sequence)
+                should_skip_base = False
+                if not force and current_base_entry:
+                    last_updated = current_base_entry.get("updated_timestamp", 0.0)
                     if since_timestamp and last_updated <= since_timestamp:
                         log.debug(
-                            f"Skipping {command_id}: Last updated ({last_updated:.2f}) is not after --since ({since_timestamp:.2f})."
+                            f"Skipping BASE {base_command_id}: Last updated ({last_updated:.2f}) is not after --since ({since_timestamp:.2f})."
                         )
+                        should_skip_base = True
                         skipped_count += 1
-                        continue
                     # Could add other time-based checks here if needed
 
-                # --- Run Baseline Generation/Verification --- #
-                log.debug(f"Running baseline generation/verification for {command_id}...")
-                baseline_status = generate_or_verify_baseline(tool_name)
+                if not should_skip_base:
+                    # Run Baseline Generation for BASE command
+                    log.debug(f"Running baseline generation/verification for BASE {base_command_id}...")
+                    base_status_enum, base_calculated_crc, base_check_timestamp = generate_or_verify_baseline(tool_name)
 
-                if baseline_status not in {
-                    BaselineStatus.UP_TO_DATE,
-                    BaselineStatus.UPDATED,
-                }:
-                    err_msg = f"Baseline generation failed for '{tool_name}' with status: {baseline_status.name}"
-                    log.error(err_msg)
-                    sync_errors.append(err_msg)
-                    continue  # Skip index update if baseline failed
+                    if base_status_enum not in {
+                        BaselineStatus.UP_TO_DATE,
+                        BaselineStatus.UPDATED,
+                        BaselineStatus.CAPTURE_SUCCESS,
+                    }:
+                        err_msg = (
+                            f"Baseline generation failed for BASE '{tool_name}' with status: {base_status_enum.name}"
+                        )
+                        log.error(err_msg)
+                        sync_errors.append(err_msg)
+                    else:
+                        # Ensure Skeleton JSON exists for BASE command
+                        created_base_json = _create_skeleton_json_if_missing(base_json_file_path, base_command_sequence)
+                        if created_base_json:
+                            skeleton_created_count += 1
 
-                # --- Ensure Skeleton JSON Exists --- #
-                created_json = _create_skeleton_json_if_missing(json_file_path, command_sequence)
-                if created_json:
-                    skeleton_created_count += 1
+                        # Update Index Entry for BASE command
+                        log.debug(f"Updating index entry for BASE {base_command_id}...")
+                        base_baseline_txt_path = tool_defs_dir / tool_name / f"{base_command_id}.txt"
+                        relative_base_baseline_path_str = (
+                            str(base_baseline_txt_path.relative_to(tool_defs_dir))
+                            if base_baseline_txt_path.exists()
+                            else None
+                        )
 
-                # --- Update Index Entry (Adapted from conftest) --- #
-                log.debug(f"Updating index entry for {command_id}...")
-                # Re-fetch entry in case skeleton was created
-                current_entry = handler.get_entry(command_sequence)
-                relative_baseline_path = handler.get_baseline_path_for_sequence(
-                    command_sequence
-                )  # Get path from handler
-                if not relative_baseline_path:
-                    log.error(f"Failed to get baseline path from index for {command_id} after baseline generation.")
-                    sync_errors.append(f"Index inconsistency for {command_id}: baseline path missing.")
-                    continue
-
-                if current_entry is None:
-                    log.info(f"Index Update: No existing entry for {command_id}, creating default.")
-                    current_entry = {
-                        "command": list(command_sequence),
-                        "baseline_file": str(relative_baseline_path),  # Use path from index
-                        "json_definition_file": str(json_file_path.relative_to(tool_defs_dir)),
-                        "crc": None,
-                        "updated_timestamp": 0.0,
-                        "checked_timestamp": 0.0,  # Baseline check covers this?
-                        "source": "zlt_tools_sync",
-                    }
-                else:
-                    # Ensure paths are up-to-date
-                    current_entry["baseline_file"] = str(relative_baseline_path)
-                    current_entry["json_definition_file"] = str(json_file_path.relative_to(tool_defs_dir))
-
-                # Update timestamp
-                update_time = time.time()
-                current_entry["updated_timestamp"] = update_time
-                # Update CRC from baseline generator (already stored in index by it)
-                current_entry["crc"] = handler.get_crc_for_sequence(command_sequence)
-
-                handler.update_entry(command_sequence, current_entry)
-                log.debug(f"Index update successful for {command_id}")
-                if baseline_status == BaselineStatus.UPDATED or created_json:  # Count if baseline OR JSON changed
-                    updated_count += 1
-
+                        base_update_data = {
+                            "command": list(base_command_sequence),
+                            "baseline_file": relative_base_baseline_path_str,
+                            "json_definition_file": str(base_json_file_path.relative_to(tool_defs_dir)),
+                            "crc": base_calculated_crc,
+                            "updated_timestamp": base_check_timestamp if base_check_timestamp else time.time(),
+                            "checked_timestamp": base_check_timestamp if base_check_timestamp else time.time(),
+                            "source": "zlt_tools_sync",
+                        }
+                        update_index_entry(index_data, base_command_sequence, base_update_data)
+                        log.debug(f"Index update successful for BASE {base_command_id}")
+                        if base_status_enum == BaselineStatus.UPDATED or created_base_json:
+                            updated_count += 1
             except Exception as e:
-                log.exception(f"Unexpected error syncing tool {tool_name}: {e}")
-                sync_errors.append(f"Unexpected error for {tool_name}: {e}")
+                err_msg = f"Unexpected error syncing BASE {base_command_id}: {e}"
+                log.exception(err_msg)  # Log traceback
+                sync_errors.append(err_msg)
+
+            # --- Process Subcommands (if defined) --- #
+            base_definition_data = None
+            if base_json_file_path.exists():
+                try:
+                    with base_json_file_path.open("r", encoding="utf-8") as f_base:
+                        base_definition_data = json_lib.load(f_base)
+                except Exception as json_e:
+                    log.warning(
+                        f"Could not load base JSON definition {base_json_file_path} to check for subcommands: {json_e}"
+                    )
+
+            if isinstance(base_definition_data, dict) and "subcommands_detail" in base_definition_data:
+                subcommands_detail = base_definition_data["subcommands_detail"]
+                if isinstance(subcommands_detail, dict):
+                    log.info(f"Found {len(subcommands_detail)} subcommands for {tool_name}. Processing...")
+                    for sub_key in sorted(subcommands_detail.keys()):
+                        log.debug(f"Processing SUBCOMMAND: {tool_name} {sub_key}")
+                        sub_command_sequence = (tool_name, sub_key)
+                        sub_command_id = command_sequence_to_id(sub_command_sequence)
+                        sub_command_sequence_str = f"{tool_name} {sub_key}"
+
+                        try:
+                            # Get paths for subcommand
+                            relative_sub_json_path, _ = command_sequence_to_filepath(sub_command_sequence)
+                            sub_json_file_path = tool_defs_dir / relative_sub_json_path
+
+                            # Check skip condition for subcommand
+                            current_sub_entry = get_index_entry(index_data, sub_command_sequence)
+                            should_skip_sub = False
+                            if not force and current_sub_entry:
+                                last_updated_sub = current_sub_entry.get("updated_timestamp", 0.0)
+                                if since_timestamp and last_updated_sub <= since_timestamp:
+                                    log.debug(
+                                        f"Skipping SUBCOMMAND {sub_command_id}: Last updated ({last_updated_sub:.2f}) is not after --since ({since_timestamp:.2f})."
+                                    )
+                                    should_skip_sub = True
+                                    skipped_count += 1
+                                # Could add other time-based checks here
+
+                            if not should_skip_sub:
+                                # Run Baseline Generation for SUBCOMMAND
+                                log.debug(
+                                    f"Running baseline generation/verification for SUBCOMMAND {sub_command_id}..."
+                                )
+                                sub_status_enum, sub_calculated_crc, sub_check_timestamp = generate_or_verify_baseline(
+                                    sub_command_sequence_str
+                                )
+
+                                if sub_status_enum not in {
+                                    BaselineStatus.UP_TO_DATE,
+                                    BaselineStatus.UPDATED,
+                                    BaselineStatus.CAPTURE_SUCCESS,
+                                }:
+                                    err_msg = f"Baseline generation failed for SUBCOMMAND '{sub_command_sequence_str}' with status: {sub_status_enum.name}"
+                                    log.error(err_msg)
+                                    sync_errors.append(err_msg)
+                                else:
+                                    # Ensure Skeleton JSON exists for SUBCOMMAND
+                                    created_sub_json = _create_skeleton_json_if_missing(
+                                        sub_json_file_path, sub_command_sequence
+                                    )
+                                    if created_sub_json:
+                                        skeleton_created_count += 1
+
+                                    # Update Index Entry for SUBCOMMAND
+                                    log.debug(f"Updating index entry for SUBCOMMAND {sub_command_id}...")
+                                    sub_baseline_txt_path = tool_defs_dir / tool_name / f"{sub_command_id}.txt"
+                                    relative_sub_baseline_path_str = (
+                                        str(sub_baseline_txt_path.relative_to(tool_defs_dir))
+                                        if sub_baseline_txt_path.exists()
+                                        else None
+                                    )
+
+                                    sub_update_data = {
+                                        "command": list(sub_command_sequence),
+                                        "baseline_file": relative_sub_baseline_path_str,
+                                        "json_definition_file": str(sub_json_file_path.relative_to(tool_defs_dir)),
+                                        "crc": sub_calculated_crc,
+                                        "updated_timestamp": sub_check_timestamp
+                                        if sub_check_timestamp
+                                        else time.time(),
+                                        "checked_timestamp": sub_check_timestamp
+                                        if sub_check_timestamp
+                                        else time.time(),
+                                        "source": "zlt_tools_sync",
+                                    }
+                                    update_index_entry(index_data, sub_command_sequence, sub_update_data)
+                                    log.debug(f"Index update successful for SUBCOMMAND {sub_command_id}")
+                                    if sub_status_enum == BaselineStatus.UPDATED or created_sub_json:
+                                        updated_count += 1  # Still counts towards overall updates
+                        except Exception as sub_e:
+                            err_msg = f"Unexpected error syncing SUBCOMMAND {sub_command_id}: {sub_e}"
+                            log.exception(err_msg)  # Log traceback
+                            sync_errors.append(err_msg)
+                else:
+                    log.debug(f"No 'subcommands_detail' dictionary found in {base_json_file_path} for {tool_name}.")
+            else:
+                log.debug(
+                    f"Base definition {base_json_file_path} not found or not a dictionary for {tool_name}, cannot check for subcommands."
+                )
 
         # 6. Save Index
-        log.info("Saving tool index...")
-        handler.save_index()
+        log.info("Saving updated tool index...")
+        if not save_tool_index(index_data):
+            log.error("Failed to save tool index.")
+            exit_code = 1
 
         # 7. Report Summary
         log.info("-- Sync Summary --")

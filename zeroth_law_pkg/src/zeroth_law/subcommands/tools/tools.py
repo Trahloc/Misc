@@ -29,6 +29,9 @@ from .blacklist_cmd import blacklist  # Import new command
 # Import and add sync command
 from .sync import sync
 
+# Import the definition group from its new location
+from .definition import definition_group
+
 tools_group.add_command(reconcile)
 # tools_group.add_command(add_whitelist) # Removed old registration
 # tools_group.add_command(remove_whitelist) # Removed old registration
@@ -37,6 +40,9 @@ tools_group.add_command(reconcile)
 tools_group.add_command(whitelist)  # Add new command
 tools_group.add_command(blacklist)  # Add new command
 tools_group.add_command(sync)
+
+# Register the definition group under tools
+tools_group.add_command(definition_group)
 
 # Example (will be added later):
 # from .sync import sync

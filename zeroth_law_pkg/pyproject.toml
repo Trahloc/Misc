@@ -95,7 +95,7 @@ test = [
 # Scripts / Entry Points
 [project.scripts]
 # zeroth-law = "zeroth_law.cli:cli_group" # Removed in favor of zlt alias
-zlt = "zeroth_law.cli:cli_group"
+zlt = "zeroth_law.cli:main"
 generate-baselines = "zeroth_law.dev_scripts.generate_baseline_cli:main"
 sync-dev = "zeroth_law.dev_scripts.sync_dev:main"
 fix-json-whitespace = "zeroth_law.dev_scripts.fix_json_whitespace:main"
@@ -178,7 +178,7 @@ whitelist = [
     "uv",
     "vulture",
     "yamllint",
-    "zeroth-law",
+    "zlt",
 ]
 
 blacklist = [
@@ -252,7 +252,7 @@ blacklist = [
     "tox",
     "twine",
     "update-json-crc",
-    "zlt",
+    "zeroth-law",
 
     # Other misc from dependencies
     "docutils",
