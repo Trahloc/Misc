@@ -1,9 +1,9 @@
 
- Verify that a local policy file is valid. NAME is the name of the file type to validate. Valid values are: policy_file               
-                                                                                                                                      
-                                                                                                                                      
- Usage: safety validate [OPTIONS] NAME [VERSION]                                                                                      
-                                                                                                                                      
+ Verify that a local policy file is valid. NAME is the name of the file type to validate. Valid values are: policy_file   
+                                                                                                                          
+                                                                                                                          
+ Usage: safety validate [OPTIONS] NAME [VERSION]                                                                          
+                                                                                                                          
                                         Options                                         
 ┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃            ┃                                                                         ┃

@@ -50,7 +50,8 @@ options:
   --memory              profile memory (default: True )
   --profile-all         profile all executed code, not just the target program (default: only the target program)
   --profile-only PROFILE_ONLY
-                        profile only code in filenames that contain the given strings, separated by commas (default: no restrictions)
+                        profile only code in filenames that contain the given strings, separated by commas (default: no 
+restrictions)
   --profile-exclude PROFILE_EXCLUDE
                         do not profile code in filenames that contain the given strings, separated by commas (default: no 
 restrictions)

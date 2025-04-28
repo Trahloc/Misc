@@ -97,7 +97,8 @@ def _perform_reconciliation_logic(
         if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR:
             msg = (
                 f"ERROR: Tool '{tool}' has directory in tools/ but is BLACKLISTED. "
-                f"Remove directory: {tool_defs_dir.relative_to(project_root_dir) / tool}"
+                f"Remove directory: {tool_defs_dir.relative_to(project_root_dir) / tool}. "
+                f"Alternatively, run 'zlt tools sync --prune' to remove all such directories."
             )
             logger.error(msg)
             error_messages.append(msg)
@@ -121,7 +122,8 @@ def _perform_reconciliation_logic(
         elif status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR:
             msg = (
                 f"WARNING: Orphan directory for '{tool}' found in tools/ but not managed. "
-                f"Run 'zlt tools add-whitelist {tool}', 'zlt tools add-blacklist {tool}', or remove directory."
+                f"Run 'zlt tools add-whitelist {tool}', 'zlt tools add-blacklist {tool}', "
+                f"or remove directory (e.g., using 'zlt tools sync --prune')."
             )
             logger.warning(msg)
             warning_messages.append(msg)

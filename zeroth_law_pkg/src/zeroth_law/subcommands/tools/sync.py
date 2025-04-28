@@ -5,6 +5,10 @@ import click
 import logging
 import time
 import sys
+import shutil
+import itertools
+import subprocess
+import hashlib
 from pathlib import Path
 from typing import Tuple, List
 
@@ -42,6 +46,101 @@ from ...lib.tool_path_utils import (
 import json as json_lib  # Alias to avoid conflict
 
 log = logging.getLogger(__name__)
+
+# Define spinner characters
+SPINNER = itertools.cycle(["-", "\\\\", "|", "/"])
+
+# --- Podman Helper Functions ---
+
+
+def _run_podman_command(args: list[str], check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
+    """Helper to run a podman command."""
+    command = ["podman"] + args
+    log.debug(f"Executing Podman command: {' '.join(command)}")
+    try:
+        return subprocess.run(
+            command,
+            check=check,
+            capture_output=capture,
+            text=True,  # Decode output as text
+            encoding="utf-8",
+        )
+    except FileNotFoundError:
+        log.error("`podman` command not found. Please ensure Podman is installed and in your PATH.")
+        raise
+    except subprocess.CalledProcessError as e:
+        log.error(f"Podman command failed: {' '.join(command)}")
+        log.error(f"Stderr: {e.stderr}")
+        raise
+
+
+def _get_container_name(project_root: Path) -> str:
+    """Generate a deterministic container name for the project."""
+    # Use a short hash of the project root path
+    project_hash = hashlib.sha1(str(project_root).encode()).hexdigest()[:12]
+    return f"zlt-baseline-runner-{project_hash}"
+
+
+def _start_podman_runner(container_name: str, project_root: Path, venv_path: Path) -> bool:
+    """Starts the podman container for baseline generation."""
+    log.info(f"Attempting to start Podman baseline runner: {container_name}")
+    # Ensure venv exists
+    if not venv_path.is_dir():
+        log.error(f"Virtual environment not found at: {venv_path}")
+        return False
+
+    # Check if container exists, remove if it does (ensures clean start)
+    try:
+        result = _run_podman_command(["inspect", container_name], check=False)
+        if result.returncode == 0:
+            log.warning(f"Container {container_name} already exists. Stopping and removing.")
+            _run_podman_command(["stop", container_name], check=False)
+            _run_podman_command(["rm", container_name], check=False)
+    except Exception as e:
+        log.error(f"Error checking/removing existing container {container_name}: {e}")
+        return False
+
+    # TODO: Determine python version/image automatically? For now, hardcode python:3.13-slim
+    # This MUST match the python version used in the project's venv
+    python_image = "docker.io/library/python:3.13-slim"
+    log.info(f"Using Podman image: {python_image}")
+
+    try:
+        # Mount project root and venv read-only
+        # Mount project root to allow running scripts from within the project
+        # Mount venv to provide access to installed tools
+        _run_podman_command(
+            [
+                "run",
+                "--rm",  # Automatically remove container on exit (though we also stop/rm explicitly)
+                "-d",  # Run detached
+                "--name",
+                container_name,
+                f"--volume={str(project_root.resolve())}:/app:ro",  # Mount project root
+                f"--volume={str(venv_path.resolve())}:/venv:ro",  # Mount venv
+                python_image,
+                "sleep",
+                "infinity",  # Keep container running
+            ]
+        )
+        log.info(f"Successfully started Podman container: {container_name}")
+        return True
+    except Exception as e:
+        log.error(f"Failed to start Podman container {container_name}: {e}")
+        return False
+
+
+def _stop_podman_runner(container_name: str) -> None:
+    """Stops and removes the podman container."""
+    log.info(f"Stopping and removing Podman container: {container_name}")
+    try:
+        # Use --ignore to avoid errors if container is already gone
+        _run_podman_command(["stop", "--ignore", container_name], check=False)
+        _run_podman_command(["rm", "--ignore", container_name], check=False)
+        log.info(f"Podman container {container_name} stopped and removed.")
+    except Exception as e:
+        # Log error but don't prevent script exit
+        log.error(f"Error stopping/removing Podman container {container_name}: {e}")
 
 
 # --- Helper for Skeleton Creation (Adapted from conftest) ---
@@ -100,8 +199,13 @@ def _create_skeleton_json_if_missing(json_file_path: Path, command_sequence: tup
     "--since",
     help="Only update items not updated since <TIMESPEC> (e.g., '24h', '3d', 'YYYY-MM-DDTHH:MM:SSZ').",
 )
+@click.option(
+    "--prune",
+    is_flag=True,
+    help="Remove unmanaged or blacklisted tool directories found locally.",
+)
 @click.pass_context
-def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since: str | None) -> None:
+def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since: str | None, prune: bool) -> None:
     """Generates/updates baselines, JSON defs, and index for managed tools."""
     config = ctx.obj["config"]
     project_root = ctx.obj.get("project_root")
@@ -112,27 +216,91 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
     updated_count = 0
     skeleton_created_count = 0
     skipped_count = 0
+    pruned_count = 0
 
     if not project_root:
         log.error("Project root could not be determined. Cannot perform sync.")
         ctx.exit(1)
 
+    # --- Podman Setup ---
+    container_name = _get_container_name(project_root)
+    venv_path = project_root / ".venv"  # Assuming standard venv location
+    ctx.obj["podman_container_name"] = None  # Initialize in context
+
     # Define paths consistently
     tool_defs_dir = project_root / "src" / "zeroth_law" / "tools"
     generated_outputs_dir = project_root / "generated_command_outputs"
-    generated_outputs_dir.mkdir(parents=True, exist_ok=True)  # Ensure baseline dir exists
+    generated_outputs_dir.mkdir(parents=True, exist_ok=True)
     tool_index_path = tool_defs_dir / "tool_index.json"
 
     try:
+        # Start Podman runner BEFORE any baseline generation might occur
+        if not _start_podman_runner(container_name, project_root, venv_path):
+            log.error("Failed to initialize Podman runner. Aborting sync.")
+            ctx.exit(1)
+        ctx.obj["podman_container_name"] = container_name  # Store name for baseline generator
+
         # 1. Perform reconciliation to get managed tools
         log.debug("Performing reconciliation to identify managed tools...")
-        _, managed_tools_set, _, _, _, _ = _perform_reconciliation_logic(
-            project_root_dir=project_root, config_data=config
+        reconciliation_results, managed_tools_set, blacklist, errors, warnings, has_errors = (
+            _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
         )
 
-        if not managed_tools_set:
-            log.info("No managed tools identified by reconciliation. Nothing to sync.")
+        if not managed_tools_set and not prune:
+            log.info("No managed tools identified by reconciliation. Nothing to sync or prune.")
             ctx.exit(0)
+
+        # 1b. Identify directories to prune (if requested)
+        dirs_to_prune = set()
+        if prune:
+            # Find tools marked as blacklisted or orphan in reconciliation results
+            blacklisted_present = {
+                tool
+                for tool, status in reconciliation_results.items()
+                if status == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR
+            }
+            orphaned_present = {
+                tool
+                for tool, status in reconciliation_results.items()
+                if status == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR
+            }
+            dirs_to_prune = blacklisted_present.union(orphaned_present)
+
+            if dirs_to_prune:
+                log.warning(
+                    f"--prune specified: The following {len(dirs_to_prune)} directories will be removed: {sorted(list(dirs_to_prune))}"
+                )
+                # Perform pruning BEFORE main sync loop
+                for tool_name in dirs_to_prune:
+                    dir_path = tool_defs_dir / tool_name
+                    if dir_path.is_dir():  # Check if it actually exists
+                        try:
+                            log.info(f"Pruning directory: {dir_path}")
+                            shutil.rmtree(dir_path)
+                            pruned_count += 1
+                        except OSError as e:
+                            err_msg = f"Error pruning directory {dir_path}: {e}"
+                            log.error(err_msg)
+                            sync_errors.append(err_msg)
+                    else:
+                        log.warning(f"Requested prune for {tool_name}, but directory {dir_path} not found.")
+            else:
+                log.info("--prune specified, but no unmanaged or blacklisted directories found to remove.")
+
+        # Exit if errors occurred during pruning
+        if sync_errors:
+            log.error("Errors occurred during pruning phase. Aborting sync.")
+            exit_code = 1
+            # Jump to summary reporting
+            raise Exception("Pruning errors occurred")  # Use exception to jump to finally/summary
+
+        if not managed_tools_set:
+            log.info("No managed tools identified. Pruning (if requested) is complete. Exiting.")
+            # Save index even if no tools were synced, in case pruning happened
+            if not save_tool_index(load_tool_index()):  # Reload index in case it changed
+                log.error("Failed to save tool index after potential pruning.")
+                exit_code = 1
+            ctx.exit(exit_code)
 
         # 2. Filter target tools
         target_tools = managed_tools_set
@@ -171,9 +339,16 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         index_data = load_tool_index()  # <-- ADD THIS LINE BACK
 
         # 5. Iterate and Sync
-        for tool_name in sorted(list(target_tools)):
+        total_tools = len(target_tools)  # Add counter
+        for i, tool_name in enumerate(sorted(list(target_tools)), 1):  # Add counter
             processed_count += 1
-            log.info(f"--- Processing Tool: {tool_name} ---")
+            # Add progress message here - Initial print for the tool
+            # click.echo(f"[{i}/{total_tools}] Processing Tool: {tool_name}...", file=sys.stderr, nl=False)
+            current_spinner = next(SPINNER)
+            base_msg = f"[{i}/{total_tools}] {current_spinner} Processing Tool: {tool_name}"
+            click.echo(f"{base_msg}...", file=sys.stderr, nl=False)
+
+            log.info(f"--- Processing Tool: {tool_name} [{i}/{total_tools}] ---")
 
             # --- Process Base Command --- #
             base_command_sequence = (tool_name,)
@@ -201,7 +376,11 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                 if not should_skip_base:
                     # Run Baseline Generation for BASE command
                     log.debug(f"Running baseline generation/verification for BASE {base_command_id}...")
-                    base_status_enum, base_calculated_crc, base_check_timestamp = generate_or_verify_baseline(tool_name)
+                    base_status_enum, base_calculated_crc, base_check_timestamp = generate_or_verify_baseline(
+                        tool_name,
+                        root_dir=tool_defs_dir,  # Pass tool_defs_dir as root? Or project_root? Check generator usage
+                        ctx=ctx,  # Pass context
+                    )
 
                     if base_status_enum not in {
                         BaselineStatus.UP_TO_DATE,
@@ -262,6 +441,18 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                 if isinstance(subcommands_detail, dict):
                     log.info(f"Found {len(subcommands_detail)} subcommands for {tool_name}. Processing...")
                     for sub_key in sorted(subcommands_detail.keys()):
+                        # Update spinner for subcommand
+                        current_spinner = next(SPINNER)
+                        sub_msg = f"{base_msg} -> {sub_key}"
+                        # Use \r to overwrite previous line part
+                        click.echo(
+                            f"\r[{i}/{total_tools}] {current_spinner} Processing {tool_name} -> {sub_key}... ".ljust(
+                                80
+                            ),
+                            file=sys.stderr,
+                            nl=False,
+                        )
+
                         log.debug(f"Processing SUBCOMMAND: {tool_name} {sub_key}")
                         sub_command_sequence = (tool_name, sub_key)
                         sub_command_id = command_sequence_to_id(sub_command_sequence)
@@ -291,7 +482,9 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                                     f"Running baseline generation/verification for SUBCOMMAND {sub_command_id}..."
                                 )
                                 sub_status_enum, sub_calculated_crc, sub_check_timestamp = generate_or_verify_baseline(
-                                    sub_command_sequence_str
+                                    sub_command_sequence_str,
+                                    root_dir=tool_defs_dir,  # Pass tool_defs_dir as root? Or project_root? Check generator usage
+                                    ctx=ctx,  # Pass context
                                 )
 
                                 if sub_status_enum not in {
@@ -341,11 +534,19 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                             log.exception(err_msg)  # Log traceback
                             sync_errors.append(err_msg)
                 else:
-                    log.debug(f"No 'subcommands_detail' dictionary found in {base_json_file_path} for {tool_name}.")
+                    log.debug(
+                        f"Base definition {base_json_file_path} not found or not a dictionary for {tool_name}, cannot check for subcommands."
+                    )
             else:
                 log.debug(
                     f"Base definition {base_json_file_path} not found or not a dictionary for {tool_name}, cannot check for subcommands."
                 )
+
+            # After processing a tool and its subcommands, clear the line and move to the next
+            click.echo("\r" + " " * 80 + "\r", file=sys.stderr, nl=False)  # Clear the line
+            click.echo(
+                f"[{i}/{total_tools}] ✓ Finished: {tool_name}", file=sys.stderr
+            )  # Print final status for the tool
 
         # 6. Save Index
         log.info("Saving updated tool index...")
@@ -357,10 +558,12 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         log.info("-- Sync Summary --")
         log.info(f"Tools Targeted:   {len(target_tools)}")
         log.info(f"Tools Processed:  {processed_count}")
-        log.info(f"Baselines/Index Updated: {updated_count}")
-        log.info(f"Skeletons Created:{skeleton_created_count}")
-        log.info(f"Skipped (recent): {skipped_count}")
-        log.info(f"Errors:           {len(sync_errors)}")
+        log.info(f"Baseline/Index Updated: {updated_count}")
+        log.info(f"Skeletons Created:  {skeleton_created_count}")
+        log.info(f"Skipped (recent):   {skipped_count}")
+        log.info(f"Errors:             {len(sync_errors)}")
+        if prune:
+            log.info(f"Directories Pruned: {pruned_count}")
         if sync_errors:
             log.error("Sync completed with errors:")
             for err in sync_errors:
@@ -373,7 +576,14 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         log.error(f"Sync failed during initial reconciliation: {e}")
         exit_code = 2
     except Exception as e:
-        log.exception("An unexpected error occurred during the sync command.")
-        exit_code = 3
+        # Check if it was the pruning exception
+        if "Pruning errors occurred" not in str(e):
+            log.exception("An unexpected error occurred during the sync command.")
+            exit_code = 3
+        # Otherwise, exit_code should already be set to 1 from pruning block
+    finally:
+        # --- Podman Cleanup ---
+        if ctx.obj.get("podman_container_name"):
+            _stop_podman_runner(ctx.obj["podman_container_name"])
 
     ctx.exit(exit_code)

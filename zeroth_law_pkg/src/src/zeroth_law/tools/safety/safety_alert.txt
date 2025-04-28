@@ -1,52 +1,53 @@
 
- \[deprecated] Create GitHub pull requests or GitHub issues using a `safety check` json report file. Being replaced by newer          
- features.                                                                                                                            
- Example: safety alert --check-report your-report.json --key API_KEY github-pr --repo my-org/my-repo --token github-token             
-                                                                                                                                      
- Usage: safety alert [OPTIONS] COMMAND [ARGS]...                                                                                      
-                                                                                                                                      
-                                                               Commands                                                               
-┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃              ┃                                                                                                                     ┃
-┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ github-issue │                                                                                                                     │
-│              │ Create a GitHub Issue for any vulnerabilities found using PyUp's remediation data.                                  │
-│              │                                                                                                                     │
-│              │ Normally, this is run by a GitHub action. If you're running this manually, ensure that your local repo is up to     │
-│              │ date and on HEAD - otherwise you'll see strange results.                                                            │
-│              │                                                                                                                     │
-│              │ Args:                                                                                                               │
-│              │     obj (Any): The Click context object containing report data.                                                     │
-│              │     repo (str): The GitHub repository path.                                                                         │
-│              │     token (str): The GitHub Access Token.                                                                           │
-│              │     base_url (Optional): Custom base URL for GitHub Enterprise, if applicable.                                      │
-│              │                                                                                                                     │
-├──────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ github-pr    │                                                                                                                     │
-│              │ Create a GitHub PR to fix any vulnerabilities using Safety's remediation data.                                      │
-│              │                                                                                                                     │
-│              │ This is usually run by a GitHub action. If you're running this manually, ensure that your local repo is up to date  │
-│              │ and on HEAD - otherwise you'll see strange results.                                                                 │
-│              │                                                                                                                     │
-│              │ Args:                                                                                                               │
-│              │     obj (Any): The Click context object containing report data.                                                     │
-│              │     repo (str): The GitHub repository path.                                                                         │
-│              │     token (str): The GitHub Access Token.                                                                           │
-│              │     base_url (Optional): Custom base URL for GitHub Enterprise, if applicable.                                      │
-│              │                                                                                                                     │
-└──────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-                                                            Options                                                            
-┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃                    ┃                                                                                                        ┃
-┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ ['--check-report'] │ JSON output of Safety Check to work with.                                                              │
-├────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--key']          │ API Key for safetycli.com's vulnerability database. Can be set as SAFETY_API_KEY environment variable. │
-├────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--policy-file']  │ Define the policy file to be used                                                                      │
-├────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--help']         │ Show this message and exit.                                                                            │
-└────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ \[deprecated] Create GitHub pull requests or GitHub issues using a `safety check` json report file. Being replaced by    
+ newer features.                                                                                                          
+ Example: safety alert --check-report your-report.json --key API_KEY github-pr --repo my-org/my-repo --token github-token 
+                                                                                                                          
+ Usage: safety alert [OPTIONS] COMMAND [ARGS]...                                                                          
+                                                                                                                          
+                                                         Commands                                                         
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃              ┃                                                                                                         ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ github-issue │                                                                                                         │
+│              │ Create a GitHub Issue for any vulnerabilities found using PyUp's remediation data.                      │
+│              │                                                                                                         │
+│              │ Normally, this is run by a GitHub action. If you're running this manually, ensure that your local repo  │
+│              │ is up to date and on HEAD - otherwise you'll see strange results.                                       │
+│              │                                                                                                         │
+│              │ Args:                                                                                                   │
+│              │     obj (Any): The Click context object containing report data.                                         │
+│              │     repo (str): The GitHub repository path.                                                             │
+│              │     token (str): The GitHub Access Token.                                                               │
+│              │     base_url (Optional): Custom base URL for GitHub Enterprise, if applicable.                          │
+│              │                                                                                                         │
+├──────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ github-pr    │                                                                                                         │
+│              │ Create a GitHub PR to fix any vulnerabilities using Safety's remediation data.                          │
+│              │                                                                                                         │
+│              │ This is usually run by a GitHub action. If you're running this manually, ensure that your local repo is │
+│              │ up to date and on HEAD - otherwise you'll see strange results.                                          │
+│              │                                                                                                         │
+│              │ Args:                                                                                                   │
+│              │     obj (Any): The Click context object containing report data.                                         │
+│              │     repo (str): The GitHub repository path.                                                             │
+│              │     token (str): The GitHub Access Token.                                                               │
+│              │     base_url (Optional): Custom base URL for GitHub Enterprise, if applicable.                          │
+│              │                                                                                                         │
+└──────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                         Options                                                          
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                    ┃                                                                                                   ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--check-report'] │ JSON output of Safety Check to work with.                                                         │
+├────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--key']          │ API Key for safetycli.com's vulnerability database. Can be set as SAFETY_API_KEY environment      │
+│                    │ variable.                                                                                         │
+├────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--policy-file']  │ Define the policy file to be used                                                                 │
+├────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--help']         │ Show this message and exit.                                                                       │
+└────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────┘
 
                                                      Global-Options                                                      
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓

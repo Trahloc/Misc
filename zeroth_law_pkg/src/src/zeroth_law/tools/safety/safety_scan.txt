@@ -1,48 +1,48 @@
 
- Scans a Python project directory.                                                                                                    
- Example: safety scan to scan the current directory                                                                                   
-                                                                                                                                      
- Usage: safety [GLOBAL-OPTIONS] scan [OPTIONS]                                                                                        
-                                                                                                                                      
-                                                               Options                                                                
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃                          ┃                                                                                                         ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ ['--target']             │ Define a specific project path to scan. (default: current directory)                                    │
-│                          │                                                                                                         │
-│                          │ Example: safety scan --target /path/to/project                                                          │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--output']             │ Set the output format for scan results (default: screen)                                                │
-│                          │                                                                                                         │
-│                          │ Example: safety scan --output json                                                                      │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--detailed-output']    │ Enable a verbose scan report for detailed insights (only for screen output)                             │
-│                          │                                                                                                         │
-│                          │ Example: safety scan --detailed-output                                                                  │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--save-as']            │ In addition to regular output save the scan results to a json, html, text, or spdx file using: FORMAT   │
-│                          │ FILE_PATH                                                                                               │
-│                          │                                                                                                         │
-│                          │ Example: safety scan --save-as json results.json                                                        │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--policy-file']        │ Use a local policy file to configure the scan.                                                          │
-│                          │                                                                                                         │
-│                          │ Note: Project scan policies defined in Safety Platform will override local policy files                 │
-│                          │                                                                                                         │
-│                          │ Example: safety scan --policy-file /path/to/policy.yml                                                  │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--apply-fixes']        │ Update packages listed in requirements.txt files to secure versions where possible                      │
-│                          │                                                                                                         │
-│                          │ Currently supports: requirements.txt files                                                              │
-│                          │                                                                                                         │
-│                          │ Note: this will update your requirements.txt file                                                       │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--install-completion'] │ Install completion for the current shell.                                                               │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--show-completion']    │ Show completion for the current shell, to copy it or customize the installation.                        │
-├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ['--help']               │ Show this message and exit.                                                                             │
-└──────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Scans a Python project directory.                                                                                        
+ Example: safety scan to scan the current directory                                                                       
+                                                                                                                          
+ Usage: safety [GLOBAL-OPTIONS] scan [OPTIONS]                                                                            
+                                                                                                                          
+                                                         Options                                                          
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                          ┃                                                                                             ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--target']             │ Define a specific project path to scan. (default: current directory)                        │
+│                          │                                                                                             │
+│                          │ Example: safety scan --target /path/to/project                                              │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--output']             │ Set the output format for scan results (default: screen)                                    │
+│                          │                                                                                             │
+│                          │ Example: safety scan --output json                                                          │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--detailed-output']    │ Enable a verbose scan report for detailed insights (only for screen output)                 │
+│                          │                                                                                             │
+│                          │ Example: safety scan --detailed-output                                                      │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--save-as']            │ In addition to regular output save the scan results to a json, html, text, or spdx file     │
+│                          │ using: FORMAT FILE_PATH                                                                     │
+│                          │                                                                                             │
+│                          │ Example: safety scan --save-as json results.json                                            │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--policy-file']        │ Use a local policy file to configure the scan.                                              │
+│                          │                                                                                             │
+│                          │ Note: Project scan policies defined in Safety Platform will override local policy files     │
+│                          │                                                                                             │
+│                          │ Example: safety scan --policy-file /path/to/policy.yml                                      │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--apply-fixes']        │ Update packages listed in requirements.txt files to secure versions where possible          │
+│                          │                                                                                             │
+│                          │ Currently supports: requirements.txt files                                                  │
+│                          │                                                                                             │
+│                          │ Note: this will update your requirements.txt file                                           │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--install-completion'] │ Install completion for the current shell.                                                   │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--show-completion']    │ Show completion for the current shell, to copy it or customize the installation.            │
+├──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ['--help']               │ Show this message and exit.                                                                 │
+└──────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────┘
 
                                                      Global-Options                                                      
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -94,12 +94,12 @@
 ├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
 │ ['--version']                    │ Show the version and exit.                                                         │
 └──────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────┘
-                                                                                                                                      
- Safety CLI version: 3.2.9                                                                                                            
- Documentation: https://docs.safetycli.com                                                                                            
-                                                                                                                                      
- Made with love by Safety Cybersecurity                                                                                               
- https://safetycli.com                                                                                                                
- support@safetycli.com                                                                                                                
-                                                                                                                                      
+                                                                                                                          
+ Safety CLI version: 3.2.9                                                                                                
+ Documentation: https://docs.safetycli.com                                                                                
+                                                                                                                          
+ Made with love by Safety Cybersecurity                                                                                   
+ https://safetycli.com                                                                                                    
+ support@safetycli.com                                                                                                    
+                                                                                                                          
 

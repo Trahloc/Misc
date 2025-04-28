@@ -1,31 +1,32 @@
 
- Authenticate Safety CLI to perform scans. Your default browser will automatically open to https://platform.safetycli.com.            
- Example: safety auth login                                                                                                           
-                                                                                                                                      
- Usage: safety [GLOBAL-OPTIONS]  [OPTIONS] COMMAND [ARGS]...                                                                          
-                                                                                                                                      
-                                                               Commands                                                               
-┏━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃          ┃                                                                                                                         ┃
-┡━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ login    │ Authenticate with Safety CLI to perform scans. Your default browser will automatically open to                          │
-│          │ https://platform.safetycli.com unless already authenticated.                                                            │
-│          │                                                                                                                         │
-│          │ Example: safety auth login                                                                                              │
-├──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ logout   │ Log out from the current Safety CLI session.                                                                            │
-│          │                                                                                                                         │
-│          │ Example: safety auth logout                                                                                             │
-├──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ status   │ Show the current authentication status.                                                                                 │
-│          │                                                                                                                         │
-│          │ Example: safety auth status                                                                                             │
-├──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ register │ Create a new user account for the safetycli.com service.                                                                │
-│          │                                                                                                                         │
-│          │ Args:                                                                                                                   │
-│          │     ctx (typer.Context): The Typer context object.                                                                      │
-└──────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ Authenticate Safety CLI to perform scans. Your default browser will automatically open to                                
+ https://platform.safetycli.com.                                                                                          
+ Example: safety auth login                                                                                               
+                                                                                                                          
+ Usage: safety [GLOBAL-OPTIONS]  [OPTIONS] COMMAND [ARGS]...                                                              
+                                                                                                                          
+                                                         Commands                                                         
+┏━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃          ┃                                                                                                             ┃
+┡━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ login    │ Authenticate with Safety CLI to perform scans. Your default browser will automatically open to              │
+│          │ https://platform.safetycli.com unless already authenticated.                                                │
+│          │                                                                                                             │
+│          │ Example: safety auth login                                                                                  │
+├──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ logout   │ Log out from the current Safety CLI session.                                                                │
+│          │                                                                                                             │
+│          │ Example: safety auth logout                                                                                 │
+├──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ status   │ Show the current authentication status.                                                                     │
+│          │                                                                                                             │
+│          │ Example: safety auth status                                                                                 │
+├──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ register │ Create a new user account for the safetycli.com service.                                                    │
+│          │                                                                                                             │
+│          │ Args:                                                                                                       │
+│          │     ctx (typer.Context): The Typer context object.                                                          │
+└──────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
                                                     Options                                                    
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃                          ┃                                                                                  ┃
@@ -87,12 +88,12 @@
 ├──────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
 │ ['--version']                    │ Show the version and exit.                                                         │
 └──────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────┘
-                                                                                                                                      
- Safety CLI version: 3.2.9                                                                                                            
- Documentation: https://docs.safetycli.com                                                                                            
-                                                                                                                                      
- Made with love by Safety Cybersecurity                                                                                               
- https://safetycli.com                                                                                                                
- support@safetycli.com                                                                                                                
-                                                                                                                                      
+                                                                                                                          
+ Safety CLI version: 3.2.9                                                                                                
+ Documentation: https://docs.safetycli.com                                                                                
+                                                                                                                          
+ Made with love by Safety Cybersecurity                                                                                   
+ https://safetycli.com                                                                                                    
+ support@safetycli.com                                                                                                    
+                                                                                                                          
 

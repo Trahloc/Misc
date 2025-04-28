@@ -1,10 +1,10 @@
 
- Generate a boilerplate Safety CLI policy file for customized security policies.                                                      
- Note: Safety Platform policies will override any local policy files found                                                            
- Example: safety generate policy_file                                                                                                 
-                                                                                                                                      
- Usage: safety generate [OPTIONS] NAME                                                                                                
-                                                                                                                                      
+ Generate a boilerplate Safety CLI policy file for customized security policies.                                          
+ Note: Safety Platform policies will override any local policy files found                                                
+ Example: safety generate policy_file                                                                                     
+                                                                                                                          
+ Usage: safety generate [OPTIONS] NAME                                                                                    
+                                                                                                                          
                                            Options                                            
 ┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃            ┃                                                                               ┃

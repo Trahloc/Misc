@@ -1,10 +1,10 @@
 
- \[deprecated] Find licenses at target files or environments. This command will be replaced by safety scan, and will be unsupported   
- beyond 1 May 2024.                                                                                                                   
- Example: safety license -r requirements.txt                                                                                          
-                                                                                                                                      
- Usage: safety license [OPTIONS]                                                                                                      
-                                                                                                                                      
+ \[deprecated] Find licenses at target files or environments. This command will be replaced by safety scan, and will be   
+ unsupported beyond 1 May 2024.                                                                                           
+ Example: safety license -r requirements.txt                                                                              
+                                                                                                                          
+ Usage: safety license [OPTIONS]                                                                                          
+                                                                                                                          
                                                   Options                                                   
 ┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃                      ┃                                                                                   ┃
