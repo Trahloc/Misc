@@ -229,8 +229,14 @@
 - [ ] **14. Podman Integration Follow-up (Post-Refactor):**
   - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
   - [ ] Test the Podman-based baseline capture workflow thoroughly, covering various tools, subcommands, potential errors (container start failure, exec failure, timeouts), and cleanup.
-  - [ ] Investigate and improve shell escaping robustness for command arguments passed to `podman exec sh -c "..."` in `baseline_generator.py`.
-  - [ ] (Post JSON Validation) Re-evaluate implementing a "blind execution" fallback (running command without `--help`) using the Podman sandbox for cases where help flags consistently fail for *valid* commands.
+  - [ ] Investigate and improve shell escaping robustness for command arguments passed to `podman exec sh -c \\\"...\\\"` in `baseline_generator.py`.
+  - [x] (Post JSON Validation) Re-evaluate implementing a \"blind execution\" fallback (running command without `--help`) using the Podman sandbox for cases where help flags consistently fail for *valid* commands.
+  - [x] **Refactor Podman Helper Function (`_prepare_command_for_container`):**
+    - [x] 1. Create new file: `src/zeroth_law/lib/tooling/podman_utils.py`.
+    - [x] 2. ~~Read the definition of `_prepare_command_for_container` from `src/zeroth_law/subcommands/tools/sync.py`.~~ *Function was missing, needed reimplementation.*
+    - [x] 3. Edit `podman_utils.py` to add the function definition (with imports: `Path`, `sys`, `List`, `Sequence`).
+    - [x] 4. Edit `src/zeroth_law/subcommands/tools/sync.py` to add import from `podman_utils`.
+    - [x] 5. Edit `src/zeroth_law/lib/tooling/baseline_generator.py` to add import from `podman_utils`.
 
 ## **Phase I: Capability-Driven Refactor & Central Definitions**
 # Goal: Refactor ZLT core logic to use capabilities for tool dispatch and dynamically generate CLI options from a central definition.

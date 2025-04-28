@@ -10,7 +10,8 @@ import itertools
 import subprocess
 import hashlib
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Any, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- Imports from other modules --- #
 
@@ -20,9 +21,12 @@ from .reconcile import _perform_reconciliation_logic, ReconciliationError
 # Need baseline generation logic
 # TODO: Move baseline_generator to a shared location
 from ...lib.tooling.baseline_generator import (
-    generate_or_verify_baseline,
+    generate_or_verify_ground_truth_txt,
     BaselineStatus,
 )
+
+# Import the Podman helper function
+from ...lib.tooling.podman_utils import _prepare_command_for_container  # noqa: F401 - Used indirectly by baseline_generator?
 
 # Need ToolIndexHandler and related utils
 # TODO: Move ToolIndexHandler and helpers to shared location if not already
@@ -48,7 +52,7 @@ import json as json_lib  # Alias to avoid conflict
 log = logging.getLogger(__name__)
 
 # Define spinner characters
-SPINNER = itertools.cycle(["-", "\\\\", "|", "/"])
+# SPINNER = itertools.cycle(["-", "\\\\", "|", "/"])
 
 # --- Podman Helper Functions ---
 
@@ -105,6 +109,20 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
     python_image = "docker.io/library/python:3.13-slim"
     log.info(f"Using Podman image: {python_image}")
 
+    # --- TEMP DEBUG: Print paths for manual command ---
+    resolved_project_path = str(project_root.resolve())
+    resolved_venv_path = str(venv_path.resolve())
+    print(f"TEMP_PROJECT_PATH: {resolved_project_path}")
+    print(f"TEMP_VENV_PATH: {resolved_venv_path}")
+    # --- END TEMP DEBUG ---
+
+    # --- DEBUG: Log the exact paths being mounted ---
+    resolved_project_path = str(project_root.resolve())
+    resolved_venv_path = str(venv_path.resolve())
+    log.info(f"DEBUG: Mounting project root: {resolved_project_path} -> /app")
+    log.info(f"DEBUG: Mounting venv path:   {resolved_venv_path} -> /venv")
+    # --- END DEBUG ---
+
     try:
         # Mount project root and venv read-only
         # Mount project root to allow running scripts from within the project
@@ -123,7 +141,61 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
                 "infinity",  # Keep container running
             ]
         )
-        log.info(f"Successfully started Podman container: {container_name}")
+        log.info(f"Successfully executed podman run command for {container_name}.")
+
+        # --- DEBUG: Poll container status until 'Up' or timeout ---
+        log.info(f"Polling status of container {container_name}...")
+        start_time = time.time()
+        timeout_seconds = 20  # Max wait time
+        is_running = False
+        while time.time() - start_time < timeout_seconds:
+            try:
+                status_check_cmd = ["podman", "ps", "-f", f"name={container_name}", "--format", "{{.Status}}"]
+                log.debug(f"DEBUG: Running command: {' '.join(status_check_cmd)}")
+                sys.stdout.flush()
+                sys.stderr.flush()
+                status_check_result = subprocess.run(
+                    status_check_cmd,
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    timeout=5,  # Short timeout for the ps command itself
+                )
+                status_output = status_check_result.stdout.strip()
+                log.debug(
+                    f"DEBUG: `podman ps` poll output: '{status_output}' (Exit: {status_check_result.returncode}) Stderr: {status_check_result.stderr.strip()}"
+                )
+                sys.stdout.flush()
+                sys.stderr.flush()
+
+                if status_check_result.returncode == 0 and status_output and "Up" in status_output:
+                    log.info(f"DEBUG: Container {container_name} is Up.")
+                    is_running = True
+                    break  # Exit loop successfully
+
+                # Add a check for container exiting unexpectedly
+                if "Exited" in status_output:
+                    log.error(f"DEBUG: Container {container_name} exited unexpectedly during startup check.")
+                    is_running = False
+                    break  # Exit loop as it has failed
+
+            except Exception as status_e:
+                log.error(f"DEBUG: Error checking podman status during poll: {status_e}")
+                # Continue polling unless timeout is reached
+            finally:
+                sys.stdout.flush()
+                sys.stderr.flush()
+
+            log.debug(f"DEBUG: Container not Up yet, sleeping... (Elapsed: {time.time() - start_time:.1f}s)")
+            time.sleep(0.5)  # Wait before next poll
+
+        if not is_running:
+            log.error(f"DEBUG: Container {container_name} did not become 'Up' within {timeout_seconds} seconds.")
+            return False
+        # --- END DEBUG ---
+
+        log.info(f"Successfully started and verified Podman container: {container_name}")
         return True
     except Exception as e:
         log.error(f"Failed to start Podman container {container_name}: {e}")
@@ -180,6 +252,130 @@ def _create_skeleton_json_if_missing(json_file_path: Path, command_sequence: tup
     return created
 
 
+# --- Helper Function for Processing a Single Command Sequence ---
+def _process_command_sequence(
+    command_sequence: Tuple[str, ...],
+    tool_defs_dir: Path,
+    project_root: Path,
+    container_name: str,
+    initial_index_data: Dict[str, Any],
+    force: bool,
+    since_timestamp: Optional[float],
+    ground_truth_txt_skip_hours: int,
+) -> Dict[str, Any]:
+    """Processes a single command sequence (ground truth gen, skeleton check, prep update data)."""
+    log.debug(f"--->>> Worker thread processing: {command_sequence_to_id(command_sequence)}")
+
+    command_id = command_sequence_to_id(command_sequence)
+    command_sequence_str = " ".join(command_sequence)
+    tool_name = command_sequence[0]
+    result: Dict[str, Any] = {
+        "command_sequence": command_sequence,
+        "status": None,  # Will be BaselineStatus or similar indicator
+        "calculated_crc": None,
+        "check_timestamp": None,
+        "skeleton_created": False,
+        "error_message": None,
+        "skipped": False,
+    }
+    log.info(f"Starting processing for: {command_id}")
+
+    try:
+        # 1. Check Skip Condition
+        should_skip = False
+        skip_reason = ""
+        current_entry = get_index_entry(initial_index_data, command_sequence)
+        if not force and current_entry:
+            last_updated = current_entry.get("updated_timestamp", 0.0)
+
+            if since_timestamp is not None:
+                # --since is provided, use its logic
+                if (
+                    last_updated > 0 and last_updated >= since_timestamp
+                ):  # Corrected logic: skip if updated *after* or *at* since_timestamp
+                    should_skip = True
+                    skip_reason = f"last updated ({last_updated:.2f}) is not before --since ({since_timestamp:.2f})"
+                else:
+                    # --since is NOT provided, apply default configured hour check
+                    if ground_truth_txt_skip_hours > 0:  # <-- Use renamed parameter
+                        skip_threshold = time.time() - ground_truth_txt_skip_hours * 3600
+                        if last_updated > 0 and last_updated > skip_threshold:
+                            should_skip = True
+                            skip_reason = f"last updated ({last_updated:.2f}) is within the last {ground_truth_txt_skip_hours} hours"
+                    # If ground_truth_txt_skip_hours <= 0, no default skip is applied
+
+        if should_skip:
+            log.info(f"Skipping ground truth generation for {command_id}: {skip_reason}.")  # <-- Update log message
+            result["skipped"] = True
+            result["status"] = "SKIPPED_TIMESTAMP"  # More specific status
+            return result  # Early exit if skipped
+
+        # 2. Run Ground Truth Generation
+        log.info(f"Processing {command_id} (Not skipped).")  # Updated log
+        # Ensure project_root is passed correctly from the arguments of this function
+        if not isinstance(project_root, Path):
+            raise ValueError(f"Invalid project_root type passed to _process_command_sequence: {type(project_root)}")
+
+        status_enum, calculated_crc, check_timestamp = generate_or_verify_ground_truth_txt(
+            command_sequence_str,
+            root_dir=tool_defs_dir,
+            container_name=container_name,
+            project_root=project_root,
+        )
+        result["calculated_crc"] = calculated_crc
+        result["check_timestamp"] = check_timestamp
+        result["status"] = status_enum  # Store the enum status
+
+        if status_enum not in {
+            BaselineStatus.UP_TO_DATE,
+            BaselineStatus.UPDATED,
+            BaselineStatus.CAPTURE_SUCCESS,
+        }:
+            result["error_message"] = (
+                f"Ground truth TXT generation failed for '{command_sequence_str}' with status: {status_enum.name}"
+            )
+            log.error(result["error_message"])
+            # Don't return early, still try to ensure skeleton exists below
+            # Store the failure status
+
+        # 3. Ensure Skeleton JSON exists
+        relative_json_path, _ = command_sequence_to_filepath(command_sequence)
+        json_file_path = tool_defs_dir / relative_json_path
+        skeleton_created = _create_skeleton_json_if_missing(json_file_path, command_sequence)
+        result["skeleton_created"] = skeleton_created
+
+        # If skeleton creation failed after ground truth failure, update error message? Or keep original?
+        # Let's keep the original ground truth failure as the primary error for now.
+
+        # 4. Prepare update data (even if ground truth failed, we might have CRC/timestamp)
+        baseline_txt_path = tool_defs_dir / tool_name / f"{command_id}.txt"
+        relative_baseline_path_str = (
+            str(baseline_txt_path.relative_to(tool_defs_dir))
+            if baseline_txt_path.exists()  # Check if file exists *after* ground truth gen attempt
+            else None
+        )
+        result["update_data"] = {
+            "command": list(command_sequence),
+            "baseline_file": relative_baseline_path_str,
+            "json_definition_file": str(json_file_path.relative_to(tool_defs_dir)),
+            "crc": calculated_crc,
+            "updated_timestamp": check_timestamp if check_timestamp else time.time(),
+            "checked_timestamp": check_timestamp if check_timestamp else time.time(),
+            "source": "zlt_tools_sync",
+        }
+
+    except Exception as e:
+        err_msg = f"Unexpected error processing {command_id}: {e}"
+        log.exception(err_msg)
+        result["error_message"] = err_msg
+        result["status"] = BaselineStatus.UNEXPECTED_ERROR  # Or a new status?
+
+    log.info(
+        f"Finished processing for: {command_id} with status: {result.get('status', 'UNKNOWN')} {'(Skipped)' if result.get('skipped') else ''}"
+    )
+    return result
+
+
 # --- Main Sync Command --- #
 
 
@@ -206,10 +402,12 @@ def _create_skeleton_json_if_missing(json_file_path: Path, command_sequence: tup
 )
 @click.pass_context
 def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since: str | None, prune: bool) -> None:
-    """Generates/updates baselines, JSON defs, and index for managed tools."""
-    config = ctx.obj["config"]
-    project_root = ctx.obj.get("project_root")
-    log.info("Starting tool synchronization...")
+    """Synchronizes tool definitions, baselines, and the tool index."""
+    log.critical("!!! ENTERING sync command function !!!")
+
+    # --- Configuration & Initialization --- #
+    project_root = ctx.obj.get("project_root")  # Use .get for safety
+    config = ctx.obj.get("config", {})  # Use .get with default
     exit_code = 0
     sync_errors: List[str] = []
     processed_count = 0
@@ -217,15 +415,22 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
     skeleton_created_count = 0
     skipped_count = 0
     pruned_count = 0
+    max_workers = 4  # Default number of parallel workers, adjust as needed
+    # Read ground truth TXT skip hours from config, default to 24 if not set or invalid type
+    try:
+        ground_truth_txt_skip_hours = int(config.get("ground_truth_txt_skip_since", 24))
+    except (ValueError, TypeError):
+        log.warning("Invalid value for ground_truth_txt_skip_since in config, defaulting to 24 hours.")
+        ground_truth_txt_skip_hours = 24
 
     if not project_root:
         log.error("Project root could not be determined. Cannot perform sync.")
         ctx.exit(1)
 
-    # --- Podman Setup ---
+    # --- Podman Setup --- Get container name BEFORE executor
     container_name = _get_container_name(project_root)
-    venv_path = project_root / ".venv"  # Assuming standard venv location
-    ctx.obj["podman_container_name"] = None  # Initialize in context
+    venv_path = project_root / ".venv"
+    ctx.obj["podman_container_name"] = container_name  # Still store for potential future use/cleanup
 
     # Define paths consistently
     tool_defs_dir = project_root / "src" / "zeroth_law" / "tools"
@@ -234,18 +439,20 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
     tool_index_path = tool_defs_dir / "tool_index.json"
 
     try:
-        # Start Podman runner BEFORE any baseline generation might occur
+        # --- Start Podman Runner ---
         if not _start_podman_runner(container_name, project_root, venv_path):
             log.error("Failed to initialize Podman runner. Aborting sync.")
             ctx.exit(1)
-        ctx.obj["podman_container_name"] = container_name  # Store name for baseline generator
+        ctx.obj["podman_container_name"] = container_name
 
-        # 1. Perform reconciliation to get managed tools
+        log.debug("Pausing briefly for container stabilization...")
+        time.sleep(2)
+
+        # --- Reconciliation & Pruning (Sequential - Must happen before parallel sync) ---
         log.debug("Performing reconciliation to identify managed tools...")
         reconciliation_results, managed_tools_set, blacklist, errors, warnings, has_errors = (
             _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
         )
-
         if not managed_tools_set and not prune:
             log.info("No managed tools identified by reconciliation. Nothing to sync or prune.")
             ctx.exit(0)
@@ -291,18 +498,16 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         if sync_errors:
             log.error("Errors occurred during pruning phase. Aborting sync.")
             exit_code = 1
-            # Jump to summary reporting
             raise Exception("Pruning errors occurred")  # Use exception to jump to finally/summary
 
         if not managed_tools_set:
             log.info("No managed tools identified. Pruning (if requested) is complete. Exiting.")
-            # Save index even if no tools were synced, in case pruning happened
-            if not save_tool_index(load_tool_index()):  # Reload index in case it changed
+            if not save_tool_index(load_tool_index()):
                 log.error("Failed to save tool index after potential pruning.")
                 exit_code = 1
             ctx.exit(exit_code)
 
-        # 2. Filter target tools
+        # --- Filter Target Tools ---
         target_tools = managed_tools_set
         if specific_tools:
             target_tools = {tool for tool in specific_tools if tool in managed_tools_set}
@@ -314,261 +519,176 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                 ctx.exit(1)
         log.info(f"Targeting {len(target_tools)} tools for sync: {sorted(list(target_tools))}")
 
-        # 3. Parse --since (Basic implementation - TODO: Add robust parsing)
+        # --- Parse --since ---
         since_timestamp = None
         if since:
-            # VERY basic parsing - Needs improvement!
             try:
                 if since.endswith("h"):
                     since_timestamp = time.time() - int(since[:-1]) * 3600
                 elif since.endswith("d"):
                     since_timestamp = time.time() - int(since[:-1]) * 86400
                 else:
-                    # Attempt ISO format or epoch?
                     since_timestamp = float(since)  # Basic epoch assumption
-                log.info(f"Applying --since filter: {since} (Timestamp > {since_timestamp:.2f})")
+                    log.info(f"Applying --since filter: {since} (Timestamp > {since_timestamp:.2f})")
             except ValueError:
                 log.error(f"Invalid --since format: {since}. Expected format like '24h', '3d', or epoch timestamp.")
                 ctx.exit(1)
 
-        # 4. Instantiate ToolIndexHandler --> Load index data directly
+        # --- Load Initial Index ---
         if not tool_index_path.is_file():
             log.warning(f"Tool index file not found at {tool_index_path}, creating empty index.")
             tool_index_path.write_text("{}", encoding="utf-8")
-        # handler = ToolIndexHandler(tool_index_path) # <-- REMOVE THIS
-        index_data = load_tool_index()  # <-- ADD THIS LINE BACK
+        index_data = load_tool_index()  # Load initial state for skip checks
 
-        # 5. Iterate and Sync
-        total_tools = len(target_tools)  # Add counter
-        for i, tool_name in enumerate(sorted(list(target_tools)), 1):  # Add counter
-            processed_count += 1
-            # Add progress message here - Initial print for the tool
-            # click.echo(f"[{i}/{total_tools}] Processing Tool: {tool_name}...", file=sys.stderr, nl=False)
-            current_spinner = next(SPINNER)
-            base_msg = f"[{i}/{total_tools}] {current_spinner} Processing Tool: {tool_name}"
-            click.echo(f"{base_msg}...", file=sys.stderr, nl=False)
+        # --- DEBUG: Check container filesystem --- #
+        log.info("--- DEBUG: Checking container filesystem before parallel execution ---")
+        try:
+            log.info("DEBUG: Listing /venv contents...")
+            _run_podman_command(["exec", container_name, "/bin/ls", "-la", "/venv"], check=True, capture=True)
+            log.info("DEBUG: Listing /venv/bin contents...")
+            _run_podman_command(["exec", container_name, "/bin/ls", "-la", "/venv/bin"], check=True, capture=True)
+            log.info("--- DEBUG: Filesystem check complete ---")
+        except Exception as fs_check_e:
+            log.error(f"--- DEBUG: Error checking container filesystem: {fs_check_e} ---")
+            # Optionally exit if filesystem check fails critically
+            # ctx.exit(1)
 
-            log.info(f"--- Processing Tool: {tool_name} [{i}/{total_tools}] ---")
-
-            # --- Process Base Command --- #
+        # --- Prepare Task List ---
+        tasks_to_run: List[Tuple[str, ...]] = []
+        for tool_name in sorted(list(target_tools)):
+            # Add base command task
             base_command_sequence = (tool_name,)
-            base_command_id = command_sequence_to_id(base_command_sequence)
-            log.debug(f"Processing BASE command: {base_command_id}")
+            tasks_to_run.append(base_command_sequence)
 
-            try:
-                # Get paths for base command
-                relative_base_json_path, _ = command_sequence_to_filepath(base_command_sequence)
-                base_json_file_path = tool_defs_dir / relative_base_json_path
-
-                # Check skip condition for base command
-                current_base_entry = get_index_entry(index_data, base_command_sequence)
-                should_skip_base = False
-                if not force and current_base_entry:
-                    last_updated = current_base_entry.get("updated_timestamp", 0.0)
-                    if since_timestamp and last_updated <= since_timestamp:
-                        log.debug(
-                            f"Skipping BASE {base_command_id}: Last updated ({last_updated:.2f}) is not after --since ({since_timestamp:.2f})."
-                        )
-                        should_skip_base = True
-                        skipped_count += 1
-                    # Could add other time-based checks here if needed
-
-                if not should_skip_base:
-                    # Run Baseline Generation for BASE command
-                    log.debug(f"Running baseline generation/verification for BASE {base_command_id}...")
-                    base_status_enum, base_calculated_crc, base_check_timestamp = generate_or_verify_baseline(
-                        tool_name,
-                        root_dir=tool_defs_dir,  # Pass tool_defs_dir as root? Or project_root? Check generator usage
-                        ctx=ctx,  # Pass context
-                    )
-
-                    if base_status_enum not in {
-                        BaselineStatus.UP_TO_DATE,
-                        BaselineStatus.UPDATED,
-                        BaselineStatus.CAPTURE_SUCCESS,
-                    }:
-                        err_msg = (
-                            f"Baseline generation failed for BASE '{tool_name}' with status: {base_status_enum.name}"
-                        )
-                        log.error(err_msg)
-                        sync_errors.append(err_msg)
-                    else:
-                        # Ensure Skeleton JSON exists for BASE command
-                        created_base_json = _create_skeleton_json_if_missing(base_json_file_path, base_command_sequence)
-                        if created_base_json:
-                            skeleton_created_count += 1
-
-                        # Update Index Entry for BASE command
-                        log.debug(f"Updating index entry for BASE {base_command_id}...")
-                        base_baseline_txt_path = tool_defs_dir / tool_name / f"{base_command_id}.txt"
-                        relative_base_baseline_path_str = (
-                            str(base_baseline_txt_path.relative_to(tool_defs_dir))
-                            if base_baseline_txt_path.exists()
-                            else None
-                        )
-
-                        base_update_data = {
-                            "command": list(base_command_sequence),
-                            "baseline_file": relative_base_baseline_path_str,
-                            "json_definition_file": str(base_json_file_path.relative_to(tool_defs_dir)),
-                            "crc": base_calculated_crc,
-                            "updated_timestamp": base_check_timestamp if base_check_timestamp else time.time(),
-                            "checked_timestamp": base_check_timestamp if base_check_timestamp else time.time(),
-                            "source": "zlt_tools_sync",
-                        }
-                        update_index_entry(index_data, base_command_sequence, base_update_data)
-                        log.debug(f"Index update successful for BASE {base_command_id}")
-                        if base_status_enum == BaselineStatus.UPDATED or created_base_json:
-                            updated_count += 1
-            except Exception as e:
-                err_msg = f"Unexpected error syncing BASE {base_command_id}: {e}"
-                log.exception(err_msg)  # Log traceback
-                sync_errors.append(err_msg)
-
-            # --- Process Subcommands (if defined) --- #
-            base_definition_data = None
+            # Check for subcommands in the base JSON definition
+            relative_base_json_path, _ = command_sequence_to_filepath(base_command_sequence)
+            base_json_file_path = tool_defs_dir / relative_base_json_path
             if base_json_file_path.exists():
                 try:
                     with base_json_file_path.open("r", encoding="utf-8") as f_base:
                         base_definition_data = json_lib.load(f_base)
+                        if isinstance(base_definition_data, dict) and "subcommands_detail" in base_definition_data:
+                            subcommands_detail = base_definition_data["subcommands_detail"]
+                            if isinstance(subcommands_detail, dict):
+                                for sub_key in subcommands_detail.keys():
+                                    sub_command_sequence = (tool_name, sub_key)
+                                    tasks_to_run.append(sub_command_sequence)
                 except Exception as json_e:
-                    log.warning(
-                        f"Could not load base JSON definition {base_json_file_path} to check for subcommands: {json_e}"
-                    )
+                    log.warning(f"Could not load or parse {base_json_file_path} to check for subcommands: {json_e}")
 
-            if isinstance(base_definition_data, dict) and "subcommands_detail" in base_definition_data:
-                subcommands_detail = base_definition_data["subcommands_detail"]
-                if isinstance(subcommands_detail, dict):
-                    log.info(f"Found {len(subcommands_detail)} subcommands for {tool_name}. Processing...")
-                    for sub_key in sorted(subcommands_detail.keys()):
-                        # Update spinner for subcommand
-                        current_spinner = next(SPINNER)
-                        sub_msg = f"{base_msg} -> {sub_key}"
-                        # Use \r to overwrite previous line part
-                        click.echo(
-                            f"\r[{i}/{total_tools}] {current_spinner} Processing {tool_name} -> {sub_key}... ".ljust(
-                                80
-                            ),
-                            file=sys.stderr,
-                            nl=False,
-                        )
+        log.info(f"Prepared {len(tasks_to_run)} total command sequences for parallel processing.")
 
-                        log.debug(f"Processing SUBCOMMAND: {tool_name} {sub_key}")
-                        sub_command_sequence = (tool_name, sub_key)
-                        sub_command_id = command_sequence_to_id(sub_command_sequence)
-                        sub_command_sequence_str = f"{tool_name} {sub_key}"
+        # --- Execute Tasks in Parallel ---
+        results: List[Dict[str, Any]] = []
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Store future-to-sequence mapping for logging upon completion/error
+            future_to_sequence = {
+                executor.submit(
+                    _process_command_sequence,
+                    sequence,
+                    tool_defs_dir,
+                    project_root,
+                    container_name,
+                    index_data,
+                    force,
+                    since_timestamp,
+                    ground_truth_txt_skip_hours,
+                ): sequence
+                for sequence in tasks_to_run
+            }
 
-                        try:
-                            # Get paths for subcommand
-                            relative_sub_json_path, _ = command_sequence_to_filepath(sub_command_sequence)
-                            sub_json_file_path = tool_defs_dir / relative_sub_json_path
+            log.info(f"Submitted {len(future_to_sequence)} tasks to ThreadPoolExecutor (max_workers={max_workers})...")
 
-                            # Check skip condition for subcommand
-                            current_sub_entry = get_index_entry(index_data, sub_command_sequence)
-                            should_skip_sub = False
-                            if not force and current_sub_entry:
-                                last_updated_sub = current_sub_entry.get("updated_timestamp", 0.0)
-                                if since_timestamp and last_updated_sub <= since_timestamp:
-                                    log.debug(
-                                        f"Skipping SUBCOMMAND {sub_command_id}: Last updated ({last_updated_sub:.2f}) is not after --since ({since_timestamp:.2f})."
-                                    )
-                                    should_skip_sub = True
-                                    skipped_count += 1
-                                # Could add other time-based checks here
+            # Process completed futures
+            for future in as_completed(future_to_sequence):
+                sequence = future_to_sequence[future]
+                try:
+                    result = future.result()
+                    results.append(result)
+                    processed_count += 1  # Increment processed count here
+                    # Maybe log progress like: log.info(f"Completed {processed_count}/{len(tasks_to_run)} tasks.")
+                except Exception as exc:
+                    command_id = command_sequence_to_id(sequence)
+                    err_msg = f"Task for {command_id} generated an unexpected exception: {exc}"
+                    log.exception(err_msg)  # Log traceback
+                    sync_errors.append(err_msg)
+                    processed_count += 1  # Still counts as processed, albeit failed
 
-                            if not should_skip_sub:
-                                # Run Baseline Generation for SUBCOMMAND
-                                log.debug(
-                                    f"Running baseline generation/verification for SUBCOMMAND {sub_command_id}..."
-                                )
-                                sub_status_enum, sub_calculated_crc, sub_check_timestamp = generate_or_verify_baseline(
-                                    sub_command_sequence_str,
-                                    root_dir=tool_defs_dir,  # Pass tool_defs_dir as root? Or project_root? Check generator usage
-                                    ctx=ctx,  # Pass context
-                                )
+        log.info("All processing tasks completed.")
 
-                                if sub_status_enum not in {
-                                    BaselineStatus.UP_TO_DATE,
-                                    BaselineStatus.UPDATED,
-                                    BaselineStatus.CAPTURE_SUCCESS,
-                                }:
-                                    err_msg = f"Baseline generation failed for SUBCOMMAND '{sub_command_sequence_str}' with status: {sub_status_enum.name}"
-                                    log.error(err_msg)
-                                    sync_errors.append(err_msg)
-                                else:
-                                    # Ensure Skeleton JSON exists for SUBCOMMAND
-                                    created_sub_json = _create_skeleton_json_if_missing(
-                                        sub_json_file_path, sub_command_sequence
-                                    )
-                                    if created_sub_json:
-                                        skeleton_created_count += 1
+        # --- Process Results and Update Index (Serially) ---
+        log.info("Processing results and updating index...")
+        final_index_data = (
+            load_tool_index()
+        )  # Re-load index in case pruning changed it? Or assume initial load is fine? Let's use initial for now.
+        # It's safer to use the initially loaded index_data, as pruning happened before parallel execution.
+        final_index_data = index_data
 
-                                    # Update Index Entry for SUBCOMMAND
-                                    log.debug(f"Updating index entry for SUBCOMMAND {sub_command_id}...")
-                                    sub_baseline_txt_path = tool_defs_dir / tool_name / f"{sub_command_id}.txt"
-                                    relative_sub_baseline_path_str = (
-                                        str(sub_baseline_txt_path.relative_to(tool_defs_dir))
-                                        if sub_baseline_txt_path.exists()
-                                        else None
-                                    )
+        for result in results:
+            if result.get("skipped"):
+                skipped_count += 1
+                continue  # Don't update index for skipped items
 
-                                    sub_update_data = {
-                                        "command": list(sub_command_sequence),
-                                        "baseline_file": relative_sub_baseline_path_str,
-                                        "json_definition_file": str(sub_json_file_path.relative_to(tool_defs_dir)),
-                                        "crc": sub_calculated_crc,
-                                        "updated_timestamp": sub_check_timestamp
-                                        if sub_check_timestamp
-                                        else time.time(),
-                                        "checked_timestamp": sub_check_timestamp
-                                        if sub_check_timestamp
-                                        else time.time(),
-                                        "source": "zlt_tools_sync",
-                                    }
-                                    update_index_entry(index_data, sub_command_sequence, sub_update_data)
-                                    log.debug(f"Index update successful for SUBCOMMAND {sub_command_id}")
-                                    if sub_status_enum == BaselineStatus.UPDATED or created_sub_json:
-                                        updated_count += 1  # Still counts towards overall updates
-                        except Exception as sub_e:
-                            err_msg = f"Unexpected error syncing SUBCOMMAND {sub_command_id}: {sub_e}"
-                            log.exception(err_msg)  # Log traceback
-                            sync_errors.append(err_msg)
-                else:
-                    log.debug(
-                        f"Base definition {base_json_file_path} not found or not a dictionary for {tool_name}, cannot check for subcommands."
-                    )
-            else:
-                log.debug(
-                    f"Base definition {base_json_file_path} not found or not a dictionary for {tool_name}, cannot check for subcommands."
-                )
+            status = result.get("status")
+            error_message = result.get("error_message")
+            command_sequence = result["command_sequence"]
+            update_data = result.get("update_data")
 
-            # After processing a tool and its subcommands, clear the line and move to the next
-            click.echo("\r" + " " * 80 + "\r", file=sys.stderr, nl=False)  # Clear the line
-            click.echo(
-                f"[{i}/{total_tools}] ✓ Finished: {tool_name}", file=sys.stderr
-            )  # Print final status for the tool
+            if error_message:
+                # If there was an error during processing itself, ensure it's in sync_errors
+                if error_message not in sync_errors:
+                    sync_errors.append(error_message)
 
-        # 6. Save Index
+            # Check if ground truth generation status indicates failure
+            if isinstance(status, BaselineStatus) and status not in {
+                BaselineStatus.UP_TO_DATE,
+                BaselineStatus.UPDATED,
+                BaselineStatus.CAPTURE_SUCCESS,
+            }:
+                # If ground truth generation failed, ensure the error message is captured if not already present
+                if not error_message:
+                    err_msg_from_status = f"Ground truth TXT generation failed for '{' '.join(command_sequence)}' with status: {status.name}"  # <-- Update log message
+                    if err_msg_from_status not in sync_errors:
+                        sync_errors.append(err_msg_from_status)
+                # Do NOT update the index entry if ground truth generation failed, but count skeleton creation
+                if result.get("skeleton_created"):
+                    skeleton_created_count += 1
+            elif update_data and not error_message:
+                # Update index only if ground truth generation was successful OR up-to-date AND no processing error occurred
+                try:
+                    update_index_entry(final_index_data, command_sequence, update_data)
+                    # Increment update count if ground truth generation status was UPDATED or skeleton was created
+                    if result.get("skeleton_created") or status == BaselineStatus.UPDATED:
+                        updated_count += 1
+                except Exception as index_e:
+                    err_msg = f"Failed to update index for {command_sequence_to_id(command_sequence)}: {index_e}"
+                    log.exception(err_msg)
+                    sync_errors.append(err_msg)
+            elif result.get("skeleton_created"):
+                # Count skeleton creation even if index wasn't updated due to ground truth generation failure
+                skeleton_created_count += 1
+
+        # --- Save Final Index ---
         log.info("Saving updated tool index...")
-        if not save_tool_index(index_data):
-            log.error("Failed to save tool index.")
-            exit_code = 1
+        if not save_tool_index(final_index_data):
+            log.error("Failed to save final tool index.")
+            exit_code = 1  # Mark failure
 
-        # 7. Report Summary
+        # --- Report Summary --- (Adjust counters based on collected results)
         log.info("-- Sync Summary --")
-        log.info(f"Tools Targeted:   {len(target_tools)}")
-        log.info(f"Tools Processed:  {processed_count}")
-        log.info(f"Baseline/Index Updated: {updated_count}")
-        log.info(f"Skeletons Created:  {skeleton_created_count}")
-        log.info(f"Skipped (recent):   {skipped_count}")
-        log.info(f"Errors:             {len(sync_errors)}")
+        log.info(f"Tools Targeted:       {len(target_tools)}")
+        log.info(f"Sequences Processed:  {processed_count}")  # Total futures processed
+        log.info(f"Sequences Skipped (timestamp): {skipped_count}")  # Clarify skip reason
+        log.info(f"Ground Truth/JSON Updated/Created: {updated_count}")  # Rename summary line
+        # log.info(f"Skeletons Created:    {skeleton_created_count}") # Can be combined with updated count or kept separate
+        log.info(f"Errors Encountered:   {len(sync_errors)}")
         if prune:
-            log.info(f"Directories Pruned: {pruned_count}")
+            log.info(f"Directories Pruned:   {pruned_count}")
         if sync_errors:
             log.error("Sync completed with errors:")
             for err in sync_errors:
                 log.error(f"- {err}")
-            exit_code = 1
+            exit_code = 1  # Mark failure if not already set
         else:
             log.info("Synchronization completed successfully.")
 
@@ -576,14 +696,12 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         log.error(f"Sync failed during initial reconciliation: {e}")
         exit_code = 2
     except Exception as e:
-        # Check if it was the pruning exception
         if "Pruning errors occurred" not in str(e):
             log.exception("An unexpected error occurred during the sync command.")
             exit_code = 3
-        # Otherwise, exit_code should already be set to 1 from pruning block
     finally:
-        # --- Podman Cleanup ---
-        if ctx.obj.get("podman_container_name"):
-            _stop_podman_runner(ctx.obj["podman_container_name"])
+        # --- Podman Cleanup --- Use the name determined earlier
+        if container_name:
+            _stop_podman_runner(container_name)
 
     ctx.exit(exit_code)

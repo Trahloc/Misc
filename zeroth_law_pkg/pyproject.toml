@@ -142,6 +142,10 @@ max_statements = 50
 project_root = "../zeroth_law_pkg/"
 git_root = ".."
 
+# Default skip duration (in hours) for ground truth TXT generation during sync.
+# Tool runs older than this value will be processed. Set <= 0 to disable default time-based skip.
+ground_truth_txt_skip_since = 24
+
 # --- ZLT Tool Whitelist/Blacklist ---
 [tool.zeroth-law.managed-tools]
 whitelist = [
