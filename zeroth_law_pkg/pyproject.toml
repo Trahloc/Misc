@@ -27,6 +27,7 @@ dependencies = [
     "deptry",
     "flake8",
     "isort",        # Provides isort, isort-identify-imports
+    "jq>=1.8.0",
     "jsonschema",
     "mutmut",
     "mypy",
@@ -301,6 +302,7 @@ items = [
     "node_modules",              # For Node/Prettier
     ".coverage",                 # Coverage database
     "project_structure.json",    # Project data file
+    "requirements-dev.txt",      # Generated requirements for container
 ]
 
 # ----------------------------------------- #
@@ -512,6 +514,9 @@ source = ["src"] # Specify source directory for coverage
 #fail_under = 90 # Uncomment and adjust threshold later
 show_missing = true
 skip_covered = true
+
+[dependency-groups]
+dev = ["pytest-mock>=3.14.0"]
 
 [tool.zeroth-law.actions.format.zlt_options.check]
 type = "flag"

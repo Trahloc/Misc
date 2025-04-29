@@ -230,7 +230,19 @@
   - [x] Update `get_tool_dirs` import in `test_no_orphan_tool_directories`.
   - [ ] Verify tests pass or fail for expected reasons (e.g., `ToolIndexHandler` import).
   - [ ] Add new tests for `zlt tools reconcile`, `sync`, `add/remove-whitelist/blacklist`.
-- [ ] **14. Podman Integration Follow-up (Post-Refactor):**
+- [ ] **14. Implement Subcommand-Level Blacklist/Whitelist Management:**
+  - [ ] Design and implement parsing logic in `config_loader.py` or `reconcile.py` to understand hierarchical entries in `pyproject.toml`'s `whitelist` and `blacklist` sections (e.g., `tool:sub1,sub2` or `tool:sub:subsub1`).
+  - [ ] Update `zlt tools reconcile` to factor in subcommand specifications when determining tool/subcommand status.
+  - [ ] Update `zlt tools sync` to filter command sequences based on the hierarchical blacklist/whitelist status resolved during reconciliation.
+  - [ ] Update `zlt tools add/remove-whitelist/blacklist` commands to correctly parse, handle, and write the hierarchical `tool:sub1,sub2` syntax to `pyproject.toml`.
+  - [ ] Add comprehensive tests for parsing, reconciliation, sync filtering, and management commands related to subcommand specifications.
+  - [x] **14.1.** Implement parsing logic in `config_loader.py` to handle hierarchical syntax (`tool:sub1,sub2`) and produce structured dicts.
+  - [ ] **14.2.** Refactor `tool_reconciler.py::reconcile_tools` to accept and utilize the structured dict format for whitelist/blacklist.
+  - [ ] **14.3.** Update `reconcile.py::_perform_reconciliation_logic` to pass the structured dicts to `reconcile_tools` and interpret the results correctly.
+  - [ ] **14.4.** Update `sync.py` to filter command sequences based on the hierarchical blacklist/whitelist status (needs status info from reconcile).
+  - [ ] **14.5.** Update `list_utils.py` and `whitelist_cmd.py`/`blacklist_cmd.py` to parse/write the hierarchical syntax.
+  - [ ] **14.6.** Add/update tests for parsing (`config_loader`), reconciliation (`reconcile`), sync filtering (`sync`), and list management commands.
+- [ ] **15. Podman Integration Follow-up (Post-Refactor):**
   - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
   - [ ] Test the Podman-based baseline capture workflow thoroughly, covering various tools, subcommands, potential errors (container start failure, exec failure, timeouts), and cleanup.
   - [ ] Investigate and improve shell escaping robustness for command arguments passed to `podman exec sh -c \\\"...\\\"` in `baseline_generator.py`.
