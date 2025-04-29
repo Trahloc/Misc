@@ -1,12 +1,13 @@
 """Implements the 'zlt tools whitelist' subcommand."""
 
 import click
-import logging
+import structlog
+from pathlib import Path
 
 # Import the shared utility functions
 from .list_utils import modify_tool_list, list_tool_list
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 @click.command("whitelist")

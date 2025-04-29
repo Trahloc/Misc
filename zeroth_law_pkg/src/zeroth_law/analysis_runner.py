@@ -4,12 +4,14 @@ Handles running analysis on files and formatting/reporting violations.
 """
 
 import json
-import logging
+import structlog
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Set
+from typing import Any, Dict, List, Tuple, Optional, Set
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
+
+# Constants for analysis results (Example)
 
 
 # --- Placeholder Analyzer Function ---

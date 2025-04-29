@@ -1,13 +1,14 @@
 # FILE: src/zeroth_law/actions/lint/python.py
 """Executes Python linting checks using configured consultant tools."""
 
-import logging
+import structlog
 import subprocess
 import sys  # Import the sys module
 from pathlib import Path
 from typing import Any
+from zeroth_law.utils.subprocess_utils import run_command
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 # TODO: Replace basic logging with structlog configured instance
 
 

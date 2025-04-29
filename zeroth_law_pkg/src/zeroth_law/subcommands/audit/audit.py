@@ -6,7 +6,7 @@ __all__ = ["audit"]  # Assuming 'audit' is the main function/entry point
 """Implements the audit command for ZLT."""
 
 import json
-import logging
+import structlog
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -22,7 +22,7 @@ from zeroth_law.analysis_runner import (
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 from zeroth_law.file_processor import find_files_to_audit
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 @click.command("audit")

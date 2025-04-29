@@ -192,9 +192,15 @@ def _get_test_py_files() -> Set[Path]:
 
 def _expected_source_path(test_file: Path) -> Path:
     """Calculates the expected corresponding source file path."""
-    # Handle the special case for the renamed audit test file
-    if test_file == TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py":
-        return SRC_PKG_ROOT / "commands" / "audit.py"
+    # --- Special Cases ---
+    # Handle the special case for the renamed audit test file (if it still exists)
+    # if test_file == TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py":
+    #     return SRC_PKG_ROOT / "commands" / "audit.py"
+
+    # Handle the special case for dynamic options test
+    if test_file == TESTS_MIRROR_ROOT / "test_cli" / "test_dynamic_options.py":
+        return SRC_PKG_ROOT / "cli.py"  # Dynamic options are part of cli.py
+    # --- End Special Cases ---
 
     relative_path = test_file.relative_to(TESTS_MIRROR_ROOT)
     # Remove 'test_' prefix from all parts
@@ -210,6 +216,12 @@ TEST_FILE_IDS = [str(p.relative_to(TESTS_ROOT)) for p in TEST_FILES]
 def test_no_orphaned_test_files(test_file: Path):
     """Verify that every test file mirrors an existing source file."""
     expected_source_file = _expected_source_path(test_file)
+    # --- DEBUG --- Print the paths being compared
+    print(f"\nDEBUG: test_file = {test_file}")
+    print(f"DEBUG: expected_source_file = {expected_source_file}")
+    print(f"DEBUG: expected_source_file exists? = {expected_source_file.exists()}")
+    print(f"DEBUG: expected_source_file is_file? = {expected_source_file.is_file()}")
+    # --- END DEBUG ---
     assert expected_source_file.is_file(), (
         f"Misplaced/Orphaned Test File: Test file '{test_file.relative_to(TESTS_ROOT)}' exists, but the expected \
 "

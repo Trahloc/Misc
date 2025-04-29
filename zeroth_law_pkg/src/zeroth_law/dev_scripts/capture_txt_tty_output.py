@@ -18,6 +18,8 @@ import sys
 import termios
 from pathlib import Path
 from typing import Final, List, Tuple
+import structlog
+from zeroth_law.utils.subprocess_utils import run_subprocess_no_check as run_command
 
 # --- CONSTANTS ---
 PTY_READ_TIMEOUT: Final[float] = 1.0  # Seconds to wait for pty output
@@ -27,8 +29,7 @@ DEFAULT_TERM_COLS: Final[int] = 80
 
 # --- LOGGING ---
 # Configure basic logging for script execution feedback
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def capture_tty_output(

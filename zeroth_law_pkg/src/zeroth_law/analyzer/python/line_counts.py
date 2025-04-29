@@ -2,11 +2,12 @@
 """Analyzes Python files for line count thresholds."""
 
 import io
-import logging
+import structlog
 import tokenize
 from pathlib import Path
+from typing import Any, Dict
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Type alias for violation result
 LineCountViolation = tuple[str, int]  # (violation_type, count)

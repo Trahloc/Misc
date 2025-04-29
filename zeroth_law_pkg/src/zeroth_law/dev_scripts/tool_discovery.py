@@ -3,13 +3,14 @@
 Provides functions to get potential tools and update the managed tools configuration.
 """
 
+import structlog  # Replace logging with structlog
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Set
 
 import yaml  # Requires PyYAML
 import toml  # Add TOML import
-import logging  # Add logging import
 
 # --- Constants ---
 # Assume this script runs from the workspace root or src/zeroth_law/dev_scripts
@@ -24,7 +25,7 @@ except NameError:
 TOOLS_DIR = WORKSPACE_ROOT / "src" / "zeroth_law" / "tools"
 PYPROJECT_PATH = WORKSPACE_ROOT / "pyproject.toml"
 
-log = logging.getLogger(__name__)  # Add logger
+log = structlog.get_logger()  # Use structlog
 
 # --- Configuration Loading ---
 

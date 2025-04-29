@@ -1,8 +1,9 @@
 """Checks the availability of a tool in the uv-managed environment."""
 
-import logging
-from typing import Optional
+import jsonschema
+import structlog
 import sys
+from typing import Optional, List, Dict, Any
 
 # Add missing import
 import subprocess
@@ -10,7 +11,7 @@ import subprocess
 # Import the new helper
 from zeroth_law.utils.subprocess_utils import run_subprocess_no_check
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 DEFAULT_TIMEOUT = 10  # Timeout for the which command
 

@@ -1,12 +1,12 @@
 # FILE: src/zeroth_law/git_utils.py
 """Utilities for interacting with Git repositories."""
 
-import logging
-import stat
 import subprocess
+import structlog
 from pathlib import Path
+import stat
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def find_git_root(start_path: Path) -> Path:

@@ -2,7 +2,7 @@
 """Implements the 'zlt tools sync' subcommand."""
 
 import click
-import logging
+import structlog
 import time
 import sys
 import shutil
@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # --- Imports from other modules --- #
 
 # Need reconciliation logic to determine managed tools
-from .reconcile import _perform_reconciliation_logic, ReconciliationError
+from .reconcile import _perform_reconciliation_logic, ReconciliationError, ToolStatus
 
 # Need baseline generation logic
 # TODO: Move baseline_generator to a shared location
@@ -27,6 +27,9 @@ from ...lib.tooling.baseline_generator import (
 
 # Import the Podman helper function
 from ...lib.tooling.podman_utils import _prepare_command_for_container  # noqa: F401 - Used indirectly by baseline_generator?
+
+# --- Import _run_podman_command as well --- #
+from ...lib.tooling.podman_utils import _run_podman_command
 
 # Need ToolIndexHandler and related utils
 # TODO: Move ToolIndexHandler and helpers to shared location if not already
@@ -49,33 +52,14 @@ from ...lib.tool_path_utils import (
 # Need skeleton creation logic (adapted from conftest)
 import json as json_lib  # Alias to avoid conflict
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Define spinner characters
 # SPINNER = itertools.cycle(["-", "\\\\", "|", "/"])
 
 # --- Podman Helper Functions ---
 
-
-def _run_podman_command(args: list[str], check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
-    """Helper to run a podman command."""
-    command = ["podman"] + args
-    log.debug(f"Executing Podman command: {' '.join(command)}")
-    try:
-        return subprocess.run(
-            command,
-            check=check,
-            capture_output=capture,
-            text=True,  # Decode output as text
-            encoding="utf-8",
-        )
-    except FileNotFoundError:
-        log.error("`podman` command not found. Please ensure Podman is installed and in your PATH.")
-        raise
-    except subprocess.CalledProcessError as e:
-        log.error(f"Podman command failed: {' '.join(command)}")
-        log.error(f"Stderr: {e.stderr}")
-        raise
+# REMOVED _run_podman_command - Moved to podman_utils.py
 
 
 def _get_container_name(project_root: Path) -> str:
@@ -86,11 +70,13 @@ def _get_container_name(project_root: Path) -> str:
 
 
 def _start_podman_runner(container_name: str, project_root: Path, venv_path: Path) -> bool:
-    """Starts the podman container for baseline generation."""
+    """Starts the podman container, creates internal venv, and installs deps."""
     log.info(f"Attempting to start Podman baseline runner: {container_name}")
-    # Ensure venv exists
-    if not venv_path.is_dir():
-        log.error(f"Virtual environment not found at: {venv_path}")
+
+    # --- Ensure host venv exists (to get uv) --- #
+    host_uv_path = venv_path / "bin" / "uv"
+    if not host_uv_path.is_file():
+        log.error(f"Host `uv` executable not found at: {host_uv_path}. Cannot proceed.")
         return False
 
     # Check if container exists, remove if it does (ensures clean start)
@@ -104,44 +90,71 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
         log.error(f"Error checking/removing existing container {container_name}: {e}")
         return False
 
-    # TODO: Determine python version/image automatically? For now, hardcode python:3.13-slim
-    # This MUST match the python version used in the project's venv
     python_image = "docker.io/library/python:3.13-slim"
     log.info(f"Using Podman image: {python_image}")
 
-    # --- TEMP DEBUG: Print paths for manual command ---
-    resolved_project_path = str(project_root.resolve())
-    resolved_venv_path = str(venv_path.resolve())
-    print(f"TEMP_PROJECT_PATH: {resolved_project_path}")
-    print(f"TEMP_VENV_PATH: {resolved_venv_path}")
-    # --- END TEMP DEBUG ---
-
-    # --- DEBUG: Log the exact paths being mounted ---
-    resolved_project_path = str(project_root.resolve())
-    resolved_venv_path = str(venv_path.resolve())
-    log.info(f"DEBUG: Mounting project root: {resolved_project_path} -> /app")
-    log.info(f"DEBUG: Mounting venv path:   {resolved_venv_path} -> /venv")
-    # --- END DEBUG ---
-
     try:
-        # Mount project root and venv read-only
-        # Mount project root to allow running scripts from within the project
-        # Mount venv to provide access to installed tools
+        # Mount project root read-only.
         _run_podman_command(
             [
                 "run",
-                "--rm",  # Automatically remove container on exit (though we also stop/rm explicitly)
-                "-d",  # Run detached
+                "--rm",
+                "-d",
                 "--name",
                 container_name,
-                f"--volume={str(project_root.resolve())}:/app:ro",  # Mount project root
-                f"--volume={str(venv_path.resolve())}:/venv:ro",  # Mount venv
+                f"--volume={str(project_root.resolve())}:/app:ro",  # Mount project root read-only
+                # Venv mount removed
                 python_image,
                 "sleep",
-                "infinity",  # Keep container running
+                "infinity",
             ]
         )
-        log.info(f"Successfully executed podman run command for {container_name}.")
+        log.info(f"Successfully executed podman run command for {container_name}. Container warming up...")
+        time.sleep(3)  # Give container a moment to start
+
+        # --- Create internal venv --- #
+        log.info(f"Creating virtual environment inside {container_name} at /venv...")
+        _run_podman_command(["exec", container_name, "python", "-m", "venv", "/venv"], check=True)
+        log.info("Internal venv created.")
+
+        # --- Install dependencies using host uv targeting internal venv --- #
+        # We need the requirements file path relative to the project root
+        # Assuming standard locations like requirements.txt or using pyproject.toml
+        # For simplicity, let's assume pyproject.toml is the source via uv pip sync
+        log.info(f"Installing dependencies from /app/pyproject.toml into internal /venv using host uv...")
+        # Command needs to execute uv from host mount to target internal python
+        # This is tricky. Let's try executing uv directly inside.
+        # First, check if uv exists in the base image (it might)
+        uv_check_result = _run_podman_command(["exec", container_name, "which", "uv"], check=False, capture=True)
+        internal_uv_path = "uv"  # Assume it's on PATH
+        if uv_check_result.returncode != 0:
+            log.warning("uv not found in base image PATH. Trying /app/.venv/bin/uv from mount...")
+            # This requires /app mount, which we have. Use absolute path from host perspective mapped to container.
+            # This is getting complex. Let's INSTALL uv first using pip if needed.
+            log.info("Installing uv inside the container using pip...")
+            _run_podman_command(["exec", container_name, "/venv/bin/pip", "install", "uv"], check=True)
+            log.info("`uv` installed inside container.")
+            internal_uv_path = "/venv/bin/uv"
+        else:
+            log.info("`uv` found in container PATH.")
+            internal_uv_path = uv_check_result.stdout.strip() if uv_check_result.stdout else "uv"
+
+        # Now run uv pip sync using the container's uv and python
+        sync_cmd = [
+            "exec",
+            "-w",
+            "/app",  # Run from project root within container
+            container_name,
+            internal_uv_path,  # Use the uv inside the container
+            "pip",
+            "sync",
+            "--python",
+            "/venv/bin/python",  # Target the internal venv python
+            "/app/pyproject.toml",  # Sync using pyproject.toml (will implicitly use lockfile if present)
+        ]
+        log.info(f"Running uv pip sync from pyproject.toml: {' '.join(sync_cmd)}")
+        _run_podman_command(sync_cmd, check=True)
+        log.info("Dependencies installed in internal venv from pyproject.toml.")
 
         # --- DEBUG: Poll container status until 'Up' or timeout ---
         log.info(f"Polling status of container {container_name}...")
@@ -195,10 +208,12 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
             return False
         # --- END DEBUG ---
 
-        log.info(f"Successfully started and verified Podman container: {container_name}")
+        log.info(f"Successfully started and provisioned Podman container: {container_name}")
         return True
     except Exception as e:
-        log.error(f"Failed to start Podman container {container_name}: {e}")
+        log.error(f"Failed to start or provision Podman container {container_name}: {e}")
+        # Attempt cleanup even on failure
+        _stop_podman_runner(container_name)
         return False
 
 
@@ -447,6 +462,22 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
 
         log.debug("Pausing briefly for container stabilization...")
         time.sleep(2)
+
+        # --- DEBUG: Check container venv/bin --- #
+        log.info("--- DEBUG: Checking /venv/bin inside container --- ")
+        try:
+            ls_result = _run_podman_command(
+                ["exec", container_name, "ls", "-la", "/venv/bin"], check=True, capture=True
+            )
+            log.info(
+                f"DEBUG: /venv/bin listing:\n{ls_result.stdout.decode('utf-8', errors='replace')}"
+            )  # Decode stdout here
+        except Exception as ls_e:
+            log.error(f"--- DEBUG: Failed to list /venv/bin: {ls_e} --- ")
+            # Optionally exit if this check is critical
+            # ctx.exit(1)
+        log.info("--- DEBUG: Container check complete --- ")
+        # --- End DEBUG --- #
 
         # --- Reconciliation & Pruning (Sequential - Must happen before parallel sync) ---
         log.debug("Performing reconciliation to identify managed tools...")

@@ -4,8 +4,10 @@
 Orchestrates various checks like header, footer, complexity, docstrings, etc.
 """
 
-import logging
+import ast
+import structlog
 from pathlib import Path
+from typing import Any, List, Tuple, Dict, Type
 
 # Import analysis functions from submodules
 from .complexity import ComplexityViolation, analyze_complexity
@@ -17,7 +19,7 @@ from .statements import StatementViolation, analyze_statements
 # Keep header/footer checks here as they are simple file content checks
 # (ast_utils are used internally by other analyzers)
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Constants removed - should be passed in or loaded from config by caller
 # EXPECTED_HEADER_LINES = 2 # Still needed internally?

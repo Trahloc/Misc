@@ -1,10 +1,11 @@
 # File: src/zeroth_law/path_utils.py
 """Path-related utility functions."""
 
-import logging
+import os
+import structlog
 from pathlib import Path
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def find_project_root(start_path: Path) -> Path | None:

@@ -2,13 +2,14 @@
 """Analyzes Python functions for excessive parameters."""
 
 import ast
-import logging
+from io import BytesIO
+import structlog
 from pathlib import Path
 
 # from .ast_utils import _add_parent_pointers, _parse_file_to_ast
 from .ast_utils import _build_parent_map, _parse_file_to_ast
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Type alias for violation tuple
 ParameterViolation = tuple[str, int, int]

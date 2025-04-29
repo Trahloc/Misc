@@ -3,8 +3,9 @@
 """Scans for JSON tool definitions and attempts to fix common structural schema violations."""
 
 import sys
-import logging
+import structlog
 import json
+import jsonschema
 from pathlib import Path
 from zeroth_law.common.path_utils import find_project_root
 
@@ -16,8 +17,7 @@ _PROJECT_ROOT = project_root  # Use the determined project root
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+log = structlog.get_logger()
 
 # --- Schema Requirements (Simplified) ---
 REQUIRED_TOP_LEVEL_KEYS = [
@@ -43,6 +43,8 @@ ALLOWED_TOP_LEVEL_KEYS = {
     "subcommands_detail",
     "metadata",
 }
+
+# Mapping from simple type name to jsonschema type dict
 
 
 def fix_json_file_structure(file_path: Path, tool_name: str, command_id: str) -> bool:

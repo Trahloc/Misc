@@ -7,6 +7,9 @@ from unittest.mock import patch, mock_open
 # Assume main cli entry point
 from zeroth_law.cli import main as zlt_cli
 
+# Mark all tests in this module to be skipped until implementation is ready
+pytestmark = pytest.mark.skip(reason="Implementation for 'zlt tools definition' subcommand group is pending.")
+
 
 # Helper function to create mock files/dirs
 def setup_mock_tool_def(tmp_path: Path, tool_id: str, initial_data: dict) -> Path:

@@ -10,12 +10,13 @@ bypasses the necessary AI interpretation step.
 """
 
 import argparse
+import json
+import structlog
 import sys
-import logging
+from pathlib import Path
 
 # --- LOGGING ---
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def main():

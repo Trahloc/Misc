@@ -5,7 +5,7 @@ Utilities for loading and saving the central tool index file (tool_index.json).
 """
 
 import json
-import logging
+import structlog
 import time
 from pathlib import Path
 from typing import Dict, Tuple, Any, Optional
@@ -24,7 +24,7 @@ except NameError:
 
 # --- LOGGING ---
 # Use a logger specific to this module
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 # Basic config assuming the calling script sets up root logging
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 

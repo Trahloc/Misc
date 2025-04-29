@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 from importlib.metadata import version, PackageNotFoundError
 
 import click
-import logging
 
 from zeroth_law.action_runner import run_action
 from zeroth_law.common.config_loader import load_config
@@ -159,9 +158,6 @@ def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
     }
     # Use WARNING (30) as default if level_name is unknown
     level_num = level_map.get(level_name.lower(), 30)
-
-    # Import logging locally ONLY for setting the stdlib root logger level
-    import logging
 
     # Reconfigure structlog based on CLI args
     # TODO: Add more sophisticated configuration based on flags

@@ -1,8 +1,8 @@
-import logging
+import structlog
 from pathlib import Path
 from typing import Dict, List, Any
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def find_tool_for_capability_and_files(

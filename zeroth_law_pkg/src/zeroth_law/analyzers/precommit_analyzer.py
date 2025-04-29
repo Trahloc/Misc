@@ -1,13 +1,13 @@
 # FILE: src/zeroth_law/analyzers/precommit_analyzer.py
 """Analyzes .pre-commit-config.yaml files for ZLF compliance."""
 
-import logging
+import structlog
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
 import yaml
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Hooks known to require the project's virtual environment
 # TODO: Make this configurable?

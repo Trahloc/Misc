@@ -1,14 +1,15 @@
 """Implements the 'zlt tools add-blacklist' and 'remove-blacklist' subcommands."""
 
 import click
-import logging
+import structlog
 from pathlib import Path
 
 # Import the shared helper (or define locally if preferred)
 # Assuming it will be moved to a shared location later
 from .whitelist import _modify_tool_list
+from .list_utils import update_tool_list, load_pyproject_toml
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 @click.command("add-blacklist")

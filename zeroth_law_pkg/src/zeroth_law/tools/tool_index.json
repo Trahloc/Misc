@@ -2,13 +2,13 @@
   "autopep8": {
     "args": [],
     "baseline_file": "autopep8/autopep8.txt",
-    "checked_timestamp": 1745827126.142552,
+    "checked_timestamp": 1745842308.66802,
     "command": [
       "autopep8"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "autopep8.json",
-    "updated_timestamp": 1745827126.142552,
+    "updated_timestamp": 1745842308.66802,
     "json_definition_file": "autopep8/autopep8.json",
     "source": "zlt_tools_sync"
   },
@@ -18,65 +18,65 @@
       "."
     ],
     "baseline_file": "bandit/bandit.txt",
-    "checked_timestamp": 1745827126.1428375,
+    "checked_timestamp": 1745842308.6684234,
     "command": [
       "bandit"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "bandit_report_skeleton.json",
-    "updated_timestamp": 1745827126.1428375,
+    "updated_timestamp": 1745842308.6684234,
     "json_definition_file": "bandit/bandit.json",
     "source": "zlt_tools_sync"
   },
   "bandit-baseline": {
     "args": [],
     "baseline_file": "bandit-baseline/bandit-baseline.txt",
-    "checked_timestamp": 1745827126.1431496,
+    "checked_timestamp": 1745842308.6686394,
     "command": [
       "bandit-baseline"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "bandit-baseline.json",
-    "updated_timestamp": 1745827126.1431496,
+    "updated_timestamp": 1745842308.6686394,
     "json_definition_file": "bandit-baseline/bandit-baseline.json",
     "source": "zlt_tools_sync"
   },
   "bandit-config-generator": {
     "args": [],
     "baseline_file": "bandit-config-generator/bandit-config-generator.txt",
-    "checked_timestamp": 1745827126.1434731,
+    "checked_timestamp": 1745842308.6690235,
     "command": [
       "bandit-config-generator"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "bandit-config-generator.json",
-    "updated_timestamp": 1745827126.1434731,
+    "updated_timestamp": 1745842308.6690235,
     "json_definition_file": "bandit-config-generator/bandit-config-generator.json",
     "source": "zlt_tools_sync"
   },
   "black": {
     "args": [],
     "baseline_file": "black/black.txt",
-    "checked_timestamp": 1745827126.2364564,
+    "checked_timestamp": 1745842308.8368094,
     "command": [
       "black"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "black.json",
-    "updated_timestamp": 1745827126.2364564,
+    "updated_timestamp": 1745842308.8368094,
     "json_definition_file": "black/black.json",
     "source": "zlt_tools_sync"
   },
   "coverage": {
     "args": [],
     "baseline_file": "coverage/coverage.txt",
-    "checked_timestamp": 1745827126.2431338,
+    "checked_timestamp": 1745846483.8134718,
     "command": [
       "coverage"
     ],
-    "crc": "0x00000000",
+    "crc": "0x891C20F3",
     "json_skeleton_file": "coverage.json",
-    "updated_timestamp": 1745827126.2431338,
+    "updated_timestamp": 1745846483.8134718,
     "json_definition_file": "coverage/coverage.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -87,9 +87,9 @@
         ],
         "baseline_file": "coverage/coverage_annotate.txt",
         "json_definition_file": "coverage/coverage_annotate.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.2505903,
-        "checked_timestamp": 1745827126.2505903,
+        "crc": "0xD717A5E4",
+        "updated_timestamp": 1745846483.828552,
+        "checked_timestamp": 1745846483.828552,
         "source": "zlt_tools_sync"
       },
       "combine": {
@@ -99,9 +99,9 @@
         ],
         "baseline_file": "coverage/coverage_combine.txt",
         "json_definition_file": "coverage/coverage_combine.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.281,
-        "checked_timestamp": 1745827126.281,
+        "crc": "0x16045BD7",
+        "updated_timestamp": 1745846483.832386,
+        "checked_timestamp": 1745846483.832386,
         "source": "zlt_tools_sync"
       },
       "debug": {
@@ -111,9 +111,9 @@
         ],
         "baseline_file": "coverage/coverage_debug.txt",
         "json_definition_file": "coverage/coverage_debug.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.3410935,
-        "checked_timestamp": 1745827126.3410935,
+        "crc": "0xA6AA4E9D",
+        "updated_timestamp": 1745846483.884324,
+        "checked_timestamp": 1745846483.884324,
         "source": "zlt_tools_sync"
       },
       "erase": {
@@ -123,9 +123,9 @@
         ],
         "baseline_file": "coverage/coverage_erase.txt",
         "json_definition_file": "coverage/coverage_erase.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.3460739,
-        "checked_timestamp": 1745827126.3460739,
+        "crc": "0x97636057",
+        "updated_timestamp": 1745846483.984086,
+        "checked_timestamp": 1745846483.984086,
         "source": "zlt_tools_sync"
       },
       "help": {
@@ -135,9 +135,9 @@
         ],
         "baseline_file": "coverage/coverage_help.txt",
         "json_definition_file": "coverage/coverage_help.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.4464734,
-        "checked_timestamp": 1745827126.4464734,
+        "crc": "0x891C20F3",
+        "updated_timestamp": 1745846483.9881713,
+        "checked_timestamp": 1745846483.9881713,
         "source": "zlt_tools_sync"
       },
       "html": {
@@ -147,9 +147,9 @@
         ],
         "baseline_file": "coverage/coverage_html.txt",
         "json_definition_file": "coverage/coverage_html.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.4939237,
-        "checked_timestamp": 1745827126.4939237,
+        "crc": "0x549A9276",
+        "updated_timestamp": 1745846484.0297756,
+        "checked_timestamp": 1745846484.0297756,
         "source": "zlt_tools_sync"
       },
       "json": {
@@ -159,9 +159,9 @@
         ],
         "baseline_file": "coverage/coverage_json.txt",
         "json_definition_file": "coverage/coverage_json.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.616913,
-        "checked_timestamp": 1745827126.616913,
+        "crc": "0x4B62D4AA",
+        "updated_timestamp": 1745846484.087262,
+        "checked_timestamp": 1745846484.087262,
         "source": "zlt_tools_sync"
       },
       "lcov": {
@@ -171,9 +171,9 @@
         ],
         "baseline_file": "coverage/coverage_lcov.txt",
         "json_definition_file": "coverage/coverage_lcov.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.6481109,
-        "checked_timestamp": 1745827126.6481109,
+        "crc": "0xABE46127",
+        "updated_timestamp": 1745846484.1245315,
+        "checked_timestamp": 1745846484.1245315,
         "source": "zlt_tools_sync"
       },
       "report": {
@@ -183,9 +183,9 @@
         ],
         "baseline_file": "coverage/coverage_report.txt",
         "json_definition_file": "coverage/coverage_report.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.7264986,
-        "checked_timestamp": 1745827126.7264986,
+        "crc": "0x938B6C25",
+        "updated_timestamp": 1745846484.129411,
+        "checked_timestamp": 1745846484.129411,
         "source": "zlt_tools_sync"
       },
       "run": {
@@ -195,9 +195,9 @@
         ],
         "baseline_file": "coverage/coverage_run.txt",
         "json_definition_file": "coverage/coverage_run.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.842155,
-        "checked_timestamp": 1745827126.842155,
+        "crc": "0x0775CE81",
+        "updated_timestamp": 1745846484.173678,
+        "checked_timestamp": 1745846484.173678,
         "source": "zlt_tools_sync"
       },
       "xml": {
@@ -207,9 +207,9 @@
         ],
         "baseline_file": "coverage/coverage_xml.txt",
         "json_definition_file": "coverage/coverage_xml.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827126.948042,
-        "checked_timestamp": 1745827126.948042,
+        "crc": "0xE82FFDF5",
+        "updated_timestamp": 1745846484.2430525,
+        "checked_timestamp": 1745846484.2430525,
         "source": "zlt_tools_sync"
       }
     }
@@ -217,78 +217,78 @@
   "deptry": {
     "args": [],
     "baseline_file": "deptry/deptry.txt",
-    "checked_timestamp": 1745827127.06321,
+    "checked_timestamp": 1745842309.657201,
     "command": [
       "deptry"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "deptry.json",
-    "updated_timestamp": 1745827127.06321,
+    "updated_timestamp": 1745842309.657201,
     "json_definition_file": "deptry/deptry.json",
     "source": "zlt_tools_sync"
   },
   "flake8": {
     "args": [],
     "baseline_file": "flake8/flake8.txt",
-    "checked_timestamp": 1745827127.065391,
+    "checked_timestamp": 1745842309.662484,
     "command": [
       "flake8"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "flake8.json",
-    "updated_timestamp": 1745827127.065391,
+    "updated_timestamp": 1745842309.662484,
     "json_definition_file": "flake8/flake8.json",
     "source": "zlt_tools_sync"
   },
   "isort": {
     "args": [],
     "baseline_file": "isort/isort.txt",
-    "checked_timestamp": 1745827127.1723397,
+    "checked_timestamp": 1745846484.3389854,
     "command": [
       "isort"
     ],
-    "crc": "0x00000000",
+    "crc": "0x3736B0EA",
     "json_skeleton_file": "isort.json",
-    "updated_timestamp": 1745827127.1723397,
+    "updated_timestamp": 1745846484.3389854,
     "json_definition_file": "isort/isort.json",
     "source": "zlt_tools_sync"
   },
   "isort-identify-imports": {
     "args": [],
     "baseline_file": "isort-identify-imports/isort-identify-imports.txt",
-    "checked_timestamp": 1745827127.2900102,
+    "checked_timestamp": 1745846484.3453345,
     "command": [
       "isort-identify-imports"
     ],
-    "crc": "0x00000000",
+    "crc": "0xBA808EAA",
     "json_skeleton_file": "isort-identify-imports.json",
-    "updated_timestamp": 1745827127.2900102,
+    "updated_timestamp": 1745846484.3453345,
     "json_definition_file": "isort-identify-imports/isort-identify-imports.json",
     "source": "zlt_tools_sync"
   },
   "jsonschema": {
     "args": [],
     "baseline_file": "jsonschema/jsonschema.txt",
-    "checked_timestamp": 1745827127.2936893,
+    "checked_timestamp": 1745842309.8259578,
     "command": [
       "jsonschema"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "jsonschema.json",
-    "updated_timestamp": 1745827127.2936893,
+    "updated_timestamp": 1745842309.8259578,
     "json_definition_file": "jsonschema/jsonschema.json",
     "source": "zlt_tools_sync"
   },
   "mutmut": {
     "args": [],
     "baseline_file": "mutmut/mutmut.txt",
-    "checked_timestamp": 1745827127.324399,
+    "checked_timestamp": 1745842309.874005,
     "command": [
       "mutmut"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "mutmut.json",
-    "updated_timestamp": 1745827127.324399,
+    "updated_timestamp": 1745842309.874005,
     "json_definition_file": "mutmut/mutmut.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -299,9 +299,9 @@
         ],
         "baseline_file": "mutmut/mutmut_apply.txt",
         "json_definition_file": "mutmut/mutmut_apply.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.3713474,
-        "checked_timestamp": 1745827127.3713474,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.0857494,
+        "checked_timestamp": 1745842310.0857494,
         "source": "zlt_tools_sync"
       },
       "browse": {
@@ -311,9 +311,9 @@
         ],
         "baseline_file": "mutmut/mutmut_browse.txt",
         "json_definition_file": "mutmut/mutmut_browse.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.4009519,
-        "checked_timestamp": 1745827127.4009519,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.1021483,
+        "checked_timestamp": 1745842310.1021483,
         "source": "zlt_tools_sync"
       },
       "print-time-estimates": {
@@ -323,9 +323,9 @@
         ],
         "baseline_file": "mutmut/mutmut_print-time-estimates.txt",
         "json_definition_file": "mutmut/mutmut_print-time-estimates.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.4646366,
-        "checked_timestamp": 1745827127.4646366,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.134165,
+        "checked_timestamp": 1745842310.134165,
         "source": "zlt_tools_sync"
       },
       "results": {
@@ -335,9 +335,9 @@
         ],
         "baseline_file": "mutmut/mutmut_results.txt",
         "json_definition_file": "mutmut/mutmut_results.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.495872,
-        "checked_timestamp": 1745827127.495872,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.162251,
+        "checked_timestamp": 1745842310.162251,
         "source": "zlt_tools_sync"
       },
       "run": {
@@ -347,9 +347,9 @@
         ],
         "baseline_file": "mutmut/mutmut_run.txt",
         "json_definition_file": "mutmut/mutmut_run.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.5631936,
-        "checked_timestamp": 1745827127.5631936,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.2604954,
+        "checked_timestamp": 1745842310.2604954,
         "source": "zlt_tools_sync"
       },
       "show": {
@@ -359,9 +359,9 @@
         ],
         "baseline_file": "mutmut/mutmut_show.txt",
         "json_definition_file": "mutmut/mutmut_show.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.6101022,
-        "checked_timestamp": 1745827127.6101022,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.2965126,
+        "checked_timestamp": 1745842310.2965126,
         "source": "zlt_tools_sync"
       },
       "tests-for-mutant": {
@@ -371,9 +371,9 @@
         ],
         "baseline_file": "mutmut/mutmut_tests-for-mutant.txt",
         "json_definition_file": "mutmut/mutmut_tests-for-mutant.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.6993086,
-        "checked_timestamp": 1745827127.6993086,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.3997953,
+        "checked_timestamp": 1745842310.3997953,
         "source": "zlt_tools_sync"
       }
     }
@@ -381,39 +381,39 @@
   "mypy": {
     "args": [],
     "baseline_file": "mypy/mypy.txt",
-    "checked_timestamp": 1745827127.7629764,
+    "checked_timestamp": 1745842310.4039612,
     "command": [
       "mypy"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "mypy.json",
-    "updated_timestamp": 1745827127.7629764,
+    "updated_timestamp": 1745842310.4039612,
     "json_definition_file": "mypy/mypy.json",
     "source": "zlt_tools_sync"
   },
   "pipdeptree": {
     "args": [],
     "baseline_file": "pipdeptree/pipdeptree.txt",
-    "checked_timestamp": 1745827127.8560088,
+    "checked_timestamp": 1745842310.5015926,
     "command": [
       "pipdeptree"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "pipdeptree.json",
-    "updated_timestamp": 1745827127.8560088,
+    "updated_timestamp": 1745842310.5015926,
     "json_definition_file": "pipdeptree/pipdeptree.json",
     "source": "zlt_tools_sync"
   },
   "poetry": {
     "args": [],
     "baseline_file": "poetry/poetry.txt",
-    "checked_timestamp": 1745827127.8908393,
+    "checked_timestamp": 1745842310.5356336,
     "command": [
       "poetry"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "poetry.json",
-    "updated_timestamp": 1745827127.8908393,
+    "updated_timestamp": 1745842310.5356336,
     "json_definition_file": "poetry/poetry.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -424,9 +424,9 @@
         ],
         "baseline_file": "poetry/poetry_about.txt",
         "json_definition_file": "poetry/poetry_about.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.9088063,
-        "checked_timestamp": 1745827127.9088063,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.6414938,
+        "checked_timestamp": 1745842310.6414938,
         "source": "zlt_tools_sync"
       },
       "add": {
@@ -436,9 +436,9 @@
         ],
         "baseline_file": "poetry/poetry_add.txt",
         "json_definition_file": "poetry/poetry_add.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.9401274,
-        "checked_timestamp": 1745827127.9401274,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.7312274,
+        "checked_timestamp": 1745842310.7312274,
         "source": "zlt_tools_sync"
       },
       "build": {
@@ -448,9 +448,9 @@
         ],
         "baseline_file": "poetry/poetry_build.txt",
         "json_definition_file": "poetry/poetry_build.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827127.979296,
-        "checked_timestamp": 1745827127.979296,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.735349,
+        "checked_timestamp": 1745842310.735349,
         "source": "zlt_tools_sync"
       },
       "check": {
@@ -460,9 +460,9 @@
         ],
         "baseline_file": "poetry/poetry_check.txt",
         "json_definition_file": "poetry/poetry_check.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.0057282,
-        "checked_timestamp": 1745827128.0057282,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.8346732,
+        "checked_timestamp": 1745842310.8346732,
         "source": "zlt_tools_sync"
       },
       "config": {
@@ -472,9 +472,9 @@
         ],
         "baseline_file": "poetry/poetry_config.txt",
         "json_definition_file": "poetry/poetry_config.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.1189349,
-        "checked_timestamp": 1745827128.1189349,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.9041836,
+        "checked_timestamp": 1745842310.9041836,
         "source": "zlt_tools_sync"
       },
       "export": {
@@ -484,9 +484,9 @@
         ],
         "baseline_file": "poetry/poetry_export.txt",
         "json_definition_file": "poetry/poetry_export.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.1715176,
-        "checked_timestamp": 1745827128.1715176,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842310.9083114,
+        "checked_timestamp": 1745842310.9083114,
         "source": "zlt_tools_sync"
       },
       "init": {
@@ -496,9 +496,9 @@
         ],
         "baseline_file": "poetry/poetry_init.txt",
         "json_definition_file": "poetry/poetry_init.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.189548,
-        "checked_timestamp": 1745827128.189548,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.008186,
+        "checked_timestamp": 1745842311.008186,
         "source": "zlt_tools_sync"
       },
       "install": {
@@ -508,9 +508,9 @@
         ],
         "baseline_file": "poetry/poetry_install.txt",
         "json_definition_file": "poetry/poetry_install.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.2563195,
-        "checked_timestamp": 1745827128.2563195,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.0406356,
+        "checked_timestamp": 1745842311.0406356,
         "source": "zlt_tools_sync"
       },
       "list": {
@@ -520,9 +520,9 @@
         ],
         "baseline_file": "poetry/poetry_list.txt",
         "json_definition_file": "poetry/poetry_list.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.3478305,
-        "checked_timestamp": 1745827128.3478305,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.172699,
+        "checked_timestamp": 1745842311.172699,
         "source": "zlt_tools_sync"
       },
       "lock": {
@@ -532,9 +532,9 @@
         ],
         "baseline_file": "poetry/poetry_lock.txt",
         "json_definition_file": "poetry/poetry_lock.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.3663425,
-        "checked_timestamp": 1745827128.3663425,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.2401645,
+        "checked_timestamp": 1745842311.2401645,
         "source": "zlt_tools_sync"
       },
       "new": {
@@ -544,9 +544,9 @@
         ],
         "baseline_file": "poetry/poetry_new.txt",
         "json_definition_file": "poetry/poetry_new.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.4014616,
-        "checked_timestamp": 1745827128.4014616,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.2420492,
+        "checked_timestamp": 1745842311.2420492,
         "source": "zlt_tools_sync"
       },
       "publish": {
@@ -556,9 +556,9 @@
         ],
         "baseline_file": "poetry/poetry_publish.txt",
         "json_definition_file": "poetry/poetry_publish.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.5229137,
-        "checked_timestamp": 1745827128.5229137,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.4075856,
+        "checked_timestamp": 1745842311.4075856,
         "source": "zlt_tools_sync"
       },
       "remove": {
@@ -568,9 +568,9 @@
         ],
         "baseline_file": "poetry/poetry_remove.txt",
         "json_definition_file": "poetry/poetry_remove.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.6595914,
-        "checked_timestamp": 1745827128.6595914,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.512178,
+        "checked_timestamp": 1745842311.512178,
         "source": "zlt_tools_sync"
       },
       "run": {
@@ -580,9 +580,9 @@
         ],
         "baseline_file": "poetry/poetry_run.txt",
         "json_definition_file": "poetry/poetry_run.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.6626072,
-        "checked_timestamp": 1745827128.6626072,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.5452511,
+        "checked_timestamp": 1745842311.5452511,
         "source": "zlt_tools_sync"
       },
       "search": {
@@ -592,9 +592,9 @@
         ],
         "baseline_file": "poetry/poetry_search.txt",
         "json_definition_file": "poetry/poetry_search.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.693971,
-        "checked_timestamp": 1745827128.693971,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.643618,
+        "checked_timestamp": 1745842311.643618,
         "source": "zlt_tools_sync"
       },
       "shell": {
@@ -604,9 +604,9 @@
         ],
         "baseline_file": "poetry/poetry_shell.txt",
         "json_definition_file": "poetry/poetry_shell.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.8298986,
-        "checked_timestamp": 1745827128.8298986,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.6898704,
+        "checked_timestamp": 1745842311.6898704,
         "source": "zlt_tools_sync"
       },
       "show": {
@@ -616,9 +616,9 @@
         ],
         "baseline_file": "poetry/poetry_show.txt",
         "json_definition_file": "poetry/poetry_show.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827128.868451,
-        "checked_timestamp": 1745827128.868451,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.7507508,
+        "checked_timestamp": 1745842311.7507508,
         "source": "zlt_tools_sync"
       },
       "update": {
@@ -628,9 +628,9 @@
         ],
         "baseline_file": "poetry/poetry_update.txt",
         "json_definition_file": "poetry/poetry_update.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.0138164,
-        "checked_timestamp": 1745827129.0138164,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.795229,
+        "checked_timestamp": 1745842311.795229,
         "source": "zlt_tools_sync"
       },
       "version": {
@@ -640,9 +640,9 @@
         ],
         "baseline_file": "poetry/poetry_version.txt",
         "json_definition_file": "poetry/poetry_version.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.017663,
-        "checked_timestamp": 1745827129.017663,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.8862154,
+        "checked_timestamp": 1745842311.8862154,
         "source": "zlt_tools_sync"
       }
     }
@@ -650,13 +650,13 @@
   "pre-commit": {
     "args": [],
     "baseline_file": "pre-commit/pre-commit.txt",
-    "checked_timestamp": 1745827129.1639879,
+    "checked_timestamp": 1745842311.9423993,
     "command": [
       "pre-commit"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "pre-commit.json",
-    "updated_timestamp": 1745827129.1639879,
+    "updated_timestamp": 1745842311.9423993,
     "json_definition_file": "pre-commit/pre-commit.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -667,9 +667,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_autoupdate.txt",
         "json_definition_file": "pre-commit/pre-commit_autoupdate.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.2834942,
-        "checked_timestamp": 1745827129.2834942,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842311.9890592,
+        "checked_timestamp": 1745842311.9890592,
         "source": "zlt_tools_sync"
       },
       "clean": {
@@ -679,9 +679,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_clean.txt",
         "json_definition_file": "pre-commit/pre-commit_clean.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.287864,
-        "checked_timestamp": 1745827129.287864,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.048831,
+        "checked_timestamp": 1745842312.048831,
         "source": "zlt_tools_sync"
       },
       "gc": {
@@ -691,9 +691,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_gc.txt",
         "json_definition_file": "pre-commit/pre-commit_gc.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.3179219,
-        "checked_timestamp": 1745827129.3179219,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.1360419,
+        "checked_timestamp": 1745842312.1360419,
         "source": "zlt_tools_sync"
       },
       "help": {
@@ -703,9 +703,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_help.txt",
         "json_definition_file": "pre-commit/pre-commit_help.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827130.2296085,
-        "checked_timestamp": 1745827130.2296085,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.8074565,
+        "checked_timestamp": 1745842312.8074565,
         "source": "zlt_tools_sync"
       },
       "hook-impl": {
@@ -715,9 +715,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_hook-impl.txt",
         "json_definition_file": "pre-commit/pre-commit_hook-impl.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827130.2603962,
-        "checked_timestamp": 1745827130.2603962,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.8915203,
+        "checked_timestamp": 1745842312.8915203,
         "source": "zlt_tools_sync"
       },
       "init-templatedir": {
@@ -727,9 +727,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_init-templatedir.txt",
         "json_definition_file": "pre-commit/pre-commit_init-templatedir.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.364637,
-        "checked_timestamp": 1745827129.364637,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.207624,
+        "checked_timestamp": 1745842312.207624,
         "source": "zlt_tools_sync"
       },
       "install": {
@@ -739,9 +739,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_install.txt",
         "json_definition_file": "pre-commit/pre-commit_install.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.58943,
-        "checked_timestamp": 1745827129.58943,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.2695115,
+        "checked_timestamp": 1745842312.2695115,
         "source": "zlt_tools_sync"
       },
       "install-hooks": {
@@ -751,9 +751,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_install-hooks.txt",
         "json_definition_file": "pre-commit/pre-commit_install-hooks.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.618515,
-        "checked_timestamp": 1745827129.618515,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.274067,
+        "checked_timestamp": 1745842312.274067,
         "source": "zlt_tools_sync"
       },
       "migrate-config": {
@@ -763,9 +763,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_migrate-config.txt",
         "json_definition_file": "pre-commit/pre-commit_migrate-config.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.6790323,
-        "checked_timestamp": 1745827129.6790323,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.342389,
+        "checked_timestamp": 1745842312.342389,
         "source": "zlt_tools_sync"
       },
       "run": {
@@ -775,9 +775,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_run.txt",
         "json_definition_file": "pre-commit/pre-commit_run.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.6868594,
-        "checked_timestamp": 1745827129.6868594,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.42762,
+        "checked_timestamp": 1745842312.42762,
         "source": "zlt_tools_sync"
       },
       "sample-config": {
@@ -787,9 +787,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_sample-config.txt",
         "json_definition_file": "pre-commit/pre-commit_sample-config.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.7688706,
-        "checked_timestamp": 1745827129.7688706,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.5149512,
+        "checked_timestamp": 1745842312.5149512,
         "source": "zlt_tools_sync"
       },
       "try-repo": {
@@ -799,9 +799,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_try-repo.txt",
         "json_definition_file": "pre-commit/pre-commit_try-repo.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.885334,
-        "checked_timestamp": 1745827129.885334,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.545874,
+        "checked_timestamp": 1745842312.545874,
         "source": "zlt_tools_sync"
       },
       "uninstall": {
@@ -811,9 +811,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_uninstall.txt",
         "json_definition_file": "pre-commit/pre-commit_uninstall.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.9441624,
-        "checked_timestamp": 1745827129.9441624,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.642109,
+        "checked_timestamp": 1745842312.642109,
         "source": "zlt_tools_sync"
       },
       "validate-config": {
@@ -823,9 +823,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_validate-config.txt",
         "json_definition_file": "pre-commit/pre-commit_validate-config.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.9896882,
-        "checked_timestamp": 1745827129.9896882,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.646396,
+        "checked_timestamp": 1745842312.646396,
         "source": "zlt_tools_sync"
       },
       "validate-manifest": {
@@ -835,9 +835,9 @@
         ],
         "baseline_file": "pre-commit/pre-commit_validate-manifest.txt",
         "json_definition_file": "pre-commit/pre-commit_validate-manifest.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827129.9937027,
-        "checked_timestamp": 1745827129.9937027,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842312.7946467,
+        "checked_timestamp": 1745842312.7946467,
         "source": "zlt_tools_sync"
       }
     }
@@ -845,13 +845,13 @@
   "py-spy": {
     "args": [],
     "baseline_file": "py-spy/py-spy.txt",
-    "checked_timestamp": 1745840064.8106778,
+    "checked_timestamp": 1745846485.7354274,
     "command": [
       "py-spy"
     ],
     "crc": "0xDC4DE986",
     "json_skeleton_file": "py-spy.json",
-    "updated_timestamp": 1745840064.8106778,
+    "updated_timestamp": 1745846485.7354274,
     "json_definition_file": "py-spy/py-spy.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -863,8 +863,8 @@
         "baseline_file": "py-spy/py-spy_dump.txt",
         "json_definition_file": "py-spy/py-spy_dump.json",
         "crc": "0x4C300294",
-        "updated_timestamp": 1745840065.4226398,
-        "checked_timestamp": 1745840065.4226398,
+        "updated_timestamp": 1745846485.775487,
+        "checked_timestamp": 1745846485.775487,
         "source": "zlt_tools_sync"
       },
       "help": {
@@ -875,8 +875,8 @@
         "baseline_file": "py-spy/py-spy_help.txt",
         "json_definition_file": "py-spy/py-spy_help.json",
         "crc": "0xDC4DE986",
-        "updated_timestamp": 1745840065.4828115,
-        "checked_timestamp": 1745840065.4828115,
+        "updated_timestamp": 1745846485.8785317,
+        "checked_timestamp": 1745846485.8785317,
         "source": "zlt_tools_sync"
       },
       "record": {
@@ -887,8 +887,8 @@
         "baseline_file": "py-spy/py-spy_record.txt",
         "json_definition_file": "py-spy/py-spy_record.json",
         "crc": "0x3FCF98B8",
-        "updated_timestamp": 1745840065.1167684,
-        "checked_timestamp": 1745840065.1167684,
+        "updated_timestamp": 1745846485.7404797,
+        "checked_timestamp": 1745846485.7404797,
         "source": "zlt_tools_sync"
       },
       "top": {
@@ -899,8 +899,8 @@
         "baseline_file": "py-spy/py-spy_top.txt",
         "json_definition_file": "py-spy/py-spy_top.json",
         "crc": "0xA53954FF",
-        "updated_timestamp": 1745840065.1652012,
-        "checked_timestamp": 1745840065.1652012,
+        "updated_timestamp": 1745846485.745581,
+        "checked_timestamp": 1745846485.745581,
         "source": "zlt_tools_sync"
       }
     }
@@ -908,91 +908,91 @@
   "pycodestyle": {
     "args": [],
     "baseline_file": "pycodestyle/pycodestyle.txt",
-    "checked_timestamp": 1745827130.5943465,
+    "checked_timestamp": 1745842313.2312462,
     "command": [
       "pycodestyle"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "pycodestyle.json",
-    "updated_timestamp": 1745827130.5943465,
+    "updated_timestamp": 1745842313.2312462,
     "json_definition_file": "pycodestyle/pycodestyle.json",
     "source": "zlt_tools_sync"
   },
   "pydocstyle": {
     "args": [],
     "baseline_file": "pydocstyle/pydocstyle.txt",
-    "checked_timestamp": 1745827130.5976045,
+    "checked_timestamp": 1745842313.3272624,
     "command": [
       "pydocstyle"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "pydocstyle.json",
-    "updated_timestamp": 1745827130.5976045,
+    "updated_timestamp": 1745842313.3272624,
     "json_definition_file": "pydocstyle/pydocstyle.json",
     "source": "zlt_tools_sync"
   },
   "pyflakes": {
     "args": [],
     "baseline_file": "pyflakes/pyflakes.txt",
-    "checked_timestamp": 1745827130.602024,
+    "checked_timestamp": 1745846485.9179327,
     "command": [
       "pyflakes"
     ],
-    "crc": "0x00000000",
+    "crc": "0x11B74AC5",
     "json_skeleton_file": "pyflakes.json",
-    "updated_timestamp": 1745827130.602024,
+    "updated_timestamp": 1745846485.9179327,
     "json_definition_file": "pyflakes/pyflakes.json",
     "source": "zlt_tools_sync"
   },
   "pylint": {
     "args": [],
     "baseline_file": "pylint/pylint.txt",
-    "checked_timestamp": 1745827130.7202702,
+    "checked_timestamp": 1745842313.3747485,
     "command": [
       "pylint"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "pylint.json",
-    "updated_timestamp": 1745827130.7202702,
+    "updated_timestamp": 1745842313.3747485,
     "json_definition_file": "pylint/pylint.json",
     "source": "zlt_tools_sync"
   },
   "pyproject-build": {
     "args": [],
     "baseline_file": "pyproject-build/pyproject-build.txt",
-    "checked_timestamp": 1745827130.7508254,
+    "checked_timestamp": 1745842313.4583647,
     "command": [
       "pyproject-build"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "pyproject-build.json",
-    "updated_timestamp": 1745827130.7508254,
+    "updated_timestamp": 1745842313.4583647,
     "json_definition_file": "pyproject-build/pyproject-build.json",
     "source": "zlt_tools_sync"
   },
   "pytest": {
     "args": [],
     "baseline_file": "pytest/pytest.txt",
-    "checked_timestamp": 1745827130.7819614,
+    "checked_timestamp": 1745842313.5735672,
     "command": [
       "pytest"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "pytest.json",
-    "updated_timestamp": 1745827130.7819614,
+    "updated_timestamp": 1745842313.5735672,
     "json_definition_file": "pytest/pytest.json",
     "source": "zlt_tools_sync"
   },
   "radon": {
     "args": [],
     "baseline_file": "radon/radon.txt",
-    "checked_timestamp": 1745827130.786719,
+    "checked_timestamp": 1745842313.6053107,
     "command": [
       "radon"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "radon.json",
-    "updated_timestamp": 1745827130.786719,
+    "updated_timestamp": 1745842313.6053107,
     "json_definition_file": "radon/radon.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -1003,9 +1003,9 @@
         ],
         "baseline_file": "radon/radon_cc.txt",
         "json_definition_file": "radon/radon_cc.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827130.8791084,
-        "checked_timestamp": 1745827130.8791084,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842313.6966364,
+        "checked_timestamp": 1745842313.6966364,
         "source": "zlt_tools_sync"
       },
       "hal": {
@@ -1015,9 +1015,9 @@
         ],
         "baseline_file": "radon/radon_hal.txt",
         "json_definition_file": "radon/radon_hal.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827130.9583054,
-        "checked_timestamp": 1745827130.9583054,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842313.90554,
+        "checked_timestamp": 1745842313.90554,
         "source": "zlt_tools_sync"
       },
       "mi": {
@@ -1027,9 +1027,9 @@
         ],
         "baseline_file": "radon/radon_mi.txt",
         "json_definition_file": "radon/radon_mi.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827130.9412727,
-        "checked_timestamp": 1745827130.9412727,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842313.8070867,
+        "checked_timestamp": 1745842313.8070867,
         "source": "zlt_tools_sync"
       },
       "raw": {
@@ -1039,9 +1039,9 @@
         ],
         "baseline_file": "radon/radon_raw.txt",
         "json_definition_file": "radon/radon_raw.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827130.9383628,
-        "checked_timestamp": 1745827130.9383628,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842313.705522,
+        "checked_timestamp": 1745842313.705522,
         "source": "zlt_tools_sync"
       }
     }
@@ -1049,13 +1049,13 @@
   "ruff": {
     "args": [],
     "baseline_file": "ruff/ruff.txt",
-    "checked_timestamp": 1745840958.936485,
+    "checked_timestamp": 1745846486.1553838,
     "command": [
       "ruff"
     ],
     "crc": "0xAE0936D1",
     "json_skeleton_file": "ruff.json",
-    "updated_timestamp": 1745840958.936485,
+    "updated_timestamp": 1745846486.1553838,
     "json_definition_file": "ruff/ruff.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -1067,8 +1067,8 @@
         "baseline_file": "ruff/ruff_analyze.txt",
         "json_definition_file": "ruff/ruff_analyze.json",
         "crc": "0x3B6300DB",
-        "updated_timestamp": 1745840958.9368312,
-        "checked_timestamp": 1745840958.9368312,
+        "updated_timestamp": 1745846486.1644626,
+        "checked_timestamp": 1745846486.1644626,
         "source": "zlt_tools_sync"
       },
       "check": {
@@ -1079,8 +1079,8 @@
         "baseline_file": "ruff/ruff_check.txt",
         "json_definition_file": "ruff/ruff_check.json",
         "crc": "0x084BD2EB",
-        "updated_timestamp": 1745840958.9371464,
-        "checked_timestamp": 1745840958.9371464,
+        "updated_timestamp": 1745846486.2259688,
+        "checked_timestamp": 1745846486.2259688,
         "source": "zlt_tools_sync"
       },
       "clean": {
@@ -1091,8 +1091,8 @@
         "baseline_file": "ruff/ruff_clean.txt",
         "json_definition_file": "ruff/ruff_clean.json",
         "crc": "0x2C216C81",
-        "updated_timestamp": 1745840958.9375014,
-        "checked_timestamp": 1745840958.9375014,
+        "updated_timestamp": 1745846486.2311764,
+        "checked_timestamp": 1745846486.2311764,
         "source": "zlt_tools_sync"
       },
       "config": {
@@ -1103,8 +1103,8 @@
         "baseline_file": "ruff/ruff_config.txt",
         "json_definition_file": "ruff/ruff_config.json",
         "crc": "0xD1B1C1AA",
-        "updated_timestamp": 1745840959.2623653,
-        "checked_timestamp": 1745840959.2623653,
+        "updated_timestamp": 1745846486.294764,
+        "checked_timestamp": 1745846486.294764,
         "source": "zlt_tools_sync"
       },
       "format": {
@@ -1115,8 +1115,8 @@
         "baseline_file": "ruff/ruff_format.txt",
         "json_definition_file": "ruff/ruff_format.json",
         "crc": "0x626765AB",
-        "updated_timestamp": 1745840959.3619378,
-        "checked_timestamp": 1745840959.3619378,
+        "updated_timestamp": 1745846486.2974167,
+        "checked_timestamp": 1745846486.2974167,
         "source": "zlt_tools_sync"
       },
       "help": {
@@ -1127,8 +1127,8 @@
         "baseline_file": "ruff/ruff_help.txt",
         "json_definition_file": "ruff/ruff_help.json",
         "crc": "0xAE0936D1",
-        "updated_timestamp": 1745840959.3688745,
-        "checked_timestamp": 1745840959.3688745,
+        "updated_timestamp": 1745846486.3283582,
+        "checked_timestamp": 1745846486.3283582,
         "source": "zlt_tools_sync"
       },
       "linter": {
@@ -1139,8 +1139,8 @@
         "baseline_file": "ruff/ruff_linter.txt",
         "json_definition_file": "ruff/ruff_linter.json",
         "crc": "0x880A548D",
-        "updated_timestamp": 1745840959.382945,
-        "checked_timestamp": 1745840959.382945,
+        "updated_timestamp": 1745846486.363714,
+        "checked_timestamp": 1745846486.363714,
         "source": "zlt_tools_sync"
       },
       "rule": {
@@ -1151,8 +1151,8 @@
         "baseline_file": "ruff/ruff_rule.txt",
         "json_definition_file": "ruff/ruff_rule.json",
         "crc": "0xC35ED592",
-        "updated_timestamp": 1745840959.626025,
-        "checked_timestamp": 1745840959.626025,
+        "updated_timestamp": 1745846486.394561,
+        "checked_timestamp": 1745846486.394561,
         "source": "zlt_tools_sync"
       },
       "server": {
@@ -1163,8 +1163,8 @@
         "baseline_file": "ruff/ruff_server.txt",
         "json_definition_file": "ruff/ruff_server.json",
         "crc": "0x6679BE6E",
-        "updated_timestamp": 1745840959.6909165,
-        "checked_timestamp": 1745840959.6909165,
+        "updated_timestamp": 1745846486.4517002,
+        "checked_timestamp": 1745846486.4517002,
         "source": "zlt_tools_sync"
       },
       "version": {
@@ -1175,8 +1175,8 @@
         "baseline_file": "ruff/ruff_version.txt",
         "json_definition_file": "ruff/ruff_version.json",
         "crc": "0x985C188B",
-        "updated_timestamp": 1745840959.727577,
-        "checked_timestamp": 1745840959.727577,
+        "updated_timestamp": 1745846486.4540522,
+        "checked_timestamp": 1745846486.4540522,
         "source": "zlt_tools_sync"
       }
     }
@@ -1184,13 +1184,13 @@
   "safety": {
     "args": [],
     "baseline_file": "safety/safety.txt",
-    "checked_timestamp": 1745827131.5470288,
+    "checked_timestamp": 1745842314.6294074,
     "command": [
       "safety"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "safety.json",
-    "updated_timestamp": 1745827131.5470288,
+    "updated_timestamp": 1745842314.6294074,
     "json_definition_file": "safety/safety.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -1201,9 +1201,9 @@
         ],
         "baseline_file": "safety/safety_alert.txt",
         "json_definition_file": "safety/safety_alert.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.6669087,
-        "checked_timestamp": 1745827131.6669087,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842314.6594493,
+        "checked_timestamp": 1745842314.6594493,
         "source": "zlt_tools_sync"
       },
       "auth": {
@@ -1213,9 +1213,9 @@
         ],
         "baseline_file": "safety/safety_auth.txt",
         "json_definition_file": "safety/safety_auth.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.6706975,
-        "checked_timestamp": 1745827131.6706975,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842314.7046628,
+        "checked_timestamp": 1745842314.7046628,
         "source": "zlt_tools_sync"
       },
       "check": {
@@ -1225,9 +1225,9 @@
         ],
         "baseline_file": "safety/safety_check.txt",
         "json_definition_file": "safety/safety_check.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.70187,
-        "checked_timestamp": 1745827131.70187,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842314.7839956,
+        "checked_timestamp": 1745842314.7839956,
         "source": "zlt_tools_sync"
       },
       "check-updates": {
@@ -1237,9 +1237,9 @@
         ],
         "baseline_file": "safety/safety_check-updates.txt",
         "json_definition_file": "safety/safety_check-updates.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.72036,
-        "checked_timestamp": 1745827131.72036,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842314.883565,
+        "checked_timestamp": 1745842314.883565,
         "source": "zlt_tools_sync"
       },
       "configure": {
@@ -1249,9 +1249,9 @@
         ],
         "baseline_file": "safety/safety_configure.txt",
         "json_definition_file": "safety/safety_configure.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.8910694,
-        "checked_timestamp": 1745827131.8910694,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842314.9254088,
+        "checked_timestamp": 1745842314.9254088,
         "source": "zlt_tools_sync"
       },
       "generate": {
@@ -1261,9 +1261,9 @@
         ],
         "baseline_file": "safety/safety_generate.txt",
         "json_definition_file": "safety/safety_generate.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.9082367,
-        "checked_timestamp": 1745827131.9082367,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842314.9884405,
+        "checked_timestamp": 1745842314.9884405,
         "source": "zlt_tools_sync"
       },
       "license": {
@@ -1273,9 +1273,9 @@
         ],
         "baseline_file": "safety/safety_license.txt",
         "json_definition_file": "safety/safety_license.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.9382205,
-        "checked_timestamp": 1745827131.9382205,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842314.9961684,
+        "checked_timestamp": 1745842314.9961684,
         "source": "zlt_tools_sync"
       },
       "scan": {
@@ -1285,9 +1285,9 @@
         ],
         "baseline_file": "safety/safety_scan.txt",
         "json_definition_file": "safety/safety_scan.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827131.9694788,
-        "checked_timestamp": 1745827131.9694788,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842315.0561597,
+        "checked_timestamp": 1745842315.0561597,
         "source": "zlt_tools_sync"
       },
       "validate": {
@@ -1297,9 +1297,9 @@
         ],
         "baseline_file": "safety/safety_validate.txt",
         "json_definition_file": "safety/safety_validate.json",
-        "crc": "0x00000000",
-        "updated_timestamp": 1745827132.1237326,
-        "checked_timestamp": 1745827132.1237326,
+        "crc": "0x88D9C481",
+        "updated_timestamp": 1745842315.1933193,
+        "checked_timestamp": 1745842315.1933193,
         "source": "zlt_tools_sync"
       }
     }
@@ -1307,65 +1307,65 @@
   "scalene": {
     "args": [],
     "baseline_file": "scalene/scalene.txt",
-    "checked_timestamp": 1745827132.1479454,
+    "checked_timestamp": 1745842315.2522578,
     "command": [
       "scalene"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "scalene.json",
-    "updated_timestamp": 1745827132.1479454,
+    "updated_timestamp": 1745842315.2522578,
     "json_definition_file": "scalene/scalene.json",
     "source": "zlt_tools_sync"
   },
   "sqlite-utils": {
     "args": [],
     "baseline_file": "sqlite-utils/sqlite-utils.txt",
-    "checked_timestamp": 1745827132.2121446,
+    "checked_timestamp": 1745842315.2557197,
     "command": [
       "sqlite-utils"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "sqlite-utils.json",
-    "updated_timestamp": 1745827132.2121446,
+    "updated_timestamp": 1745842315.2557197,
     "json_definition_file": "sqlite-utils/sqlite-utils.json",
     "source": "zlt_tools_sync"
   },
   "tabulate": {
     "args": [],
     "baseline_file": "tabulate/tabulate.txt",
-    "checked_timestamp": 1745827132.2654715,
+    "checked_timestamp": 1745846486.876984,
     "command": [
       "tabulate"
     ],
-    "crc": "0x00000000",
+    "crc": "0x38E3AA30",
     "json_skeleton_file": "tabulate.json",
-    "updated_timestamp": 1745827132.2654715,
+    "updated_timestamp": 1745846486.876984,
     "json_definition_file": "tabulate/tabulate.json",
     "source": "zlt_tools_sync"
   },
   "typer": {
     "args": [],
     "baseline_file": "typer/typer.txt",
-    "checked_timestamp": 1745827132.2828043,
+    "checked_timestamp": 1745842315.4727957,
     "command": [
       "typer"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "typer.json",
-    "updated_timestamp": 1745827132.2828043,
+    "updated_timestamp": 1745842315.4727957,
     "json_definition_file": "typer/typer.json",
     "source": "zlt_tools_sync"
   },
   "uv": {
     "args": [],
     "baseline_file": "uv/uv.txt",
-    "checked_timestamp": 1745840069.3220842,
+    "checked_timestamp": 1745846486.9408898,
     "command": [
       "uv"
     ],
     "crc": "0xD39EB042",
     "json_skeleton_file": "uv.json",
-    "updated_timestamp": 1745840069.3220842,
+    "updated_timestamp": 1745846486.9408898,
     "json_definition_file": "uv/uv.json",
     "source": "zlt_tools_sync",
     "subcommands": {
@@ -1377,8 +1377,8 @@
         "baseline_file": "uv/uv_add.txt",
         "json_definition_file": "uv/uv_add.json",
         "crc": "0x1A87B87E",
-        "updated_timestamp": 1745840069.3528569,
-        "checked_timestamp": 1745840069.3528569,
+        "updated_timestamp": 1745846486.9453325,
+        "checked_timestamp": 1745846486.9453325,
         "source": "zlt_tools_sync"
       },
       "build": {
@@ -1389,8 +1389,8 @@
         "baseline_file": "uv/uv_build.txt",
         "json_definition_file": "uv/uv_build.json",
         "crc": "0x9385A857",
-        "updated_timestamp": 1745840069.474151,
-        "checked_timestamp": 1745840069.474151,
+        "updated_timestamp": 1745846486.9856832,
+        "checked_timestamp": 1745846486.9856832,
         "source": "zlt_tools_sync"
       },
       "cache": {
@@ -1401,8 +1401,8 @@
         "baseline_file": "uv/uv_cache.txt",
         "json_definition_file": "uv/uv_cache.json",
         "crc": "0x75DC183C",
-        "updated_timestamp": 1745840069.5370517,
-        "checked_timestamp": 1745840069.5370517,
+        "updated_timestamp": 1745846487.0145195,
+        "checked_timestamp": 1745846487.0145195,
         "source": "zlt_tools_sync"
       },
       "export": {
@@ -1413,8 +1413,8 @@
         "baseline_file": "uv/uv_export.txt",
         "json_definition_file": "uv/uv_export.json",
         "crc": "0x98825DE1",
-        "updated_timestamp": 1745840069.5421824,
-        "checked_timestamp": 1745840069.5421824,
+        "updated_timestamp": 1745846487.0334072,
+        "checked_timestamp": 1745846487.0334072,
         "source": "zlt_tools_sync"
       },
       "help": {
@@ -1424,9 +1424,9 @@
         ],
         "baseline_file": "uv/uv_help.txt",
         "json_definition_file": "uv/uv_help.json",
-        "crc": "0xB55259BE",
-        "updated_timestamp": 1745840069.5493748,
-        "checked_timestamp": 1745840069.5493748,
+        "crc": "0xF0BA1BDB",
+        "updated_timestamp": 1745846487.0386539,
+        "checked_timestamp": 1745846487.0386539,
         "source": "zlt_tools_sync"
       },
       "init": {
@@ -1437,8 +1437,8 @@
         "baseline_file": "uv/uv_init.txt",
         "json_definition_file": "uv/uv_init.json",
         "crc": "0x792B7AD9",
-        "updated_timestamp": 1745840069.638686,
-        "checked_timestamp": 1745840069.638686,
+        "updated_timestamp": 1745846487.04284,
+        "checked_timestamp": 1745846487.04284,
         "source": "zlt_tools_sync"
       },
       "lock": {
@@ -1449,8 +1449,8 @@
         "baseline_file": "uv/uv_lock.txt",
         "json_definition_file": "uv/uv_lock.json",
         "crc": "0x2A7DDC7B",
-        "updated_timestamp": 1745840069.7041435,
-        "checked_timestamp": 1745840069.7041435,
+        "updated_timestamp": 1745846487.1054978,
+        "checked_timestamp": 1745846487.1054978,
         "source": "zlt_tools_sync"
       },
       "pip": {
@@ -1461,8 +1461,8 @@
         "baseline_file": "uv/uv_pip.txt",
         "json_definition_file": "uv/uv_pip.json",
         "crc": "0xD52C91D7",
-        "updated_timestamp": 1745840069.7248766,
-        "checked_timestamp": 1745840069.7248766,
+        "updated_timestamp": 1745846487.110685,
+        "checked_timestamp": 1745846487.110685,
         "source": "zlt_tools_sync"
       },
       "publish": {
@@ -1473,8 +1473,8 @@
         "baseline_file": "uv/uv_publish.txt",
         "json_definition_file": "uv/uv_publish.json",
         "crc": "0xF22A8159",
-        "updated_timestamp": 1745840069.804592,
-        "checked_timestamp": 1745840069.804592,
+        "updated_timestamp": 1745846487.1172438,
+        "checked_timestamp": 1745846487.1172438,
         "source": "zlt_tools_sync"
       },
       "python": {
@@ -1485,8 +1485,8 @@
         "baseline_file": "uv/uv_python.txt",
         "json_definition_file": "uv/uv_python.json",
         "crc": "0x6CEE2F19",
-        "updated_timestamp": 1745840069.8770986,
-        "checked_timestamp": 1745840069.8770986,
+        "updated_timestamp": 1745846487.1227005,
+        "checked_timestamp": 1745846487.1227005,
         "source": "zlt_tools_sync"
       },
       "remove": {
@@ -1497,8 +1497,8 @@
         "baseline_file": "uv/uv_remove.txt",
         "json_definition_file": "uv/uv_remove.json",
         "crc": "0xCD31D2E2",
-        "updated_timestamp": 1745840069.9236565,
-        "checked_timestamp": 1745840069.9236565,
+        "updated_timestamp": 1745846487.1744697,
+        "checked_timestamp": 1745846487.1744697,
         "source": "zlt_tools_sync"
       },
       "run": {
@@ -1509,8 +1509,8 @@
         "baseline_file": "uv/uv_run.txt",
         "json_definition_file": "uv/uv_run.json",
         "crc": "0x600ABA3B",
-        "updated_timestamp": 1745840069.9775116,
-        "checked_timestamp": 1745840069.9775116,
+        "updated_timestamp": 1745846487.1924977,
+        "checked_timestamp": 1745846487.1924977,
         "source": "zlt_tools_sync"
       },
       "self": {
@@ -1521,8 +1521,8 @@
         "baseline_file": "uv/uv_self.txt",
         "json_definition_file": "uv/uv_self.json",
         "crc": "0xA6C825BE",
-        "updated_timestamp": 1745840070.156959,
-        "checked_timestamp": 1745840070.156959,
+        "updated_timestamp": 1745846487.2292454,
+        "checked_timestamp": 1745846487.2292454,
         "source": "zlt_tools_sync"
       },
       "sync": {
@@ -1533,8 +1533,8 @@
         "baseline_file": "uv/uv_sync.txt",
         "json_definition_file": "uv/uv_sync.json",
         "crc": "0x06E2EBC2",
-        "updated_timestamp": 1745840070.1750789,
-        "checked_timestamp": 1745840070.1750789,
+        "updated_timestamp": 1745846487.2495477,
+        "checked_timestamp": 1745846487.2495477,
         "source": "zlt_tools_sync"
       },
       "tool": {
@@ -1545,8 +1545,8 @@
         "baseline_file": "uv/uv_tool.txt",
         "json_definition_file": "uv/uv_tool.json",
         "crc": "0x8B482BFD",
-        "updated_timestamp": 1745840070.2338872,
-        "checked_timestamp": 1745840070.2338872,
+        "updated_timestamp": 1745846487.3540518,
+        "checked_timestamp": 1745846487.3540518,
         "source": "zlt_tools_sync"
       },
       "tree": {
@@ -1557,8 +1557,8 @@
         "baseline_file": "uv/uv_tree.txt",
         "json_definition_file": "uv/uv_tree.json",
         "crc": "0x4ADD9AD3",
-        "updated_timestamp": 1745840070.2648394,
-        "checked_timestamp": 1745840070.2648394,
+        "updated_timestamp": 1745846487.3587904,
+        "checked_timestamp": 1745846487.3587904,
         "source": "zlt_tools_sync"
       },
       "venv": {
@@ -1569,8 +1569,8 @@
         "baseline_file": "uv/uv_venv.txt",
         "json_definition_file": "uv/uv_venv.json",
         "crc": "0xB8DD00B4",
-        "updated_timestamp": 1745840070.4476008,
-        "checked_timestamp": 1745840070.4476008,
+        "updated_timestamp": 1745846487.3636847,
+        "checked_timestamp": 1745846487.3636847,
         "source": "zlt_tools_sync"
       },
       "version": {
@@ -1581,8 +1581,8 @@
         "baseline_file": "uv/uv_version.txt",
         "json_definition_file": "uv/uv_version.json",
         "crc": "0x429C05DC",
-        "updated_timestamp": 1745840070.4523473,
-        "checked_timestamp": 1745840070.4523473,
+        "updated_timestamp": 1745846487.3667934,
+        "checked_timestamp": 1745846487.3667934,
         "source": "zlt_tools_sync"
       }
     }
@@ -1590,26 +1590,26 @@
   "vulture": {
     "args": [],
     "baseline_file": "vulture/vulture.txt",
-    "checked_timestamp": 1745827132.9249208,
+    "checked_timestamp": 1745846487.4078505,
     "command": [
       "vulture"
     ],
-    "crc": "0x00000000",
+    "crc": "0xE007FA0B",
     "json_skeleton_file": "vulture.json",
-    "updated_timestamp": 1745827132.9249208,
+    "updated_timestamp": 1745846487.4078505,
     "json_definition_file": "vulture/vulture.json",
     "source": "zlt_tools_sync"
   },
   "yamllint": {
     "args": [],
     "baseline_file": "yamllint/yamllint.txt",
-    "checked_timestamp": 1745827132.958275,
+    "checked_timestamp": 1745842316.6648293,
     "command": [
       "yamllint"
     ],
-    "crc": "0x00000000",
+    "crc": "0x88D9C481",
     "json_skeleton_file": "yamllint.json",
-    "updated_timestamp": 1745827132.958275,
+    "updated_timestamp": 1745842316.6648293,
     "json_definition_file": "yamllint/yamllint.json",
     "source": "zlt_tools_sync"
   }

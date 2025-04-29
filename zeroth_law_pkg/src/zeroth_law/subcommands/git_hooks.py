@@ -2,7 +2,7 @@
 CLI commands related to Git hook management for Zeroth Law.
 """
 
-import logging
+import structlog
 import click
 import subprocess
 from pathlib import Path
@@ -18,7 +18,7 @@ from zeroth_law.common.git_utils import (
 )
 from zeroth_law.common.path_utils import find_project_root
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Define commands as standalone functions decorated with click.command
 # They will be added to the main group in cli.py

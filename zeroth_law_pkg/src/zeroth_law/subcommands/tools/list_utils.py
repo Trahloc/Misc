@@ -1,6 +1,8 @@
 """Utility functions for modifying whitelist/blacklist in pyproject.toml."""
 
-import logging
+import click
+import structlog
+import sys
 from pathlib import Path
 from typing import List, Set, Tuple
 
@@ -8,7 +10,7 @@ from typing import List, Set, Tuple
 import tomlkit
 from tomlkit.exceptions import NonExistentKey, TOMLKitError
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # --- Helper Functions --- #
 

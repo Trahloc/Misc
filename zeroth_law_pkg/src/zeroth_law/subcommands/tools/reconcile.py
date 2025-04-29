@@ -2,7 +2,7 @@
 """Implements the 'zlt tools reconcile' subcommand."""
 
 import click
-import logging
+import structlog  # Replace logging with structlog
 import json as json_lib  # Alias to avoid conflict with option name
 from pathlib import Path
 from typing import Any, Dict, Set, Tuple
@@ -20,7 +20,7 @@ from ...lib.tooling.environment_scanner import get_executables_from_env
 from ...lib.tooling.tool_reconciler import ToolStatus, reconcile_tools
 from ...lib.tooling.tools_dir_scanner import get_tool_dirs
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()  # Use structlog
 
 
 class ReconciliationError(Exception):

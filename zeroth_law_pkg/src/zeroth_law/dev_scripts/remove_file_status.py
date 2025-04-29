@@ -4,13 +4,14 @@ Removes the 'file_status' key from the metadata object in all tool JSON files.
 """
 
 import json
-import logging
 from pathlib import Path
 import sys
+import structlog
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")  # Changed back to INFO for less noise
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
+
+# Configuration
 
 # Determine the project root and tools directory
 try:

@@ -1,11 +1,11 @@
 """Utilities for running subprocesses."""
 
-import logging
+import structlog
 import shlex
 import subprocess
-from typing import Sequence
+from typing import Sequence, List, Tuple
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def run_subprocess_no_check(

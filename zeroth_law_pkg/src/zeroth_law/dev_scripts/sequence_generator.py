@@ -1,9 +1,10 @@
 """Generates command sequences for a tool, including its subcommands."""
 
-import logging
+import structlog
 from typing import List, Tuple, Dict, Any, Set
+import zlib
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def _generate_sequence_id(parts: Tuple[str, ...]) -> str:

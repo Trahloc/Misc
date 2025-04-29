@@ -5,17 +5,16 @@ runs baseline generation to get CRCs/timestamps, and writes the index.
 """
 
 import json
-import logging
+import time
+import structlog
 import subprocess
 import sys
-import time
 from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
 import zlib  # Import zlib for CRC calculation
 
 # --- Configuration & Constants ---
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Assume this script runs from the workspace root or src/zeroth_law/dev_scripts
 try:

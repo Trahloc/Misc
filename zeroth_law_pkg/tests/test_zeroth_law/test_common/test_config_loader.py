@@ -280,9 +280,10 @@ def test_load_config_file_not_found():
     non_existent_path = Path("surely/this/does/not/exist/pyproject.toml")
     config = load_config(non_existent_path)
 
-    # Assert it returns defaults plus empty actions
+    # Assert it returns defaults plus empty actions and managed-tools
     expected_config = DEFAULT_CONFIG.copy()
     expected_config["actions"] = {}
+    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Add expected key
     assert config == expected_config
 
 
@@ -302,9 +303,10 @@ some_option = "value"
     config = load_config(config_file)
 
     # Should use defaults
-    # Check that core config matches defaults, and actions is an empty dict
+    # Check that core config matches defaults, actions is empty, and managed-tools is empty
     expected_config = DEFAULT_CONFIG.copy()
     expected_config["actions"] = {}
+    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Add expected key
     assert config == expected_config
 
 

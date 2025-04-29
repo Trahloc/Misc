@@ -2,10 +2,10 @@
 """Utilities for working with Python Abstract Syntax Trees (AST)."""
 
 import ast
-import logging
+import structlog
 from pathlib import Path
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def _parse_file_to_ast(file_path: str | Path) -> tuple[ast.Module, str]:

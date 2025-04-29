@@ -196,99 +196,13 @@ def ensure_skeleton_json_exists(tool_dir: Path, tool_id: str, command_sequence: 
 def main():  # pragma: no cover # Exclude the entire main function
     """Runs the test/example logic for the baseline writers."""
     # Setup basic logging for direct execution test
-    # This might configure logging globally, consider if that's okay
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    # logging.basicConfig(
+    #     level=logging.DEBUG,
+    #     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    # )
+    log.info("Running baseline_writers main function for testing/example.")
 
-    log.info("Testing baseline_writers...")
-    test_tool_name = "_test_writer_tool"
-    test_tool_id = "_test_writer_tool_sub"
-    # TOOLS_DIR_ROOT is determined by env var or file path at module load time
-    test_tool_dir = TOOLS_DIR_ROOT / test_tool_name
-    test_cmd_seq = [test_tool_name, "sub"]
-    test_content = "This is the ground truth text content.\nLine 2."
-
-    # Clean up previous runs if necessary
-    test_txt_file = test_tool_dir / f"{test_tool_id}.txt"
-    test_json_file = test_tool_dir / f"{test_tool_id}.json"
-    if test_txt_file.exists():
-        log.debug(f"Removing existing test file: {test_txt_file}")
-        test_txt_file.unlink()
-    if test_json_file.exists():
-        log.debug(f"Removing existing test file: {test_json_file}")
-        test_json_file.unlink()
-    # Check if directory is empty before removing
-    if test_tool_dir.exists():
-        is_empty = not any(test_tool_dir.iterdir())
-        if is_empty:
-            log.debug(f"Removing empty test directory: {test_tool_dir}")
-            test_tool_dir.rmdir()
-        else:
-            log.warning(f"Test directory not empty, not removing: {test_tool_dir}")
-
-    # Test TXT writer
-    log.info("Testing write_ground_truth_txt...")
-    txt_success = write_ground_truth_txt(test_tool_dir, test_tool_id, test_content)
-    if txt_success:
-        log.info("TXT write successful.")
-        assert test_txt_file.is_file()
-        with open(test_txt_file, "r", encoding=DEFAULT_ENCODING) as f:
-            assert f.read() == test_content
-        log.info("TXT content verified.")
-    else:
-        log.error("TXT write failed!")
-
-    # Test Skeleton writer (first time)
-    log.info("Testing ensure_skeleton_json_exists (first time)...")
-    skel_success1 = ensure_skeleton_json_exists(test_tool_dir, test_tool_id, test_cmd_seq)
-    if skel_success1:
-        log.info("Skeleton ensure (1) successful.")
-        assert test_json_file.is_file()
-        # Verify content
-        with open(test_json_file, "r", encoding=DEFAULT_ENCODING) as f:
-            skel_data = json.load(f)
-            assert "file_status" not in skel_data["metadata"]
-            assert "ground_truth_crc" in skel_data["metadata"], "Skeleton metadata missing ground_truth_crc"
-            assert skel_data["metadata"]["ground_truth_crc"] == "0x00000000", "Skeleton CRC is not 0x00000000"
-            assert skel_data["command_sequence"] == test_cmd_seq
-        log.info("Skeleton content verified.")
-    else:
-        log.error("Skeleton ensure (1) failed!")
-
-    # Test Skeleton writer (second time - should do nothing)
-    log.info("Testing ensure_skeleton_json_exists (second time - should skip)...")
-    # Create a dummy file to ensure it's skipped
-    test_json_file.write_text('{"tampered": true}', encoding=DEFAULT_ENCODING)
-    skel_success2 = ensure_skeleton_json_exists(test_tool_dir, test_tool_id, test_cmd_seq)
-    if skel_success2:
-        log.info("Skeleton ensure (2) successful (as expected).")
-        with open(test_json_file, "r", encoding=DEFAULT_ENCODING) as f:
-            # Check it wasn't overwritten by the skeleton function
-            assert "tampered" in json.load(f)
-        log.info("Verified skeleton was not overwritten.")
-    else:
-        log.error("Skeleton ensure (2) failed unexpectedly!")
-
-    # Final Cleanup
-    log.info("Cleaning up test files...")
-    if test_txt_file.exists():
-        log.debug(f"Cleaning up: {test_txt_file}")
-        test_txt_file.unlink()
-    if test_json_file.exists():
-        log.debug(f"Cleaning up: {test_json_file}")
-        test_json_file.unlink()
-    # Check if directory is empty before removing
-    if test_tool_dir.exists():
-        is_empty = not any(test_tool_dir.iterdir())
-        if is_empty:
-            log.debug(f"Cleaning up empty directory: {test_tool_dir}")
-            test_tool_dir.rmdir()
-        else:
-            log.warning(f"Test directory not empty after cleanup: {test_tool_dir}")
-
-    log.info("Testing finished.")
+    # Define test data
 
 
 # Example usage (for testing this module directly)

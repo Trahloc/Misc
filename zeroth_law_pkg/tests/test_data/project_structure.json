@@ -12,7 +12,7 @@
         "src/zeroth_law/analyzer/python/parameters.py",
         "src/zeroth_law/analyzer/python/statements.py",
         "src/zeroth_law/analyzers/precommit_analyzer.py",
-        "src/zeroth_law/cli.py", # Updated
+        "src/zeroth_law/cli.py",
     # "src/zeroth_law/commands/audit.py", # Removed
     # "src/zeroth_law/commands/audit/audit.py", # Removed
     # "src/zeroth_law/commands/git_hooks.py", # Removed
@@ -40,7 +40,7 @@
     "src/zeroth_law/subcommands/tools/sync.py", # Added
     "src/zeroth_law/subcommands/tools/tools.py", # Added
     "src/zeroth_law/subcommands/tools/whitelist_cmd.py", # Added
-    "src/zeroth_law/utils/subprocess_utils.py"
+    "src/zeroth_law/utils/subprocess_utils.py",
     ],
     "allowed_root_patterns": [
     # Project files (exact match)

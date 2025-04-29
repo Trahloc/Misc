@@ -1,8 +1,10 @@
-import logging
+import subprocess
+import structlog
+import sys
 from pathlib import Path
 from typing import List, Dict, Any, Sequence
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def build_tool_command_arguments(

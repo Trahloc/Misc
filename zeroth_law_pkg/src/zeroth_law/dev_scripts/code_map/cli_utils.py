@@ -2,9 +2,10 @@
 
 import argparse
 from pathlib import Path
-import logging
+import structlog
+import click
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 # Common default paths - resolve based on a detected project root
@@ -60,18 +61,24 @@ def add_common_logging_arguments(parser: argparse.ArgumentParser):
 
 def configure_logging(args: argparse.Namespace):
     """Configures logging based on parsed arguments."""
-    log_level = logging.DEBUG if args.verbose or args.debug_sql else logging.INFO
+    log_level = structlog.get_logger().level if args.verbose or args.debug_sql else structlog.get_logger().level
     # Use force=True to ensure configuration overrides any defaults
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s - %(levelname)s - [%(name)s] %(message)s",
-        force=True,
+    structlog.configure(
+        processors=[
+            structlog.processors.JSONRenderer(
+                indent=4, sort_keys=True, key_order=["timestamp", "level", "logger", "message"]
+            )
+        ],
+        logger_factory=structlog.PrintLoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        context_class=dict,
+        cache_logger_on_first_use=True,
     )
     # Control sqlite-utils verbosity separately
     logging.getLogger("sqlite_utils").setLevel(logging.DEBUG if args.debug_sql else logging.WARNING)
 
     log.info("Logging configured.")
-    if log_level == logging.DEBUG:
+    if log_level == structlog.get_logger().level:
         log.debug("Verbose logging enabled.")
     if args.debug_sql:
         log.debug("SQL query logging enabled.")

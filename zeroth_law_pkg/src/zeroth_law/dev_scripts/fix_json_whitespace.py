@@ -3,10 +3,11 @@
 """Scans for JSON files in the tools directory and removes trailing whitespace after the final brace."""
 
 import sys
-import logging
+import structlog
 from pathlib import Path
 import re
 import json
+import jsonschema
 
 # from zeroth_law.path_utils import find_project_root
 from zeroth_law.common.path_utils import find_project_root
@@ -15,8 +16,7 @@ from zeroth_law.common.path_utils import find_project_root
 # Assuming this script is run from somewhere within the project structure
 project_root = find_project_root()
 
-log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+log = structlog.get_logger()
 
 # Regex to find a closing brace followed by whitespace at the very end of the string
 TRAILING_WHITESPACE_RE = re.compile(r"(\}\s+)$")

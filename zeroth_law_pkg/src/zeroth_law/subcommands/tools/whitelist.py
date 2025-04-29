@@ -1,7 +1,7 @@
 """Implements the 'zlt tools add-whitelist' and 'remove-whitelist' subcommands."""
 
 import click
-import logging
+import structlog
 from pathlib import Path
 from typing import List, Set, Tuple
 
@@ -9,7 +9,7 @@ from typing import List, Set, Tuple
 import tomlkit
 from tomlkit.exceptions import NonExistentKey, TOMLKitError
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # --- Helper Functions --- #
 

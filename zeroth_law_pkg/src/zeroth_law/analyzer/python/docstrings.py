@@ -3,13 +3,15 @@
 
 import ast
 import io
-import logging
+import structlog
 import tokenize
 from pathlib import Path
+from io import BytesIO
+from typing import List, Tuple, Dict, Any, Optional
 
 from .ast_utils import _build_parent_map, _parse_file_to_ast
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Type alias for violation tuple
 DocstringViolation = tuple[str, str, int]  # (node_type, node_name, line_number)

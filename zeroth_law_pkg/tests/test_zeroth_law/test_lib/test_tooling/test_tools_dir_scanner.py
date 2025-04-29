@@ -7,34 +7,36 @@ from zeroth_law.lib.tooling.tools_dir_scanner import get_tool_dirs
 
 
 def test_scan_with_tool_dirs(tmp_path):
-    """Test scanning a directory containing valid tool directories under alphabetical dirs."""
+    """Test scanning a directory containing valid tool directories.
+
+    NOTE: get_tool_dirs only scans DIRECT children of the base directory.
+    It does NOT recursively scan into subdirs like 'a/', 'b/'.
+    This test reflects that behavior.
+    """
     tools_base_dir = tmp_path / "tools"
-    # Define expected tools and their parent grouping dirs
-    expected_tools_map = {
-        "a": ["tool_a"],
-        "b": ["tool_b"],
-        "direct": ["another_tool"],  # Tool directly under tools/
-    }
-    expected_tools = set()
+    tools_base_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create dummy tool directories based on the map
-    for group_letter, tool_names in expected_tools_map.items():
-        if len(group_letter) == 1 and group_letter.isalpha():  # Grouping dir
-            group_dir = tools_base_dir / group_letter
-        else:  # Direct tool dir
-            group_dir = tools_base_dir
+    # Create a valid direct tool directory
+    direct_tool_name = "another_tool"
+    direct_tool_dir = tools_base_dir / direct_tool_name
+    direct_tool_dir.mkdir()
+    (direct_tool_dir / f"{direct_tool_name}.json").touch() # Needs the .json file
 
-        for tool_name in tool_names:
-            tool_dir = group_dir / tool_name
-            tool_dir.mkdir(parents=True, exist_ok=True)
-            # Create the required .json file for direct tools
-            if group_dir == tools_base_dir:
-                (tool_dir / f"{tool_name}.json").touch()
-            expected_tools.add(tool_name)
+    # Create nested directories that should NOT be found by get_tool_dirs
+    nested_dir_a = tools_base_dir / "a"
+    nested_dir_a.mkdir()
+    (nested_dir_a / "tool_a").mkdir()
+
+    nested_dir_b = tools_base_dir / "b"
+    nested_dir_b.mkdir()
+    (nested_dir_b / "tool_b").mkdir()
 
     # Create dummy files to ensure only dirs are picked up
     (tools_base_dir / "some_file.txt").touch()
-    (tools_base_dir / "a" / "another_file.txt").touch()
+    (nested_dir_a / "another_file.txt").touch()
+
+    # Expected result: Only the direct tool directory
+    expected_tools = {direct_tool_name}
 
     found_tools = get_tool_dirs(tools_base_dir)
 

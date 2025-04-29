@@ -1,11 +1,11 @@
 """Extracts subcommand details from a tool's JSON definition file."""
 
+import structlog
 import json
-import logging
 from pathlib import Path
 from typing import Dict, Any
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 def get_subcommands_from_json(json_path: Path) -> Dict[str, Any]:

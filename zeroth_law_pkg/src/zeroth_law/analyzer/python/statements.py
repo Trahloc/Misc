@@ -2,14 +2,16 @@
 """Analyzes Python functions for excessive statement counts."""
 
 import ast
-import logging
-import typing
+from io import BytesIO
+import structlog
+import tokenize
 from pathlib import Path
+from typing import List, Tuple, Dict, Any
 
 # from .ast_utils import _add_parent_pointers, _parse_file_to_ast
 from .ast_utils import _build_parent_map, _parse_file_to_ast
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Type alias for violation tuple
 StatementViolation = tuple[str, int, int]  # (node_name, line_number, statement_count)
@@ -24,7 +26,7 @@ class StatementCounterVisitor(ast.NodeVisitor):
     Recursively visits statement nodes within the function, excluding nested functions/classes.
     """
 
-    def __init__(self: typing.Self) -> None:
+    def __init__(self: Any) -> None:
         """Initialize statement counter."""
         self.count = 0
 

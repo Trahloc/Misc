@@ -1,9 +1,10 @@
 """Main command group for 'zlt tools' subcommands."""
 
 import click
-import logging
+import structlog
+from pathlib import Path
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 @click.group("tools")

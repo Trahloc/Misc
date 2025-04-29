@@ -7,6 +7,7 @@
 # --- IMPORTS ---
 import ast
 import sqlite3
+import structlog
 import time
 import hashlib
 from pathlib import Path
@@ -14,6 +15,7 @@ import logging
 import sys
 import argparse
 import sqlite_utils  # Added dependency
+from typing import Dict, List, Optional, Tuple
 
 # --- CONSTANTS ---
 # Remove old defaults, now handled by cli_utils or main block
@@ -24,7 +26,7 @@ PRUNE_CONFIRMATION_STRING = "Yes I have reviewed the content of the source files
 
 # --- LOGGING SETUP (Explicit) ---
 # Ensure logging is configured early and forcefully for the script itself
-log = logging.getLogger("map_generator")  # Use a specific name?
+log = structlog.get_logger()  # Use structlog
 # Remove the basicConfig call here if cli_utils handles it later in main?
 # Or ensure this basicConfig uses force=True if kept.
 # Let's try setting the level directly on the logger for now.

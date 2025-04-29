@@ -1,8 +1,9 @@
 """Debug script to fix header/footer for a specific file and log comparison."""
 
-import logging
+import structlog
 import sys
 from pathlib import Path
+from typing import Any
 
 # Add project root to sys.path BEFORE attempting src import
 PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()  # Go up 3 levels: dev_scripts -> zeroth_law -> src
@@ -14,8 +15,7 @@ from src.zeroth_law.analyzer.python.analyzer import (
 )  # noqa: E402
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Define paths (relative to project root determined above)
 TARGET_FILE = PROJECT_ROOT / "__init__.py"  # Target src/zeroth_law/__init__.py

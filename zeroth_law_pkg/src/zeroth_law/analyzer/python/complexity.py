@@ -5,15 +5,17 @@ Based on the radon library's approach.
 """
 
 import ast
-import logging
+import tokenize
+from io import BytesIO
+import structlog
 from pathlib import Path
-from typing import Self
+from typing import Self, List, Tuple, Dict, Any
 
 # Removed problematic import: import ruff.complexity as ruff_complexity
 # from .ast_utils import _add_parent_pointers, _parse_file_to_ast
 from .ast_utils import _build_parent_map, _parse_file_to_ast
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # Type alias using modern built-in generic type
 ComplexityViolation = tuple[str, int, int]  # (node_name, line_number, complexity_score)

@@ -3,7 +3,8 @@
 Handles finding and filtering files based on CLI input and configuration.
 """
 
-import logging
+import fnmatch
+import structlog
 import sys
 from pathlib import Path
 from typing import Any, List, Set, Generator, Tuple
@@ -11,7 +12,7 @@ from zeroth_law.common.file_finder import find_python_files
 from zeroth_law.common.config_loader import load_config
 from zeroth_law.analyzer.python.analyzer import analyze_file_compliance
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 
 # --- Core File Finding Logic ---

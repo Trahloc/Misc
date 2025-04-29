@@ -7,7 +7,8 @@ import sqlite3
 import json
 import argparse
 from pathlib import Path
-import logging
+import structlog
+from typing import List, Dict, Tuple, Set
 import sys
 import sqlite_utils
 from tabulate import tabulate
@@ -17,8 +18,7 @@ DB_PATH_DEFAULT = Path("tests/codebase_map/code_map.db")
 OUTPUT_PATH_DEFAULT = Path("tests/codebase_map/code_map_report.json")
 
 # --- LOGGING ---
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-log = logging.getLogger(__name__)
+log = structlog.get_logger()
 
 # --- Query Functions ---
 
