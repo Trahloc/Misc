@@ -266,6 +266,43 @@ blacklist = [
 
 ]
 
+# --- Allowed Items at Project Root (for test_project_layout.py) ---
+[tool.zeroth-law.allowed-project-roots]
+items = [
+    "src",
+    "tests",
+    "docs",
+    "frameworks",
+    "scripts",
+    "templates",
+    "tools",
+    ".venv",
+    ".pytest_cache",
+    ".github",
+    ".vscode",
+    ".cursor",
+    ".ignore",
+    "build",
+    "dist",                      # Standard build output
+    "coverage_html_report",      # Standard coverage report
+    "generated_command_outputs", # For baseline text
+    "pyproject.toml",
+    "uv.lock",
+    "README.md",
+    "LICENSE",
+    "NOTES.md",
+    "TODO.md",
+    "CODE_TODOS.md",
+    ".gitignore",
+    ".pre-commit-config.yaml",
+    "mock_whitelist.toml",       # Mock config file
+    "package.json",              # For Node/Prettier
+    "package-lock.json",         # For Node/Prettier
+    "node_modules",              # For Node/Prettier
+    ".coverage",                 # Coverage database
+    "project_structure.json",    # Project data file
+]
+
 # ----------------------------------------- #
 
 # Add pytest configuration section

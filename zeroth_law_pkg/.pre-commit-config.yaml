@@ -51,6 +51,7 @@ repos:
         name: Generate CODE_TODOS.md
         entry: zeroth_law_pkg/src/zeroth_law/dev_scripts/generate_code_todos.sh # Updated path relative to Git root
         language: system
+        stages: [post-commit]
         pass_filenames: false
         always_run: true
         verbose: true
