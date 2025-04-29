@@ -72,6 +72,8 @@
 - [ ] 6. **Publishing Prep (Optional):** Prepare for potential PyPI release.
 
 ## Known Issues / Tech Debt
+- [CRITICAL] **Investigate and Fix `src/src` Directory Structure:** The project contains a `src/src/` directory structure which is incorrect. Audit the project structure, identify the cause, and refactor to the correct `src/zeroth_law/` structure, adjusting all relevant imports and configurations.
+- [ ] **Investigate Podman Stop Warning:** The `zlt-baseline-runner-...` container often requires SIGKILL instead of stopping gracefully with SIGTERM during `zlt tools sync`. Investigate the cause (e.g., process handling in `container_runner.py`, resource limits, Podman cleanup) and resolve.
 - [ ] Investigate and fix root cause of `mypy` "Source file found twice" error when executed via `action_runner.py`. Re-enable `mypy` in `tool_mapping.json` for the `lint` action once resolved. (Currently handled by pre-commit hook).
 - [ ] Review and refactor suppressed `E402` (module import not at top of file) errors identified in `CODE_TODOS.md`. Remove `sys.path` modifications if redundant due to Poetry's editable install.
 
@@ -219,6 +221,8 @@
   - [ ] Migrate skeleton JSON creation logic.
   - [ ] Migrate index update logic (`ToolIndexHandler`).
   - [x] Implement `--tool`, `--force`, `--since` options.
+  - [ ] **Verify Handling of Whitelisted but Missing Tools:** Ensure `sync` correctly attempts to generate baselines for tools like `zlt` that are whitelisted but whose directories are initially missing.
+  - [ ] **Enhance User Feedback:** Add progress indicators or more verbose logging during reconciliation and parallel baseline generation phases to improve user experience for long operations.
 - [x] 11. Refactor/Remove redundant dev scripts (`reconciliation_logic.py`, `generate_baseline_cli.py`, `tool_discovery.py`, `tools_dir_scanner.py`).
 - [x] 12. Refactor/Remove redundant test fixtures (`ensure_baselines_updated`, `managed_sequences` - replace with direct calls or new fixtures if needed).
 - [x] 13. Update tests to use or test the new `zlt tools` commands.
