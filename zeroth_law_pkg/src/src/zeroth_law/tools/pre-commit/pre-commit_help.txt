@@ -1,7 +1,0 @@
-usage: pre-commit help [-h] [help_cmd]
-
-positional arguments:
-  help_cmd    Command to show help for.
-
-options:
-  -h, --help  show this help message and exit
