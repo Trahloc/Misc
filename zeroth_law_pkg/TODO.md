@@ -242,6 +242,11 @@
   - [ ] **14.4.** Update `sync.py` to filter command sequences based on the hierarchical blacklist/whitelist status (needs status info from reconcile).
   - [ ] **14.5.** Update `list_utils.py` and `whitelist_cmd.py`/`blacklist_cmd.py` to parse/write the hierarchical syntax.
   - [ ] **14.6.** Add/update tests for parsing (`config_loader`), reconciliation (`reconcile`), sync filtering (`sync`), and list management commands.
+    - [ ] **14.6.1** Create tests for `list_utils.py::modify_tool_list` covering hierarchical add/remove scenarios.
+    - [ ] **14.6.2** Update tests for `config_loader.py::load_config` to verify correct parsing.
+    - [ ] **14.6.3** Update tests for `reconcile.py` to use mock hierarchical config and verify results.
+    - [ ] **14.6.4** Update tests for `sync.py` to verify task filtering based on hierarchical blacklist.
+    - [ ] **14.6.5** Update tests for `whitelist_cmd.py`/`blacklist_cmd.py` CLI commands.
 - [ ] **15. Podman Integration Follow-up (Post-Refactor):**
   - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
   - [ ] Test the Podman-based baseline capture workflow thoroughly, covering various tools, subcommands, potential errors (container start failure, exec failure, timeouts), and cleanup.
