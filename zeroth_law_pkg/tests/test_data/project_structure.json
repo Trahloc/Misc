@@ -52,6 +52,7 @@
         "CODE_TODOS.md",
         "package.json",
         "project_structure.json",
+        "mock_whitelist.toml",
         "conftest.py",
         "__init__.py",
         ".git/**",
