@@ -1,1 +1,10 @@
-/usr/local/bin/python
+usage: pre-commit validate-manifest [-h] [--color {auto,always,never}]
+                                    [filenames ...]
+
+positional arguments:
+  filenames
+
+options:
+  -h, --help            show this help message and exit
+  --color {auto,always,never}
+                        Whether to use color in output. Defaults to `auto`.

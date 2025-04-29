@@ -1,1 +1,16 @@
-/usr/local/bin/python
+usage: pre-commit hook-impl [-h] [--color {auto,always,never}] [-c CONFIG]
+                            [--hook-type HOOK_TYPE] [--hook-dir HOOK_DIR]
+                            [--skip-on-missing-config]
+                            ...
+
+positional arguments:
+  rest
+
+options:
+  -h, --help            show this help message and exit
+  --color {auto,always,never}
+                        Whether to use color in output. Defaults to `auto`.
+  -c, --config CONFIG   Path to alternate config file
+  --hook-type HOOK_TYPE
+  --hook-dir HOOK_DIR
+  --skip-on-missing-config

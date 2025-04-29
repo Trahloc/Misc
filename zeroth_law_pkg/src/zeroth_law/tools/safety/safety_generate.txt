@@ -1,1 +1,20 @@
-/usr/local/bin/python
+
+ Generate a boilerplate Safety CLI policy file for customized security          
+ policies.                                                                      
+ Note: Safety Platform policies will override any local policy files found      
+ Example: safety generate policy_file                                           
+                                                                                
+ Usage: safety generate [OPTIONS] NAME                                          
+                                                                                
+                                    Options                                     
+┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃            ┃                                                                 ┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--path'] │ The path where the generated file will be saved (default:       │
+│            │ current directory).                                             │
+│            │                                                                 │
+│            │ Example: safety generate policy_file --path                     │
+│            │ .my-project-safety-policy.yml                                   │
+├────────────┼─────────────────────────────────────────────────────────────────┤
+│ ['--help'] │ Show this message and exit.                                     │
+└────────────┴─────────────────────────────────────────────────────────────────┘

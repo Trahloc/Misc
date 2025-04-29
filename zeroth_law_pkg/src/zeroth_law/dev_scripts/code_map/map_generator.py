@@ -25,19 +25,23 @@ from typing import Dict, List, Optional, Tuple
 PRUNE_CONFIRMATION_STRING = "Yes I have reviewed the content of the source files and determined these entries are stale"
 
 # --- LOGGING SETUP (Explicit) ---
-# Ensure logging is configured early and forcefully for the script itself
-log = structlog.get_logger()  # Use structlog
-# Remove the basicConfig call here if cli_utils handles it later in main?
-# Or ensure this basicConfig uses force=True if kept.
-# Let's try setting the level directly on the logger for now.
-# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-# log = logging.getLogger(__name__)
-# Attempt direct handler configuration:
-handler = logging.StreamHandler(sys.stderr)  # Ensure output to stderr
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - [%(name)s] %(message)s")
-handler.setFormatter(formatter)
-log.addHandler(handler)
-log.setLevel(logging.INFO)  # Default level, --verbose in main will set to DEBUG
+# Configure structlog for script output
+structlog.configure(
+    processors=[
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        # Use ConsoleRenderer for nice, human-readable output, especially in scripts
+        structlog.dev.ConsoleRenderer(),
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+log = structlog.get_logger()
+# Set level via command-line args later if needed (see main function)
 
 # --- AST Visitor ---
 

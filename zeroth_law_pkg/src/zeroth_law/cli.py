@@ -8,10 +8,11 @@ import os
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, cast
 from importlib.metadata import version, PackageNotFoundError
 
 import click
+import logging
 
 from zeroth_law.action_runner import run_action
 from zeroth_law.common.config_loader import load_config

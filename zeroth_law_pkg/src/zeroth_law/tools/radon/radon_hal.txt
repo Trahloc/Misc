@@ -1,1 +1,28 @@
-/usr/local/bin/python
+usage: radon hal [-h] [-e <str>] [-i <str>] [-j] [-f] [-O <str>]
+                 [--include-ipynb] [--ipynb-cells]
+                 paths [paths ...]
+
+The Halstead metrics are a series of measurements meant to quantitatively
+measure the complexity of code, including the difficulty a programmer would
+have in writing it.
+
+positional arguments:
+  paths                 The paths where to find modules or packages to
+                        analyze. More than one path is allowed.
+
+options:
+  -h, --help            show this help message and exit
+  -e, --exclude <str>   Exclude files only when their path matches one of
+                        these glob patterns. Usually needs quoting at the
+                        command line.
+  -i, --ignore <str>    Ignore directories when their name matches one of
+                        these glob patterns: radon won't even descend into
+                        them. By default, hidden directories (starting with
+                        '.') are ignored.
+  -j, --json            Format results in JSON.
+  -f, --functions       Analyze files by top-level functions instead of as a
+                        whole.
+  -O, --output-file <str>
+                        The output file (default to stdout).
+  --include-ipynb       Include IPython Notebook files
+  --ipynb-cells         Include reports for individual IPYNB cells

@@ -1,1 +1,125 @@
-/usr/local/bin/python
+
+ \[deprecated] Find licenses at target files or environments. This command will 
+ be replaced by safety scan, and will be unsupported beyond 1 May 2024.         
+ Example: safety license -r requirements.txt                                    
+                                                                                
+ Usage: safety license [OPTIONS]                                                
+                                                                                
+                                    Options                                     
+┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                      ┃                                                       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--proxy-host']     │ Specify a proxy host for network communications.      │
+│                      │                                                       │
+│                      │ Note: proxy details can be set globally in a config   │
+│                      │ file.                                                 │
+│                      │                                                       │
+│                      │ See safety configure --help                           │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--proxy-port']     │ Set the proxy port (default: 80).                     │
+│                      │                                                       │
+│                      │ Note: proxy details can be set globally in a config   │
+│                      │ file.                                                 │
+│                      │                                                       │
+│                      │ See safety configure --help                           │
+│                      │                                                       │
+│                      │  Requires: [ proxy_host ]                             │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--proxy-protocol'] │ Choose the proxy protocol (default: https).           │
+│                      │                                                       │
+│                      │ Note: proxy details can be set globally in a config   │
+│                      │ file.                                                 │
+│                      │                                                       │
+│                      │ See safety configure --help                           │
+│                      │                                                       │
+│                      │  Requires: [ proxy_host ]                             │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--key']            │ The API key required for cicd stage or production     │
+│                      │ stage scans.                                          │
+│                      │                                                       │
+│                      │ For development stage scans unset the API key and     │
+│                      │ authenticate using safety auth.                       │
+│                      │                                                       │
+│                      │ Tip: the API key can also be set using the            │
+│                      │ environment variable: SAFETY_API_KEY                  │
+│                      │                                                       │
+│                      │ Example: safety --key API_KEY --stage cicd scan       │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--db']             │ Path to a local license database. Default: empty      │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--output', '-o']   │                                                       │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--cache']          │ Whether license database file should be               │
+│                      │ cached.Default: 0 seconds                             │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--file', '-r']     │ Read input from one (or multiple) requirement files.  │
+│                      │ Default: empty                                        │
+├──────────────────────┼───────────────────────────────────────────────────────┤
+│ ['--help']           │ Show this message and exit.                           │
+└──────────────────────┴───────────────────────────────────────────────────────┘
+
+                                 Global-Options                                 
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                  ┃                                           ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--stage']                      │ Assign a development lifecycle stage to   │
+│                                  │ your scan (default: development).         │
+│                                  │                                           │
+│                                  │ This labels the scan and its findings in  │
+│                                  │ Safety Platform with this stage.          │
+│                                  │                                           │
+│                                  │ Example: safety --stage production scan   │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--key']                        │ The API key required for cicd stage or    │
+│                                  │ production stage scans.                   │
+│                                  │                                           │
+│                                  │ For development stage scans unset the API │
+│                                  │ key and authenticate using safety auth.   │
+│                                  │                                           │
+│                                  │ Tip: the API key can also be set using    │
+│                                  │ the environment variable: SAFETY_API_KEY  │
+│                                  │                                           │
+│                                  │ Example: safety --key API_KEY --stage     │
+│                                  │ cicd scan                                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-host']                 │ Specify a proxy host for network          │
+│                                  │ communications.                           │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-port']                 │ Set the proxy port (default: 80).         │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+│                                  │                                           │
+│                                  │  Requires: [ proxy_host ]                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-protocol']             │ Choose the proxy protocol (default:       │
+│                                  │ https).                                   │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+│                                  │                                           │
+│                                  │  Requires: [ proxy_host ]                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--disable-optional-telemetry'] │ Opt-out of sending optional telemetry     │
+│                                  │ data. Anonymized telemetry data will      │
+│                                  │ remain.                                   │
+│                                  │                                           │
+│                                  │ Example: safety                           │
+│                                  │ --disable-optional-telemetry scan         │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--debug']                      │ Enable debug mode for detailed output.    │
+│                                  │                                           │
+│                                  │ Example: safety --debug scan              │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--version']                    │ Show the version and exit.                │
+└──────────────────────────────────┴───────────────────────────────────────────┘
+

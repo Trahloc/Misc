@@ -1,1 +1,4 @@
-/usr/local/bin/python
+Usage: mutmut print-time-estimates [OPTIONS] [MUTANT_NAMES]...
+
+Options:
+  --help  Show this message and exit.

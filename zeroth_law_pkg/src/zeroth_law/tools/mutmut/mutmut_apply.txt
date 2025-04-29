@@ -1,1 +1,4 @@
-/usr/local/bin/python
+Usage: mutmut apply [OPTIONS] MUTANT_NAME
+
+Options:
+  --help  Show this message and exit.

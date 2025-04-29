@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Tuple, List, Dict, Any, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module needs to filter command sequences based on resolved hierarchical status.
+
 # --- Imports from other modules --- #
 
 # Need reconciliation logic to determine managed tools
@@ -139,22 +141,33 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
             log.info("`uv` found in container PATH.")
             internal_uv_path = uv_check_result.stdout.strip() if uv_check_result.stdout else "uv"
 
-        # Now run uv pip sync using the container's uv and python
+        # --- Copy requirements file into container --- #
+        host_req_file = project_root / "requirements-dev.txt"
+        container_req_file = "/tmp/requirements-dev.txt"
+        if host_req_file.is_file():
+            log.info(f"Copying {host_req_file.name} to {container_name}:{container_req_file}...")
+            _run_podman_command(["cp", str(host_req_file), f"{container_name}:{container_req_file}"], check=True)
+            log.info("Requirements file copied.")
+        else:
+            log.error(f"Host requirements file {host_req_file} not found. Cannot sync dependencies.")
+            return False
+
+        # --- Run uv pip sync using the requirements file --- #
         sync_cmd = [
             "exec",
             "-w",
-            "/app",  # Run from project root within container
+            "/app",  # Still run from project root for context, though sync path is absolute
             container_name,
-            internal_uv_path,  # Use the uv inside the container
+            internal_uv_path,
             "pip",
             "sync",
             "--python",
-            "/venv/bin/python",  # Target the internal venv python
-            "/app/pyproject.toml",  # Sync using pyproject.toml (will implicitly use lockfile if present)
+            "/venv/bin/python",
+            container_req_file,  # Use the copied requirements file path
         ]
-        log.info(f"Running uv pip sync from pyproject.toml: {' '.join(sync_cmd)}")
+        log.info(f"Running uv pip sync from requirements file: {' '.join(sync_cmd)}")
         _run_podman_command(sync_cmd, check=True)
-        log.info("Dependencies installed in internal venv from pyproject.toml.")
+        log.info("Dependencies installed in internal venv from requirements file.")
 
         # --- DEBUG: Poll container status until 'Up' or timeout ---
         log.info(f"Polling status of container {container_name}...")
@@ -481,7 +494,8 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
 
         # --- Reconciliation & Pruning (Sequential - Must happen before parallel sync) ---
         log.debug("Performing reconciliation to identify managed tools...")
-        reconciliation_results, managed_tools_set, blacklist, errors, warnings, has_errors = (
+        # Get the FULL reconciliation results and the parsed blacklist
+        reconciliation_results, managed_tools_set, parsed_blacklist, errors, warnings, has_errors = (
             _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
         )
         if not managed_tools_set and not prune:
@@ -584,10 +598,36 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
             # Optionally exit if filesystem check fails critically
             # ctx.exit(1)
 
-        # --- Prepare Task List ---
+        # --- Prepare Task List (with filtering based on blacklist) ---
         tasks_to_run: List[Tuple[str, ...]] = []
+        skipped_by_blacklist_count = 0
+
         for tool_name in sorted(list(target_tools)):
-            # Add base command task
+            tool_status = reconciliation_results.get(tool_name)
+
+            # Skip tool if not considered managed by reconciliation
+            if tool_status not in {
+                ToolStatus.MANAGED_OK,
+                ToolStatus.MANAGED_MISSING_ENV,
+                ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
+            }:
+                log.debug(
+                    f"Skipping tool '{tool_name}' as its reconciliation status is '{tool_status.name if tool_status else 'UNKNOWN'}'."
+                )
+                continue
+
+            # Check if the whole tool is blacklisted
+            is_whole_tool_blacklisted = parsed_blacklist.get(tool_name) == {"*"}
+            if is_whole_tool_blacklisted:
+                log.info(f"Skipping tool '{tool_name}' and its subcommands as it is fully blacklisted.")
+                skipped_by_blacklist_count += 1  # Count the base tool skip
+                # We might need a better way to count skipped subcommands if desired
+                continue
+
+            # Add base command task (if tool itself isn't blacklisted implicitly by only having sub-blacklists)
+            # Note: The current reconciliation logic focuses on tool-level status.
+            # We assume if the tool reached here, its base command should be processed unless subcommands cover everything.
+            # This logic might need refinement depending on desired behavior when *only* subcommands are blacklisted.
             base_command_sequence = (tool_name,)
             tasks_to_run.append(base_command_sequence)
 
@@ -601,13 +641,25 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
                         if isinstance(base_definition_data, dict) and "subcommands_detail" in base_definition_data:
                             subcommands_detail = base_definition_data["subcommands_detail"]
                             if isinstance(subcommands_detail, dict):
+                                blacklisted_subs = parsed_blacklist.get(
+                                    tool_name, set()
+                                )  # Get specific subs or empty set
                                 for sub_key in subcommands_detail.keys():
+                                    # Skip if this specific subcommand is blacklisted
+                                    if sub_key in blacklisted_subs:
+                                        log.info(f"Skipping blacklisted subcommand: {tool_name}:{sub_key}")
+                                        skipped_by_blacklist_count += 1
+                                        continue
+
+                                    # If not skipped, add the subcommand task
                                     sub_command_sequence = (tool_name, sub_key)
                                     tasks_to_run.append(sub_command_sequence)
                 except Exception as json_e:
                     log.warning(f"Could not load or parse {base_json_file_path} to check for subcommands: {json_e}")
 
-        log.info(f"Prepared {len(tasks_to_run)} total command sequences for parallel processing.")
+        log.info(
+            f"Prepared {len(tasks_to_run)} command sequences for parallel processing (skipped {skipped_by_blacklist_count} due to blacklist)."
+        )
 
         # --- Execute Tasks in Parallel ---
         results: List[Dict[str, Any]] = []
@@ -710,6 +762,7 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         log.info(f"Tools Targeted:       {len(target_tools)}")
         log.info(f"Sequences Processed:  {processed_count}")  # Total futures processed
         log.info(f"Sequences Skipped (timestamp): {skipped_count}")  # Clarify skip reason
+        log.info(f"Sequences Skipped (blacklist): {skipped_by_blacklist_count}")  # Add count for blacklist skips
         log.info(f"Ground Truth/JSON Updated/Created: {updated_count}")  # Rename summary line
         # log.info(f"Skeletons Created:    {skeleton_created_count}") # Can be combined with updated count or kept separate
         log.info(f"Errors Encountered:   {len(sync_errors)}")

@@ -1,1 +1,17 @@
-/usr/local/bin/python
+usage: pre-commit install [-h] [--color {auto,always,never}] [-c CONFIG] [-f]
+                          [--install-hooks]
+                          [-t {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}]
+                          [--allow-missing-config]
+
+options:
+  -h, --help            show this help message and exit
+  --color {auto,always,never}
+                        Whether to use color in output. Defaults to `auto`.
+  -c, --config CONFIG   Path to alternate config file
+  -f, --overwrite       Overwrite existing hooks / remove migration mode.
+  --install-hooks       Whether to install hook environments for all
+                        environments in the config file.
+  -t, --hook-type {commit-msg,post-checkout,post-commit,post-merge,post-rewrite,pre-commit,pre-merge-commit,pre-push,pre-rebase,prepare-commit-msg}
+  --allow-missing-config
+                        Whether to allow a missing `pre-commit` configuration
+                        file or exit with a failure code.

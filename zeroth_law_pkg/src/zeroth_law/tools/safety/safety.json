@@ -85,42 +85,42 @@
   ],
   "subcommand": null,
   "subcommands_detail": {
-    "alert": {
-      "description": "[deprecated] Create GitHub pull requests or GitHub issues using a `safety check` json report file. Being replaced by newer features.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_alert.json"
-    },
-    "auth": {
-      "description": "Authenticate Safety CLI to perform scans. Your default browser will automatically open to https://platform.safetycli.com.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_auth.json"
-    },
-    "check": {
-      "description": "[deprecated] Find vulnerabilities at target files or environments. Now replaced by safety scan, and will be unsupported beyond 1 May 2024.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_check.json"
-    },
-    "check-updates": {
-      "description": "Check for version updates to Safety CLI.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_check-updates.json"
-    },
-    "configure": {
-      "description": "Set up global configurations for Safety CLI, including proxy settings and organization details.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_configure.json"
-    },
-    "generate": {
-      "description": "Generate a boilerplate Safety CLI policy file for customized security policies. Note: Safety Platform policies will override any local policy files found.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_generate.json"
-    },
-    "license": {
-      "description": "[deprecated] Find licenses at target files or environments. This command will be replaced by safety scan, and will be unsupported beyond 1 May 2024.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_license.json"
-    },
-    "scan": {
-      "description": "Scans a Python project directory.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_scan.json"
-    },
-    "validate": {
-      "description": "Verify that a local policy file is valid. NAME is the name of the file type to validate. Valid values are: policy_file.",
-      "json_definition": "src/zeroth_law/tools/safety/safety_validate.json"
-    }
+    // "alert": {
+    //   "description": "[deprecated] Create GitHub pull requests or GitHub issues using a `safety check` json report file. Being replaced by newer features.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_alert.json"
+    // },
+    // "auth": {
+    //   "description": "Authenticate Safety CLI to perform scans. Your default browser will automatically open to https://platform.safetycli.com.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_auth.json"
+    // },
+    // "check": {
+    //   "description": "[deprecated] Find vulnerabilities at target files or environments. Now replaced by safety scan, and will be unsupported beyond 1 May 2024.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_check.json"
+    // },
+    // "check-updates": {
+    //   "description": "Check for version updates to Safety CLI.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_check-updates.json"
+    // },
+    // "configure": {
+    //   "description": "Set up global configurations for Safety CLI, including proxy settings and organization details.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_configure.json"
+    // },
+    // "generate": {
+    //   "description": "Generate a boilerplate Safety CLI policy file for customized security policies. Note: Safety Platform policies will override any local policy files found.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_generate.json"
+    // },
+    // "license": {
+    //   "description": "[deprecated] Find licenses at target files or environments. This command will be replaced by safety scan, and will be unsupported beyond 1 May 2024.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_license.json"
+    // },
+    // "scan": {
+    //   "description": "Scans a Python project directory.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_scan.json"
+    // },
+    // "validate": {
+    //   "description": "Verify that a local policy file is valid. NAME is the name of the file type to validate. Valid values are: policy_file.",
+    //   "json_definition": "src/zeroth_law/tools/safety/safety_validate.json"
+    // }
   },
   "usage": "safety [OPTIONS] COMMAND [ARGS]..."
 }

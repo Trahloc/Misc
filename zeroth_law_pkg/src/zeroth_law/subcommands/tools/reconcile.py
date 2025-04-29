@@ -5,14 +5,10 @@ import click
 import structlog  # Replace logging with structlog
 import json as json_lib  # Alias to avoid conflict with option name
 from pathlib import Path
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Dict, Set, Tuple, List
+from enum import Enum, auto
 
-# Adjust imports - assuming these utils remain in dev_scripts for now
-# TODO: Move these utilities to a more central location (e.g., common or tools_lib)
-# from ...dev_scripts.config_reader import load_tool_lists_from_toml
-# from ...dev_scripts.environment_scanner import get_executables_from_env
-# from ...dev_scripts.tool_reconciler import ToolStatus, reconcile_tools
-# from ...dev_scripts.tools_dir_scanner import get_tool_dirs
+# TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module needs to parse and apply subcommand specs from pyproject.toml.
 
 # --- Updated imports from lib/tooling --- #
 # from ...dev_scripts.config_reader import load_tool_lists_from_toml # No longer needed, reads from ctx
@@ -32,7 +28,7 @@ class ReconciliationError(Exception):
 def _perform_reconciliation_logic(
     project_root_dir: Path,
     config_data: dict,  # Pass loaded config data
-) -> Tuple[Dict[str, ToolStatus], Set[str], Set[str], list[str]]:
+) -> Tuple[Dict[str, ToolStatus], Set[str], Dict[str, Set[str]], list[str], list[str], bool]:
     """Internal logic, adapted from dev_scripts/reconciliation_logic.py."""
     logger = log  # Use module logger
 
@@ -47,15 +43,17 @@ def _perform_reconciliation_logic(
 
     tool_defs_dir = project_root_dir / "src" / "zeroth_law" / "tools"
 
-    # 1. Read Config (adapted to use pre-loaded config_data)
+    # 1. Read Config (use the PARSED dictionaries from config_data)
     try:
-        # Extract lists directly from the loaded config object
-        managed_tools_config = config_data.get("managed-tools", {})  # Get directly from config_data
-        whitelist = set(managed_tools_config.get("whitelist", []))
-        blacklist = set(managed_tools_config.get("blacklist", []))
-        logger.info(f"Whitelist: {whitelist}, Blacklist: {blacklist}")
+        # Extract parsed dictionaries directly from the loaded config object
+        managed_tools_config = config_data.get("managed-tools", {})
+        # These are now expected to be Dict[str, Set[str]]
+        whitelist: Dict[str, Set[str]] = managed_tools_config.get("whitelist", {})
+        blacklist: Dict[str, Set[str]] = managed_tools_config.get("blacklist", {})
+        logger.info(f"Whitelist (parsed): {whitelist}, Blacklist (parsed): {blacklist}")
     except Exception as e:
-        msg = f"Failed to extract whitelist/blacklist from loaded config data: {e}"
+        # Keep this error handling, although type issues should be less likely now
+        msg = f"Failed to extract parsed whitelist/blacklist from loaded config data: {e}"
         logger.error(msg)
         raise ReconciliationError(msg) from e
 
@@ -65,7 +63,8 @@ def _perform_reconciliation_logic(
             raise FileNotFoundError(f"Tool definitions directory not found: {tool_defs_dir}")
         dir_tools = get_tool_dirs(tool_defs_dir)
         logger.info(f"Found {len(dir_tools)} tool definitions in {tool_defs_dir}.")
-        env_tools = get_executables_from_env(whitelist, dir_tools)  # Pass whitelist for filtering
+        # Pass the KEYS of the whitelist dict for filtering env tools
+        env_tools = get_executables_from_env(set(whitelist.keys()), dir_tools)
         logger.info(f"Found {len(env_tools)} relevant executables in environment after filtering.")
     except FileNotFoundError as e:
         logger.error(str(e))
@@ -141,11 +140,11 @@ def _perform_reconciliation_logic(
 
     logger.info(f"Identified {len(managed_tools_for_processing)} tools considered effectively managed.")
 
-    # Return results including error status
+    # Return results including error status and the parsed blacklist
     return (
         reconciliation_results,
         managed_tools_for_processing,
-        blacklist,
+        blacklist,  # Return the parsed dict
         error_messages,
         warning_messages,
         errors_found,
@@ -173,7 +172,8 @@ def reconcile(ctx: click.Context, output_json: bool) -> None:
         ctx.exit(1)
 
     try:
-        results, managed, blacklist, errors, warnings, has_errors = _perform_reconciliation_logic(
+        # Receive the parsed blacklist dict here
+        results, managed, parsed_blacklist, errors, warnings, has_errors = _perform_reconciliation_logic(
             project_root_dir=project_root, config_data=config
         )
 
@@ -190,7 +190,9 @@ def reconcile(ctx: click.Context, output_json: bool) -> None:
                 "warnings": warnings,
                 "details": {tool: status.name for tool, status in results.items()},
                 "managed_tools": sorted(list(managed)),
-                "blacklist": sorted(list(blacklist)),
+                # Convert parsed blacklist back to list format for JSON output if needed, or output the dict?
+                # Let's output the dict for clarity, matching the internal state.
+                "blacklist": {k: sorted(list(v)) for k, v in parsed_blacklist.items()},  # Sort subcommands
             }
             print(json_lib.dumps(output_data, indent=2))
         else:

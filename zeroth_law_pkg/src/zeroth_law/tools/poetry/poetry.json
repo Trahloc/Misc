@@ -129,10 +129,6 @@
       "description": "Manages configuration settings.",
       "json_definition": "src/zeroth_law/tools/poetry/poetry_config.json"
     },
-    "export": {
-      "description": "Exports the lock file to alternative formats.",
-      "json_definition": "src/zeroth_law/tools/poetry/poetry_export.json"
-    },
     "init": {
       "description": "Creates a basic pyproject.toml file in current directory.",
       "json_definition": "src/zeroth_law/tools/poetry/poetry_init.json"
@@ -161,17 +157,9 @@
       "description": "Removes a package from the project dependencies.",
       "json_definition": "src/zeroth_law/tools/poetry/poetry_remove.json"
     },
-    "run": {
-      "description": "Runs a command in the project's virtual environment.",
-      "json_definition": "src/zeroth_law/tools/poetry/poetry_run.json"
-    },
     "search": {
       "description": "Searches for packages on remote repositories.",
       "json_definition": "src/zeroth_law/tools/poetry/poetry_search.json"
-    },
-    "shell": {
-      "description": "Spawns a shell within the project's virtual environment.",
-      "json_definition": "src/zeroth_law/tools/poetry/poetry_shell.json"
     },
     "show": {
       "description": "Shows information about packages.",

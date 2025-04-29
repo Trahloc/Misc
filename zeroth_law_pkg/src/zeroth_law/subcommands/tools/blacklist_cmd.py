@@ -4,8 +4,10 @@ import click
 import structlog
 from pathlib import Path
 
+# TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module needs to handle parsing/writing the tool:sub1,sub2 syntax.
+
 # Import the shared utility functions
-from .list_utils import modify_tool_list, list_tool_list
+from .list_utils import modify_tool_list, list_tool_list, print_list_changes
 
 log = structlog.get_logger()
 

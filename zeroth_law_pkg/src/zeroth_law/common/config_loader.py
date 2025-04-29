@@ -12,13 +12,14 @@ for parsing TOML configuration files.
 import os
 import tomllib
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Optional, Tuple, List, Union, Set
 
 import structlog  # Import structlog
+import tomlkit
+from .config_validation import validate_config
 
 # Import defaults from shared module
 from zeroth_law.config_defaults import DEFAULT_CONFIG
-from zeroth_law.common.config_validation import validate_config
 
 # Setup logging
 log = structlog.get_logger()  # Use structlog
@@ -35,10 +36,74 @@ _TOOL_SECTION_PATH = "tool.zeroth-law"
 _TOML_LOADER = tomllib
 _TOMLLIB = tomllib
 
+# TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module may need updates to parse/validate the hierarchical blacklist/whitelist syntax.
+
 
 # Define base exception for type hinting/fallback
 class TomlDecodeError(Exception):
     """Base exception class for TOML decoding errors."""
+
+
+def _parse_hierarchical_list(raw_list: List[str]) -> Dict[str, Set[str]]:
+    """Parses a list of strings with potential hierarchy into a structured dict.
+
+    Handles entries like "tool", "tool:sub1", "tool:sub1,sub2".
+    Using {"*"} to represent the entire tool being listed.
+    Currently assumes only one level of subcommand hierarchy (tool:sub).
+    """
+    parsed_dict: Dict[str, Set[str]] = {}
+    if not isinstance(raw_list, list):
+        log.warning(
+            "Managed tools list is not a valid list. Returning empty structure.", received_type=type(raw_list).__name__
+        )
+        return {}
+
+    for entry in raw_list:
+        if not isinstance(entry, str):  # Basic validation
+            log.warning("Ignoring non-string entry in managed tools list.", entry=entry)
+            continue
+
+        entry = entry.strip()
+        if not entry:
+            continue
+
+        parts = entry.split(":", 1)
+        tool_name = parts[0].strip()
+        if not tool_name:  # Skip entries starting with ':' or empty
+            continue
+
+        if len(parts) == 1:
+            # Entry is just a tool name (e.g., "pip")
+            # Mark the entire tool using "*". Listing the whole tool overrides specific subs.
+            log.debug("Parsed whole tool entry", tool=tool_name)
+            parsed_dict[tool_name] = {"*"}  # Overwrite previous entries for this tool
+        else:
+            # Entry has subcommands (e.g., "safety:alert,check")
+            subcommands_str = parts[1]
+            # Split by comma, strip whitespace, filter out empty strings
+            subcommands = {sub.strip() for sub in subcommands_str.split(",") if sub.strip()}
+
+            if not subcommands:
+                log.warning("Entry specified tool with ':' but no valid subcommands followed.", entry=entry)
+                continue
+
+            # TODO: Handle deeper nesting like tool:sub:subsub? Needs further parsing logic.
+            # Current limitation: Handles only tool:sub1,sub2
+
+            if tool_name in parsed_dict and parsed_dict[tool_name] == {"*"}:
+                # Whole tool is already listed, ignore specific subcommand entries for it.
+                log.debug("Ignoring subcommand entry as whole tool is listed.", tool=tool_name, subcommands=subcommands)
+                continue
+            else:
+                # Add/update subcommands.
+                if tool_name in parsed_dict:
+                    parsed_dict[tool_name].update(subcommands)
+                    log.debug("Updated subcommands for tool", tool=tool_name, added_subcommands=subcommands)
+                else:
+                    parsed_dict[tool_name] = subcommands
+                    log.debug("Added new tool with subcommands", tool=tool_name, subcommands=subcommands)
+
+    return parsed_dict
 
 
 def find_pyproject_toml() -> Path | None:
@@ -218,7 +283,10 @@ def load_action_definitions(config_section: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_config(config_path_override: str | Path | None = None) -> dict[str, Any]:
-    """Load Zeroth Law config, process actions separately, merge rest with defaults."""
+    """Load Zeroth Law config, process actions separately, merge rest with defaults.
+
+    Parses managed-tools whitelist/blacklist into structured dictionaries.
+    """
     # Find the config file
     found_path: Path | None
     if config_path_override is None:
@@ -228,10 +296,11 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
             # Return structure including expected keys, even if empty
             final_config = DEFAULT_CONFIG.copy()
             final_config["actions"] = {}
+            # Use the parsed (empty) structure
             final_config["managed-tools"] = {
-                "whitelist": [],
-                "blacklist": [],
-            }  # Ensure managed-tools exists
+                "whitelist": {},  # Parsed structure is dict
+                "blacklist": {},  # Parsed structure is dict
+            }
             return final_config
     else:
         found_path = Path(config_path_override)
@@ -242,9 +311,9 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
         final_config["managed-tools"] = {
-            "whitelist": [],
-            "blacklist": [],
-        }  # Ensure managed-tools exists
+            "whitelist": {},
+            "blacklist": {},
+        }
         return final_config
 
     try:
@@ -259,22 +328,39 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         # Merge core settings with defaults and validate
         merged_core_config = merge_with_defaults(core_config_settings, DEFAULT_CONFIG)
 
-        # Extract actions and managed-tools separately
+        # Extract actions config
         actions_config = load_action_definitions(config_section)
-        managed_tools_config = config_section.get("managed-tools", {"whitelist": [], "blacklist": []})
-        if not isinstance(managed_tools_config, dict):
+
+        # Extract and parse managed-tools config
+        managed_tools_section = config_section.get("managed-tools", {})
+        if not isinstance(managed_tools_section, dict):
             log.warning(
                 f"Invalid type for '[{_TOOL_SECTION_PATH}.managed-tools]' section: "
-                f"{type(managed_tools_config).__name__}. Using empty lists.",
+                f"{type(managed_tools_section).__name__}. Using empty lists.",
             )
-            managed_tools_config = {"whitelist": [], "blacklist": []}
+            raw_whitelist = []
+            raw_blacklist = []
+        else:
+            raw_whitelist = managed_tools_section.get("whitelist", [])
+            raw_blacklist = managed_tools_section.get("blacklist", [])
 
-        # Combine validated core config, actions, and managed-tools
+        # Parse the raw lists into structured dictionaries
+        parsed_whitelist = _parse_hierarchical_list(raw_whitelist)
+        parsed_blacklist = _parse_hierarchical_list(raw_blacklist)
+
+        # Combine validated core config, actions, and PARSED managed-tools
         final_config = merged_core_config
         final_config["actions"] = actions_config
-        final_config["managed-tools"] = managed_tools_config  # Add managed-tools back
+        # Store the parsed dictionaries
+        final_config["managed-tools"] = {
+            "whitelist": parsed_whitelist,
+            "blacklist": parsed_blacklist,
+        }
 
         log.debug(f"Successfully loaded and processed config from: {found_path}")
+        # <<<--- ADDED DEBUG PRINT --- >>>
+        log.debug("Final loaded config (managed-tools parsed)", managed_tools=final_config["managed-tools"])
+        # <<<--- END ADDED DEBUG PRINT --- >>>
         return final_config
 
     except Exception as e:
@@ -282,13 +368,13 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
             f"Failed to load or process config file {found_path}: {e}. Using defaults.",
             exc_info=True,
         )
-        # Return defaults + empty actions/managed on any load error
+        # Return defaults + empty parsed structure on any load error
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
         final_config["managed-tools"] = {
-            "whitelist": [],
-            "blacklist": [],
-        }  # Ensure managed-tools exists
+            "whitelist": {},
+            "blacklist": {},
+        }
         return final_config
 
 
