@@ -231,22 +231,21 @@
   - [ ] Verify tests pass or fail for expected reasons (e.g., `ToolIndexHandler` import).
   - [ ] Add new tests for `zlt tools reconcile`, `sync`, `add/remove-whitelist/blacklist`.
 - [ ] **14. Implement Subcommand-Level Blacklist/Whitelist Management:**
-  - [ ] Design and implement parsing logic in `config_loader.py` or `reconcile.py` to understand hierarchical entries in `pyproject.toml`'s `whitelist` and `blacklist` sections (e.g., `tool:sub1,sub2` or `tool:sub:subsub1`).
-  - [ ] Update `zlt tools reconcile` to factor in subcommand specifications when determining tool/subcommand status.
-  - [ ] Update `zlt tools sync` to filter command sequences based on the hierarchical blacklist/whitelist status resolved during reconciliation.
-  - [ ] Update `zlt tools add/remove-whitelist/blacklist` commands to correctly parse, handle, and write the hierarchical `tool:sub1,sub2` syntax to `pyproject.toml`.
-  - [ ] Add comprehensive tests for parsing, reconciliation, sync filtering, and management commands related to subcommand specifications.
   - [x] **14.1.** Implement parsing logic in `config_loader.py` to handle hierarchical syntax (`tool:sub1,sub2`) and produce structured dicts.
-  - [ ] **14.2.** Refactor `tool_reconciler.py::reconcile_tools` to accept and utilize the structured dict format for whitelist/blacklist.
-  - [ ] **14.3.** Update `reconcile.py::_perform_reconciliation_logic` to pass the structured dicts to `reconcile_tools` and interpret the results correctly.
-  - [ ] **14.4.** Update `sync.py` to filter command sequences based on the hierarchical blacklist/whitelist status (needs status info from reconcile).
-  - [ ] **14.5.** Update `list_utils.py` and `whitelist_cmd.py`/`blacklist_cmd.py` to parse/write the hierarchical syntax.
-  - [ ] **14.6.** Add/update tests for parsing (`config_loader`), reconciliation (`reconcile`), sync filtering (`sync`), and list management commands.
-    - [ ] **14.6.1** Create tests for `list_utils.py::modify_tool_list` covering hierarchical add/remove scenarios.
-    - [ ] **14.6.2** Update tests for `config_loader.py::load_config` to verify correct parsing.
-    - [ ] **14.6.3** Update tests for `reconcile.py` to use mock hierarchical config and verify results.
-    - [ ] **14.6.4** Update tests for `sync.py` to verify task filtering based on hierarchical blacklist.
-    - [ ] **14.6.5** Update tests for `whitelist_cmd.py`/`blacklist_cmd.py` CLI commands.
+  - [ ] **14.2.** Refactor `tool_reconciler.py::reconcile_tools` to accept and utilize the structured dict/tree format for whitelist/blacklist and apply **specific-over-general precedence rule**.
+  - [ ] **14.3.** Update `reconcile.py::_perform_reconciliation_logic` to pass the structured dicts/trees to `reconcile_tools` and interpret the results correctly.
+  - [ ] **14.4.** Update `sync.py` to filter command sequences based on the resolved hierarchical status from `reconcile` (applying precedence rules).
+  - [ ] **14.5.** Update `list_utils.py` (`modify_tool_list`, `_format...`) and `whitelist_cmd.py`/`blacklist_cmd.py`:
+    - [ ] Handle parsing/writing arbitrary nesting syntax (`tool:sub:subsub`).
+    - [ ] Implement `--all` flag logic for descendant modification.
+    - [ ] Implement conflict detection: `add` fails if item exists in other list, unless `--force` is used (add `--force` option to CLI commands).
+  - [ ] **14.6.** Add/update tests for:
+    - [ ] **14.6.1** Nested parsing (`config_loader`).
+    - [ ] **14.6.2** Hierarchical modification in `list_utils.py` (add/remove, with/without `--all`, with/without `--force`, conflict scenarios).
+    - [ ] **14.6.3** Precedence rule checking in `reconcile`.
+    - [ ] **14.6.4** Task filtering in `sync` based on precedence.
+    - [ ] **14.6.5** CLI command tests (`whitelist_cmd.py`/`blacklist_cmd.py`) including `--force`.
+    - [ ] **14.6.6** New pytest check to fail if the *exact same item* exists in both parsed whitelist and blacklist structures.
 - [ ] **15. Podman Integration Follow-up (Post-Refactor):**
   - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
   - [ ] Test the Podman-based baseline capture workflow thoroughly, covering various tools, subcommands, potential errors (container start failure, exec failure, timeouts), and cleanup.
