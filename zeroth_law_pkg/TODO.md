@@ -77,6 +77,9 @@
     - WARN: Violates a principle, but doesn't impact functionality or clarity.
     - FAIL: Breaks TDD, type coverage, correctness, or structural integrity.
 - [ ] ZLT: Refactor `cli.py::run_audit` to utilize the new orchestration engine.
+- [ ] Investigate using `uv run <tool> -- <args>` for local ZLT tool execution instead of direct `.venv/bin/<tool>` calls, evaluating benefits for environment consistency vs. implementation complexity/overhead.
+- [ ] **(Optional Investigation) Podman for Stricter Local Checks:** Explore the feasibility and value of optionally running certain local ZLT checks (e.g., linters, formatters in check mode) inside a Podman container (potentially read-only) to strictly prevent unintended file modifications. Assess performance trade-offs.
+- [ ] **(Optional Investigation) Podman for Sandboxing:** Explore using Podman as a sandboxed execution environment for potentially less trusted or experimental tools integrated into the ZLT workflow in the future.
 
 ## **Phase E: ZLT-Dev Capability Mapping & Optimization**
 # Goal: Continuously improve ZLT's understanding of consultant tools and optimize its default configuration based on evidence from real tests.
@@ -231,8 +234,9 @@
 - [ ] **15. Podman Integration Follow-up (Post-Refactor):**
   - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
   - [ ] Test the Podman-based baseline capture workflow thoroughly, covering various tools, subcommands, potential errors (container start failure, exec failure, timeouts), and cleanup.
-  - [ ] Investigate and improve shell escaping robustness for command arguments passed to `podman exec sh -c \\\"...\\\"` in `baseline_generator.py`.
-  - [x] (Post JSON Validation) Re-evaluate implementing a \"blind execution\" fallback (running command without `--help`) using the Podman sandbox for cases where help flags consistently fail for *valid* commands.
+  - [ ] **15.3 Verify Read-Only Check:** Explicitly test and document the use of a read-only filesystem within the Podman container during baseline generation to differentiate commands requiring writes (which should fail) from pure help/subcommand invocations.
+  - [ ] Investigate and improve shell escaping robustness for command arguments passed to `podman exec sh -c \"...\"` in `baseline_generator.py`.
+  - [x] (Post JSON Validation) Re-evaluate implementing a "blind execution" fallback (running command without `--help`) using the Podman sandbox for cases where help flags consistently fail for *valid* commands.
   - [x] **Refactor Podman Helper Function (`_prepare_command_for_container`):**
     - [x] 1. Create new file: `src/zeroth_law/lib/tooling/podman_utils.py`.
     - [x] 2. ~~Read the definition of `_prepare_command_for_container` from `src/zeroth_law/subcommands/tools/sync.py`.~~ *Function was missing, needed reimplementation.*
