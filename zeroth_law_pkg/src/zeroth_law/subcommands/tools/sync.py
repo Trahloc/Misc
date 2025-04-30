@@ -17,8 +17,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- Imports from other modules --- #
 
-# Need reconciliation logic to determine managed tools
-from .reconcile import _perform_reconciliation_logic, ReconciliationError, ToolStatus
+# Need reconciliation logic, status enum, and the effective status checker
+from .reconcile import (
+    _perform_reconciliation_logic,
+    ReconciliationError,
+    ToolStatus,
+    # ParsedHierarchy, # Import type from common
+    # _get_effective_status, # Import checker from tool_reconciler
+)
+from ...lib.tooling.tool_reconciler import _get_effective_status  # Import checker
+from ...common.hierarchical_utils import ParsedHierarchy  # Import type
 
 # Need baseline generation logic
 # TODO: Move baseline_generator to a shared location
@@ -495,7 +503,7 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         # --- Reconciliation & Pruning (Sequential - Must happen before parallel sync) ---
         log.debug("Performing reconciliation to identify managed tools...")
         # Get the FULL reconciliation results and the parsed blacklist
-        reconciliation_results, managed_tools_set, parsed_blacklist, errors, warnings, has_errors = (
+        reconciliation_results, managed_tools_set, parsed_whitelist, parsed_blacklist, errors, warnings, has_errors = (
             _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
         )
         if not managed_tools_set and not prune:
@@ -605,57 +613,58 @@ def sync(ctx: click.Context, specific_tools: Tuple[str, ...], force: bool, since
         for tool_name in sorted(list(target_tools)):
             tool_status = reconciliation_results.get(tool_name)
 
-            # Skip tool if not considered managed by reconciliation
-            if tool_status not in {
-                ToolStatus.MANAGED_OK,
-                ToolStatus.MANAGED_MISSING_ENV,
-                ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
-            }:
-                log.debug(
-                    f"Skipping tool '{tool_name}' as its reconciliation status is '{tool_status.name if tool_status else 'UNKNOWN'}'."
+            # Skip tool if it's not considered whitelisted or is explicitly blacklisted
+            # Use the effective status check
+            effective_status = _get_effective_status([tool_name], parsed_whitelist, parsed_blacklist)
+
+            if effective_status == "blacklist":
+                log.debug(f"Skipping blacklisted tool: {tool_name}")
+                skipped_by_blacklist_count += 1
+                continue
+            elif effective_status != "whitelist":  # Includes None (unmanaged) or potentially error states
+                # Should only sync tools that are effectively whitelisted
+                log.debug(f"Skipping tool not effectively whitelisted: {tool_name}", status=effective_status)
+                skipped_by_blacklist_count += 1  # Count as skipped for simplicity
+                continue
+
+            # Now check specific reconciliation status for whitelisted tools
+            if tool_status is None:
+                # --- Subcommand Filtering --- #
+                filtered_sequences = []
+                for seq_tuple in command_sequences:
+                    command_path_str = seq_tuple[0]  # e.g., "tool:sub:subsub"
+                    command_path_list = command_path_str.split(":")
+
+                    # Check effective status of this specific command path
+                    cmd_effective_status = _get_effective_status(command_path_list, parsed_whitelist, parsed_blacklist)
+
+                    if cmd_effective_status == "blacklist":
+                        log.debug(f"Skipping blacklisted subcommand sequence: {command_path_str}")
+                        skipped_by_blacklist_count += 1
+                        continue
+                    elif cmd_effective_status != "whitelist":  # Must be specifically whitelisted or covered by parent
+                        log.debug(
+                            f"Skipping subcommand sequence not effectively whitelisted: {command_path_str}",
+                            status=cmd_effective_status,
+                        )
+                        skipped_by_blacklist_count += 1
+                        continue
+                    else:
+                        # Effectively whitelisted, add it
+                        filtered_sequences.append(seq_tuple)
+
+                if not filtered_sequences:
+                    log.info(f"No command sequences left for tool {tool_name} after blacklist filtering.")
+                    continue  # Skip adding tool task if no sequences remain
+
+                tasks_to_run.append(
+                    (
+                        tool_name,
+                        target_file,
+                        filtered_sequences,  # Use filtered list
+                        tool_command_path,
+                    )
                 )
-                continue
-
-            # Check if the whole tool is blacklisted
-            is_whole_tool_blacklisted = parsed_blacklist.get(tool_name) == {"*"}
-            if is_whole_tool_blacklisted:
-                log.info(f"Skipping tool '{tool_name}' and its subcommands as it is fully blacklisted.")
-                skipped_by_blacklist_count += 1  # Count the base tool skip
-                # We might need a better way to count skipped subcommands if desired
-                continue
-
-            # Add base command task (if tool itself isn't blacklisted implicitly by only having sub-blacklists)
-            # Note: The current reconciliation logic focuses on tool-level status.
-            # We assume if the tool reached here, its base command should be processed unless subcommands cover everything.
-            # This logic might need refinement depending on desired behavior when *only* subcommands are blacklisted.
-            base_command_sequence = (tool_name,)
-            tasks_to_run.append(base_command_sequence)
-
-            # Check for subcommands in the base JSON definition
-            relative_base_json_path, _ = command_sequence_to_filepath(base_command_sequence)
-            base_json_file_path = tool_defs_dir / relative_base_json_path
-            if base_json_file_path.exists():
-                try:
-                    with base_json_file_path.open("r", encoding="utf-8") as f_base:
-                        base_definition_data = json_lib.load(f_base)
-                        if isinstance(base_definition_data, dict) and "subcommands_detail" in base_definition_data:
-                            subcommands_detail = base_definition_data["subcommands_detail"]
-                            if isinstance(subcommands_detail, dict):
-                                blacklisted_subs = parsed_blacklist.get(
-                                    tool_name, set()
-                                )  # Get specific subs or empty set
-                                for sub_key in subcommands_detail.keys():
-                                    # Skip if this specific subcommand is blacklisted
-                                    if sub_key in blacklisted_subs:
-                                        log.info(f"Skipping blacklisted subcommand: {tool_name}:{sub_key}")
-                                        skipped_by_blacklist_count += 1
-                                        continue
-
-                                    # If not skipped, add the subcommand task
-                                    sub_command_sequence = (tool_name, sub_key)
-                                    tasks_to_run.append(sub_command_sequence)
-                except Exception as json_e:
-                    log.warning(f"Could not load or parse {base_json_file_path} to check for subcommands: {json_e}")
 
         log.info(
             f"Prepared {len(tasks_to_run)} command sequences for parallel processing (skipped {skipped_by_blacklist_count} due to blacklist)."
