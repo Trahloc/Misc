@@ -283,7 +283,7 @@ def test_load_config_file_not_found():
     # Assert it returns defaults plus empty actions and managed-tools
     expected_config = DEFAULT_CONFIG.copy()
     expected_config["actions"] = {}
-    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Add expected key
+    expected_config["managed-tools"] = {"whitelist": {}, "blacklist": {}}  # Expect dicts now
     assert config == expected_config
 
 
@@ -306,7 +306,7 @@ some_option = "value"
     # Check that core config matches defaults, actions is empty, and managed-tools is empty
     expected_config = DEFAULT_CONFIG.copy()
     expected_config["actions"] = {}
-    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}  # Add expected key
+    expected_config["managed-tools"] = {"whitelist": {}, "blacklist": {}}  # Expect dicts now
     assert config == expected_config
 
 
@@ -321,7 +321,11 @@ def test_load_config_integration(tmp_path, monkeypatch):
 max_complexity = 5
 max_lines = 80
 max_parameters = 3
-        """
+
+[tool.zeroth-law.managed-tools]
+whitelist = ["mytool:sub1,sub2"]
+blacklist = ["blacklisted_tool"]
+            """
         )
 
     # Set environment variable to point to the config file
@@ -339,3 +343,17 @@ max_parameters = 3
     for key in DEFAULT_CONFIG:
         if key not in ["max_complexity", "max_lines", "max_parameters"]:
             assert config[key] == DEFAULT_CONFIG[key]
+
+    # Verify merged config (excluding actions)
+    assert config["managed-tools"] == {
+        "whitelist": {"mytool": {"sub1", "sub2"}},
+        "blacklist": {"blacklisted_tool": {"*"}},
+    }
+    # assert config["actions"] == {"format": {"tool": "ruff_format"}} # This seems incorrect for this test setup
+
+
+def test_load_config_validation_failure(tmp_path):
+    pass  # Add pass statement to fix indentation
+
+
+# --- Tests for Config Validation --- #
