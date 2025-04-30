@@ -12,9 +12,15 @@ from enum import Enum, auto
 
 # --- Updated imports from lib/tooling --- #
 # from ...dev_scripts.config_reader import load_tool_lists_from_toml # No longer needed, reads from ctx
-from ...lib.tooling.environment_scanner import get_executables_from_env
-from ...lib.tooling.tool_reconciler import ToolStatus, reconcile_tools
-from ...lib.tooling.tools_dir_scanner import get_tool_dirs
+from ...lib.tooling.environment_scanner import get_executables_from_env, find_executables_in_paths
+from ...lib.tooling.tool_reconciler import ToolStatus, reconcile_tools, ReconciliationError, _get_effective_status
+from ...lib.tooling.tools_dir_scanner import get_tool_dirs, scan_tools_dir
+
+# Import type hint from new file
+from ...common.hierarchical_utils import ParsedHierarchy
+
+# Need config loading capability
+from ...common.config_loader import load_config
 
 log = structlog.get_logger()  # Use structlog
 
@@ -28,8 +34,26 @@ class ReconciliationError(Exception):
 def _perform_reconciliation_logic(
     project_root_dir: Path,
     config_data: dict,  # Pass loaded config data
-) -> Tuple[Dict[str, ToolStatus], Set[str], Dict[str, Set[str]], list[str], list[str], bool]:
-    """Internal logic, adapted from dev_scripts/reconciliation_logic.py."""
+) -> Tuple[
+    Dict[str, ToolStatus],
+    Set[str],
+    ParsedHierarchy,
+    ParsedHierarchy,
+    List[str],
+    List[str],
+    bool,
+]:
+    """Internal logic, adapted from dev_scripts/reconciliation_logic.py.
+
+    Returns tuple:
+        - reconciliation_results: Dict[tool_name, ToolStatus]
+        - managed_tools_set: Set[str] (Top-level tools considered managed by whitelist)
+        - parsed_whitelist: ParsedHierarchy
+        - parsed_blacklist: ParsedHierarchy
+        - error_messages: List[str]
+        - warning_messages: List[str]
+        - has_errors: bool
+    """
     logger = log  # Use module logger
 
     # <<<--- REMOVE DEBUG PRINT HERE --->>>
@@ -89,6 +113,24 @@ def _perform_reconciliation_logic(
     logger.info("Tool reconciliation logic complete.")
 
     # 4. Analyze Results & Collect Messages
+    managed_tools_set = {  # Derive top-level managed tools from whitelist
+        tool for tool, node in whitelist.items() if node.get("_explicit") or node.get("_all")
+    }
+
+    # 4. Perform Reconciliation
+    try:
+        reconciliation_results: Dict[str, ToolStatus] = reconcile_tools(
+            discovered_env_tools=env_tools,
+            discovered_tools_dir_tools=dir_tools,
+            whitelist=whitelist,
+            blacklist=blacklist,
+        )
+    except ReconciliationError as e:
+        msg = f"Reconciliation failed: {e}"
+        logger.error(msg)
+        raise ReconciliationError(msg) from e
+
+    # 5. Analyze Results & Collect Messages
     managed_tools_for_processing = set()
     for tool, status in reconciliation_results.items():
         # Handle hierarchy - TODO: Implement tool:subcommand parsing if needed
@@ -144,7 +186,8 @@ def _perform_reconciliation_logic(
     return (
         reconciliation_results,
         managed_tools_for_processing,
-        blacklist,  # Return the parsed dict
+        whitelist,
+        blacklist,
         error_messages,
         warning_messages,
         errors_found,
@@ -173,8 +216,8 @@ def reconcile(ctx: click.Context, output_json: bool) -> None:
 
     try:
         # Receive the parsed blacklist dict here
-        results, managed, parsed_blacklist, errors, warnings, has_errors = _perform_reconciliation_logic(
-            project_root_dir=project_root, config_data=config
+        results, managed, parsed_whitelist, parsed_blacklist, errors, warnings, has_errors = (
+            _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
         )
 
         if output_json:
@@ -192,6 +235,7 @@ def reconcile(ctx: click.Context, output_json: bool) -> None:
                 "managed_tools": sorted(list(managed)),
                 # Convert parsed blacklist back to list format for JSON output if needed, or output the dict?
                 # Let's output the dict for clarity, matching the internal state.
+                "whitelist": {k: sorted(list(v)) for k, v in parsed_whitelist.items()},  # Sort subcommands
                 "blacklist": {k: sorted(list(v)) for k, v in parsed_blacklist.items()},  # Sort subcommands
             }
             print(json_lib.dumps(output_data, indent=2))
@@ -219,6 +263,8 @@ def reconcile(ctx: click.Context, output_json: bool) -> None:
             #    for tool, status in sorted(results.items()):
             #        print(f"- {tool}: {status.name}")
 
+            _print_reconciliation_summary(results, warnings, errors, parsed_whitelist, parsed_blacklist)
+
         if has_errors:
             exit_code = 1  # Exit with error if critical issues found
         elif warnings:
@@ -232,3 +278,93 @@ def reconcile(ctx: click.Context, output_json: bool) -> None:
         exit_code = 3
 
     ctx.exit(exit_code)
+
+
+def _print_reconciliation_summary(
+    results: Dict[str, ToolStatus],
+    warnings: List[str],
+    errors: List[str],
+    whitelist: ParsedHierarchy,  # Need parsed lists for detailed checks
+    blacklist: ParsedHierarchy,
+) -> None:
+    """Prints a formatted summary of the reconciliation results."""
+    log.info("--- Tool Reconciliation Summary ---")
+
+    status_groups: Dict[ToolStatus, List[str]] = {status: [] for status in ToolStatus}
+    for tool, status in sorted(results.items()):
+        status_groups[status].append(tool)
+
+    if status_groups[ToolStatus.MANAGED_OK]:
+        log.info("Managed & OK:", tools=status_groups[ToolStatus.MANAGED_OK])
+    if status_groups[ToolStatus.MANAGED_MISSING_ENV]:
+        log.warning(
+            "Managed but MISSING from environment (install required?):",
+            tools=status_groups[ToolStatus.MANAGED_MISSING_ENV],
+        )
+    if status_groups[ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR]:
+        log.warning(
+            "Whitelisted & in env, but MISSING baseline definition (run 'zlt tools sync'?):",
+            tools=status_groups[ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR],
+        )
+    if status_groups[ToolStatus.BLACKLISTED_IN_ENV]:
+        log.warning("Blacklisted but FOUND in environment:", tools=status_groups[ToolStatus.BLACKLISTED_IN_ENV])
+    if status_groups[ToolStatus.NEW_ENV_TOOL]:
+        log.info("New tools FOUND in environment (unmanaged):", tools=status_groups[ToolStatus.NEW_ENV_TOOL])
+    # Add reporting for other statuses as needed, e.g., UNMANAGED_IN_TOOLS_DIR
+    if status_groups[ToolStatus.UNMANAGED_IN_TOOLS_DIR]:
+        log.info(
+            "Unmanaged tools found ONLY in tools dir (prune candidates?):",
+            tools=status_groups[ToolStatus.UNMANAGED_IN_TOOLS_DIR],
+        )
+
+    # Print specific warnings and errors
+    for warning in warnings:
+        log.warning(warning)
+    for error in errors:
+        log.error(error)
+
+    # --- Add Conflict Check --- #
+    has_conflicts = _check_for_conflicts(whitelist, blacklist)
+    if has_conflicts:
+        log.error(
+            "Configuration Error: Found items listed in BOTH whitelist and blacklist simultaneously!",
+            check="pyproject.toml",
+        )
+
+    log.info("--- End Summary ---")
+
+
+def _check_for_conflicts(whitelist: ParsedHierarchy, blacklist: ParsedHierarchy, path: List[str] = None) -> bool:
+    """Recursively checks for direct conflicts (same item in both lists)."""
+    if path is None:
+        path = []
+    has_conflict = False
+
+    # Check nodes at the current level
+    current_whitelist_keys = {k for k in whitelist if not k.startswith("_")}
+    current_blacklist_keys = {k for k in blacklist if not k.startswith("_")}
+    common_keys = current_whitelist_keys.intersection(current_blacklist_keys)
+
+    for key in common_keys:
+        wl_node = whitelist[key]
+        bl_node = blacklist[key]
+        current_path_str = ":".join(path + [key])
+
+        # Conflict if both are explicitly listed or both have :*
+        wl_explicit = wl_node.get("_explicit", False)
+        bl_explicit = bl_node.get("_explicit", False)
+        wl_all = wl_node.get("_all", False)
+        bl_all = bl_node.get("_all", False)
+
+        if (wl_explicit and bl_explicit) or (wl_all and bl_all):
+            log.error(f"Conflict detected: '{current_path_str}' found in both whitelist and blacklist.")
+            has_conflict = True
+
+        # Recursively check children
+        wl_children = {k: v for k, v in wl_node.items() if not k.startswith("_") and isinstance(v, dict)}
+        bl_children = {k: v for k, v in bl_node.items() if not k.startswith("_") and isinstance(v, dict)}
+        if wl_children or bl_children:  # Only recurse if there are children in either
+            if _check_for_conflicts(wl_children, bl_children, path + [key]):
+                has_conflict = True  # Propagate conflict upwards
+
+    return has_conflict
