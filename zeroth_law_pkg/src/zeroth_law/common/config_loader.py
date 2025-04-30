@@ -18,6 +18,9 @@ import structlog  # Import structlog
 import tomlkit
 from .config_validation import validate_config
 
+# Import the new parser
+from .hierarchical_utils import parse_to_nested_dict, ParsedHierarchy
+
 # Import defaults from shared module
 from zeroth_law.config_defaults import DEFAULT_CONFIG
 
@@ -332,26 +335,16 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         actions_config = load_action_definitions(config_section)
 
         # Extract and parse managed-tools config
-        managed_tools_section = config_section.get("managed-tools", {})
-        if not isinstance(managed_tools_section, dict):
-            log.warning(
-                f"Invalid type for '[{_TOOL_SECTION_PATH}.managed-tools]' section: "
-                f"{type(managed_tools_section).__name__}. Using empty lists.",
-            )
-            raw_whitelist = []
-            raw_blacklist = []
-        else:
-            raw_whitelist = managed_tools_section.get("whitelist", [])
-            raw_blacklist = managed_tools_section.get("blacklist", [])
+        managed_tools_config = config_section.get("managed-tools", {})
+        raw_whitelist = managed_tools_config.get("whitelist", [])
+        raw_blacklist = managed_tools_config.get("blacklist", [])
 
-        # Parse the raw lists into structured dictionaries
-        parsed_whitelist = _parse_hierarchical_list(raw_whitelist)
-        parsed_blacklist = _parse_hierarchical_list(raw_blacklist)
+        # --- Use the new nested parser --- #
+        parsed_whitelist: ParsedHierarchy = parse_to_nested_dict(raw_whitelist)
+        parsed_blacklist: ParsedHierarchy = parse_to_nested_dict(raw_blacklist)
 
-        # Combine validated core config, actions, and PARSED managed-tools
         final_config = merged_core_config
         final_config["actions"] = actions_config
-        # Store the parsed dictionaries
         final_config["managed-tools"] = {
             "whitelist": parsed_whitelist,
             "blacklist": parsed_blacklist,
