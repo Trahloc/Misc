@@ -4,32 +4,242 @@ import click
 import structlog
 import sys
 from pathlib import Path
-from typing import List, Set, Tuple, Dict
+from typing import List, Set, Tuple, Dict, Union, Optional
 
 # Use tomlkit to preserve formatting
 import tomlkit
 from tomlkit.items import Array
 from tomlkit.exceptions import NonExistentKey, TOMLKitError
 
-# Import the parser from config_loader
-from ...common.config_loader import _parse_hierarchical_list
+# --- Import from shared utils --- #
+from ...common.hierarchical_utils import (
+    NodeData,
+    ParsedHierarchy,
+    parse_to_nested_dict,
+    format_nested_dict_to_list,
+    get_node,
+    remove_node_recursive,
+    set_node_flags,
+)
+
+from ...lib.tooling.tool_reconciler import _get_effective_status
 
 log = structlog.get_logger()
 
+# --- Type Hint for Nested Structure --- #
+# REMOVED - Imported from hierarchical_utils
+
 # --- Helper Functions --- #
+# REMOVED - Moved to hierarchical_utils
+
+# --- Modify modify_tool_list --- #
+# (Keep the _apply_modification_recursive helper here as it's specific to list modification logic)
 
 
-def _format_parsed_dict_to_list(parsed_dict: Dict[str, Set[str]]) -> List[str]:
-    """Converts the parsed dictionary back into a sorted list of strings for TOML."""
-    output_list = []
-    for tool, subs in sorted(parsed_dict.items()):
-        if subs == {"*"}:
-            output_list.append(tool)
+def _apply_modification_recursive(
+    target_hierarchy: ParsedHierarchy,
+    other_hierarchy: ParsedHierarchy,
+    path: List[str],
+    action: str,  # "add" or "remove"
+    apply_all: bool,
+    force: bool,
+    target_list_name: str,
+) -> Tuple[bool, bool]:  # Return (modified_target, modified_other)
+    modified_target = False
+    modified_other = False
+    path_str = ":".join(path)
+    other_list_name = "blacklist" if target_list_name == "whitelist" else "whitelist"
+
+    # Check initial effective status - this tells us if the EXACT path is covered
+    if target_list_name == "whitelist":
+        initial_target_effective_status = _get_effective_status(path, target_hierarchy, other_hierarchy)
+        initial_other_effective_status = _get_effective_status(path, target_hierarchy, other_hierarchy)  # Pass WL first
+    else:  # target_list_name == "blacklist"
+        initial_target_effective_status = _get_effective_status(
+            path, other_hierarchy, target_hierarchy
+        )  # Pass WL first
+        initial_other_effective_status = _get_effective_status(path, other_hierarchy, target_hierarchy)
+
+    if action == "add":
+        # --- Check for Effective No-Op (adding something already covered) --- #
+        if initial_target_effective_status == target_list_name:
+            target_node = get_node(target_hierarchy, path)
+            # Check if the _explicit flag needs setting or if _all matches
+            current_is_explicit = target_node.get("_explicit", False) if target_node else False
+            current_has_all = target_node.get("_all", False) if target_node else False
+
+            # Check if any ancestor has _all=True
+            ancestor_has_all = False
+            for i in range(len(path) - 1, -1, -1):
+                ancestor_path = path[: i + 1]
+                ancestor_node = get_node(target_hierarchy, ancestor_path)
+                if ancestor_node and ancestor_node.get("_all", False):
+                    ancestor_has_all = True
+                    break
+
+            # No-op conditions:
+            # 1. Trying to add exact item that exists explicitly with same _all flag
+            is_identical_existing_node = current_is_explicit and (current_has_all == apply_all)
+            # 2. Trying to add item under an ancestor that already has _all=True
+            is_covered_by_ancestor = ancestor_has_all
+
+            if is_identical_existing_node or is_covered_by_ancestor:
+                log.debug(
+                    f"Item '{path_str}{':*' if apply_all else ''}' already effectively exists in {target_list_name}. No change needed. (Identical: {is_identical_existing_node}, Covered: {is_covered_by_ancestor})"
+                )
+                return False, False
+
+        # --- NEW Comprehensive Conflict Check --- #
+        conflict_found = False
+        conflicting_paths_in_other = []  # Store paths to remove if force=True
+
+        # Check 1: Does the exact path have conflicting status in the other list?
+        if initial_other_effective_status == other_list_name:
+            conflict_found = True
+            # Try to find the specific node causing this status (could be ancestor)
+            # This logic might be complex, for now, assume the path itself is the conflict source if status matches
+            conflicting_paths_in_other.append(path)
+            log.debug(f"Conflict check 1: Exact path '{path_str}' effectively exists in {other_list_name}.")
+
+        # Check 2: If adding X:*, does X or any child of X exist in the other list?
+        if apply_all:
+            other_node_at_path = get_node(other_hierarchy, path)
+            if other_node_at_path:
+                # Check if the node itself or any descendant exists explicitly or with _all
+                def _find_conflicts_under(sub_hierarchy, current_sub_path):
+                    found = False
+                    conflicts = []
+                    node_data = get_node(sub_hierarchy, current_sub_path)
+                    if node_data:
+                        if node_data.get("_explicit") or node_data.get("_all"):
+                            found = True
+                            conflicts.append(current_sub_path)
+                        # Check children
+                        child_keys = [k for k in node_data if not k.startswith("_")]
+                        for key in child_keys:
+                            child_found, child_conflicts = _find_conflicts_under(
+                                sub_hierarchy, current_sub_path + [key]
+                            )
+                            if child_found:
+                                found = True
+                                conflicts.extend(child_conflicts)
+                    return found, list(set(tuple(p) for p in conflicts))  # Deduplicate paths
+
+                # Start search from the node being overridden by apply_all
+                has_conflicting_children, child_conflict_paths_tuples = _find_conflicts_under(other_hierarchy, path)
+                child_conflict_paths = [list(p) for p in child_conflict_paths_tuples]
+
+                if has_conflicting_children:
+                    log.debug(
+                        f"Conflict check 2: Adding '{path_str}:*' conflicts with existing children in {other_list_name}: {child_conflict_paths}"
+                    )
+                    conflict_found = True
+                    conflicting_paths_in_other.extend(child_conflict_paths)
+
+        # Check 3: If adding X:Y, does X:* exist in the other list?
+        elif len(path) > 0:
+            parent_path = path[:-1]
+            # Check all ancestors for :*
+            for i in range(len(path), 0, -1):
+                ancestor_path = path[:i]
+                other_ancestor_node = get_node(other_hierarchy, ancestor_path)
+                if other_ancestor_node and other_ancestor_node.get("_all", False):
+                    log.debug(
+                        f"Conflict check 3: Adding '{path_str}' conflicts with ancestor '{':'.join(ancestor_path)}:*' in {other_list_name}."
+                    )
+                    conflict_found = True
+                    conflicting_paths_in_other.append(ancestor_path)  # Conflicting node is the ancestor
+                    break  # Stop at the highest conflicting ancestor
+
+        # Remove duplicates from conflicting paths
+        conflicting_paths_in_other = [list(p) for p in set(tuple(p) for p in conflicting_paths_in_other)]
+
+        # --- Handle Conflict / Force --- #
+        if conflict_found:
+            if not force:
+                log.error(
+                    f"Conflict: Cannot add '{path_str}{':*' if apply_all else ''}' to {target_list_name}. Conflicts with entries in {other_list_name}. Use --force to override. Conflicts: {conflicting_paths_in_other}"
+                )
+                return False, False  # Block modification due to conflict
+            else:
+                # Force: Remove ALL identified conflicting nodes from the other hierarchy
+                log.warning(
+                    f"--force specified: Attempting to remove conflicting entries from {other_list_name}: {conflicting_paths_in_other}"
+                )
+                any_other_changed = False
+                for conflict_path in conflicting_paths_in_other:
+                    log.debug(f"Force removing path: {conflict_path} from {other_list_name}")
+                    other_was_changed_single = remove_node_recursive(other_hierarchy, conflict_path)
+                    if other_was_changed_single:
+                        log.debug(f"Successfully removed {conflict_path} from {other_list_name}.")
+                        any_other_changed = True
+                    else:
+                        log.warning(
+                            f"Attempted force removal of {conflict_path} from {other_list_name}, but remove_node_recursive reported no change."
+                        )
+
+                if any_other_changed:
+                    modified_other = True  # Record that the other list WAS modified
+                else:
+                    log.warning(
+                        f"--force used for '{path_str}', but no conflicting paths could be effectively removed from {other_list_name}. Paths attempted: {conflicting_paths_in_other}"
+                    )
+
+        # --- Proceed with adding/updating the target list --- #
+        target_changed_by_set = set_node_flags(target_hierarchy, path, is_explicit=True, is_all=apply_all)
+        if target_changed_by_set:
+            modified_target = True
+
+    elif action == "remove":
+        # Get the node *before* potentially modifying it
+        initial_target_node = get_node(target_hierarchy, path)
+
+        if not initial_target_node:
+            log.debug(f"Item '{path_str}' not found in {target_list_name} for removal. No change.")
+            return False, False
+
+        if apply_all:
+            target_was_changed = remove_node_recursive(target_hierarchy, path)
+            if target_was_changed:
+                modified_target = True
+            else:
+                log.debug(f"Remove --all called for '{path_str}', but hierarchy did not change (was it already gone?).")
         else:
-            # Sort subcommands for consistent output
-            sorted_subs = sorted(list(subs))
-            output_list.append(f"{tool}:{','.join(sorted_subs)}")
-    return output_list
+            # --- Non-All Remove Logic --- #
+            node_to_modify = get_node(target_hierarchy, path)
+            if node_to_modify:
+                was_explicit = node_to_modify.get("_explicit", False)
+                has_all = node_to_modify.get("_all", False)
+
+                if was_explicit:
+                    log.debug(f"Removing explicit flag for '{path_str}'. Has _all={has_all}")
+                    node_to_modify.pop("_explicit", None)
+                    if not has_all:
+                        modified_target = True
+                        log.debug(f"Effective modification: explicit flag removed and _all=False for '{path_str}'")
+                    else:
+                        log.debug(f"Explicit flag removed for '{path_str}', but _all=True, so no effective change.")
+
+                    is_empty_now = not any(k for k in node_to_modify if not k.startswith("_"))
+                    has_flags_now = node_to_modify.get("_explicit", False) or node_to_modify.get("_all", False)
+                    if is_empty_now and not has_flags_now:
+                        log.debug(
+                            f"Node '{path_str}' became empty and flagless after explicit flag removal, removing recursively."
+                        )
+                        cleanup_removed_something = remove_node_recursive(target_hierarchy, path)
+                        if cleanup_removed_something:
+                            modified_target = True
+                else:
+                    log.debug(
+                        f"Item '{path_str}' found in {target_list_name}, but explicit flag was not set for non-recursive removal. No change."
+                    )
+            else:
+                log.warning(
+                    f"Node '{path_str}' disappeared during non-all removal check? Initial existed: {initial_target_node is not None}"
+                )
+
+    # Return final modification status for both hierarchies - rely solely on determined flags
+    return modified_target, modified_other
 
 
 def modify_tool_list(
@@ -37,7 +247,8 @@ def modify_tool_list(
     tool_items_to_modify: Tuple[str, ...],
     target_list_name: str,  # "whitelist" or "blacklist"
     action: str,  # "add" or "remove"
-    apply_all: bool,  # TODO: Re-evaluate --all flag logic for hierarchical data
+    apply_all: bool,
+    force: bool = False,
 ) -> bool:
     """Reads pyproject.toml, modifies the target list (handling hierarchy), and writes it back.
 
@@ -56,126 +267,83 @@ def modify_tool_list(
         # Navigate to managed-tools table, creating if necessary
         managed_tools_table = doc.setdefault("tool", {}).setdefault("zeroth-law", {}).setdefault("managed-tools", {})
 
-        # Ensure target and other lists exist as arrays, get raw lists
+        # Get raw lists
         raw_target_list = managed_tools_table.get(target_list_name, [])
         other_list_name = "blacklist" if target_list_name == "whitelist" else "whitelist"
         raw_other_list = managed_tools_table.get(other_list_name, [])
 
-        # --- Parse the raw lists into structured dicts --- #
-        target_dict = _parse_hierarchical_list(
+        # --- Parse the raw lists into NESTED dicts using imported helper --- #
+        target_hierarchy = parse_to_nested_dict(
             list(raw_target_list) if isinstance(raw_target_list, (Array, list)) else []
         )
-        other_dict = _parse_hierarchical_list(list(raw_other_list) if isinstance(raw_other_list, (Array, list)) else [])
-        initial_target_dict_repr = repr(target_dict)  # For change detection
+        other_hierarchy = parse_to_nested_dict(
+            list(raw_other_list) if isinstance(raw_other_list, (Array, list)) else []
+        )
+        initial_target_repr = repr(target_hierarchy)
+        initial_other_repr = repr(other_hierarchy)
 
         # --- Process Modifications --- #
-        # TODO: Implement --all logic refinement here if needed.
-        if apply_all:
-            log.warning("Ignoring --all flag for now due to complexity with hierarchical lists.")
-
-        for item_str in tool_items_to_modify:
-            item_str = item_str.strip()
+        any_item_caused_modification = False
+        for item_str_raw in tool_items_to_modify:
+            item_str = item_str_raw.strip()
             if not item_str:
                 continue
 
-            parts = item_str.split(":", 1)
-            tool_name = parts[0].strip()
-            subs_to_modify_str = parts[1] if len(parts) > 1 else None
-            subs_to_modify: Set[str] | None = None
-            if subs_to_modify_str:
-                subs_to_modify = {s.strip() for s in subs_to_modify_str.split(",") if s.strip()}
-                if not subs_to_modify:
-                    log.warning(f"Ignoring item '{item_str}' with colon but no valid subcommands.")
+            # Check for trailing :* which now indicates apply_all for this item
+            item_apply_all = apply_all  # Start with global flag
+            if item_str.endswith(":*"):
+                item_apply_all = True
+                item_str = item_str[:-2]  # Remove the trailing :*
+                if not item_str:
+                    log.error("Invalid format: ':*' cannot stand alone.")
                     continue
 
-            is_whole_tool_modification = subs_to_modify is None
+            path = [p.strip() for p in item_str.split(":") if p.strip()]
+            if not path:
+                log.warning(f"Ignoring invalid empty item string: '{item_str_raw}'")
+                continue
 
-            if action == "add":
-                # --- Add Logic --- #
-                # Check other list first (for conflicts/removals)
-                if tool_name in other_dict:
-                    if is_whole_tool_modification:
-                        # Adding whole tool, remove any specific subs or whole tool from other list
-                        other_dict.pop(tool_name, None)
-                        log.debug(f"Removed '{tool_name}:*' and any specific subcommands from {other_list_name}.")
-                    elif subs_to_modify:  # Adding specific subs
-                        if other_dict[tool_name] == {"*"}:
-                            # Cannot add specific subs if whole tool is in other list
-                            log.info(
-                                f"Cannot add '{item_str}' to {target_list_name}; '{tool_name}' is fully present in {other_list_name}."
-                            )
-                            continue  # Skip adding to target_dict
-                        else:
-                            # Remove these specific subs from the other list
-                            other_dict[tool_name].difference_update(subs_to_modify)
-                            if not other_dict[tool_name]:  # Remove tool key if set is empty
-                                other_dict.pop(tool_name)
-                            log.debug(f"Removed specified subcommands for '{tool_name}' from {other_list_name}.")
-
-                # Now add to target list
-                if is_whole_tool_modification:
-                    # Add/overwrite tool with {"*"}
-                    target_dict[tool_name] = {"*"}
-                    log.debug(f"Added/Set '{tool_name}:*' in {target_list_name}.")
-                elif subs_to_modify:  # Adding specific subs
-                    if tool_name not in target_dict or target_dict[tool_name] != {"*"}:
-                        target_dict.setdefault(tool_name, set()).update(subs_to_modify)
-                        log.debug(f"Added subcommands {subs_to_modify} for '{tool_name}' in {target_list_name}.")
-                    else:
-                        # Whole tool already in target, do nothing
-                        log.debug(
-                            f"Cannot add specific subs for '{tool_name}'; tool is already fully in {target_list_name}."
-                        )
-
-            elif action == "remove":
-                # --- Remove Logic --- #
-                if tool_name in target_dict:
-                    if is_whole_tool_modification:
-                        # Removing whole tool
-                        target_dict.pop(tool_name, None)
-                        log.debug(f"Removed '{tool_name}:*' and any specific subcommands from {target_list_name}.")
-                    elif subs_to_modify:  # Removing specific subs
-                        if target_dict[tool_name] == {"*"}:
-                            # Cannot remove specific subs if whole tool is listed
-                            log.info(
-                                f"Cannot remove '{item_str}' from {target_list_name}; '{tool_name}' is fully present."
-                            )
-                        else:
-                            target_dict[tool_name].difference_update(subs_to_modify)
-                            if not target_dict[tool_name]:  # Remove tool key if set is empty
-                                target_dict.pop(tool_name)
-                            log.debug(f"Removed specified subcommands for '{tool_name}' from {target_list_name}.")
-                else:
-                    log.debug(f"Item '{item_str}' not found in {target_list_name} for removal.")
+            # Apply the modification recursively
+            mod_target, mod_other = _apply_modification_recursive(
+                target_hierarchy, other_hierarchy, path, action, item_apply_all, force, target_list_name
+            )
+            # Track if *any* modification call reported success for either hierarchy
+            if mod_target or mod_other:
+                any_item_caused_modification = True
 
         # --- Check if changes occurred --- #
-        modified = repr(target_dict) != initial_target_dict_repr or bool(
-            other_dict
-        )  # Simplified check, assumes other_dict changes count
-        # A more precise check would compare initial and final repr of other_dict too
+        # NEW LOGIC:
+        # Base modification status solely on the boolean flags returned by the recursive helper,
+        # which now understand effective state changes.
+        overall_modified = any_item_caused_modification
+
+        # --- DEBUG: Log final hierarchies before formatting --- #
+        log.debug("[FINAL HIERARCHY DEBUG] Target Hierarchy before format:", data=repr(target_hierarchy))
+        log.debug("[FINAL HIERARCHY DEBUG] Other Hierarchy before format:", data=repr(other_hierarchy))
+        # --- END DEBUG --- #
 
         # --- Write back to TOML --- #
-        if modified:
-            # Convert dicts back to sorted lists
-            final_target_list = _format_parsed_dict_to_list(target_dict)
-            final_other_list = _format_parsed_dict_to_list(other_dict)
+        if overall_modified:
+            log.info(f"Change detected in {target_list_name} or opposing list. Writing updated configuration...")
+            final_target_list = format_nested_dict_to_list(target_hierarchy)
+            final_other_list = format_nested_dict_to_list(other_hierarchy)
 
             # Update the tomlkit document
-            target_array = tomlkit.array()
+            target_array = tomlkit.array()  # Create new array
             target_array.extend(final_target_list)
             target_array.multiline(True)
             managed_tools_table[target_list_name] = target_array
 
-            other_array = tomlkit.array()
+            other_array = tomlkit.array()  # Create new array
             other_array.extend(final_other_list)
             other_array.multiline(True)
-            managed_tools_table[other_list_name] = other_array  # Update the other list too
+            managed_tools_table[other_list_name] = other_array
 
             log.info(f"Writing updated configuration to {pyproject_path}")
             pyproject_path.write_text(tomlkit.dumps(doc), encoding="utf-8")
-            return True
+            return True  # Return True as modification happened
         else:
-            log.info("No changes made to the configuration lists.")
+            log.info(f"No effective changes made to {target_list_name} or opposing list.")
             return False
 
     except (NonExistentKey, KeyError) as e:
