@@ -3,6 +3,7 @@
 import click
 import structlog
 from pathlib import Path
+from typing import Tuple
 
 # TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module needs to handle parsing/writing the tool:sub1,sub2 syntax.
 
@@ -31,6 +32,11 @@ log = structlog.get_logger()
     is_flag=True,
     help="When adding/removing, also apply to children/parents in the opposing list.",
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force adding the item even if it exists in the whitelist (removes from whitelist).",
+)
 @click.argument("tool_names", nargs=-1)
 @click.pass_context
 def blacklist(
@@ -38,6 +44,7 @@ def blacklist(
     action_add: bool,
     action_remove: bool,
     apply_all: bool,
+    force: bool,
     tool_names: tuple[str, ...],
 ) -> None:
     """Manage or list the managed tools blacklist in pyproject.toml.
@@ -72,16 +79,31 @@ def blacklist(
 
     # Determine action
     action = "add" if action_add else "remove"
+    use_force = force
 
     log.info(f"Attempting to {action} blacklist: {tool_names} (All: {apply_all})")
     try:
-        modified = modify_tool_list(project_root, tool_names, "blacklist", action, apply_all)
+        modified = modify_tool_list(
+            project_root=project_root,
+            tool_items_to_modify=tool_names,
+            target_list_name="blacklist",
+            action=action,
+            apply_all=apply_all,
+            force=use_force,
+        )
         if modified:
             log.info("Blacklist modification successful.")
+            # Print final list for confirmation
+            final_list = list_tool_list(project_root, "blacklist")
+            log.info("Current blacklist:", items=final_list if final_list else "[EMPTY]")
         else:
-            log.info("No changes were made to the blacklist.")
+            log.info("Blacklist was not modified (no changes needed or conflict detected without --force).")
+    except FileNotFoundError as e:
+        log.error(f"Error: {e}")
+        ctx.exit(1)
+    except ValueError as e:
+        log.error(f"Error processing configuration: {e}")
+        ctx.exit(1)
     except Exception as e:
-        log.error(
-            f"Failed to modify blacklist: {e}", exc_info=ctx.obj.get("verbosity", 0) > 1
-        )  # Show traceback if verbose
+        log.exception("An unexpected error occurred.")
         ctx.exit(1)
