@@ -9,102 +9,90 @@ from typing import Tuple
 # TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module needs to handle parsing/writing the tool:sub1,sub2 syntax.
 
 # Import the shared utility functions
-from .list_utils import modify_tool_list, list_tool_list, print_list_changes
+from .list_utils import modify_tool_list, list_tool_list
 
 log = structlog.get_logger()
 
 
-@click.command("whitelist")
-@click.option(
-    "--add",
-    "action_add",
-    is_flag=True,
-    help="Add the specified tool(s)/subcommand(s) to the whitelist.",
-)
-@click.option(
-    "--remove",
-    "action_remove",
-    is_flag=True,
-    help="Remove the specified tool(s)/subcommand(s) from the whitelist.",
-)
+@click.group("whitelist")
+def whitelist():
+    """Manage the tool whitelist in pyproject.toml."""
+    pass
+
+
+@whitelist.command("add")
+@click.argument("tool_items", nargs=-1, required=True)
 @click.option(
     "--all",
     "apply_all",
     is_flag=True,
-    help="When adding/removing, also apply to children/parents in the opposing list.",
+    help="Apply the action recursively to all subcommands (e.g., 'tool:*').",
 )
 @click.option(
     "--force",
     is_flag=True,
-    help="Force adding the item even if it exists in the blacklist (removes from blacklist).",
+    help="Force add: remove conflicting entry from blacklist if present.",
 )
-@click.argument("tool_names", nargs=-1)
 @click.pass_context
-def whitelist(
-    ctx: click.Context,
-    action_add: bool,
-    action_remove: bool,
-    apply_all: bool,
-    force: bool,
-    tool_names: tuple[str, ...],
-) -> None:
-    """Manage or list the managed tools whitelist in pyproject.toml.
-
-    If neither --add nor --remove is specified, lists the current whitelist.
-    """
+def add_whitelist(ctx: click.Context, tool_items: Tuple[str, ...], apply_all: bool, force: bool):
+    """Add tools or subcommands to the whitelist."""
     project_root = ctx.obj.get("project_root")
     if not project_root:
-        log.error("Project root could not be determined. Cannot manage whitelist.")
+        log.error("Project root could not be determined.")
         ctx.exit(1)
 
-    if action_add and action_remove:
-        log.error("Options --add and --remove are mutually exclusive.")
+    log.info(
+        f"Adding to whitelist: {tool_items} (All: {apply_all}, Force: {force})",
+        items=tool_items,
+        all=apply_all,
+        force=force,
+    )
+    # initial_list = list_tool_list(project_root, "whitelist") # Get initial state
+    modified = modify_tool_list(
+        project_root=project_root,
+        tool_items_to_modify=tool_items,
+        target_list_name="whitelist",
+        action="add",
+        apply_all=apply_all,
+        force=force,
+    )
+    if modified:
+        # final_list = list_tool_list(project_root, "whitelist") # Get final state
+        # print_list_changes("Whitelist", initial_list, final_list) # REMOVED CALL
+        log.info("Whitelist successfully modified.")
+    else:
+        log.info("Whitelist not modified (item might already exist or conflict). Check logs.")
+
+
+@whitelist.command("remove")
+@click.argument("tool_items", nargs=-1, required=True)
+@click.option(
+    "--all",
+    "apply_all",
+    is_flag=True,
+    help="Apply the action recursively to all subcommands (e.g., 'tool:*').",
+)
+@click.pass_context
+def remove_whitelist(ctx: click.Context, tool_items: Tuple[str, ...], apply_all: bool):
+    """Remove tools or subcommands from the whitelist."""
+    project_root = ctx.obj.get("project_root")
+    if not project_root:
+        log.error("Project root could not be determined.")
         ctx.exit(1)
 
-    if (action_add or action_remove) and not tool_names:
-        log.error("Tool name(s) must be provided when using --add or --remove.")
-        ctx.exit(1)
-
-    if not action_add and not action_remove:
-        # Default action: List the current whitelist
-        if tool_names:
-            log.warning("Tool names provided without --add or --remove will be ignored.")
-        current_whitelist = list_tool_list(project_root, "whitelist")
-        if not current_whitelist:
-            print("Whitelist is currently empty.")
-        else:
-            print("Current Whitelist:")
-            for item in current_whitelist:
-                print(f"- {item}")
-        ctx.exit(0)
-
-    # Determine action
-    action = "add" if action_add else "remove"
-    use_force = force
-
-    log.info(f"Attempting to {action} whitelist: {tool_names} (All: {apply_all})")
-    try:
-        modified = modify_tool_list(
-            project_root=project_root,
-            tool_items_to_modify=tool_names,
-            target_list_name="whitelist",
-            action=action,
-            apply_all=apply_all,
-            force=use_force,
-        )
-        if modified:
-            log.info("Whitelist modification successful.")
-            # Print final list for confirmation
-            final_list = list_tool_list(project_root, "whitelist")
-            log.info("Current whitelist:", items=final_list if final_list else "[EMPTY]")
-        else:
-            log.info("Whitelist was not modified (no changes needed or conflict detected without --force).")
-    except FileNotFoundError as e:
-        log.error(f"Error: {e}")
-        ctx.exit(1)
-    except ValueError as e:
-        log.error(f"Error processing configuration: {e}")
-        ctx.exit(1)
-    except Exception as e:
-        log.exception("An unexpected error occurred.")
-        ctx.exit(1)
+    log.info(f"Removing from whitelist: {tool_items} (All: {apply_all})", items=tool_items, all=apply_all)
+    # initial_list = list_tool_list(project_root, "whitelist") # Get initial state
+    modified = modify_tool_list(
+        project_root=project_root,
+        tool_items_to_modify=tool_items,
+        target_list_name="whitelist",
+        action="remove",
+        apply_all=apply_all,
+        force=False,  # Force not applicable for remove
+    )
+    if modified:
+        # final_list = list_tool_list(project_root, "whitelist") # Get final state
+        # print_list_changes("Whitelist", initial_list, final_list) # REMOVED CALL
+        log.info("Whitelist successfully modified.")
+    else:
+        log.info("Whitelist not modified (item might not exist). Check logs.")

@@ -12,9 +12,9 @@ from enum import Enum, auto
 
 # --- Updated imports from lib/tooling --- #
 # from ...dev_scripts.config_reader import load_tool_lists_from_toml # No longer needed, reads from ctx
-from ...lib.tooling.environment_scanner import get_executables_from_env, find_executables_in_paths
-from ...lib.tooling.tool_reconciler import ToolStatus, reconcile_tools, ReconciliationError, _get_effective_status
-from ...lib.tooling.tools_dir_scanner import get_tool_dirs, scan_tools_dir
+from ...lib.tooling.environment_scanner import get_executables_from_env
+from ...lib.tooling.tool_reconciler import ToolStatus, reconcile_tools, _get_effective_status
+from ...lib.tooling.tools_dir_scanner import get_tool_dirs
 
 # Import type hint from new file
 from ...common.hierarchical_utils import ParsedHierarchy

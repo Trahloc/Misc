@@ -24,31 +24,18 @@ from zeroth_law.common.git_utils import (
 )
 from zeroth_law.common.path_utils import find_project_root
 
-# Add import for analysis functions
+# Re-add necessary imports
 from zeroth_law.analysis_runner import (
     analyze_files,
     format_violations_as_json,
     log_violations_as_text,
     run_all_checks,
 )
-
-# Import the dynamic command function
-# from zeroth_law.dynamic_commands import add_dynamic_commands # Might remove if not used
-
-# Import the Git hook commands
-from .subcommands.git_hooks import install_git_hook, restore_git_hooks
-
-# Import the new Audit command
-from .subcommands.audit.audit import audit
-
-# Import the pre-commit analyzer
-from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
-
-# Import the new tools group
-from .subcommands.tools.tools import tools_group
-
-# Import the new definition group
-# from .subcommands.definition.definition import definition_group # <-- REMOVE THIS IMPORT
+from .subcommands.audit.audit import audit as audit_command  # NEW import of function
+from .subcommands.git_hooks import install_git_hook, restore_git_hooks  # Correct: Import individual commands
+from .subcommands.tools.tools import tools_group  # Tools GROUP
+from .subcommands.todo.todo_group import todo_group  # Todo GROUP
+from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config  # Analyzer
 
 # --- Early Structlog Setup --- START
 # Configure structlog early with basic console output
@@ -308,11 +295,11 @@ def create_cli_group() -> click.Group:
     base_cli_group.params.extend(dynamic_options)
 
     # Add the subcommands (this happens after the group is created)
-    base_cli_group.add_command(audit)
+    base_cli_group.add_command(audit_command)  # NEW add of function
     base_cli_group.add_command(install_git_hook)
     base_cli_group.add_command(restore_git_hooks)
     base_cli_group.add_command(tools_group)  # Add the tools subcommand group
-    # base_cli_group.add_command(definition_group) # <-- REMOVE THIS REGISTRATION
+    base_cli_group.add_command(todo_group)
 
     # TODO: Add dynamic commands based on capabilities/mapping later
     # add_dynamic_commands(base_cli_group)

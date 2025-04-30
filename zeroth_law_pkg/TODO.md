@@ -6,24 +6,6 @@
 **Next Action:** Re-run `pytest tests/test_cli.py` to verify the fix and CLI dispatch mechanism after the project rename.
 **====**
 
-## **Phase A: Initial Setup & Foundational Checks**
-
-- [x] 1. Initialize project structure (`poetry new`, basic dirs like `src/zeroth_law`, `tests`).
-- [x] 2. Populate `pyproject.toml` (incl. build-system fix)
-- [x] 3. Set up `ruff` configuration (`pyproject.toml`).
-- [x] 4. Set up `mypy` configuration (`pyproject.toml`).
-- [x] 5. Set up `pytest` configuration (`pyproject.toml`, basic `conftest.py` if needed).
-- [x] 6. Set up `pre-commit` (`.pre-commit-config.yaml` with `ruff`, `mypy`).
-- [x] 7. Create initial `README.md` with setup instructions (using `poetry`).
-- [x] 8. Implement basic `file_finder.py` (TDD): Find `.py` files, exclude defaults.
-- [x] 9. Implement basic `config_loader.py` (TDD): Load basic settings (e.g., `exclude_dirs`, `exclude_files`) from `[tool.zeroth-law]` in `pyproject.toml`, merging with defaults.
-- [x] 10. Implement basic `cli.py` using `click` (TDD): Argument parsing (paths, recursive, verbosity, color), setup logging (`structlog`), call config loader, call file finder, orchestrate basic audit flow.
-- [x] 11. Implement basic Header Check (`analyzer/python/analyzer.py::check_header_compliance`).
-- [x] 12. Implement basic Footer Check (`analyzer/python/analyzer.py::check_footer_compliance`).
-- [x] 13. Implement main `analyze_file_compliance` orchestrator (`analyzer/python/analyzer.py`) calling header/footer checks.
-- [x] 14. Integrate checks into `cli.py::run_audit`.
-- [x] 15. Ensure pre-commit hooks pass (resolve initial issues, potentially adjust limits temporarily).
-
 ## **Phase B: Extending Static Analysis & Refinement**
 
 - [x] 1. **Line Count Check:** (`analyzer/python/line_counts.py`) Implement `analyze_line_counts` (TDD). Integrate into `analyze_file_compliance`.
@@ -146,22 +128,22 @@
     - [x] Implement logic to detect potential stale entries (`audit_database_against_scan`).
     - [x] Track processed items during scan.
     - [x] Add `argparse` for script execution.
-- [ ] **3. Implement Map Verification Tests (`tests/test_codebase_map/test_map_generator.py`):
+- [ ] **5. Implement Map Verification Tests (`tests/test_codebase_map/test_map_generator.py`):
     - [ ] Test basic generation (modules, classes, functions) with temp files.
     - [ ] Test signature hash calculation and updates.
     - [ ] Test handling of methods vs. module-level functions.
     - [ ] Test stale entry detection (`audit_database_against_scan`) reporting.
     - [ ] Use `pytest` fixtures for setup/teardown (temp DB, temp src files).
-- [ ] **4. Implement Pruning/Cleanup Mechanism:**
+- [ ] **6. Implement Pruning/Cleanup Mechanism:**
     - [x] Design the confirmation mechanism for stale entry removal (require `--prune-stale-entries "<confirmation_string>"`).
     - [x] Implement the logic to execute SQL `DELETE` statements based on the verified confirmation.
     - [x] Add tests to verify conditional pruning based on confirmation string.
-- [x] **5. Integrate into Test Workflow:**
+- [ ] **7. Integrate into Test Workflow:**
     - [x] Ensure map generation/update runs automatically during `pytest` (via session-scoped fixture `code_map_db` in `tests/conftest.py`).
     - [ ] Ensure verification tests run as part of the standard test suite (will be covered by creating tests in Task 3/6).
-- [ ] **6. Implement Reporting (Optional but Recommended):**
+- [ ] **8. Implement Reporting (Optional but Recommended):**
     - [ ] Add fixtures or scripts to query the DB upon specific test failures and generate consumable reports for the AI (e.g., list of orphaned functions, signature mismatches).
-- [ ] **7. (Future) ZLT Integration:** Explore having ZLT directly query the `code_map.db`.
+- [ ] **9. (Future) ZLT Integration:** Explore having ZLT directly query the `code_map.db`.
 
 ## **Phase G: Tool Definition Workflow & AI Interpretation**
 # Goal: Refine the process for capturing and verifying tool CLI definitions using AI interpretation.
@@ -201,7 +183,7 @@
 - [x] 4. Create `src/zeroth_law/subcommands/tools/__init__.py`.
 - [x] 5. Create `src/zeroth_law/subcommands/tools/tools.py` with main `click.group`.
 - [x] 6. Register `tools_group` in `src/zeroth_law/cli.py`.
-- [x] 7. Implement `zlt tools reconcile` subcommand.
+- [ ] 7. Implement `zlt tools reconcile` subcommand.
   - [x] Migrate core logic from `reconciliation_logic.py`.
   - [ ] Migrate logic from `tool_discovery.py`.
   - [ ] Migrate logic from `tools_dir_scanner.py`.
@@ -216,7 +198,7 @@
   - [x] Implement hierarchical logic (tool vs. tool:subcommand).
   - [x] Implement `--all` flag logic.
   - [x] Implement INFO message for conflicting entries.
-- [x] 10. Implement `zlt tools sync` subcommand.
+- [ ] 10. Implement `zlt tools sync` subcommand.
   - [ ] Migrate baseline generation logic (`generate_baseline_cli.py`).
   - [ ] Migrate skeleton JSON creation logic.
   - [ ] Migrate index update logic (`ToolIndexHandler`).
@@ -225,7 +207,7 @@
   - [ ] **Enhance User Feedback:** Add progress indicators or more verbose logging during reconciliation and parallel baseline generation phases to improve user experience for long operations.
 - [x] 11. Refactor/Remove redundant dev scripts (`reconciliation_logic.py`, `generate_baseline_cli.py`, `tool_discovery.py`, `tools_dir_scanner.py`).
 - [x] 12. Refactor/Remove redundant test fixtures (`ensure_baselines_updated`, `managed_sequences` - replace with direct calls or new fixtures if needed).
-- [x] 13. Update tests to use or test the new `zlt tools` commands.
+- [ ] 13. Update tests to use or test the new `zlt tools` commands.
   - [x] Refactor `test_check_for_new_tools` to use `zlt tools reconcile`.
   - [x] Update `get_tool_dirs` import in `test_no_orphan_tool_directories`.
   - [ ] Verify tests pass or fail for expected reasons (e.g., `ToolIndexHandler` import).
@@ -235,17 +217,17 @@
   - [ ] **14.2.** Refactor `tool_reconciler.py::reconcile_tools` to accept and utilize the structured dict/tree format for whitelist/blacklist and apply **specific-over-general precedence rule**.
   - [ ] **14.3.** Update `reconcile.py::_perform_reconciliation_logic` to pass the structured dicts/trees to `reconcile_tools` and interpret the results correctly.
   - [ ] **14.4.** Update `sync.py` to filter command sequences based on the resolved hierarchical status from `reconcile` (applying precedence rules).
-  - [ ] **14.5.** Update `list_utils.py` (`modify_tool_list`, `_format...`) and `whitelist_cmd.py`/`blacklist_cmd.py`:
-    - [ ] Handle parsing/writing arbitrary nesting syntax (`tool:sub:subsub`).
-    - [ ] Implement `--all` flag logic for descendant modification.
-    - [ ] Implement conflict detection: `add` fails if item exists in other list, unless `--force` is used (add `--force` option to CLI commands).
+  - [x] **14.5.** Update `list_utils.py` (`modify_tool_list`, `_format...`) and `whitelist_cmd.py`/`blacklist_cmd.py`:
+    - [x] Handle parsing/writing arbitrary nesting syntax (`tool:sub:subsub`).
+    - [x] Implement `--all` flag logic for descendant modification.
+    - [x] Implement conflict detection: `add` fails if item exists in other list, unless `--force` is used (add `--force` option to CLI commands).
   - [ ] **14.6.** Add/update tests for:
-    - [ ] **14.6.1** Nested parsing (`config_loader`).
-    - [ ] **14.6.2** Hierarchical modification in `list_utils.py` (add/remove, with/without `--all`, with/without `--force`, conflict scenarios).
+    - [x] **14.6.1** Nested parsing (`config_loader`).
+    - [x] **14.6.2** Hierarchical modification in `list_utils.py` (add/remove, with/without `--all`, with/without `--force`, conflict scenarios).
     - [ ] **14.6.3** Precedence rule checking in `reconcile`.
     - [ ] **14.6.4** Task filtering in `sync` based on precedence.
-    - [ ] **14.6.5** CLI command tests (`whitelist_cmd.py`/`blacklist_cmd.py`) including `--force`.
-    - [ ] **14.6.6** New pytest check to fail if the *exact same item* exists in both parsed whitelist and blacklist structures.
+    - [x] **14.6.5** CLI command tests (`whitelist_cmd.py`/`blacklist_cmd.py`) including `--force`.
+    - [x] **14.6.6** New pytest check to fail if the *exact same item* exists in both parsed whitelist and blacklist structures.
 - [ ] **15. Podman Integration Follow-up (Post-Refactor):**
   - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
   - [ ] Test the Podman-based baseline capture workflow thoroughly, covering various tools, subcommands, potential errors (container start failure, exec failure, timeouts), and cleanup.
@@ -259,31 +241,62 @@
     - [x] 5. Edit `src/zeroth_law/lib/tooling/baseline_generator.py` to add import from `podman_utils`.
 
 ## **Phase I: Capability-Driven Refactor & Central Definitions**
-# Goal: Refactor ZLT core logic to use capabilities for tool dispatch and dynamically generate CLI options from a central definition.
-- [x] **1. Define Central Files:**
-  - [x] Create `src/zeroth_law/zlt_capabilities.json` (or similar) defining canonical capabilities (e.g., "Formatter", "Linter") with descriptions.
-  - [x] Create `src/zeroth_law/zlt_options_definitions.json` defining canonical ZLT CLI options (`verbose`, `quiet`, `config`, `recursive`, `paths`, etc.) including their type, CLI flags, help text, etc.
-- [x] **2. Update Tool Definition Schema & Guidelines:**
-  - [x] Add `provides_capabilities: [<capability_name>, ...]` to the JSON schema metadata.
-  - [x] Add `supported_filetypes: [<extension>, ...]` (or `"*"`) to the JSON schema metadata.
-  - [x] Add `maps_to_zlt_option: <canonical_option_name>` to the schema for options/arguments within the JSON.
-  - [ ] (Optional) Add `metadata.default_behavior_for_zlt_option: {<canonical_option_name>: <value>}` to schema.
-  - [x] Update `tools/zlt_schema_guidelines.md` to document these new fields.
-- [x] **3. Implement & Verify Dynamic CLI Generation (TDD):**
-  - [x] Write `pytest` tests verifying `zlt --help` output matches the content of `zlt_options_definitions.json`.
-  - [x] Refactor `src/zeroth_law/cli.py` to load `zlt_options_definitions.json` and dynamically add options/arguments using `click` or `typer` APIs.
-  - [x] Expand tests for all defined global options and verify.
-- [x] **4. Implement & Verify Capability/Filetype Dispatch Logic (TDD):**
-  - [x] Write `pytest` tests for the core dispatch logic: given ZLT action -> capability, file types, and mock tool definitions, assert correct tool(s) are selected.
-  - [x] Implement the ZLT logic to scan tool definitions, filter by `provides_capabilities` and `supported_filetypes`, and select the prime tool(s).
-  - [x] Expand tests for various file types, capabilities, and edge cases (no match, `*` type) and verify.
-- [x] **5. Implement & Verify Option Translation Logic (TDD):**
-  - [x] Write `pytest` tests for option translation: given ZLT command options, selected tool definition, assert correct final command arguments are generated using `maps_to_zlt_option` and default behavior data.
-  - [x] Implement the ZLT logic to perform this translation during command execution.
-  - [x] Expand tests for various option types and combinations and verify.
-- [x] **6. Develop Tool Definition Management Commands (TDD):**
-  - [x] Define subcommand structure (e.g., `zlt definition ...`).
-  - [x] Create subcommand module(s) (e.g., `src/zeroth_law/subcommands/definition/`).
-  - [x] Register subcommand group with main CLI.
-  - [x] Write tests for `add-capability`, `remove-capability`, `set-filetypes`, `map-option`, `unmap-option`. (Success cases done)
-  - [x] Implement logic for management commands, including validation against central definitions.
+# Goal: Refactor core logic for better testability, define central schemas, and improve CLI experience.
+
+[ ] **1. Integrate TODO Management into ZLT (`src/zeroth_law/subcommands/todo/`):**
+    - [x] Create `todo_group.py` and register with `cli.py`.
+    - [x] Move `archive_todo_phase.py` logic into `zlt todo complete` command.
+    - [ ] **1.3. Implement `zlt todo codetodos`:**
+        - [ ] Create `codetodos.py` subcommand.
+        - [ ] Adapt logic from `scripts/generate_code_todos.py` (or similar).
+        - [ ] Define output format for `CODE_TODOS.md`.
+        - [ ] Add tests for `codetodos` generation.
+    - [ ] **1.4. Refine `zlt todo complete` Workflow:**
+        - [ ] Determine verification mechanism (e.g., require `--reviewed` flag? Rely on manual AI trigger?).
+        - [ ] Update command logic and documentation.
+        - [ ] **1.4.1 Add `--report` option:** Implement a `--report <string>` option used with `--confirmed` to capture the AI's **Executive Summary**.
+        - [ ] **1.4.2 Prepend summary to archive:** Modify `complete` logic to prepend the `--report` Executive Summary to the archived phase content.
+        - [ ] **1.4.3 Add tests for `--report`:** Verify report content appears in the archived file.
+    - [ ] **1.5. Refine Phase Completion Test (`test_detect_completed_phases.py`):**
+        - [ ] Adjust test logic/assertion to act as a *warning* or *prompt* for review, not a hard failure.
+        - [ ] Update test message to reflect its advisory role.
+
+## **Phase J: Tool Execution Definition & Mapping**
+# Goal: Define and populate the structured knowledge ZLT uses to select and execute the correct underlying tools based on requested capabilities, file types, and options.
+
+[ ] **1. Define Tool Definition Schema (`src/zeroth_law/schemas/tool_definition.schema.json`?):**
+    - [ ] Specify JSON schema for tool/subcommand `.json` definition files.
+    - [ ] Include fields for core CLI structure (commands, options, args, types) derived from `.txt` baselines.
+    - [ ] Add required semantic fields:
+        - `capability`: ZLT capability provided (string or list, linking to `tool_capabilities.yaml`?).
+        - `filetype_affinity`: List of applicable file extensions.
+        - `option_map`: Mapping from canonical ZLT option names (`zlt_options_definitions.json`) to this tool's specific options/flags/argument patterns.
+            - Consider how to represent complex mappings (e.g., ZLT `--level=high` maps to tool `--severity critical --filter XYZ`).
+
+[ ] **2. AI Task: Populate Initial Definitions (`src/zeroth_law/tools/.../*.json`):**
+    - [ ] Systematically interpret the `.txt` baseline help output for core tools (`ruff`, `mypy`, `pytest`, `black`, etc.).
+    - [ ] Create/update the corresponding `.json` definition files according to the defined schema.
+    - [ ] Ensure accurate mapping of CLI structure.
+    - [ ] Add the semantic mappings (`capability`, `filetype_affinity`, `option_map`) based on tool documentation and ZLT goals.
+    - [ ] Update `metadata.ground_truth_crc` in the `.json` to match the corresponding `.txt` baseline CRC in `tool_index.json` after interpretation.
+
+[ ] **3. Implement Tool Definition Loading & Validation:**
+    - [ ] Create loader function to read and validate `.json` definition files against the schema.
+    - [ ] Implement tests (`test_tool_definition_validation.py`?) to:
+        - Validate schema compliance.
+        - Verify consistency (e.g., referenced ZLT options in `option_map` exist in `zlt_options_definitions.json`).
+        - Check for structural integrity.
+
+[ ] **4. Define Central ZLT Capabilities (`src/zeroth_law/zlt_capabilities.yaml`):**
+    - [ ] Create a YAML file listing canonical ZLT capabilities (e.g., `Linter`, `Formatter`, `TypeChecker`, `Tester`, `SecurityAuditor`) with descriptions.
+    - [ ] Ensure capability names used in tool definitions refer to entries in this file.
+
+[ ] **5. Define Central ZLT Options (`src/zeroth_law/zlt_options_definitions.json`):**
+    - [ ] Create JSON file defining canonical ZLT global/command options (e.g., `--config`, `--fix`, `--verbose`, `--level`, `paths`).
+    - [ ] Include type, CLI flags, help text, canonical name for mapping.
+    - [ ] Ensure ZLT CLI generation (Phase I.3) uses this file.
+    - [ ] Ensure tool definition validation (J.3) uses this file to check `option_map` references.
+
+## **Phase K: ... (Next Phase)**
+# ...
+
