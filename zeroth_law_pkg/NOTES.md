@@ -746,3 +746,16 @@ Implement a system that maintains an automated, persistent "map" of the codebase
 *   **Performance:** This approach is expected to be slower than the previous `uv run` method due to container management and execution overhead.
 
 **Note:** While enhancing security, this change does **not** inherently fix errors caused by asking the baseline generator to process invalid command sequences (e.g., `poetry export`, `poetry shell`). Correcting the source tool definition JSON files remains necessary to resolve those specific errors.
+
+## `uv run pytest` Failures (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - AI: Run `date --iso-8601=seconds`)
+
+**Problem:** Attempts to run the test suite using `uv run pytest` are currently failing. The exact errors need to be captured, but symptoms are consistent with environment or path resolution issues preventing pytest from discovering or importing test modules correctly. This blocks verification of recent changes.
+
+**Plan:**
+1. Run `uv run pytest -vv` to capture the specific error messages.
+2. Analyze the traceback, likely looking for `ImportError` or similar issues.
+3. Review ZLF documentation (Section 7.1) for common causes.
+4. Verify `pyproject.toml` (`[tool.pytest.ini_options]`).
+5. Verify `__init__.py` files in `src/` and `tests/`.
+6. Verify project installation within the `.venv`.
+7. Fix the underlying issue.
