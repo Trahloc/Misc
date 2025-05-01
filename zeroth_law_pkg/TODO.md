@@ -312,77 +312,77 @@
 
 ### **Phase 1: Setup & Reconciliation (Steps 1-5)**
 
-- [ ] **Step 1: Environment Setup** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 1.1 Action: Ensure correct venv activation (implicit via `uv run`).
-  - [ ] 1.2 Action: Determine absolute path to active venv `bin` directory (e.g., `sys.prefix`/`bin`) -> `venv_bin_path`.
-  - [ ] 1.3 Verification: Log the detected `venv_bin_path`.
+- [x] **Step 1: Environment Setup** (`2025-05-01T12:15:37+08:00`)
+  - [x] 1.1 Action: Ensure correct venv activation (implicit via `uv run`). (`2025-05-01T13:47:53+08:00`)
+  - [x] 1.2 Action: Determine absolute path to active venv `bin` directory (e.g., `sys.prefix`/`bin`) -> `venv_bin_path`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 1.3 Verification: Log the detected `venv_bin_path`. (`2025-05-01T13:47:53+08:00`)
 
-- [ ] **Step 2: Discover Executables** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 2.1 Action: Scan `venv_bin_path` directory.
-  - [ ] 2.2 Action: Create raw list `raw_executables` of all executable file names.
-  - [ ] 2.3 Verification: Log the count of `raw_executables`.
+- [x] **Step 2: Discover Executables** (`2025-05-01T12:15:37+08:00`)
+  - [x] 2.1 Action: Scan `venv_bin_path` directory. (`2025-05-01T13:47:53+08:00`)
+  - [x] 2.2 Action: Create raw list `raw_executables` of all executable file names. (`2025-05-01T13:47:53+08:00`)
+  - [x] 2.3 Verification: Log the count of `raw_executables`. (`2025-05-01T13:47:53+08:00`)
 
-- [ ] **Step 3: Filter & Validate Whitelist/Blacklist** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 3.1 Action: Load hierarchical whitelist/blacklist from `pyproject.toml` -> `whitelist_tree`, `blacklist_tree` (using `src/zeroth_law/lib/config_loader.py`).
-  - [ ] 3.2 Action: Implement/Verify `check_list_conflicts(whitelist_tree, blacklist_tree)` (in `src/zeroth_law/lib/hierarchical_utils.py`?).
-  - [ ] 3.3 Action: Call `check_list_conflicts`, fail immediately if conflicts found.
-  - [ ] 3.4 Action: Implement/Verify `get_effective_status(sequence, whitelist_tree, blacklist_tree)` in `src/zeroth_law/lib/hierarchical_utils.py` (handles precedence, wildcards).
-  - [ ] 3.5 Action: Initialize `managed_executables = []`, `unclassified_executables = []`.
-  - [ ] 3.6 Action: Iterate `raw_executables`, use `get_effective_status` to populate `managed_executables` and `unclassified_executables`.
-  - [ ] 3.7 Action: If `unclassified_executables` not empty, fail immediately with clear instructions to use `zlt tools add-whitelist/add-blacklist`.
-  - [ ] 3.8 Verification: Log count of `managed_executables`.
+- [x] **Step 3: Filter & Validate Whitelist/Blacklist** (`2025-05-01T12:15:37+08:00`)
+  - [x] 3.1 Action: Load hierarchical whitelist/blacklist from `pyproject.toml` -> `whitelist_tree`, `blacklist_tree` (using `src/zeroth_law/lib/config_loader.py`). (`2025-05-01T13:47:53+08:00`)
+  - [x] 3.2 Action: Implement/Verify `check_list_conflicts(whitelist_tree, blacklist_tree)` (in `src/zeroth_law/lib/hierarchical_utils.py`?). (`2025-05-01T13:47:53+08:00`)
+  - [x] 3.3 Action: Call `check_list_conflicts`, fail immediately if conflicts found. (`2025-05-01T13:47:53+08:00`)
+  - [x] 3.4 Action: Implement/Verify `get_effective_status(sequence, whitelist_tree, blacklist_tree)` in `src/zeroth_law/lib/hierarchical_utils.py` (handles precedence, wildcards). (`2025-05-01T13:47:53+08:00`)
+  - [x] 3.5 Action: Initialize `managed_executables = []`, `unclassified_executables = []`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 3.6 Action: Iterate `raw_executables`, use `get_effective_status` to populate `managed_executables` and `unclassified_executables`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 3.7 Action: If `unclassified_executables` not empty, fail immediately with clear instructions to use `zlt tools add-whitelist/add-blacklist`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 3.8 Verification: Log count of `managed_executables`. (`2025-05-01T13:47:53+08:00`)
 
-- [ ] **Step 4: Reconcile `tools/` Directory Structure** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 4.1 Action: Define `tools_base_dir = Path("src/zeroth_law/tools/")`.
-  - [ ] 4.2 Action: Get list `existing_tool_dirs` of immediate subdirectories.
-  - [ ] 4.3 Action: Initialize `orphan_dirs = []`.
-  - [ ] 4.4 Action: Iterate `existing_tool_dirs`, use `get_effective_status` to populate `orphan_dirs` if status is BLACKLISTED or UNSPECIFIED.
-  - [ ] 4.5 Action: If `orphan_dirs` not empty, fail immediately with instructions to whitelist tool or remove directory.
-  - [ ] 4.6 Action: Iterate `managed_executables`, ensure `tools_base_dir / tool_name` exists, create if missing (`os.makedirs`).
-  - [ ] 4.7 Verification: `tools/` structure aligns with `managed_executables`.
+- [x] **Step 4: Reconcile `tools/` Directory Structure** (`2025-05-01T12:15:37+08:00`)
+  - [x] 4.1 Action: Define `tools_base_dir = Path("src/zeroth_law/tools/")`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 4.2 Action: Get list `existing_tool_dirs` of immediate subdirectories. (`2025-05-01T13:47:53+08:00`)
+  - [x] 4.3 Action: Initialize `orphan_dirs = []`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 4.4 Action: Iterate `existing_tool_dirs`, use `get_effective_status` to populate `orphan_dirs` if status is BLACKLISTED or UNSPECIFIED. (`2025-05-01T13:47:53+08:00`)
+  - [x] 4.5 Action: If `orphan_dirs` not empty, fail immediately with instructions to whitelist tool or remove directory. (`2025-05-01T13:47:53+08:00`)
+  - [x] 4.6 Action: Iterate `managed_executables`, ensure `tools_base_dir / tool_name` exists, create if missing (`os.makedirs`). (`2025-05-01T13:47:53+08:00`)
+  - [x] 4.7 Verification: `tools/` structure aligns with `managed_executables`. (`2025-05-01T13:47:53+08:00`)
 
-- [ ] **Step 5: Identify Effectively Whitelisted Command Sequences** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 5.1 Action: Initialize `whitelisted_sequences = []`.
-  - [ ] 5.2 Action: Add base sequences from `managed_executables` to `whitelisted_sequences`.
-  - [ ] 5.3 Action: Implement/Verify recursive `scan_tool_dirs(current_dir, current_sequence, ...)` in `src/zeroth_law/lib/tooling/tools_dir_scanner.py` (uses `get_effective_status`, handles recursion).
-  - [ ] 5.4 Action: Call `scan_tool_dirs` for each managed tool's base directory.
-  - [ ] 5.5 Action: Combine base and scanned sequences into final `whitelisted_sequences`.
-  - [ ] 5.6 Verification: Log total count of `whitelisted_sequences`.
+- [x] **Step 5: Identify Effectively Whitelisted Command Sequences** (`2025-05-01T12:15:37+08:00`)
+  - [x] 5.1 Action: Initialize `whitelisted_sequences = []`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 5.2 Action: Add base sequences from `managed_executables` to `whitelisted_sequences`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 5.3 Action: Implement/Verify recursive `scan_tool_dirs(current_dir, current_sequence, ...)` in `src/zeroth_law/lib/tooling/tools_dir_scanner.py` (uses `get_effective_status`, handles recursion). (`2025-05-01T13:47:53+08:00`)
+  - [x] 5.4 Action: Call `scan_tool_dirs` for each managed tool's base directory. (`2025-05-01T13:47:53+08:00`)
+  - [x] 5.5 Action: Combine base and scanned sequences into final `whitelisted_sequences`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 5.6 Verification: Log total count of `whitelisted_sequences`. (`2025-05-01T13:47:53+08:00`)
 
 ### **Phase 2: Baseline Generation & Indexing (Step 6)**
 
-- [ ] **Step 6: `.txt` Baseline Generation & Verification** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 6.1 Action: Initialize `recent_update_warning_count = 0`.
-  - [ ] 6.2 Action: Implement/Verify `ToolIndexHandler` class (in `src/zeroth_law/lib/tooling/tool_index_handler.py`?) with load/save/update/add methods for `tool_index.json`. Load index.
-  - [ ] 6.3 Action: Define deterministic Podman container name.
-  - [ ] 6.4 Action: Implement Podman container setup/teardown context management within `sync` command (stop/rm existing, start new, stop/rm finally, read-only mounts).
-  - [ ] 6.5 Action: Loop through each `sequence` in `whitelisted_sequences`:
-    - [ ] 6.5.1 Lookup: Get entry from loaded index via `ToolIndexHandler`. Continue if not found.
-    - [ ] 6.5.2 Timestamp Check: Use `--check-since` (default 24h) and `--force`. Continue if check passes.
-    - [ ] 6.5.3 Podman Execution:
-      - [ ] 6.5.3.1 Construct help command args (e.g., `['ruff', 'check', '--help']`).
-      - [ ] 6.5.3.2 Implement/Verify `_execute_capture_in_podman(sequence_args, container_name, ...)` in `src/zeroth_law/lib/tooling/baseline_generator.py` (builds `podman exec sh -c "export PATH...; timeout ... | cat"`, runs `subprocess`, handles errors, returns stdout).
-      - [ ] 6.5.3.3 Call `_execute_capture_in_podman`, handle exceptions.
-    - [ ] 6.5.4 CRC Calculation: Calculate `new_crc = zlib.crc32(output)` -> hex string.
-    - [ ] 6.5.5 Comparison & Update:
-      - [ ] 6.5.5.1 If `new_crc == index_crc`: Call `ToolIndexHandler.update_checked_timestamp(sequence, now)`.
-      - [ ] 6.5.5.2 If `new_crc != index_crc`: Use `--update-since` (default 48h), warn/increment `recent_update_warning_count` if needed. Write output to `.txt` file. Call `ToolIndexHandler.update_entry(sequence, crc=new_crc, updated_timestamp=now, ...)`.
-  - [ ] 6.6 Action: After loop, call `ToolIndexHandler.save_index()`.
-  - [ ] 6.7 Action: If `recent_update_warning_count >= 3`, fail immediately reporting rapid update issue.
+- [x] **Step 6: `.txt` Baseline Generation & Verification** (`2025-05-01T12:15:37+08:00`)
+  - [x] 6.1 Action: Initialize `recent_update_warning_count = 0`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 6.2 Action: Implement/Verify `ToolIndexHandler` class (in `src/zeroth_law/lib/tooling/tool_index_handler.py`?) with load/save/update/add methods for `tool_index.json`. Load index. (Using functions from `tool_index_utils.py`) (`2025-05-01T13:47:53+08:00`)
+  - [x] 6.3 Action: Define deterministic Podman container name. (`2025-05-01T13:47:53+08:00`)
+  - [x] 6.4 Action: Implement Podman container setup/teardown context management within `sync` command (stop/rm existing, start new, stop/rm finally, read-only mounts). (`2025-05-01T13:47:53+08:00`)
+  - [x] 6.5 Action: Loop through each `sequence` in `whitelisted_sequences`: (`2025-05-01T13:47:53+08:00`)
+    - [x] 6.5.1 Lookup: Get entry from loaded index via `ToolIndexHandler`. Continue if not found. (`2025-05-01T13:47:53+08:00`)
+    - [x] 6.5.2 Timestamp Check: Use `--check-since` (default 24h) and `--force`. Continue if check passes. (`2025-05-01T13:47:53+08:00`)
+    - [x] 6.5.3 Podman Execution:
+      - [x] 6.5.3.1 Construct help command args (e.g., `['ruff', 'check', '--help']`). (`2025-05-01T13:47:53+08:00`)
+      - [x] 6.5.3.2 Implement/Verify `_execute_capture_in_podman(sequence_args, container_name, ...)` in `src/zeroth_law/lib/tooling/baseline_generator.py` (builds `podman exec sh -c "export PATH...; timeout ... | cat"`, runs `subprocess`, handles errors, returns stdout). (`2025-05-01T13:47:53+08:00`)
+      - [x] 6.5.3.3 Call `_execute_capture_in_podman`, handle exceptions. (`2025-05-01T13:47:53+08:00`)
+    - [x] 6.5.4 CRC Calculation: Calculate `new_crc = zlib.crc32(output)` -> hex string. (`2025-05-01T13:47:53+08:00`)
+    - [x] 6.5.5 Comparison & Update:
+      - [x] 6.5.5.1 If `new_crc == index_crc`: Call `ToolIndexHandler.update_checked_timestamp(sequence, now)`. (`2025-05-01T13:47:53+08:00`)
+      - [x] 6.5.5.2 If `new_crc != index_crc`: Use `--update-since` (default 48h), warn/increment `recent_update_warning_count` if needed. Write output to `.txt` file. Call `ToolIndexHandler.update_entry(sequence, crc=new_crc, updated_timestamp=now, ...)` (`2025-05-01T13:47:53+08:00`)
+  - [x] 6.6 Action: After loop, call `ToolIndexHandler.save_index()`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 6.7 Action: If `recent_update_warning_count >= 3`, fail immediately reporting rapid update issue. (`2025-05-01T13:47:53+08:00`)
 
 ### **Phase 3: AI Interpretation & Validation (Steps 7-8)**
 
-- [ ] **Step 7: Identify First Missing/Outdated `.json`** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 7.1 Action: Reload index via `ToolIndexHandler`.
-  - [ ] 7.2 Action: Loop through `tool_index.json` entries (`sequence_key`, `entry_data`).
-  - [ ] 7.3 Action: For each entry:
-    - [ ] 7.3.1 Check `get_effective_status`. Continue if not WHITELISTED.
-    - [ ] 7.3.2 Determine `txt_path`, `json_path`.
-    - [ ] 7.3.3 Check if `txt_path` exists. Continue if not.
-    - [ ] 7.3.4 Check if `json_path` exists. If not, `needs_interpretation = True`.
-    - [ ] 7.3.5 If `json_path` exists, load JSON, get `json_crc`, compare with `index_crc`. If mismatch or placeholder, `needs_interpretation = True`.
-    - [ ] 7.3.6 If `needs_interpretation`, fail immediately, report sequence/path, instruct AI to start Step 8.
-  - [ ] 7.4 Outcome: If loop completes, proceed to Step 9.
+- [x] **Step 7: Identify First Missing/Outdated `.json`** (`2025-05-01T12:15:37+08:00`)
+  - [x] 7.1 Action: Reload index via `ToolIndexHandler`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 7.2 Action: Loop through `tool_index.json` entries (`sequence_key`, `entry_data`). (`2025-05-01T13:47:53+08:00`)
+  - [x] 7.3 Action: For each entry: (`2025-05-01T13:47:53+08:00`)
+    - [x] 7.3.1 Check `get_effective_status`. Continue if not WHITELISTED. (`2025-05-01T13:47:53+08:00`)
+    - [x] 7.3.2 Determine `txt_path`, `json_path`. (`2025-05-01T13:47:53+08:00`)
+    - [x] 7.3.3 Check if `txt_path` exists. Continue if not. (`2025-05-01T13:47:53+08:00`)
+    - [x] 7.3.4 Check if `json_path` exists. If not, `needs_interpretation = True`. (`2025-05-01T13:47:53+08:00`)
+    - [x] 7.3.5 If `json_path` exists, load JSON, get `json_crc`, compare with `index_crc`. If mismatch or placeholder, `needs_interpretation = True`. (`2025-05-01T13:47:53+08:00`)
+    - [x] 7.3.6 If `needs_interpretation`, fail immediately, report sequence/path, instruct AI to start Step 8. (`2025-05-01T13:47:53+08:00`)
+  - [x] 7.4 Outcome: If loop completes, proceed to Step 9. (`2025-05-01T13:47:53+08:00`)
 
 - [ ] **Step 8: AI Interpretation & Validation (Triggered by Step 7 Failure)** (`2025-05-01T12:15:37+08:00`)
   - [ ] 8.1 AI Task: Interpret `.txt` to `.json`
@@ -403,64 +403,74 @@
 
 ### **Phase 4: Subcommand Discovery & Iteration (Steps 9-10)**
 
-- [ ] **Step 9: Discover & Index Subcommands** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 9.1 Action: Reload index. Initialize `new_sequences_added = False`.
-  - [ ] 9.2 Action: Loop through `tool_index.json` entries (`parent_sequence_key`, `parent_entry_data`).
-    - [ ] 9.2.1 Consistency Check: Verify parent `.json` exists and its CRC matches index. Continue if not.
-    - [ ] 9.2.2 Parse JSON: Load parent JSON.
-    - [ ] 9.2.3 Find Subcommands: Extract subcommand names (e.g., from `subcommands_detail`).
-    - [ ] 9.2.4 Process Subcommands: For each `subcommand_name`:
-      - [ ] 9.2.4.1 Construct `new_sequence_list`, `new_sequence_key`.
-      - [ ] 9.2.4.2 Recursion Check: Fail if `subcommand_name == parent_sequence[-1]`.
-      - [ ] 9.2.4.3 Check `get_effective_status`.
-      - [ ] 9.2.4.4 If WHITELISTED and `new_sequence_key` not in index: Calculate paths, create subdir, call `ToolIndexHandler.add_entry(new_sequence_key, crc=None, ...)`, set `new_sequences_added = True`.
-  - [ ] 9.3 Action: If `new_sequences_added`, call `ToolIndexHandler.save_index()`.
+- [x] **Step 9: Discover & Index Subcommands** (`2025-05-01T12:15:37+08:00`)
+  - [x] 9.1 Action: Reload index. Initialize `new_sequences_added = False`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 9.2 Action: Loop through `tool_index.json` entries (`parent_sequence_key`, `parent_entry_data`). (`2025-05-01T13:47:53+08:00`)
+    - [x] 9.2.1 Consistency Check: Verify parent `.json` exists and its CRC matches index. Continue if not. (`2025-05-01T13:47:53+08:00`)
+    - [x] 9.2.2 Parse JSON: Load parent JSON. (`2025-05-01T13:47:53+08:00`)
+    - [x] 9.2.3 Find Subcommands: Extract subcommand names (e.g., from `subcommands_detail`). (`2025-05-01T13:47:53+08:00`)
+    - [x] 9.2.4 Process Subcommands: For each `subcommand_name`: (`2025-05-01T13:47:53+08:00`)
+      - [x] 9.2.4.1 Construct `new_sequence_list`, `new_sequence_key`. (`2025-05-01T13:47:53+08:00`)
+      - [x] 9.2.4.2 Recursion Check: Fail if `subcommand_name == parent_sequence[-1]`. (`2025-05-01T13:47:53+08:00`)
+      - [x] 9.2.4.3 Check `get_effective_status`. (`2025-05-01T13:47:53+08:00`)
+      - [x] 9.2.4.4 If WHITELISTED and `new_sequence_key` not in index: Calculate paths, create subdir, call `ToolIndexHandler.add_entry(new_sequence_key, crc=None, ...)`, set `new_sequences_added = True`. (`2025-05-01T13:47:53+08:00`)
+  - [x] 9.3 Action: If `new_sequences_added`, call `ToolIndexHandler.save_index()`. (`2025-05-01T13:47:53+08:00`)
 
-- [ ] **Step 10: Iteration & Completion** (`2025-05-01T12:15:37+08:00`)
-  - [ ] 10.1 Check: If `new_sequences_added` was `True`, report need to re-run `sync` and exit.
-  - [ ] 10.2 Check: If Step 7 completed AND `new_sequences_added` was `False`, report successful completion and exit 0.
+- [x] **Step 10: Iteration & Completion** (`2025-05-01T12:15:37+08:00`)
+  - [x] 10.1 Check: If `new_sequences_added` was `True`, report need to re-run `sync` and exit. (`2025-05-01T13:47:53+08:00`)
+  - [x] 10.2 Check: If Step 7 completed AND `new_sequences_added` was `False`, report successful completion and exit 0. (`2025-05-01T13:47:53+08:00`)
 
 ## **Phase M: Test Coverage for Tool Sync Workflow (Phase L)**
 # Goal: Implement comprehensive unit and integration tests for the Phase L functionality.
 # NOTE: Add completion timestamp `(YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - Run 'date --iso-8601=seconds')` to each item upon completion.
 
-- [ ] **1. Unit Tests: `hierarchical_utils.py`**
-  - [ ] Test `parse_to_nested_dict`: Basic parsing, nested parsing, comma handling (last part only), wildcard (`:*`) handling, invalid inputs (empty strings, `::`, etc.).
-  - [ ] Test `check_list_conflicts`: No conflicts, conflicts at root, conflicts nested, no common keys.
-  - [ ] Test `get_effective_status`:
-    - [ ] No match (UNSPECIFIED).
-    - [ ] Whitelist only (explicit, wildcard).
-    - [ ] Blacklist only (explicit, wildcard).
-    - [ ] Both match: Deeper path wins (W>B, B>W).
-    - [ ] Both match (same level): Explicit beats wildcard (W>B, B>W).
-    - [ ] Both match (same level, same type): Blacklist wins tie (explicit W vs explicit B, wildcard W vs wildcard B).
+- [x] **1. Unit Tests: `hierarchical_utils.py`** (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `parse_to_nested_dict`: Basic parsing, nested parsing, comma handling (last part only), wildcard (`:*`) handling, invalid inputs (empty strings, `::`, etc.). (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `check_list_conflicts`: No conflicts, conflicts at root, conflicts nested, no common keys. (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `get_effective_status`: (`2025-05-01T17:10:35+08:00`)
+    - [x] No match (UNSPECIFIED). (`2025-05-01T17:10:35+08:00`)
+    - [x] Whitelist only (explicit, wildcard). (`2025-05-01T17:10:35+08:00`)
+    - [x] Blacklist only (explicit, wildcard). (`2025-05-01T17:10:35+08:00`)
+    - [x] Both match: Deeper path wins (W>B, B>W). (`2025-05-01T17:10:35+08:00`)
+    - [x] Both match (same level): Explicit beats wildcard (W>B, B>W). (`2025-05-01T17:10:35+08:00`)
+    - [x] Both match (same level, same type): Blacklist wins tie (explicit W vs explicit B, wildcard W vs wildcard B). (`2025-05-01T17:10:35+08:00`)
 
 - [ ] **2. Unit Tests: `tools_dir_scanner.py`**
-  - [ ] Test `scan_whitelisted_sequences`:
-    - [ ] Mock `get_effective_status`. Test scanning various directory structures.
-    - [ ] Scenario: Only base tools whitelisted.
-    - [ ] Scenario: Base tool and some subcommands whitelisted.
-    - [ ] Scenario: Only specific subcommands whitelisted (base implicitly needed).
-    - [ ] Scenario: Blacklisted tool/subcommand encountered during scan (should not be returned or descended into).
-    - [ ] Scenario: Empty tools directory.
+  - [x] Test `scan_whitelisted_sequences`: (`2025-05-01T17:10:35+08:00`)
+    - [x] Mock `get_effective_status`. Test scanning various directory structures. (`2025-05-01T17:10:35+08:00`)
+    - [x] Scenario: Only base tools whitelisted. (`2025-05-01T17:10:35+08:00`)
+    - [x] Scenario: Base tool and some subcommands whitelisted. (`2025-05-01T17:10:35+08:00`)
+    - [x] Scenario: Only specific subcommands whitelisted (base implicitly needed). (`2025-05-01T17:10:35+08:00`)
+    - [x] Scenario: Blacklisted tool/subcommand encountered during scan (should not be returned or descended into). (`2025-05-01T17:10:35+08:00`)
+    - [x] Scenario: Empty tools directory. (`2025-05-01T17:10:35+08:00`)
     - [ ] Scenario: Directory scan error handling (mock `os.iterdir` exception?).
 
 - [ ] **3. Unit Tests: `tool_index_utils.py`**
-  - [ ] Test `load_tool_index`: File not found, invalid JSON, empty file, valid file (nested structure).
-  - [ ] Test `save_tool_index`: Successful save, check sorting, check trailing newline.
-  - [ ] Test `get_index_entry`: Base command found/not found, subcommand found/not found (nested), invalid base entry type.
-  - [ ] Test `update_index_entry`: Update existing base, update existing sub, create new base, create new sub (incl. creating intermediate dicts), update with different data types.
+  - [x] Test `load_tool_index`: File not found, invalid JSON, empty file, valid file (nested structure). (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `save_tool_index`: Successful save, check sorting, check trailing newline. (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `get_index_entry`: Base command found/not found, subcommand found/not found (nested), invalid base entry type. (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `update_index_entry`: Update existing base, update existing sub, create new base, create new sub (incl. creating intermediate dicts), update with different data types. (`2025-05-01T17:10:35+08:00`)
   - [ ] Test `load_update_and_save_entry` (requires mocking `FileLock` and other utils).
+  - [x] Test `update_json_crc_tool.py` script: (`2025-05-01T13:52:13+08:00`)
+    - [x] Handles file not found (target JSON). (`2025-05-01T13:52:13+08:00`)
+    - [x] Handles file not found (index). (`2025-05-01T13:52:13+08:00`)
+    - [x] Handles missing entry in index. (`2025-05-01T13:52:13+08:00`)
+    - [x] Handles missing CRC in index entry. (`2025-05-01T13:52:13+08:00`)
+    - [x] Handles JSON load errors (target/index). (`2025-05-01T13:52:13+08:00`)
+    - [x] Handles file write errors. (`2025-05-01T13:52:13+08:00`)
+    - [x] Test argument parsing (--file required). (`2025-05-01T13:52:13+08:00`)
+    - [x] No update needed (CRC matches). (`2025-05-01T13:52:13+08:00`)
+    - [x] Edge case path parsing. (`2025-05-01T13:52:13+08:00`)
 
 - [ ] **4. Unit Tests: `tool_path_utils.py`**
-  - [ ] Test `command_sequence_to_filepath`: Base command, subcommand, nested subcommand paths for `.txt` and `.json`.
-  - [ ] Test `command_sequence_to_id`.
-  - [ ] Test `calculate_crc32_hex` with known inputs.
+  - [x] Test `command_sequence_to_filepath`: Base, sub, subsub, non-existent. (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `command_sequence_to_id`. (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `calculate_crc32_hex` with known inputs. (`2025-05-01T17:10:35+08:00`)
 
-- [ ] **5. Unit Tests: `podman_utils.py` & `baseline_generator.py` (Mocking `subprocess`)**
-  - [ ] Test `podman_utils._run_podman_command`: Mock `subprocess.run`, test success, non-zero exit, exception scenarios, capture stdout/stderr.
-  - [ ] Test `baseline_generator._capture_command_output`: Verify correct construction of `podman exec` command (incl. `sh -c`, PATH, `| cat`). Test handling of Python script override vs standard tool. Mock `_execute_capture_in_podman` return values (success, failure, empty output).
-  - [ ] Test `baseline_generator._execute_capture_in_podman`: Mock `_run_podman_command` return values (CompletedProcess with different stdout/stderr/returncode, including 127). Verify correct return tuple (stdout bytes, stderr bytes, exit code) or exception handling.
+- [x] **5. Unit Tests: `podman_utils.py` & `baseline_generator.py` (Mocking `subprocess`)**
+  - [x] Test `podman_utils._run_podman_command`: Mock `subprocess.run`, test success, non-zero exit, exception scenarios, capture stdout/stderr. (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `baseline_generator._capture_command_output`: Verify correct construction of `podman exec` command (incl. `sh -c`, PATH, `| cat`). Test handling of Python script override vs standard tool. Mock `_execute_capture_in_podman` return values (success, failure, empty output). (`2025-05-01T17:10:35+08:00`)
+  - [x] Test `baseline_generator._execute_capture_in_podman`: Mock `_run_podman_command` return values (CompletedProcess with different stdout/stderr/returncode, including 127). Verify correct return tuple (stdout bytes, stderr bytes, exit code) or exception handling. (`2025-05-01T17:10:35+08:00`)
 
 - [ ] **6. Integration Tests: `sync.py` (`zlt tools sync` using `CliRunner`)**
   - [ ] Setup: Use fixtures to create temporary `pyproject.toml`, mock `venv/bin` contents, mock `tools/` structure, mock Podman interactions (e.g., mock `_start/stop_podman_runner`, `_capture_command_output`).
@@ -470,11 +480,4 @@
   - [ ] Test Step 6 Success (Baseline Update): Run `sync --generate` with inconsistent index/txt (CRC mismatch). Assert exit code 0, `.txt` file updated, index entry updated (CRC, timestamps).
   - [ ] Test Step 6 Timestamp Logic: Test `--force`, `--check-since-hours` skipping/processing scenarios.
   - [ ] Test Step 6 Warning/Failure: Simulate >3 rapid updates (mock `time.time`?), assert exit code > 0 and warning message.
-  - [ ] Test Step 7 Failure (Missing JSON): Run `sync` with `.txt` present but `.json` missing. Assert exit code > 0 and specific failure message.
-  - [ ] Test Step 7 Failure (Outdated JSON): Run `sync` with `.json` CRC mismatch. Assert exit code > 0 and specific failure message.
-  - [ ] Test Step 9 Discovery: Run `sync` with consistent parent JSON containing a new, whitelisted subcommand. Assert exit code 0, new entry added to index (with `crc=None`), correct reporting message.
-  - [ ] Test Step 10 Completion: Run `sync` where Steps 7 & 9 find nothing to do. Assert exit code 0 and success message.
-  - [ ] Test Step 10 Iteration: Run `sync` after Step 9 added a sequence. Assert exit code 0 and re-run message.
-  - [ ] Test `--dry-run`: Run various scenarios with `--dry-run`, assert no file changes occur and appropriate log messages appear.
-  - [ ] Test `--prune` (requires careful mocking of `shutil.rmtree`).
-
+  - [ ] Test Step 7 Failure (Missing JSON): Run `sync` with `.txt` present but `.json`
