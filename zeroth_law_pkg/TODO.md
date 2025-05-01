@@ -54,6 +54,7 @@
 - [ ] 6. **Publishing Prep (Optional):** Prepare for potential PyPI release.
 
 ## Known Issues / Tech Debt
+- [CRITICAL] **Fix `uv run pytest` Failures:** Investigate and resolve errors preventing the test suite from running via `uv run pytest`. Follow the plan outlined in NOTES.md.
 - [CRITICAL] **Investigate and Fix `src/src` Directory Structure:** The project contains a `src/src/` directory structure which is incorrect. Audit the project structure, identify the cause, and refactor to the correct `src/zeroth_law/` structure, adjusting all relevant imports and configurations.
 - [ ] **Investigate Podman Stop Warning:** The `zlt-baseline-runner-...` container often requires SIGKILL instead of stopping gracefully with SIGTERM during `zlt tools sync`. Investigate the cause (e.g., process handling in `container_runner.py`, resource limits, Podman cleanup) and resolve.
 - [ ] Investigate and fix root cause of `mypy` "Source file found twice" error when executed via `action_runner.py`. Re-enable `mypy` in `tool_mapping.json` for the `lint` action once resolved. (Currently handled by pre-commit hook).
@@ -159,24 +160,20 @@
 # * Clarification: This interpretation (`.txt` -> `.json` structure & internal CRC sync) is the *sole* permitted non-deterministic step.
 # --- END MANDATE REMINDER --- #
 #
-- [ ] **Create `baseline_generator.py` and Implement `generate_or_verify_baseline`:**
-    - Implement help capture (`--help | cat`).
-    - Implement CRC calculation and comparison with `tool_index.json`.
-    - Implement conditional `.txt` file writing.
-    - Implement `tool_index.json` updates (for `crc`, `updated_timestamp`, `checked_timestamp`).
-    - Implement minimal skeleton `.json` creation (only if missing, with placeholder CRC `0x00000000`).
-- [ ] **Perform One-Time Structural Correction of `tool_index.json`:**
-      *(Note: This is a one-off task to fix past inconsistencies and enable the automated workflow. It does NOT represent standard practice.)*
-    - Ensure all entries have `updated_timestamp` and `checked_timestamp` keys (add placeholders if missing).
-    - Correct any known placeholder CRCs (e.g., `zeroth-law`) to match their corresponding `.txt` baseline CRC.
-- [x] **Simplify Paths:** Update paths in tests (`test_ensure_*.py`, `test_txt_json_consistency.py`).
-- [x] **Update Schema Guidelines:** Add guidance to `tools/zlt_schema_guidelines.md` emphasizing the AI\'s responsibility to maintain consistency for unchanged options/args when updating `.json` files.
+# --- SUPERCEDING NOTE (2025-05-01T12:15:37+08:00) ---
+# The detailed implementation steps outlined in the 10-Step Plan (Phase L)
+# supersede the specific implementation tasks listed below in Phase G and Phase H (Item 10).
+# While the high-level goals may remain, refer to Phase L for the current, authoritative workflow.
+# --- END SUPERCEDING NOTE ---
+#
+- [ ] **Simplify Paths:** Update paths in tests (`test_ensure_*.py`, `test_txt_json_consistency.py`).
+- [x] **Update Schema Guidelines:** Add guidance to `docs/zlt_schema_guidelines.md` emphasizing the AI's responsibility to maintain consistency for unchanged options/args when updating `.json` files.
 - [x] **Separate Capabilities:** Create `src/zeroth_law/tools/tool_capabilities.yaml` to store functional categories (Formatter, Linter, etc.), separate from CLI structure.
-- [ ] **AI Task: Populate `.json` Definitions:** Systematically process `.txt` files and populate the corresponding `.json` skeleton files according to the guidelines.
+- [ ] **AI Task: Populate `.json` Definitions:** Systematically process `.txt` files and populate the corresponding `.json` skeleton files according to the guidelines. (Partially superseded by Phase L, Step 8 - focus is now iterative and triggered by sync failures).
     - [ ] **Review `poetry.json`:** The current `poetry.txt` seems to contain help for `poetry list` rather than the main command.
-        - Regenerate the baseline using `poetry --help` (or similar) to capture the correct help text.
-        - Repopulate `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`.
-- [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate `value_name` structure, `nargs` consistency, and whitespace rules in names/flags.
+        - [ ] Regenerate the baseline using `poetry --help` (or similar) to capture the correct help text. (Covered by Phase L, Step 6)
+        - [ ] Repopulate `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`. (Covered by Phase L, Step 8)
+- [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate `value_name` structure, `nargs` consistency, and whitespace rules in names/flags. (Consistent with Phase L, Step 7.5 validation goals).
 
 ## **Phase H: Tool Management Subcommand (`zlt tools`)**
 # Goal: Centralize tool management logic into a dedicated subcommand group.
@@ -186,10 +183,10 @@
 - [x] 4. Create `src/zeroth_law/subcommands/tools/__init__.py`.
 - [x] 5. Create `src/zeroth_law/subcommands/tools/tools.py` with main `click.group`.
 - [x] 6. Register `tools_group` in `src/zeroth_law/cli.py`.
-- [ ] 7. Implement `zlt tools reconcile` subcommand.
+- [x] 7. Implement `zlt tools reconcile` subcommand.
   - [x] Migrate core logic from `reconciliation_logic.py`.
-  - [ ] Migrate logic from `tool_discovery.py`.
-  - [ ] Migrate logic from `tools_dir_scanner.py`.
+  - [x] Migrate logic from `tool_discovery.py`. *(Logic already covered by current reconcile implementation)*.
+  - [x] Migrate logic from `tools_dir_scanner.py`. *(Logic moved to lib/tooling/tools_dir_scanner.py)*.
   - [x] Implement reporting of discrepancies (new tools, orphans, missing files).
 - [ ] 8. Implement `zlt tools add/remove-whitelist` subcommands.
   - [ ] Implement `pyproject.toml` parsing/writing (using `tomlkit`).
@@ -201,15 +198,16 @@
   - [x] Implement hierarchical logic (tool vs. tool:subcommand).
   - [x] Implement `--all` flag logic.
   - [x] Implement INFO message for conflicting entries.
-- [ ] 10. Implement `zlt tools sync` subcommand.
-  - [ ] Migrate baseline generation logic (`generate_baseline_cli.py`).
-  - [ ] Migrate skeleton JSON creation logic.
-  - [ ] Migrate index update logic (`ToolIndexHandler`).
-  - [x] Implement `--tool`, `--force`, `--since` options.
-  - [ ] **Verify Handling of Whitelisted but Missing Tools:** Ensure `sync` correctly attempts to generate baselines for tools like `zlt` that are whitelisted but whose directories are initially missing.
-  - [ ] **Enhance User Feedback:** Add progress indicators or more verbose logging during reconciliation and parallel baseline generation phases to improve user experience for long operations.
-- [x] 11. Refactor/Remove redundant dev scripts (`reconciliation_logic.py`, `generate_baseline_cli.py`, `tool_discovery.py`, `tools_dir_scanner.py`).
-- [x] 12. Refactor/Remove redundant test fixtures (`ensure_baselines_updated`, `managed_sequences` - replace with direct calls or new fixtures if needed).
+- [ ] 10. Implement `zlt tools sync` subcommand. (Superseded by Phase L for implementation details)
+  - [ ] ~~Migrate baseline generation logic (`generate_baseline_cli.py`).~~ (Superseded by Phase L, Step 6 Podman logic)
+  - [ ] ~~Migrate skeleton JSON creation logic.~~ (Superseded by Phase L logic)
+  - [ ] ~~Migrate index update logic (`ToolIndexHandler`).~~ (Integrated into Phase L, Steps 6 & 9)
+  - [x] Implement `--tool`, `--force`, `--since` options. (Note: `--tool` needs review against Phase L sequence focus. `--since` split into `--check-since`, `--update-since` in Phase L).
+  - [✓] **10.6 Add --dry-run option:** Implement flag to simulate sync actions without execution. (Needs review/integration with Phase L)
+  - [ ] **~~Verify Handling of Whitelisted but Missing Tools:~~** ~~Ensure `sync` correctly attempts to generate baselines for tools like `zlt` that are whitelisted but whose directories are initially missing.~~ (Covered by Phase L, Step 4 & 6 interaction)
+  - [ ] **Enhance User Feedback:** Add progress indicators or more verbose logging during reconciliation and parallel baseline generation phases to improve user experience for long operations. (Still relevant for Phase L implementation)
+- [x] 11. Refactor/Remove redundant dev scripts (`reconciliation_logic.py`, `generate_baseline_cli.py`, `tools_dir_scanner.py`, `tool_discovery.py`).
+- [ ] 12. Refactor/Remove redundant test fixtures (`ensure_baselines_updated`, `managed_sequences` - replace with direct calls or new fixtures if needed).
 - [ ] 13. Update tests to use or test the new `zlt tools` commands.
   - [x] Refactor `test_check_for_new_tools` to use `zlt tools reconcile`.
   - [x] Update `get_tool_dirs` import in `test_no_orphan_tool_directories`.
@@ -229,7 +227,8 @@
     - [x] **14.6.2** Hierarchical modification in `list_utils.py` (add/remove, with/without `--all`, with/without `--force`, conflict scenarios).
     - [ ] **14.6.3** Precedence rule checking in `reconcile`.
     - [ ] **14.6.4** Task filtering in `sync` based on precedence.
-    - [x] **14.6.5** CLI command tests (`whitelist_cmd.py`/`blacklist_cmd.py`) including `--force`.
+    - [✓] **14.6.4.1** Sync Sequence Filtering: Verify `sync.py` correctly filters command sequences using `_get_effective_status` based on various `pyproject.toml` whitelist/blacklist configurations (specific tools, subcommands, wildcards). (Debugged: 2025-04-30 - Fixed issues related to type hints, parsing, and logic in `tool_reconciler.py`, `hierarchical_utils.py`, `cli.py`.)
+    - [ ] **14.6.5** CLI command tests (`whitelist_cmd.py`/`blacklist_cmd.py`) including `--force`.
     - [x] **14.6.6** New pytest check to fail if the *exact same item* exists in both parsed whitelist and blacklist structures.
 - [ ] **15. Podman Integration Follow-up (Post-Refactor):**
   - [ ] Document `podman` as a development dependency for the `zlt tools sync` workflow.
@@ -243,6 +242,12 @@
     - [x] 3. Edit `podman_utils.py` to add the function definition (with imports: `Path`, `sys`, `List`, `Sequence`).
     - [x] 4. Edit `src/zeroth_law/subcommands/tools/sync.py` to add import from `podman_utils`.
     - [x] 5. Edit `src/zeroth_law/lib/tooling/baseline_generator.py` to add import from `podman_utils`.
+- [ ] **16. Refactor `zlt tools sync` into Stages:**
+  - [ ] **16.1 Design:** Define logical stages (e.g., Reconciliation, Podman Setup, Sequence Generation, Baseline Capture Loop, Index Update, Podman Cleanup).
+  - [ ] **16.2 Implement:** Refactor `sync.py` into separate functions/methods for each stage.
+  - [ ] **16.3 Orchestrate:** Modify the main `sync` command function to call these stages in sequence.
+  - [ ] **16.4 Add Stage Control (Optional):** Consider adding flags (e.g., `--skip-setup`, `--only-capture`) or internal commands to allow running specific stages for debugging.
+  - [ ] **16.5 Test:** Ensure end-to-end functionality is preserved and add tests for individual stages if feasible.
 
 ## **Phase I: Capability-Driven Refactor & Central Definitions**
 # Goal: Refactor core logic for better testability, define central schemas, and improve CLI experience.
@@ -303,4 +308,118 @@
 
 ## **Phase K: ... (Next Phase)**
 # ...
+
+## **Phase L: Implement Tool Sync Workflow (10-Step Plan)**
+# Goal: Implement the robust, deterministic `zlt tools sync` workflow based on the 10-step plan defined on 2025-05-01.
+# NOTE: Add completion timestamp `(YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - Run 'date --iso-8601=seconds')` to each item upon completion.
+
+### **Phase 1: Setup & Reconciliation (Steps 1-5)**
+
+- [ ] **Step 1: Environment Setup** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 1.1 Action: Ensure correct venv activation (implicit via `uv run`).
+  - [ ] 1.2 Action: Determine absolute path to active venv `bin` directory (e.g., `sys.prefix`/`bin`) -> `venv_bin_path`.
+  - [ ] 1.3 Verification: Log the detected `venv_bin_path`.
+
+- [ ] **Step 2: Discover Executables** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 2.1 Action: Scan `venv_bin_path` directory.
+  - [ ] 2.2 Action: Create raw list `raw_executables` of all executable file names.
+  - [ ] 2.3 Verification: Log the count of `raw_executables`.
+
+- [ ] **Step 3: Filter & Validate Whitelist/Blacklist** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 3.1 Action: Load hierarchical whitelist/blacklist from `pyproject.toml` -> `whitelist_tree`, `blacklist_tree` (using `src/zeroth_law/lib/config_loader.py`).
+  - [ ] 3.2 Action: Implement/Verify `check_list_conflicts(whitelist_tree, blacklist_tree)` (in `src/zeroth_law/lib/hierarchical_utils.py`?).
+  - [ ] 3.3 Action: Call `check_list_conflicts`, fail immediately if conflicts found.
+  - [ ] 3.4 Action: Implement/Verify `get_effective_status(sequence, whitelist_tree, blacklist_tree)` in `src/zeroth_law/lib/hierarchical_utils.py` (handles precedence, wildcards).
+  - [ ] 3.5 Action: Initialize `managed_executables = []`, `unclassified_executables = []`.
+  - [ ] 3.6 Action: Iterate `raw_executables`, use `get_effective_status` to populate `managed_executables` and `unclassified_executables`.
+  - [ ] 3.7 Action: If `unclassified_executables` not empty, fail immediately with clear instructions to use `zlt tools add-whitelist/add-blacklist`.
+  - [ ] 3.8 Verification: Log count of `managed_executables`.
+
+- [ ] **Step 4: Reconcile `tools/` Directory Structure** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 4.1 Action: Define `tools_base_dir = Path("src/zeroth_law/tools/")`.
+  - [ ] 4.2 Action: Get list `existing_tool_dirs` of immediate subdirectories.
+  - [ ] 4.3 Action: Initialize `orphan_dirs = []`.
+  - [ ] 4.4 Action: Iterate `existing_tool_dirs`, use `get_effective_status` to populate `orphan_dirs` if status is BLACKLISTED or UNSPECIFIED.
+  - [ ] 4.5 Action: If `orphan_dirs` not empty, fail immediately with instructions to whitelist tool or remove directory.
+  - [ ] 4.6 Action: Iterate `managed_executables`, ensure `tools_base_dir / tool_name` exists, create if missing (`os.makedirs`).
+  - [ ] 4.7 Verification: `tools/` structure aligns with `managed_executables`.
+
+- [ ] **Step 5: Identify Effectively Whitelisted Command Sequences** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 5.1 Action: Initialize `whitelisted_sequences = []`.
+  - [ ] 5.2 Action: Add base sequences from `managed_executables` to `whitelisted_sequences`.
+  - [ ] 5.3 Action: Implement/Verify recursive `scan_tool_dirs(current_dir, current_sequence, ...)` in `src/zeroth_law/lib/tooling/tools_dir_scanner.py` (uses `get_effective_status`, handles recursion).
+  - [ ] 5.4 Action: Call `scan_tool_dirs` for each managed tool's base directory.
+  - [ ] 5.5 Action: Combine base and scanned sequences into final `whitelisted_sequences`.
+  - [ ] 5.6 Verification: Log total count of `whitelisted_sequences`.
+
+### **Phase 2: Baseline Generation & Indexing (Step 6)**
+
+- [ ] **Step 6: `.txt` Baseline Generation & Verification** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 6.1 Action: Initialize `recent_update_warning_count = 0`.
+  - [ ] 6.2 Action: Implement/Verify `ToolIndexHandler` class (in `src/zeroth_law/lib/tooling/tool_index_handler.py`?) with load/save/update/add methods for `tool_index.json`. Load index.
+  - [ ] 6.3 Action: Define deterministic Podman container name.
+  - [ ] 6.4 Action: Implement Podman container setup/teardown context management within `sync` command (stop/rm existing, start new, stop/rm finally, read-only mounts).
+  - [ ] 6.5 Action: Loop through each `sequence` in `whitelisted_sequences`:
+    - [ ] 6.5.1 Lookup: Get entry from loaded index via `ToolIndexHandler`. Continue if not found.
+    - [ ] 6.5.2 Timestamp Check: Use `--check-since` (default 24h) and `--force`. Continue if check passes.
+    - [ ] 6.5.3 Podman Execution:
+      - [ ] 6.5.3.1 Construct help command args (e.g., `['ruff', 'check', '--help']`).
+      - [ ] 6.5.3.2 Implement/Verify `_execute_capture_in_podman(sequence_args, container_name, ...)` in `src/zeroth_law/lib/tooling/baseline_generator.py` (builds `podman exec sh -c "export PATH...; timeout ... | cat"`, runs `subprocess`, handles errors, returns stdout).
+      - [ ] 6.5.3.3 Call `_execute_capture_in_podman`, handle exceptions.
+    - [ ] 6.5.4 CRC Calculation: Calculate `new_crc = zlib.crc32(output)` -> hex string.
+    - [ ] 6.5.5 Comparison & Update:
+      - [ ] 6.5.5.1 If `new_crc == index_crc`: Call `ToolIndexHandler.update_checked_timestamp(sequence, now)`.
+      - [ ] 6.5.5.2 If `new_crc != index_crc`: Use `--update-since` (default 48h), warn/increment `recent_update_warning_count` if needed. Write output to `.txt` file. Call `ToolIndexHandler.update_entry(sequence, crc=new_crc, updated_timestamp=now, ...)`.
+  - [ ] 6.6 Action: After loop, call `ToolIndexHandler.save_index()`.
+  - [ ] 6.7 Action: If `recent_update_warning_count >= 3`, fail immediately reporting rapid update issue.
+
+### **Phase 3: AI Interpretation & Validation (Steps 7-8)**
+
+- [ ] **Step 7: Identify First Missing/Outdated `.json`** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 7.1 Action: Reload index via `ToolIndexHandler`.
+  - [ ] 7.2 Action: Loop through `tool_index.json` entries (`sequence_key`, `entry_data`).
+  - [ ] 7.3 Action: For each entry:
+    - [ ] 7.3.1 Check `get_effective_status`. Continue if not WHITELISTED.
+    - [ ] 7.3.2 Determine `txt_path`, `json_path`.
+    - [ ] 7.3.3 Check if `txt_path` exists. Continue if not.
+    - [ ] 7.3.4 Check if `json_path` exists. If not, `needs_interpretation = True`.
+    - [ ] 7.3.5 If `json_path` exists, load JSON, get `json_crc`, compare with `index_crc`. If mismatch or placeholder, `needs_interpretation = True`.
+    - [ ] 7.3.6 If `needs_interpretation`, fail immediately, report sequence/path, instruct AI to start Step 8.
+  - [ ] 7.4 Outcome: If loop completes, proceed to Step 9.
+
+- [ ] **Step 8: AI Interpretation & Validation (Triggered by Step 7 Failure)** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 8.1 AI Task: Interpret `.txt` to `.json`
+    - [ ] 8.1.1 AI: Receive sequence key, JSON path from Step 7 failure.
+    - [ ] 8.1.2 AI: Read `.txt`, existing `.json`, `zlt_schema_guidelines.md`.
+    - [ ] 8.1.3 AI: Propose `edit_file` for `.json` path, adhering to guidelines (NO backslashes, DO NOT set `ground_truth_crc`).
+  - [ ] 8.2 Verify & Correct Schema (Automated Post-AI Edit)
+    - [ ] 8.2.1 Implement trigger mechanism (AI calls script? Wrapper script?).
+    - [ ] 8.2.2 Run `fix_json_whitespace.py` on edited file. Check exit.
+    - [ ] 8.2.3 Run `fix_json_schema.py` on edited file (ensure backslash check is added). Check exit.
+    - [ ] 8.2.4 Run `schema_corrector.py` on edited file. Check exit.
+    - [ ] 8.2.5 If any script fails, report error, instruct AI to retry 8.1.
+  - [ ] 8.3 Update `.json` CRC via Script (Automated Post-Validation)
+    - [ ] 8.3.1 Ensure `scripts/update_json_crc_tool.py` exists and functions correctly (reads index, updates `.json` metadata field).
+    - [ ] 8.3.2 Execute `uv run python scripts/update_json_crc_tool.py --file <validated_json_path>`.
+    - [ ] 8.3.3 If script fails, report error and halt.
+    - [ ] 8.3.4 If script succeeds, instruct user/AI to re-run `zlt tools sync`.
+
+### **Phase 4: Subcommand Discovery & Iteration (Steps 9-10)**
+
+- [ ] **Step 9: Discover & Index Subcommands** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 9.1 Action: Reload index. Initialize `new_sequences_added = False`.
+  - [ ] 9.2 Action: Loop through `tool_index.json` entries (`parent_sequence_key`, `parent_entry_data`).
+    - [ ] 9.2.1 Consistency Check: Verify parent `.json` exists and its CRC matches index. Continue if not.
+    - [ ] 9.2.2 Parse JSON: Load parent JSON.
+    - [ ] 9.2.3 Find Subcommands: Extract subcommand names (e.g., from `subcommands_detail`).
+    - [ ] 9.2.4 Process Subcommands: For each `subcommand_name`:
+      - [ ] 9.2.4.1 Construct `new_sequence_list`, `new_sequence_key`.
+      - [ ] 9.2.4.2 Recursion Check: Fail if `subcommand_name == parent_sequence[-1]`.
+      - [ ] 9.2.4.3 Check `get_effective_status`.
+      - [ ] 9.2.4.4 If WHITELISTED and `new_sequence_key` not in index: Calculate paths, create subdir, call `ToolIndexHandler.add_entry(new_sequence_key, crc=None, ...)`, set `new_sequences_added = True`.
+  - [ ] 9.3 Action: If `new_sequences_added`, call `ToolIndexHandler.save_index()`.
+
+- [ ] **Step 10: Iteration & Completion** (`2025-05-01T12:15:37+08:00`)
+  - [ ] 10.1 Check: If `new_sequences_added` was `True`, report need to re-run `sync` and exit.
+  - [ ] 10.2 Check: If Step 7 completed AND `new_sequences_added` was `False`, report successful completion and exit 0.
 
