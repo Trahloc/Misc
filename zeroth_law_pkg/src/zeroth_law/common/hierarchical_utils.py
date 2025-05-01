@@ -26,7 +26,8 @@ def parse_to_nested_dict(raw_list: list[str] | set[str]) -> ParsedHierarchy:
     # Accept both list and set as input
     if not isinstance(raw_list, (list, set)):
         log.warning(
-            "Managed tools list is not a valid list or set. Returning empty structure.", received_type=type(raw_list).__name__
+            "Managed tools list is not a valid list or set. Returning empty structure.",
+            received_type=type(raw_list).__name__,
         )
         return {}
 

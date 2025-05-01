@@ -435,6 +435,7 @@ ignore = [
     "E402", # ignored during dev
     "F541", # ignored during dev
     "F811", # ignored during dev
+    "F841", # ignored during dev
 ]
 
 # Ignore specific rules per file/directory

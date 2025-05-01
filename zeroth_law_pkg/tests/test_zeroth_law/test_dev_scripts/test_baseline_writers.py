@@ -251,6 +251,7 @@ def test_ensure_skeleton_json_exists_exception(mock_mkdir, tmp_path: Path):
 
 # --- Test __main__ execution ---
 
+
 @pytest.mark.skip(reason="main() is currently a placeholder, test needs review")
 def test_main_execution(tmp_path: Path, monkeypatch, caplog):
     """Test running the script's main logic by calling the main() function."""

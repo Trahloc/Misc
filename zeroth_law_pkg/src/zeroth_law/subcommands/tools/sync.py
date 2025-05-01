@@ -73,10 +73,12 @@ log = structlog.get_logger()
 
 # === Stage 1: Podman Setup/Teardown ===
 
+
 def _get_container_name(project_root: Path) -> str:
     """Generate a deterministic container name for the project."""
     project_hash = hashlib.sha1(str(project_root).encode()).hexdigest()[:12]
     return f"zlt-baseline-runner-{project_hash}"
+
 
 def _start_podman_runner(container_name: str, project_root: Path, venv_path: Path) -> bool:
     """STAGE 1: Starts the podman container, creates internal venv, and installs deps."""
@@ -93,11 +95,12 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
     try:
         # Use python -m build to build the wheel
         build_cmd = [
-            str(venv_path / "bin" / "python"), # Use python from host venv
-            "-m", "build",
-            "--wheel", # Build only wheel
-            f"--outdir={wheel_dir}", # Output directory
-            ".", # Build the current directory
+            str(venv_path / "bin" / "python"),  # Use python from host venv
+            "-m",
+            "build",
+            "--wheel",  # Build only wheel
+            f"--outdir={wheel_dir}",  # Output directory
+            ".",  # Build the current directory
         ]
         log.debug(f"Running wheel build command: {' '.join(build_cmd)}")
         # Note: This runs on the HOST, not in podman. Needs error handling.
@@ -114,7 +117,7 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
     except (subprocess.CalledProcessError, FileNotFoundError, RuntimeError) as build_e:
         log.error(f"Failed to build local project wheel: {build_e}")
         if isinstance(build_e, subprocess.CalledProcessError):
-             log.error(f"Build stderr:\n{build_e.stderr}")
+            log.error(f"Build stderr:\n{build_e.stderr}")
         return False
     # --- End Build local project wheel --- #
 
@@ -140,8 +143,8 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
 
     # --- Determine host cache path ---
     host_python_cache = Path.home() / ".cache" / "python"
-    host_python_cache.mkdir(parents=True, exist_ok=True) # Ensure host cache dir exists
-    container_python_cache = "/root/.cache/python" # Standard location for root user
+    host_python_cache.mkdir(parents=True, exist_ok=True)  # Ensure host cache dir exists
+    container_python_cache = "/root/.cache/python"  # Standard location for root user
 
     try:
         # Mount project root read-only AND host python cache read-write.
@@ -153,7 +156,7 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
                 "--name",
                 container_name,
                 f"--volume={str(project_root.resolve())}:/app:ro",  # Mount project root read-only
-                f"--volume={str(host_python_cache.resolve())}:{container_python_cache}:rw", # Mount python cache
+                f"--volume={str(host_python_cache.resolve())}:{container_python_cache}:rw",  # Mount python cache
                 python_image,
                 "sleep",
                 "infinity",
@@ -168,7 +171,7 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
         log.info("Internal venv created.")
 
         # --- Determine path to uv inside the container --- #
-        internal_uv_path = "uv" # Default assumption
+        internal_uv_path = "uv"  # Default assumption
         try:
             uv_check_result = _run_podman_command(["exec", container_name, "which", "uv"], check=False, capture=True)
             if uv_check_result.returncode == 0:
@@ -177,11 +180,11 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
             else:
                 log.warning("uv not found in container PATH. Installing using pip...")
                 _run_podman_command(["exec", container_name, "/venv/bin/pip", "install", "uv"], check=True)
-                internal_uv_path = "/venv/bin/uv" # Assume standard install path
+                internal_uv_path = "/venv/bin/uv"  # Assume standard install path
                 log.info(f"`uv` installed inside container at {internal_uv_path}")
         except Exception as uv_e:
             log.error(f"Failed to determine uv path inside container: {uv_e}")
-            return False # Cannot proceed without uv
+            return False  # Cannot proceed without uv
 
         # --- Copy requirements AND wheel file into container --- #
         host_req_file = project_root / "requirements-dev.txt"
@@ -206,9 +209,11 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
             internal_uv_path,
             "pip",
             "install",
-            "--python", "/venv/bin/python",
-            "-r", container_req_file,
-            container_wheel_file
+            "--python",
+            "/venv/bin/python",
+            "-r",
+            container_req_file,
+            container_wheel_file,
         ]
         log.info(f"Running uv pip install from requirements and wheel file...")
         _run_podman_command(install_cmd, check=True)
@@ -290,12 +295,9 @@ def _stop_podman_runner(container_name: str) -> None:
 
 # === Stage 2: Reconciliation & Pruning ===
 
+
 def _reconcile_and_prune(
-    project_root: Path,
-    config: Dict,
-    tool_defs_dir: Path,
-    prune: bool,
-    dry_run: bool
+    project_root: Path, config: Dict, tool_defs_dir: Path, prune: bool, dry_run: bool
 ) -> Tuple[Dict[str, ToolStatus], Set[str], ParsedHierarchy, ParsedHierarchy, List[str], int]:
     """STAGE 2: Performs reconciliation and optional pruning.
 
@@ -311,12 +313,16 @@ def _reconcile_and_prune(
     )
 
     if prune:
-        blacklisted_present = {t for t, s in reconciliation_results.items() if s == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR}
+        blacklisted_present = {
+            t for t, s in reconciliation_results.items() if s == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR
+        }
         orphaned_present = {t for t, s in reconciliation_results.items() if s == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR}
         dirs_to_prune = blacklisted_present.union(orphaned_present)
 
         if dirs_to_prune:
-            log.warning(f"--prune specified: {len(dirs_to_prune)} directories will be removed: {sorted(list(dirs_to_prune))}")
+            log.warning(
+                f"--prune specified: {len(dirs_to_prune)} directories will be removed: {sorted(list(dirs_to_prune))}"
+            )
             for tool_name in dirs_to_prune:
                 dir_path = tool_defs_dir / tool_name
                 if dir_path.is_dir():
@@ -347,10 +353,9 @@ def _reconcile_and_prune(
 
 # === Stage 3: Target Tool Identification ===
 
+
 def _identify_target_tools(
-    specific_tools: Tuple[str, ...],
-    reconciliation_results: Dict[str, ToolStatus],
-    managed_tools_set: Set[str]
+    specific_tools: Tuple[str, ...], reconciliation_results: Dict[str, ToolStatus], managed_tools_set: Set[str]
 ) -> Optional[Set[str]]:
     """STAGE 3: Determines the final set of tool names to target based on --tool option.
 
@@ -371,8 +376,8 @@ def _identify_target_tools(
     else:
         target_tool_names = managed_tools_set
         if not target_tool_names:
-             log.info("No managed tools identified by reconciliation. Nothing to sync.")
-             return None
+            log.info("No managed tools identified by reconciliation. Nothing to sync.")
+            return None
 
     log.info(f"Targeting {len(target_tool_names)} tools for sync: {sorted(list(target_tool_names))}")
     return target_tool_names
@@ -380,11 +385,12 @@ def _identify_target_tools(
 
 # === Stage 4: Sequence Generation & Filtering ===
 
+
 def _generate_and_filter_sequences(
     tool_defs_dir: Path,
     target_tool_names: Set[str],
     parsed_whitelist: ParsedHierarchy,
-    parsed_blacklist: ParsedHierarchy
+    parsed_blacklist: ParsedHierarchy,
 ) -> Tuple[List[Tuple[str, ...]], int, int]:
     """STAGE 4: Generates all possible sequences and filters them.
 
@@ -401,7 +407,7 @@ def _generate_and_filter_sequences(
         log.info(f"Generated {len(all_sequences)} potential command sequences.")
     except Exception as e:
         log.error(f"Error generating command sequences: {e}")
-        raise # Re-raise to stop the sync process
+        raise  # Re-raise to stop the sync process
 
     target_sequences = [seq for seq in all_sequences if seq and seq[0] in target_tool_names]
     skipped_by_scope_count = len(all_sequences) - len(target_sequences)
@@ -425,6 +431,7 @@ def _generate_and_filter_sequences(
 
 
 # === Stage 5: Parallel Baseline Processing ===
+
 
 # Helper for Skeleton Creation (Moved here for use by Stage 5 helper)
 def _create_skeleton_json_if_missing(json_file_path: Path, command_sequence: tuple[str, ...]) -> bool:
@@ -514,7 +521,7 @@ def _process_command_sequence(
 
         result["calculated_crc"] = calculated_crc
         result["check_timestamp"] = check_timestamp
-        result["status"] = status_enum # Store the actual or simulated status
+        result["status"] = status_enum  # Store the actual or simulated status
 
         if status_enum not in {
             BaselineStatus.UP_TO_DATE,
@@ -529,37 +536,37 @@ def _process_command_sequence(
         # 3. Ensure Skeleton JSON exists
         skeleton_created = _create_skeleton_json_if_missing(json_file_path, command_sequence)
         result["skeleton_created"] = skeleton_created
-        if not skeleton_created and not json_file_path.exists(): # Check if creation failed
-             # Update error message if skeleton creation failed
-             err_msg_skel = f"FAILED to ensure skeleton JSON exists at {json_file_path} for {command_id}."
-             result["error_message"] = result.get("error_message", "") + f" {err_msg_skel}"
-             result["status"] = BaselineStatus.FAILED_SKELETON_ENSURE # Mark skeleton failure
+        if not skeleton_created and not json_file_path.exists():  # Check if creation failed
+            # Update error message if skeleton creation failed
+            err_msg_skel = f"FAILED to ensure skeleton JSON exists at {json_file_path} for {command_id}."
+            result["error_message"] = result.get("error_message", "") + f" {err_msg_skel}"
+            result["status"] = BaselineStatus.FAILED_SKELETON_ENSURE  # Mark skeleton failure
 
         # 4. Prepare update data (always prepare, even for failures, but CRC might be None)
         relative_baseline_path_str = (
             str(baseline_file_path.relative_to(generated_outputs_dir))
             if baseline_file_path.exists()
-            else None # Set to None if baseline doesn't exist
+            else None  # Set to None if baseline doesn't exist
         )
         # Use the result["calculated_crc"] which could be None on failure
         update_crc = result["calculated_crc"]
-        update_timestamp = result["check_timestamp"] # Use timestamp from result
+        update_timestamp = result["check_timestamp"]  # Use timestamp from result
 
         result["update_data"] = {
             "command": list(command_sequence),
             "baseline_file": relative_baseline_path_str,
             "json_definition_file": str(relative_json_path),
-            "crc": update_crc, # Use actual CRC (might be None)
-            "updated_timestamp": update_timestamp, # Use actual timestamp
-            "checked_timestamp": update_timestamp, # Use actual timestamp
-            "source": "zlt_tools_sync", # Removed dry_run suffix
+            "crc": update_crc,  # Use actual CRC (might be None)
+            "updated_timestamp": update_timestamp,  # Use actual timestamp
+            "checked_timestamp": update_timestamp,  # Use actual timestamp
+            "source": "zlt_tools_sync",  # Removed dry_run suffix
         }
 
     except Exception as e:
         err_msg = f"Unexpected error processing {command_id}: {e}"
         log.exception(err_msg)
         result["error_message"] = err_msg
-        result["status"] = BaselineStatus.UNEXPECTED_ERROR # Or a new status?
+        result["status"] = BaselineStatus.UNEXPECTED_ERROR  # Or a new status?
 
     log.info(
         f"Finished processing for: {command_id} with status: {result.get('status', 'UNKNOWN')} {'(Skipped)' if result.get('skipped') else ''}"
@@ -578,7 +585,7 @@ def _run_parallel_baseline_processing(
     ground_truth_txt_skip_hours: int,
     generated_outputs_dir: Path,
     max_workers: int,
-    exit_errors_limit: Optional[int]
+    exit_errors_limit: Optional[int],
 ) -> Tuple[List[Dict[str, Any]], List[str], int]:
     """STAGE 5: Executes the baseline processing tasks in parallel.
 
@@ -589,14 +596,21 @@ def _run_parallel_baseline_processing(
     results: List[Dict[str, Any]] = []
     sync_errors: List[str] = []
     processed_count = 0
-    error_count = 0 # Track errors specifically for exit_errors_limit
+    error_count = 0  # Track errors specifically for exit_errors_limit
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_sequence = {
             executor.submit(
                 _process_command_sequence,
-                sequence, tool_defs_dir, project_root, container_name, index_data,
-                force, since_timestamp, ground_truth_txt_skip_hours, generated_outputs_dir,
+                sequence,
+                tool_defs_dir,
+                project_root,
+                container_name,
+                index_data,
+                force,
+                since_timestamp,
+                ground_truth_txt_skip_hours,
+                generated_outputs_dir,
             ): sequence
             for sequence in tasks_to_run
         }
@@ -610,9 +624,11 @@ def _run_parallel_baseline_processing(
                 results.append(result)
                 processed_count += 1
                 # Check if this result represents an error for the exit limit
-                if result.get("error_message") or (isinstance(result.get("status"), BaselineStatus) and result["status"] not in {
-                    BaselineStatus.UP_TO_DATE, BaselineStatus.UPDATED, BaselineStatus.CAPTURE_SUCCESS
-                }):
+                if result.get("error_message") or (
+                    isinstance(result.get("status"), BaselineStatus)
+                    and result["status"]
+                    not in {BaselineStatus.UP_TO_DATE, BaselineStatus.UPDATED, BaselineStatus.CAPTURE_SUCCESS}
+                ):
                     error_count += 1
                     log.warning(f"Error encountered for {command_id} (Total errors: {error_count})")
                     if exit_errors_limit is not None and error_count >= exit_errors_limit:
@@ -621,14 +637,14 @@ def _run_parallel_baseline_processing(
                         sync_errors.append(f"Reached error limit ({exit_errors_limit}) processing {command_id}.")
                         # TODO: Add logic to signal cancellation to running tasks if possible/needed.
                         # For now, just break the loop.
-                        break # Stop processing further completed futures
+                        break  # Stop processing further completed futures
 
             except Exception as exc:
                 err_msg = f"Task for {command_id} generated unexpected exception: {exc}"
                 log.exception(err_msg)
                 sync_errors.append(err_msg)
-                processed_count += 1 # Count as processed even if exception
-                error_count += 1 # Count exception as an error
+                processed_count += 1  # Count as processed even if exception
+                error_count += 1  # Count exception as an error
                 if exit_errors_limit is not None and error_count >= exit_errors_limit:
                     log.error(f"Reached error limit ({exit_errors_limit}) due to exception in {command_id}.")
                     break
@@ -639,11 +655,12 @@ def _run_parallel_baseline_processing(
 
 # === Stage 6: Index Update & Save ===
 
+
 def _update_and_save_index(
     results: List[Dict[str, Any]],
-    initial_index_data: Dict[str, Any], # Pass initial data to update
+    initial_index_data: Dict[str, Any],  # Pass initial data to update
     tool_index_path: Path,
-    dry_run: bool
+    dry_run: bool,
 ) -> Tuple[Dict[str, Any], List[str], int, int]:
     """STAGE 6: Processes results and updates/saves the tool index.
 
@@ -651,11 +668,11 @@ def _update_and_save_index(
              count of updated items, count of skipped items.
     """
     log.info("STAGE 6: Processing results and updating index...")
-    final_index_data = initial_index_data.copy() # Work on a copy
+    final_index_data = initial_index_data.copy()  # Work on a copy
     index_errors: List[str] = []
     updated_count = 0
     skipped_count = 0
-    skeleton_created_count = 0 # Track skeleton creation separately
+    skeleton_created_count = 0  # Track skeleton creation separately
 
     for result in results:
         if result.get("skipped"):
@@ -663,7 +680,7 @@ def _update_and_save_index(
             continue
 
         status = result.get("status")
-        error_message = result.get("error_message") # Check for processing error
+        error_message = result.get("error_message")  # Check for processing error
         command_sequence = result["command_sequence"]
         update_data = result.get("update_data")
         skeleton_created = result.get("skeleton_created", False)
@@ -673,7 +690,9 @@ def _update_and_save_index(
 
         # Only update index if baseline processing didn't fail and no processing error occurred
         is_success_status = isinstance(status, BaselineStatus) and status in {
-            BaselineStatus.UP_TO_DATE, BaselineStatus.UPDATED, BaselineStatus.CAPTURE_SUCCESS
+            BaselineStatus.UP_TO_DATE,
+            BaselineStatus.UPDATED,
+            BaselineStatus.CAPTURE_SUCCESS,
         }
 
         if update_data and is_success_status and not error_message:
@@ -681,9 +700,9 @@ def _update_and_save_index(
                 update_index_entry(final_index_data, command_sequence, update_data)
                 # Count as updated if status was UPDATED or if a skeleton was newly created
                 if status == BaselineStatus.UPDATED or skeleton_created:
-                     # Avoid double counting if skeleton was created AND baseline was updated
-                     if not (status == BaselineStatus.UPDATED and skeleton_created):
-                         updated_count += 1
+                    # Avoid double counting if skeleton was created AND baseline was updated
+                    if not (status == BaselineStatus.UPDATED and skeleton_created):
+                        updated_count += 1
             except Exception as index_e:
                 err_msg = f"Failed to update index for {command_sequence_to_id(command_sequence)}: {index_e}"
                 log.exception(err_msg)
@@ -691,7 +710,9 @@ def _update_and_save_index(
         elif error_message:
             log.debug(f"Skipping index update for {command_sequence_to_id(command_sequence)} due to processing error.")
         elif not is_success_status:
-             log.debug(f"Skipping index update for {command_sequence_to_id(command_sequence)} due to failure status: {status}")
+            log.debug(
+                f"Skipping index update for {command_sequence_to_id(command_sequence)} due to failure status: {status}"
+            )
 
     # Save Final Index
     if dry_run:
@@ -699,8 +720,8 @@ def _update_and_save_index(
     else:
         log.info(f"Saving updated tool index with {len(final_index_data)} entries...")
         if not save_tool_index(final_index_data):
-             log.error("Failed to save final tool index.")
-             index_errors.append("Failed to save final tool index.")
+            log.error("Failed to save final tool index.")
+            index_errors.append("Failed to save final tool index.")
 
     log.info("STAGE 6: Index update complete.")
     # Return updated count (includes skeleton creations) and skipped count
@@ -708,6 +729,7 @@ def _update_and_save_index(
 
 
 # === Main Sync Command (Orchestrator) ===
+
 
 @click.command("sync")
 # @common_options # Apply common options using the decorator - Temporarily disable
@@ -742,20 +764,17 @@ def _update_and_save_index(
     "--skip-hours",
     "ground_truth_txt_skip_hours",
     type=int,
-    default=7 * 24, # Default to 1 week
+    default=7 * 24,  # Default to 1 week
     help="Skip baseline regeneration if checked within this many hours (unless --force). Default: 168 (7 days).",
     show_default=True,
 )
 @click.option(
-    "--dry-run",
-    is_flag=True,
-    default=False,
-    help="Show what actions would be taken without actually executing them."
+    "--dry-run", is_flag=True, default=False, help="Show what actions would be taken without actually executing them."
 )
 @click.option(
     "--exit-errors",
     type=int,
-    default=None, # No limit by default
+    default=None,  # No limit by default
     help="Exit sync after this many baseline generation errors (FAILED_CAPTURE).",
     show_default="No limit",
 )
@@ -782,14 +801,14 @@ def sync(
         ctx.exit(1)
 
     exit_code = 0
-    all_errors: List[str] = [] # Collect errors from all stages
-    container_name = None # Initialize
+    all_errors: List[str] = []  # Collect errors from all stages
+    container_name = None  # Initialize
     tool_defs_dir = project_root / "src" / "zeroth_law" / "tools"
     generated_outputs_dir = project_root / "generated_command_outputs"
     generated_outputs_dir.mkdir(parents=True, exist_ok=True)
     tool_index_path = tool_defs_dir / "tool_index.json"
     venv_path = project_root / ".venv"
-    max_workers = 4 # Consider making this configurable
+    max_workers = 4  # Consider making this configurable
 
     try:
         # === Stage 1: Podman Setup ===
@@ -797,25 +816,24 @@ def sync(
         ctx.obj["podman_container_name"] = container_name
         if not _start_podman_runner(container_name, project_root, venv_path):
             log.error("Podman setup failed. Aborting sync.")
-            raise RuntimeError("Podman setup failed") # Use Exception to trigger finally
+            raise RuntimeError("Podman setup failed")  # Use Exception to trigger finally
 
         # === Stage 2: Reconciliation & Pruning ===
         reconciliation_results, managed_tools_set, parsed_whitelist, parsed_blacklist, stage2_errors, pruned_count = (
             _reconcile_and_prune(project_root, config, tool_defs_dir, prune, dry_run)
         )
         all_errors.extend(stage2_errors)
-        if stage2_errors and prune: # Only halt if errors occurred during actual pruning
+        if stage2_errors and prune:  # Only halt if errors occurred during actual pruning
             raise RuntimeError("Errors occurred during pruning")
 
         # === Stage 3: Target Tool Identification ===
-        target_tool_names = _identify_target_tools(
-            specific_tools, reconciliation_results, managed_tools_set
-        )
+        target_tool_names = _identify_target_tools(specific_tools, reconciliation_results, managed_tools_set)
         if target_tool_names is None:
-             # Error already logged by helper function
-             # Save index in case pruning occurred before exiting
-             if not save_tool_index(load_tool_index()): all_errors.append("Failed to save index after pruning.")
-             raise RuntimeError("No valid target tools identified")
+            # Error already logged by helper function
+            # Save index in case pruning occurred before exiting
+            if not save_tool_index(load_tool_index()):
+                all_errors.append("Failed to save index after pruning.")
+            raise RuntimeError("No valid target tools identified")
 
         # === Stage 4: Sequence Generation & Filtering ===
         tasks_to_run, skipped_by_scope, skipped_by_blacklist = _generate_and_filter_sequences(
@@ -828,19 +846,32 @@ def sync(
             # Skip Stage 5 and 6
         else:
             # === Stage 5: Parallel Baseline Processing ===
-            since_timestamp = None # Parse --since here
+            since_timestamp = None  # Parse --since here
             if since:
                 try:
-                    if since.endswith("h"): since_timestamp = time.time() - int(since[:-1]) * 3600
-                    elif since.endswith("d"): since_timestamp = time.time() - int(since[:-1]) * 86400
-                    else: since_timestamp = float(since)
-                except ValueError: log.error(f"Invalid --since format: {since}"); raise
+                    if since.endswith("h"):
+                        since_timestamp = time.time() - int(since[:-1]) * 3600
+                    elif since.endswith("d"):
+                        since_timestamp = time.time() - int(since[:-1]) * 86400
+                    else:
+                        since_timestamp = float(since)
+                except ValueError:
+                    log.error(f"Invalid --since format: {since}")
+                    raise
 
-            initial_index_data = load_tool_index() # Load index just before processing
+            initial_index_data = load_tool_index()  # Load index just before processing
             baseline_results, stage5_errors, processed_count = _run_parallel_baseline_processing(
-                tasks_to_run, tool_defs_dir, project_root, container_name, initial_index_data,
-                force, since_timestamp, ground_truth_txt_skip_hours, generated_outputs_dir,
-                max_workers, exit_errors,
+                tasks_to_run,
+                tool_defs_dir,
+                project_root,
+                container_name,
+                initial_index_data,
+                force,
+                since_timestamp,
+                ground_truth_txt_skip_hours,
+                generated_outputs_dir,
+                max_workers,
+                exit_errors,
             )
             all_errors.extend(stage5_errors)
 
@@ -863,7 +894,7 @@ def sync(
             log.info(f"Sequences Skipped (blacklist): {skipped_by_blacklist}")
             log.info(f"Ground Truth/JSON Updated/Created: {updated_count}")
         else:
-             log.info("No sequences were processed.")
+            log.info("No sequences were processed.")
         if prune:
             log.info(f"Directories Pruned:   {pruned_count}")
         log.info(f"Errors Encountered:   {len(all_errors)}")
@@ -885,7 +916,7 @@ def sync(
         exit_code = 3
         # Ensure errors list contains something if we hit unexpected exception
         if not all_errors:
-             all_errors.append(f"Unexpected exception: {e}")
+            all_errors.append(f"Unexpected exception: {e}")
     finally:
         # === Stage 7: Podman Cleanup ===
         if container_name:

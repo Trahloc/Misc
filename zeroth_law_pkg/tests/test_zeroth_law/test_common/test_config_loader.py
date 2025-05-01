@@ -347,15 +347,8 @@ blacklist = ["blacklisted_tool"]
     # Verify merged config (excluding actions)
     # Updated expected structure to match ParsedHierarchy
     expected_managed_tools = {
-        "whitelist": {
-            "mytool": {
-                "sub1": {"_explicit": True},
-                "sub2": {"_explicit": True}
-            }
-        },
-        "blacklist": {
-            "blacklisted_tool": {"_explicit": True}
-        },
+        "whitelist": {"mytool": {"sub1": {"_explicit": True}, "sub2": {"_explicit": True}}},
+        "blacklist": {"blacklisted_tool": {"_explicit": True}},
     }
     assert config["managed-tools"] == expected_managed_tools
 

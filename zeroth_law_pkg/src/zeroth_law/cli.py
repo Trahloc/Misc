@@ -161,7 +161,7 @@ def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             # structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-             renderer, # Use the chosen renderer
+            renderer,  # Use the chosen renderer
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -170,7 +170,7 @@ def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
 
     # Get the standard library root logger to set the level filter
     # structlog relies on the stdlib handler/level mechanism for filtering
-    root_logger = logging.getLogger() # Get stdlib root logger
+    root_logger = logging.getLogger()  # Get stdlib root logger
     root_logger.setLevel(level_num)
 
     # Ensure there's a handler (structlog doesn't add one automatically)
@@ -188,13 +188,12 @@ def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
         # handler.setFormatter(formatter)
         root_logger.addHandler(handler)
 
-
     log.info(
         "structlog_reconfigured",
         min_level=level_name.upper(),
         level_num=level_num,
         color_enabled=should_use_color,
-        handler_added=not root_logger.hasHandlers() # Log if we added the handler
+        handler_added=not root_logger.hasHandlers(),  # Log if we added the handler
     )
 
 
