@@ -18,6 +18,7 @@ from zeroth_law.lib.tooling.tool_reconciler import (
     ToolStatus,
     reconcile_tools,
 )
+from zeroth_law.common.hierarchical_utils import parse_to_nested_dict
 
 # Fixture for a dummy ReconciliationResult
 
@@ -36,7 +37,9 @@ def test_reconcile_managed_ok():
     }
     # Note: tool_b is whitelisted but not in tools/, which might be another status or handled later.
     # For now, focusing on tool_a's status.
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("tool_a") == ToolStatus.MANAGED_OK
     # We might refine expected status for tool_b later
 
@@ -51,7 +54,9 @@ def test_reconcile_managed_missing_in_env():
         "tool_a": ToolStatus.MANAGED_MISSING_ENV,
         "tool_b": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR,
     }
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("tool_a") == ToolStatus.MANAGED_MISSING_ENV
 
 
@@ -62,7 +67,9 @@ def test_reconcile_blacklisted_in_env_only():
     whitelist = set()
     blacklist = {"tool_c"}
     expected = {"tool_c": ToolStatus.BLACKLISTED_IN_ENV}
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("tool_c") == ToolStatus.BLACKLISTED_IN_ENV
 
 
@@ -73,7 +80,9 @@ def test_reconcile_blacklisted_in_tools_error():
     whitelist = set()
     blacklist = {"tool_c"}
     expected = {"tool_c": ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR}
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("tool_c") == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR
 
 
@@ -84,7 +93,9 @@ def test_reconcile_orphan_dir():
     whitelist = {"tool_a"}
     blacklist = {"tool_b"}
     expected = {"orphan_tool": ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR}
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("orphan_tool") == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR
 
 
@@ -95,7 +106,9 @@ def test_reconcile_new_env_tool():
     whitelist = {"tool_a"}
     blacklist = {"tool_b"}
     expected = {"new_tool": ToolStatus.NEW_ENV_TOOL}
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("new_tool") == ToolStatus.NEW_ENV_TOOL
 
 
@@ -106,7 +119,9 @@ def test_reconcile_whitelisted_missing_dir():
     whitelist = {"tool_a"}
     blacklist = set()
     expected = {"tool_a": ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR}
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("tool_a") == ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR
 
 
@@ -117,7 +132,9 @@ def test_reconcile_whitelisted_missing_dir_and_env():
     whitelist = {"tool_a"}  # Whitelisted, but nowhere to be found
     blacklist = set()
     expected = {"tool_a": ToolStatus.ERROR_MISSING_WHITELISTED}
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result.get("tool_a") == ToolStatus.ERROR_MISSING_WHITELISTED
 
 
@@ -136,7 +153,9 @@ def test_reconcile_mixed_complex():
         "orphan": ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR,
         "missing_all": ToolStatus.ERROR_MISSING_WHITELISTED,
     }
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result == expected
 
 
@@ -147,5 +166,7 @@ def test_reconcile_empty_inputs():
     whitelist = set()
     blacklist = set()
     expected = {}
-    result = reconcile_tools(env_tools, dir_tools, whitelist, blacklist)
+    parsed_whitelist = parse_to_nested_dict(whitelist)
+    parsed_blacklist = parse_to_nested_dict(blacklist)
+    result = reconcile_tools(env_tools, dir_tools, parsed_whitelist, parsed_blacklist)
     assert result == expected

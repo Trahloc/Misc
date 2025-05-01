@@ -14,8 +14,8 @@ ParsedHierarchy = Dict[str, NodeData]
 # --- Parsing --- #
 
 
-def parse_to_nested_dict(raw_list: List[str]) -> ParsedHierarchy:
-    """Parses a list of strings with hierarchy into a nested dictionary.
+def parse_to_nested_dict(raw_list: list[str] | set[str]) -> ParsedHierarchy:
+    """Parses a list or set of strings with hierarchy into a nested dictionary.
 
     Handles entries like "tool", "tool:*", "tool:sub", "tool:sub:subsub", "tool:sub:*".
     Uses special keys '_explicit' and '_all' within nodes.
@@ -23,9 +23,10 @@ def parse_to_nested_dict(raw_list: List[str]) -> ParsedHierarchy:
     """
     root: ParsedHierarchy = {}
 
-    if not isinstance(raw_list, list):
+    # Accept both list and set as input
+    if not isinstance(raw_list, (list, set)):
         log.warning(
-            "Managed tools list is not a valid list. Returning empty structure.", received_type=type(raw_list).__name__
+            "Managed tools list is not a valid list or set. Returning empty structure.", received_type=type(raw_list).__name__
         )
         return {}
 

@@ -890,7 +890,7 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]: 
             ReconciliationError,
         )
 
-        _results, managed_set, _blacklist, _errors, _warnings, _has_errors = _perform_reconciliation_logic(
+        _results, managed_set, _whitelist, _blacklist, _errors, _warnings, _has_errors = _perform_reconciliation_logic(
             project_root_dir=WORKSPACE_ROOT, config_data=config_data
         )
 

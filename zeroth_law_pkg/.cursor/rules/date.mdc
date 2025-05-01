@@ -3,4 +3,4 @@ description:
 globs:
 alwaysApply: true
 ---
-"Default date unless otherwise specified is gathered by `date +%s.%N`"
+"Default date unless otherwise specified is gathered by `date --iso-8601=seconds`"

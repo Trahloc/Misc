@@ -1,1 +1,51 @@
-# Auto-generated empty baseline for jsonschema\n# Run baseline generation script to populate.\n
+--- sh -c Environment: ---
+HOME=/root
+GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+PYTHON_SHA256=40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
+container=podman
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHON_VERSION=3.13.3
+PWD=/app
+--- sh -c Executable Check: ---
+-rwxr-xr-x 1 root root 296 Apr 30 13:17 /venv/bin/jsonschema
+--- sh -c Running Command: ---
+usage: jsonschema [-h] [-i INSTANCES] [-F ERROR_FORMAT] [-o {plain,pretty}]
+                  [-V VALIDATOR] [--base-uri BASE_URI] [--version]
+                  schema
+
+JSON Schema Validation CLI
+
+positional arguments:
+  schema                the path to a JSON Schema to validate with (i.e.
+                        schema.json)
+
+options:
+  -h, --help            show this help message and exit
+  -i, --instance INSTANCES
+                        a path to a JSON instance (i.e. filename.json) to
+                        validate (may be specified multiple times). If no
+                        instances are provided via this option, one will be
+                        expected on standard input.
+  -F, --error-format ERROR_FORMAT
+                        the format to use for each validation error message,
+                        specified in a form suitable for str.format. This
+                        string will be passed one formatted object named
+                        'error' for each ValidationError. Only provide this
+                        option when using --output=plain, which is the
+                        default. If this argument is unprovided and
+                        --output=plain is used, a simple default
+                        representation will be used.
+  -o, --output {plain,pretty}
+                        an output format to use. 'plain' (default) will
+                        produce minimal text with one line for each error,
+                        while 'pretty' will produce more detailed human-
+                        readable output on multiple lines.
+  -V, --validator VALIDATOR
+                        the fully qualified object name of a validator to use,
+                        or, for validators that are registered with
+                        jsonschema, simply the name of the class.
+  --base-uri BASE_URI   a base URI to assign to the provided schema, even if
+                        it does not declare one (via e.g. $id). This option
+                        can be used if you wish to resolve relative references
+                        to a particular URI (or local path)
+  --version             show program's version number and exit

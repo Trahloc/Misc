@@ -1,1 +1,37 @@
-# Auto-generated empty baseline for typer\n# Run baseline generation script to populate.\n
+--- sh -c Environment: ---
+HOME=/root
+GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+PYTHON_SHA256=40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
+container=podman
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHON_VERSION=3.13.3
+PWD=/app
+--- sh -c Executable Check: ---
+-rwxr-xr-x 1 root root 291 Apr 30 13:17 /venv/bin/typer
+--- sh -c Running Command: ---
+                                                                                
+ Usage: typer [OPTIONS] [PATH_OR_MODULE] COMMAND [ARGS]...                      
+                                                                                
+ Run Typer scripts with completion, without having to create a package.         
+ You probably want to install completion for the typer command:                 
+ $ typer --install-completion                                                   
+ https://typer.tiangolo.com/                                                    
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│   path_or_module      [PATH_OR_MODULE]  [default: None]                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --app                       TEXT  The typer app object/variable to use.      │
+│                                   [default: None]                            │
+│ --func                      TEXT  The function to convert to Typer.          │
+│                                   [default: None]                            │
+│ --version                         Print version and exit.                    │
+│ --install-completion              Install completion for the current shell.  │
+│ --show-completion                 Show completion for the current shell, to  │
+│                                   copy it or customize the installation.     │
+│ --help                            Show this message and exit.                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ utils   Extra utility commands for Typer apps.                               │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

@@ -1,1 +1,12 @@
-# Auto-generated empty baseline for tabulate\n# Run baseline generation script to populate.\n
+--- sh -c Environment: ---
+HOME=/root
+GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+PYTHON_SHA256=40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
+container=podman
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHON_VERSION=3.13.3
+PWD=/app
+--- sh -c Executable Check: ---
+-rwxr-xr-x 1 root root 292 Apr 30 13:17 /venv/bin/tabulate
+--- sh -c Running Command: ---
+

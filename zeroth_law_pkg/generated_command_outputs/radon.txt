@@ -1,1 +1,26 @@
-# Auto-generated empty baseline for radon\n# Run baseline generation script to populate.\n
+--- sh -c Environment: ---
+HOME=/root
+GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+PYTHON_SHA256=40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
+container=podman
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHON_VERSION=3.13.3
+PWD=/app
+--- sh -c Executable Check: ---
+-rwxr-xr-x 1 root root 287 Apr 30 13:17 /venv/bin/radon
+--- sh -c Running Command: ---
+usage: radon [-h] [-v] {cc,raw,mi,hal} ...
+
+positional arguments:
+  {cc,raw,mi,hal}
+    cc             Analyze the given Python modules and compute Cyclomatic
+                   Complexity (CC).
+    raw            Analyze the given Python modules and compute raw metrics.
+    mi             Analyze the given Python modules and compute the
+                   Maintainability Index.
+    hal            Analyze the given Python modules and compute their Halstead
+                   metrics.
+
+options:
+  -h, --help       show this help message and exit
+  -v, --version    show program's version number and exit

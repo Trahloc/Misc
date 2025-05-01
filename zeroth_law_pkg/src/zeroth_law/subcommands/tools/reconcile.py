@@ -13,7 +13,12 @@ from enum import Enum, auto
 # --- Updated imports from lib/tooling --- #
 # from ...dev_scripts.config_reader import load_tool_lists_from_toml # No longer needed, reads from ctx
 from ...lib.tooling.environment_scanner import get_executables_from_env
-from ...lib.tooling.tool_reconciler import ToolStatus, reconcile_tools, _get_effective_status
+from ...lib.tooling.tool_reconciler import (
+    ToolStatus,
+    reconcile_tools,
+    _get_effective_status,
+    _check_for_conflicts,
+)
 from ...lib.tooling.tools_dir_scanner import get_tool_dirs
 
 # Import type hint from new file
@@ -116,19 +121,6 @@ def _perform_reconciliation_logic(
     managed_tools_set = {  # Derive top-level managed tools from whitelist
         tool for tool, node in whitelist.items() if node.get("_explicit") or node.get("_all")
     }
-
-    # 4. Perform Reconciliation
-    try:
-        reconciliation_results: Dict[str, ToolStatus] = reconcile_tools(
-            discovered_env_tools=env_tools,
-            discovered_tools_dir_tools=dir_tools,
-            whitelist=whitelist,
-            blacklist=blacklist,
-        )
-    except ReconciliationError as e:
-        msg = f"Reconciliation failed: {e}"
-        logger.error(msg)
-        raise ReconciliationError(msg) from e
 
     # 5. Analyze Results & Collect Messages
     managed_tools_for_processing = set()
@@ -296,11 +288,6 @@ def _print_reconciliation_summary(
 
     if status_groups[ToolStatus.MANAGED_OK]:
         log.info("Managed & OK:", tools=status_groups[ToolStatus.MANAGED_OK])
-    if status_groups[ToolStatus.MANAGED_MISSING_ENV]:
-        log.warning(
-            "Managed but MISSING from environment (install required?):",
-            tools=status_groups[ToolStatus.MANAGED_MISSING_ENV],
-        )
     if status_groups[ToolStatus.WHITELISTED_NOT_IN_TOOLS_DIR]:
         log.warning(
             "Whitelisted & in env, but MISSING baseline definition (run 'zlt tools sync'?):",
@@ -332,39 +319,3 @@ def _print_reconciliation_summary(
         )
 
     log.info("--- End Summary ---")
-
-
-def _check_for_conflicts(whitelist: ParsedHierarchy, blacklist: ParsedHierarchy, path: List[str] = None) -> bool:
-    """Recursively checks for direct conflicts (same item in both lists)."""
-    if path is None:
-        path = []
-    has_conflict = False
-
-    # Check nodes at the current level
-    current_whitelist_keys = {k for k in whitelist if not k.startswith("_")}
-    current_blacklist_keys = {k for k in blacklist if not k.startswith("_")}
-    common_keys = current_whitelist_keys.intersection(current_blacklist_keys)
-
-    for key in common_keys:
-        wl_node = whitelist[key]
-        bl_node = blacklist[key]
-        current_path_str = ":".join(path + [key])
-
-        # Conflict if both are explicitly listed or both have :*
-        wl_explicit = wl_node.get("_explicit", False)
-        bl_explicit = bl_node.get("_explicit", False)
-        wl_all = wl_node.get("_all", False)
-        bl_all = bl_node.get("_all", False)
-
-        if (wl_explicit and bl_explicit) or (wl_all and bl_all):
-            log.error(f"Conflict detected: '{current_path_str}' found in both whitelist and blacklist.")
-            has_conflict = True
-
-        # Recursively check children
-        wl_children = {k: v for k, v in wl_node.items() if not k.startswith("_") and isinstance(v, dict)}
-        bl_children = {k: v for k, v in bl_node.items() if not k.startswith("_") and isinstance(v, dict)}
-        if wl_children or bl_children:  # Only recurse if there are children in either
-            if _check_for_conflicts(wl_children, bl_children, path + [key]):
-                has_conflict = True  # Propagate conflict upwards
-
-    return has_conflict

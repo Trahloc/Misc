@@ -345,10 +345,20 @@ blacklist = ["blacklisted_tool"]
             assert config[key] == DEFAULT_CONFIG[key]
 
     # Verify merged config (excluding actions)
-    assert config["managed-tools"] == {
-        "whitelist": {"mytool": {"sub1", "sub2"}},
-        "blacklist": {"blacklisted_tool": {"*"}},
+    # Updated expected structure to match ParsedHierarchy
+    expected_managed_tools = {
+        "whitelist": {
+            "mytool": {
+                "sub1": {"_explicit": True},
+                "sub2": {"_explicit": True}
+            }
+        },
+        "blacklist": {
+            "blacklisted_tool": {"_explicit": True}
+        },
     }
+    assert config["managed-tools"] == expected_managed_tools
+
     # assert config["actions"] == {"format": {"tool": "ruff_format"}} # This seems incorrect for this test setup
 
 

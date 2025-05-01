@@ -6,13 +6,13 @@ import structlog
 import sys
 import os
 import subprocess
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 from importlib.metadata import version, PackageNotFoundError
 
 import click
-import logging
 
 from zeroth_law.action_runner import run_action
 from zeroth_law.common.config_loader import load_config
@@ -84,16 +84,16 @@ OPTIONS_DEF_PATH = Path(__file__).parent / "zlt_options_definitions.json"
 def load_zlt_option_definitions() -> Dict[str, Dict[str, Any]]:
     """Loads the canonical ZLT option definitions from JSON."""
     if not OPTIONS_DEF_PATH.is_file():
-        log.error(f"ZLT options definition file not found: {OPTIONS_DEF_PATH}")
+        log.error("zlt_options_definition_file_not_found", path=str(OPTIONS_DEF_PATH))
         return {}
     try:
         with open(OPTIONS_DEF_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except json.JSONDecodeError as e:
-        log.error(f"Error decoding ZLT options definitions file {OPTIONS_DEF_PATH}: {e}")
+        log.error("zlt_options_definition_decoding_error", path=str(OPTIONS_DEF_PATH), error=str(e))
         return {}
     except Exception as e:
-        log.exception(f"Unexpected error loading ZLT options definitions {OPTIONS_DEF_PATH}: {e}")
+        log.exception("zlt_options_definition_loading_error", path=str(OPTIONS_DEF_PATH))
         return {}
 
 
@@ -133,34 +133,68 @@ def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click
     return click.Option(param_decls, **opts)
 
 
-# --- Logging Setup Function (May need adjustment for structlog) ---
+# --- Logging Setup Function (using structlog) ---
 def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
     """Set up structlog logging based on level and color preference."""
-    # Map level names to standard logging level numbers
+    # Map level names to standard logging level numbers for filtering
     level_map = {
-        "debug": 10,
-        "info": 20,
-        "warning": 30,
-        "error": 40,
-        "critical": 50,  # Add critical just in case
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "error": logging.ERROR,
+        "critical": logging.CRITICAL,
     }
-    # Use WARNING (30) as default if level_name is unknown
-    level_num = level_map.get(level_name.lower(), 30)
+    level_num = level_map.get(level_name.lower(), logging.WARNING)
 
-    # Reconfigure structlog based on CLI args
-    # TODO: Add more sophisticated configuration based on flags
-    # For now, just set the minimum level filter on the underlying stdlib logger
-    # This requires getting the actual root logger configured by structlog
-    # Note: structlog doesn't directly set the level, it relies on stdlib filtering
-    stdlib_root_logger = logging.getLogger()  # Get the standard lib root logger
-    stdlib_root_logger.setLevel(level_num)
+    # --- Reconfigure structlog --- #
+    # Determine renderer based on color preference
+    should_use_color = use_color if use_color is not None else sys.stderr.isatty()
+    renderer = structlog.dev.ConsoleRenderer(colors=should_use_color)
 
-    # TODO: Implement color handling
-    # Maybe swap ConsoleRenderer based on `use_color`
-    log.debug(
-        "Structlog logging level filter adjusted (via stdlib) to %s (%d)",
-        level_name.upper(),
-        level_num,
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S", utc=False),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            # structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+             renderer, # Use the chosen renderer
+        ],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+    # Get the standard library root logger to set the level filter
+    # structlog relies on the stdlib handler/level mechanism for filtering
+    root_logger = logging.getLogger() # Get stdlib root logger
+    root_logger.setLevel(level_num)
+
+    # Ensure there's a handler (structlog doesn't add one automatically)
+    # If no handlers are configured, logs might go nowhere.
+    # We add a basic StreamHandler if none exist.
+    if not root_logger.hasHandlers():
+        handler = logging.StreamHandler()
+        # We don't need a formatter on the handler itself,
+        # structlog's processors handle formatting before it gets here.
+        # formatter = structlog.stdlib.ProcessorFormatter(
+        #     # These run JUST BEFORE the log record is created
+        #     processor=renderer,
+        #     foreign_pre_chain=structlog.get_config().get("processors", [])[:-1], # Use configured processors except renderer
+        # )
+        # handler.setFormatter(formatter)
+        root_logger.addHandler(handler)
+
+
+    log.info(
+        "structlog_reconfigured",
+        min_level=level_name.upper(),
+        level_num=level_num,
+        color_enabled=should_use_color,
+        handler_added=not root_logger.hasHandlers() # Log if we added the handler
     )
 
 
@@ -184,14 +218,14 @@ def run_audit(
     output_json: bool = False,
 ) -> bool:
     """DEPRECATED: Runs the compliance audit. Use specific commands like 'lint', 'test', or 'validate' instead."""
-    log.warning("The 'run_audit' function is deprecated and will be removed. Use specific action commands.")
+    log.warning("deprecated_audit_called")
     log.info(
-        "Starting deprecated audit on paths: %s (Recursive: %s)",
-        paths_to_check,
-        recursive,
+        "deprecated_audit_starting",
+        paths=[str(p) for p in paths_to_check],
+        recursive=recursive,
     )
     files_to_audit = find_files_to_audit(paths_to_check, recursive, config)
-    log.info(f"Found {len(files_to_audit)} files. Deprecated audit finished.")
+    log.info("deprecated_audit_files_found", count=len(files_to_audit))
 
     if analyzer_func is not None:
         # Calls should now use imported functions

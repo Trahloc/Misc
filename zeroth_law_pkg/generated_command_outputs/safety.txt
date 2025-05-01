@@ -1,1 +1,149 @@
-# Auto-generated empty baseline for safety\n# Run baseline generation script to populate.\n
+--- sh -c Environment: ---
+HOME=/root
+GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+PYTHON_SHA256=40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
+container=podman
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHON_VERSION=3.13.3
+PWD=/app
+--- sh -c Executable Check: ---
+-rwxr-xr-x 1 root root 290 Apr 30 13:17 /venv/bin/safety
+--- sh -c Running Command: ---
+
+ Safety CLI 3 - Vulnerability Scanning for Secure Python Development            
+                                                                                
+ Leverage the most comprehensive vulnerability data available to secure your    
+ projects against vulnerable and malicious packages. Safety CLI is a Python     
+ dependency vulnerability scanner that enhances software supply chain security  
+ at every stage of development.                                                 
+                                                                                
+ Documentation: https://docs.safetycli.com                                      
+ Contact: support@safetycli.com                                                 
+                                                                                
+                                                                                
+ Usage: safety [OPTIONS] COMMAND [ARGS]...                                      
+                                                                                
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│                         Authenticate Safety CLI to perform scans. Your       │
+│                         default browser will automatically open to           │
+│                         https://platform.safetycli.com.                      │
+│                         Example: safety auth login                           │
+│                                                                              │
+│ scan                    Scans a Python project directory.                    │
+│                         Example: safety scan to scan the current directory   │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands cont. ─────────────────────────────────────────────────────────────╮
+│ alert                   \[deprecated] Create GitHub pull requests or GitHub  │
+│                         issues using a `safety check` json report file.      │
+│                         Being replaced by newer features.                    │
+│                         Example: safety alert --check-report                 │
+│                         your-report.json --key API_KEY github-pr --repo      │
+│                         my-org/my-repo --token github-token                  │
+│                                                                              │
+│ check                   \[deprecated] Find vulnerabilities at target files   │
+│                         or environments. Now replaced by safety scan, and    │
+│                         will be unsupported beyond 1 May 2024.               │
+│                         Example: safety check -r requirements.txt            │
+│                                                                              │
+│ check-updates           Check for version updates to Safety CLI.             │
+│                         Example: safety check-updates                        │
+│                                                                              │
+│ configure               Set up global configurations for Safety CLI,         │
+│                         including proxy settings and organization details.   │
+│                         Example: safety configure --proxy-host 192.168.0.1   │
+│                                                                              │
+│ generate                Generate a boilerplate Safety CLI policy file for    │
+│                         customized security policies.                        │
+│                         Note: Safety Platform policies will override any     │
+│                         local policy files found                             │
+│                         Example: safety generate policy_file                 │
+│                                                                              │
+│ license                 \[deprecated] Find licenses at target files or       │
+│                         environments. This command will be replaced by       │
+│                         safety scan, and will be unsupported beyond 1 May    │
+│                         2024.                                                │
+│                         Example: safety license -r requirements.txt          │
+│                                                                              │
+│ validate                Verify that a local policy file is valid. NAME is    │
+│                         the name of the file type to validate. Valid values  │
+│                         are: policy_file                                     │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+                                    Options                                     
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                  ┃                                           ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ['--stage']                      │ Assign a development lifecycle stage to   │
+│                                  │ your scan (default: development).         │
+│                                  │                                           │
+│                                  │ This labels the scan and its findings in  │
+│                                  │ Safety Platform with this stage.          │
+│                                  │                                           │
+│                                  │ Example: safety --stage production scan   │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--key']                        │ The API key required for cicd stage or    │
+│                                  │ production stage scans.                   │
+│                                  │                                           │
+│                                  │ For development stage scans unset the API │
+│                                  │ key and authenticate using safety auth.   │
+│                                  │                                           │
+│                                  │ Tip: the API key can also be set using    │
+│                                  │ the environment variable: SAFETY_API_KEY  │
+│                                  │                                           │
+│                                  │ Example: safety --key API_KEY --stage     │
+│                                  │ cicd scan                                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-host']                 │ Specify a proxy host for network          │
+│                                  │ communications.                           │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-port']                 │ Set the proxy port (default: 80).         │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+│                                  │                                           │
+│                                  │  Requires: [ proxy_host ]                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--proxy-protocol']             │ Choose the proxy protocol (default:       │
+│                                  │ https).                                   │
+│                                  │                                           │
+│                                  │ Note: proxy details can be set globally   │
+│                                  │ in a config file.                         │
+│                                  │                                           │
+│                                  │ See safety configure --help               │
+│                                  │                                           │
+│                                  │  Requires: [ proxy_host ]                 │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--disable-optional-telemetry'] │ Opt-out of sending optional telemetry     │
+│                                  │ data. Anonymized telemetry data will      │
+│                                  │ remain.                                   │
+│                                  │                                           │
+│                                  │ Example: safety                           │
+│                                  │ --disable-optional-telemetry scan         │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--debug']                      │ Enable debug mode for detailed output.    │
+│                                  │                                           │
+│                                  │ Example: safety --debug scan              │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--version']                    │ Show the version and exit.                │
+├──────────────────────────────────┼───────────────────────────────────────────┤
+│ ['--help']                       │ Show this message and exit.               │
+└──────────────────────────────────┴───────────────────────────────────────────┘
+                                                                                
+ Safety CLI version: 3.2.9                                                      
+ Documentation: https://docs.safetycli.com                                      
+                                                                                
+ Made with love by Safety Cybersecurity                                         
+ https://safetycli.com                                                          
+ support@safetycli.com                                                          
+                                                                                
+

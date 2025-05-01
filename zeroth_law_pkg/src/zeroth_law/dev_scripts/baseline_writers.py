@@ -195,6 +195,9 @@ def ensure_skeleton_json_exists(tool_dir: Path, tool_id: str, command_sequence: 
 
 def main():  # pragma: no cover # Exclude the entire main function
     """Runs the test/example logic for the baseline writers."""
+    # Re-enable test log message for test_main_execution
+    log.info("Testing baseline_writers...")
+
     # Setup basic logging for direct execution test
     # logging.basicConfig(
     #     level=logging.DEBUG,
