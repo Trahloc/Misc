@@ -6,12 +6,19 @@ from pathlib import Path
 
 log = structlog.get_logger()
 
+# Propagate CONTEXT_SETTINGS potentially?
+# from ...cli import CONTEXT_SETTINGS
+
 
 @click.group("tools")
-def tools_group() -> None:
+@click.pass_context
+def tools_group(ctx: click.Context) -> None:
     """Group for managing tool definitions, baselines, and configurations."""
     # This group function itself doesn't do anything but acts as an entry point
     # for the subcommands we will add later (reconcile, sync, etc.).
+    # We don't strictly NEED to do anything with ctx here, but passing it
+    # ensures it propagates down to subcommands that use @pass_context.
+    log.debug("Entering tools command group", ctx_obj_keys=list(ctx.obj.keys()) if ctx.obj else [])
     pass
 
 

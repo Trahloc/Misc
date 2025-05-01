@@ -288,7 +288,7 @@ def load_action_definitions(config_section: dict[str, Any]) -> dict[str, Any]:
 def load_config(config_path_override: str | Path | None = None) -> dict[str, Any]:
     """Load Zeroth Law config, process actions separately, merge rest with defaults.
 
-    Parses managed-tools whitelist/blacklist into structured dictionaries.
+    Returns the processed configuration dictionary.
     """
     # Find the config file
     found_path: Path | None
@@ -296,27 +296,19 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         found_path = find_pyproject_toml()
         if found_path is None:
             log.warning("No config file found (XDG or upwards search). Using defaults + empty actions/managed.")
-            # Return structure including expected keys, even if empty
+            # Return structure consistent with successful load but empty lists
             final_config = DEFAULT_CONFIG.copy()
             final_config["actions"] = {}
-            # Use the parsed (empty) structure
-            final_config["managed-tools"] = {
-                "whitelist": {},  # Parsed structure is dict
-                "blacklist": {},  # Parsed structure is dict
-            }
+            final_config["managed-tools"] = {"whitelist": [], "blacklist": []}
             return final_config
     else:
         found_path = Path(config_path_override)
 
     if not found_path or not found_path.exists():
-        # If no config file found, return defaults + empty actions/managed
         log.warning(f"Config file not found at {found_path}. Using defaults + empty actions/managed.")
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
-        final_config["managed-tools"] = {
-            "whitelist": {},
-            "blacklist": {},
-        }
+        final_config["managed-tools"] = {"whitelist": [], "blacklist": []}
         return final_config
 
     try:
@@ -334,26 +326,42 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         # Extract actions config
         actions_config = load_action_definitions(config_section)
 
-        # Extract and parse managed-tools config
-        managed_tools_config = config_section.get("managed-tools", {})
-        raw_whitelist = managed_tools_config.get("whitelist", [])
-        raw_blacklist = managed_tools_config.get("blacklist", [])
+        # Extract managed-tools config SECTION
+        managed_tools_section = config_section.get("managed-tools", {})
+        log.debug(
+            "Extracted managed_tools_section inside load_config",
+            type=type(managed_tools_section).__name__,
+            value=repr(managed_tools_section),  # Use repr for detailed view
+            is_dict=isinstance(managed_tools_section, dict),
+        )
+        if not isinstance(managed_tools_section, dict):
+            log.warning(
+                "Invalid type for [tool.zeroth-law.managed-tools], expected dict.",
+                received_type=type(managed_tools_section).__name__,
+            )
+            managed_tools_section = {}
 
-        # --- Use the new nested parser --- #
-        parsed_whitelist: ParsedHierarchy = parse_to_nested_dict(raw_whitelist)
-        parsed_blacklist: ParsedHierarchy = parse_to_nested_dict(raw_blacklist)
+        # Get the raw lists
+        raw_whitelist = managed_tools_section.get("whitelist", [])
+        raw_blacklist = managed_tools_section.get("blacklist", [])
 
+        # Type validation for raw lists
+        if not isinstance(raw_whitelist, (list, tomlkit.items.Array)):
+            log.warning("managed-tools.whitelist is not a list/array.", type=type(raw_whitelist).__name__)
+            raw_whitelist = []
+        if not isinstance(raw_blacklist, (list, tomlkit.items.Array)):
+            log.warning("managed-tools.blacklist is not a list/array.", type=type(raw_blacklist).__name__)
+            raw_blacklist = []
+
+        # Construct the final config
         final_config = merged_core_config
         final_config["actions"] = actions_config
         final_config["managed-tools"] = {
-            "whitelist": parsed_whitelist,
-            "blacklist": parsed_blacklist,
+            "whitelist": raw_whitelist,
+            "blacklist": raw_blacklist,
         }
 
         log.debug(f"Successfully loaded and processed config from: {found_path}")
-        # <<<--- ADDED DEBUG PRINT --- >>>
-        log.debug("Final loaded config (managed-tools parsed)", managed_tools=final_config["managed-tools"])
-        # <<<--- END ADDED DEBUG PRINT --- >>>
         return final_config
 
     except Exception as e:
@@ -361,12 +369,12 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
             f"Failed to load or process config file {found_path}: {e}. Using defaults.",
             exc_info=True,
         )
-        # Return defaults + empty parsed structure on any load error
+        # Return defaults + empty raw lists on error
         final_config = DEFAULT_CONFIG.copy()
         final_config["actions"] = {}
         final_config["managed-tools"] = {
-            "whitelist": {},
-            "blacklist": {},
+            "whitelist": [],
+            "blacklist": [],
         }
         return final_config
 

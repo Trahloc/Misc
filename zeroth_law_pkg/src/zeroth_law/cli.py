@@ -7,6 +7,7 @@ import sys
 import os
 import subprocess
 import logging
+import copy
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -22,7 +23,10 @@ from zeroth_law.common.git_utils import (
     get_staged_files,
     identify_project_roots_from_files,
 )
-from zeroth_law.common.path_utils import find_project_root
+from zeroth_law.common.path_utils import find_project_root, ZLFProjectRootNotFoundError
+
+# Import the logging setup function from its new location
+from zeroth_law.common.logging_utils import setup_structlog_logging
 
 # Re-add necessary imports
 from zeroth_law.analysis_runner import (
@@ -37,22 +41,21 @@ from .subcommands.tools.tools import tools_group  # Tools GROUP
 from .subcommands.todo.todo_group import todo_group  # Todo GROUP
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config  # Analyzer
 
+# Import sync command directly for testing
+# from .subcommands.tools.sync import sync as sync_command
+
 # --- Early Structlog Setup --- START
-# Configure structlog early with basic console output
+# Configure structlog minimally early on for setup messages
 structlog.configure(
     processors=[
-        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
-        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        # Use ConsoleRenderer for initial setup, might be adjusted later based on flags
-        structlog.dev.ConsoleRenderer(),
+        structlog.dev.ConsoleRenderer(colors=sys.stderr.isatty()),
     ],
     logger_factory=structlog.stdlib.LoggerFactory(),
     wrapper_class=structlog.stdlib.BoundLogger,
-    cache_logger_on_first_use=True,
+    cache_logger_on_first_use=False,  # Set to False during debugging
 )
 
 # Define default log level equivalent (using structlog levels implicitly handled by filtering later)
@@ -72,7 +75,7 @@ except PackageNotFoundError:
 # Context settings for Click
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
-    "ignore_unknown_options": True,
+    "ignore_unknown_options": True,  # Temporarily disable -- RESTORE
     "allow_interspersed_args": False,
 }
 
@@ -100,15 +103,39 @@ def load_zlt_option_definitions() -> Dict[str, Dict[str, Any]]:
 # --- Helper to create Click option from definition ---
 def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click.Option:
     """Creates a Click Option object from a definition dictionary."""
-    param_decls = definition.get("cli_names", [f"--{name}"])  # Default to --name if cli_names missing
+    # Use 'name' from definition as the intended internal parameter name (dest)
+    dest_name = name
+    cli_names = definition.get("cli_names", [f"--{name}"])  # CLI flags
+
+    # Determine the name click would automatically assign based on cli_names
+    # (Simplified logic based on click docs - assumes first long opt or first short opt)
+    auto_name = None
+    long_opts = [opt for opt in cli_names if opt.startswith("--")]
+    short_opts = [opt for opt in cli_names if opt.startswith("-") and not opt.startswith("--")]
+    if long_opts:
+        auto_name = long_opts[0].lstrip("-").replace("-", "_")
+    elif short_opts:
+        auto_name = short_opts[0].lstrip("-").replace("-", "_")
+
+    # If the intended dest_name differs from the auto-generated one,
+    # append the dest_name to the declarations.
+    param_decls = list(cli_names)  # Copy
+    if auto_name and dest_name != auto_name:
+        param_decls.append(dest_name)
+
     option_type = definition.get("type", "flag")
     opts = {
         "help": definition.get("description", ""),
-        "default": definition.get("default"),  # Pass default if defined
+        "default": definition.get("default"),
     }
 
     if option_type == "flag":
         opts["is_flag"] = True
+        # Check if it should be a counting flag
+        if definition.get("count", False):
+            opts["count"] = True
+            if "is_flag" in opts:
+                del opts["is_flag"]
     elif option_type == "value":
         value_type_str = definition.get("value_type")
         click_type = click.STRING  # Default
@@ -130,71 +157,8 @@ def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click
     # Remove None values from opts to avoid passing them to click.Option
     opts = {k: v for k, v in opts.items() if v is not None}
 
+    # Pass the potentially updated param_decls (incl. dest name if needed)
     return click.Option(param_decls, **opts)
-
-
-# --- Logging Setup Function (using structlog) ---
-def setup_structlog_logging(level_name: str, use_color: bool | None) -> None:
-    """Set up structlog logging based on level and color preference."""
-    # Map level names to standard logging level numbers for filtering
-    level_map = {
-        "debug": logging.DEBUG,
-        "info": logging.INFO,
-        "warning": logging.WARNING,
-        "error": logging.ERROR,
-        "critical": logging.CRITICAL,
-    }
-    level_num = level_map.get(level_name.lower(), logging.WARNING)
-
-    # --- Reconfigure structlog --- #
-    # Determine renderer based on color preference
-    should_use_color = use_color if use_color is not None else sys.stderr.isatty()
-    renderer = structlog.dev.ConsoleRenderer(colors=should_use_color)
-
-    structlog.configure(
-        processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S", utc=False),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            # structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-            renderer,  # Use the chosen renderer
-        ],
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.BoundLogger,
-        cache_logger_on_first_use=True,
-    )
-
-    # Get the standard library root logger to set the level filter
-    # structlog relies on the stdlib handler/level mechanism for filtering
-    root_logger = logging.getLogger()  # Get stdlib root logger
-    root_logger.setLevel(level_num)
-
-    # Ensure there's a handler (structlog doesn't add one automatically)
-    # If no handlers are configured, logs might go nowhere.
-    # We add a basic StreamHandler if none exist.
-    if not root_logger.hasHandlers():
-        handler = logging.StreamHandler()
-        # We don't need a formatter on the handler itself,
-        # structlog's processors handle formatting before it gets here.
-        # formatter = structlog.stdlib.ProcessorFormatter(
-        #     # These run JUST BEFORE the log record is created
-        #     processor=renderer,
-        #     foreign_pre_chain=structlog.get_config().get("processors", [])[:-1], # Use configured processors except renderer
-        # )
-        # handler.setFormatter(formatter)
-        root_logger.addHandler(handler)
-
-    log.info(
-        "structlog_reconfigured",
-        min_level=level_name.upper(),
-        level_num=level_num,
-        color_enabled=should_use_color,
-        handler_added=not root_logger.hasHandlers(),  # Log if we added the handler
-    )
 
 
 # --- Core File Finding Logic ---
@@ -265,77 +229,105 @@ def create_cli_group() -> click.Group:
 
     option_defs = load_zlt_option_definitions()
 
-    # Define the base function for the group *without* static options
+    # Define the base function for the group *with* static decorators
     @click.group(context_settings=CONTEXT_SETTINGS)
     @click.version_option(version=zlt_version, package_name="zeroth-law", prog_name="zeroth-law")
+    # --- Add global options manually as decorators --- #
+    @click.option("--verbose", "-V", count=True, default=0, help="Increase verbosity. -V for INFO, -VV for DEBUG.")
+    @click.option("--quiet", "-q", is_flag=True, default=False, help="Suppress all output except errors.")
+    @click.option(
+        "--config",
+        type=click.Path(path_type=Path),
+        default=None,
+        metavar="FILE_PATH",
+        help="Path to a tool-specific configuration file.",
+    )
+    # Add other global options like --color if defined and needed
+    # Note: Positional 'paths' is not a global option, handled by subcommands
     @click.pass_context
     def base_cli_group(ctx: click.Context, **kwargs) -> None:
-        """Zeroth Law Toolkit (zlt) - Enforces the Zeroth Law of Code Quality."""
-
-        # Extract values from kwargs passed by Click based on dynamic options
-        verbosity = kwargs.get("verbose", 0)  # Using canonical names
-        quiet = kwargs.get("quiet", False)
-        color = kwargs.get("color")  # Allow None for color
+        """Core logic for the base CLI group."""
+        # Extract values from kwargs passed by Click
+        # verbosity = kwargs.get("verbose", 0) # REMOVE
+        # quiet = kwargs.get("quiet", False) # REMOVE
+        color = kwargs.get("color")  # Assuming color option exists/added
         config_path_override = kwargs.get("config")
 
         # Determine effective log level name based on flags
-        if quiet:
-            level_name = "error"
-        elif verbosity == 1:
-            level_name = "info"
-        elif verbosity >= 2:
-            level_name = "debug"
-        else:
-            level_name = DEFAULT_LOG_LEVEL_NAME
+        # REMOVE verbose/quiet logic
+        # if quiet:
+        #     level_name = "error"
+        # elif verbosity == 1:
+        #     level_name = "info"
+        # elif verbosity >= 2:
+        #     level_name = "debug"
+        # else:
+        #     level_name = DEFAULT_LOG_LEVEL_NAME
+        # Set a default level for now, subcommands will override if needed
+        level_name = DEFAULT_LOG_LEVEL_NAME
 
         # Setup/Adjust structlog logging based on determined level and color option
         setup_structlog_logging(level_name, color)
+        # log.debug("TEST: Logging should be configured for DEBUG level now.", level_set=level_name) # Remove test log
 
-        # Find project root (might be needed by commands)
-        project_root = find_project_root(start_path=Path.cwd())
-        if not project_root:
-            log.error("Could not determine project root. Some commands might fail.")
-
-        # Load config (needed by commands)
-        config_data = load_config(config_path_override=config_path_override)
-        if config_data is None:
-            log.warning("No valid configuration found. Dynamic commands may not be available.")
-            config_data = {}  # Use empty config if none found
-
-        # Store context
+        # Store options early using kwargs
         ctx.ensure_object(dict)
-        ctx.obj["project_root"] = project_root
-        ctx.obj["config"] = config_data
-        # Store all dynamic options in context as well for potential use by subcommands
-        ctx.obj["options"] = kwargs
+        # Remove verbose/quiet from stored options if they are no longer global
+        options_to_store = {k: v for k, v in kwargs.items() if k not in ["verbose", "quiet"]}
+        ctx.obj["options"] = options_to_store
 
-        log.debug("CLI context prepared", options=kwargs)
+        # --- Consolidated Root Finding and Config Loading ---
+        try:
+            project_root = find_project_root(start_path=Path.cwd())
+            config_file_to_load = config_path_override or (project_root / "pyproject.toml")
+            # ... (rest of config loading logic remains the same)
+            if config_file_to_load and Path(config_file_to_load).is_file():
+                log.info("attempting_config_load", path=str(config_file_to_load))
+                config_data = load_config(config_file_to_load)
+                if config_data is None:
+                    log.warning("config_loading_returned_none", path=str(config_file_to_load))
+                    config_data = {}  # Use empty dict if load_config returns None
+            elif config_path_override:
+                log.warning("config_override_not_found", path=str(config_path_override))
+                config_data = {}
+            else:
+                log.warning("default_config_not_found_or_override_invalid", path=str(config_file_to_load))
+                config_data = {}
 
-    # Dynamically add options to the base_cli_group function's parameters
-    # We reverse the definitions so options are added in a consistent order (like top-to-bottom in file)
+            context_update = {"project_root": project_root, "config": copy.deepcopy(config_data)}
+            ctx.obj.update(context_update)
+            log.info("configuration_processed", loaded=bool(config_data), project_root=str(project_root))
+
+        except ZLFProjectRootNotFoundError as e:
+            log.critical("project_root_not_found", error=str(e))
+            ctx.fail(f"Fatal Error: {e} Please run `zlt` from within a ZLF compliant project directory.")
+        except Exception as e:
+            log.exception("project_root_or_config_loading_failed", error=str(e))
+            ctx.fail(f"Fatal Error during project root detection or configuration loading: {e}")
+
+    # --- Restore Dynamic Option Loading --- #
     dynamic_options: List[click.Option] = []
+    # Iterate in reverse definition order for consistent help message order
     for name, definition in reversed(option_defs.items()):
-        if definition.get("type") != "positional":  # Skip positional for global options
+        # !! IMPORTANT: Skip verbose and quiet !!
+        if name in ["verbose", "quiet"]:
+            continue
+        if definition.get("type") != "positional":
             try:
                 option = create_click_option_from_def(name, definition)
                 dynamic_options.append(option)
             except ValueError as e:
-                log.warning(f"Skipping dynamic option '{name}': {e}")
+                log.warning(f"Skipping dynamic option creation for '{name}': {e}")
 
-    # Add the dynamically created options to the command
-    # Modifying __click_params__ is one way, but applying decorators is cleaner if possible.
-    # Let's try modifying the params list directly before the group is finalized.
+    # Add the options to the group's parameter list
     base_cli_group.params.extend(dynamic_options)
 
-    # Add the subcommands (this happens after the group is created)
-    base_cli_group.add_command(audit_command)  # NEW add of function
+    # Add the subcommands
+    base_cli_group.add_command(audit_command)
     base_cli_group.add_command(install_git_hook)
     base_cli_group.add_command(restore_git_hooks)
-    base_cli_group.add_command(tools_group)  # Add the tools subcommand group
+    base_cli_group.add_command(tools_group)
     base_cli_group.add_command(todo_group)
-
-    # TODO: Add dynamic commands based on capabilities/mapping later
-    # add_dynamic_commands(base_cli_group)
 
     return base_cli_group
 

@@ -87,6 +87,22 @@
     "checked_timestamp": 1746019067.102185,
     "source": "zlt_tools_sync"
   },
+  "ruff": {
+    "subcommands": {
+      "--version": {
+        "command": [
+          "ruff",
+          "--version"
+        ],
+        "baseline_file": "ruff_--version.txt",
+        "json_definition_file": "ruff/ruff_--version.json",
+        "crc": "0x2C2E159D",
+        "updated_timestamp": 1746121550.9650884,
+        "checked_timestamp": 1746121550.9650884,
+        "source": "zlt_tools_sync"
+      }
+    }
+  },
   "safety": {
     "command": [
       "safety"
@@ -96,7 +112,21 @@
     "crc": "0x04F8FC2A",
     "updated_timestamp": 1746019068.4965537,
     "checked_timestamp": 1746019068.4965537,
-    "source": "zlt_tools_sync"
+    "source": "zlt_tools_sync",
+    "subcommands": {
+      "check": {
+        "command": [
+          "safety",
+          "check"
+        ],
+        "baseline_file": "safety_check.txt",
+        "json_definition_file": "safety/safety_check.json",
+        "crc": "0x2D25760F",
+        "updated_timestamp": 1746121550.9672601,
+        "checked_timestamp": 1746121550.9672601,
+        "source": "zlt_tools_sync"
+      }
+    }
   },
   "tabulate": {
     "command": [
@@ -119,6 +149,214 @@
     "updated_timestamp": 1746019070.4908135,
     "checked_timestamp": 1746019070.4908135,
     "source": "zlt_tools_sync"
+  },
+  "uv": {
+    "subcommands": {
+      "python": {
+        "command": [
+          "uv",
+          "python"
+        ],
+        "baseline_file": "uv_python.txt",
+        "json_definition_file": "uv/uv_python.json",
+        "crc": "0x6CEE2F19",
+        "updated_timestamp": 1746121550.971644,
+        "checked_timestamp": 1746121550.971644,
+        "source": "zlt_tools_sync"
+      },
+      "tool": {
+        "command": [
+          "uv",
+          "tool"
+        ],
+        "baseline_file": "uv_tool.txt",
+        "json_definition_file": "uv/uv_tool.json",
+        "crc": "0x8B482BFD",
+        "updated_timestamp": 1746121550.972164,
+        "checked_timestamp": 1746121550.972164,
+        "source": "zlt_tools_sync"
+      },
+      "remove": {
+        "command": [
+          "uv",
+          "remove"
+        ],
+        "baseline_file": "uv_remove.txt",
+        "json_definition_file": "uv/uv_remove.json",
+        "crc": "0xCD31D2E2",
+        "updated_timestamp": 1746121550.971775,
+        "checked_timestamp": 1746121550.971775,
+        "source": "zlt_tools_sync"
+      },
+      "pip": {
+        "command": [
+          "uv",
+          "pip"
+        ],
+        "baseline_file": "uv_pip.txt",
+        "json_definition_file": "uv/uv_pip.json",
+        "crc": "0xD52C91D7",
+        "updated_timestamp": 1746121550.9713027,
+        "checked_timestamp": 1746121550.9713027,
+        "source": "zlt_tools_sync"
+      },
+      "build": {
+        "command": [
+          "uv",
+          "build"
+        ],
+        "baseline_file": "uv_build.txt",
+        "json_definition_file": "uv/uv_build.json",
+        "crc": "0x9385A857",
+        "updated_timestamp": 1746121550.9687903,
+        "checked_timestamp": 1746121550.9687903,
+        "source": "zlt_tools_sync"
+      },
+      "cache": {
+        "command": [
+          "uv",
+          "cache"
+        ],
+        "baseline_file": "uv_cache.txt",
+        "json_definition_file": "uv/uv_cache.json",
+        "crc": "0x75DC183C",
+        "updated_timestamp": 1746121550.9700117,
+        "checked_timestamp": 1746121550.9700117,
+        "source": "zlt_tools_sync"
+      },
+      "self": {
+        "command": [
+          "uv",
+          "self"
+        ],
+        "baseline_file": "uv_self.txt",
+        "json_definition_file": "uv/uv_self.json",
+        "crc": "0xA6C825BE",
+        "updated_timestamp": 1746121550.9719229,
+        "checked_timestamp": 1746121550.9719229,
+        "source": "zlt_tools_sync"
+      },
+      "lock": {
+        "command": [
+          "uv",
+          "lock"
+        ],
+        "baseline_file": "uv_lock.txt",
+        "json_definition_file": "uv/uv_lock.json",
+        "crc": "0x2A7DDC7B",
+        "updated_timestamp": 1746121550.971109,
+        "checked_timestamp": 1746121550.971109,
+        "source": "zlt_tools_sync"
+      },
+      "init": {
+        "command": [
+          "uv",
+          "init"
+        ],
+        "baseline_file": "uv_init.txt",
+        "json_definition_file": "uv/uv_init.json",
+        "crc": "0x792B7AD9",
+        "updated_timestamp": 1746121550.9709432,
+        "checked_timestamp": 1746121550.9709432,
+        "source": "zlt_tools_sync"
+      },
+      "help": {
+        "command": [
+          "uv",
+          "help"
+        ],
+        "baseline_file": "uv_help.txt",
+        "json_definition_file": "uv/uv_help.json",
+        "crc": "0xB55259BE",
+        "updated_timestamp": 1746121550.9706914,
+        "checked_timestamp": 1746121550.9706914,
+        "source": "zlt_tools_sync"
+      },
+      "sync": {
+        "command": [
+          "uv",
+          "sync"
+        ],
+        "baseline_file": "uv_sync.txt",
+        "json_definition_file": "uv/uv_sync.json",
+        "crc": "0x06E2EBC2",
+        "updated_timestamp": 1746121550.972041,
+        "checked_timestamp": 1746121550.972041,
+        "source": "zlt_tools_sync"
+      },
+      "publish": {
+        "command": [
+          "uv",
+          "publish"
+        ],
+        "baseline_file": "uv_publish.txt",
+        "json_definition_file": "uv/uv_publish.json",
+        "crc": "0xF22A8159",
+        "updated_timestamp": 1746121550.9714363,
+        "checked_timestamp": 1746121550.9714363,
+        "source": "zlt_tools_sync"
+      },
+      "tree": {
+        "command": [
+          "uv",
+          "tree"
+        ],
+        "baseline_file": "uv_tree.txt",
+        "json_definition_file": "uv/uv_tree.json",
+        "crc": "0x4ADD9AD3",
+        "updated_timestamp": 1746121551.211463,
+        "checked_timestamp": 1746121551.211463,
+        "source": "zlt_tools_sync"
+      },
+      "venv": {
+        "command": [
+          "uv",
+          "venv"
+        ],
+        "baseline_file": "uv_venv.txt",
+        "json_definition_file": "uv/uv_venv.json",
+        "crc": "0xB8DD00B4",
+        "updated_timestamp": 1746121551.2326639,
+        "checked_timestamp": 1746121551.2326639,
+        "source": "zlt_tools_sync"
+      },
+      "export": {
+        "command": [
+          "uv",
+          "export"
+        ],
+        "baseline_file": "uv_export.txt",
+        "json_definition_file": "uv/uv_export.json",
+        "crc": "0x98825DE1",
+        "updated_timestamp": 1746121550.9706206,
+        "checked_timestamp": 1746121550.9706206,
+        "source": "zlt_tools_sync"
+      },
+      "version": {
+        "command": [
+          "uv",
+          "version"
+        ],
+        "baseline_file": "uv_version.txt",
+        "json_definition_file": "uv/uv_version.json",
+        "crc": "0x429C05DC",
+        "updated_timestamp": 1746121551.25395,
+        "checked_timestamp": 1746121551.25395,
+        "source": "zlt_tools_sync"
+      },
+      "add": {
+        "command": [
+          "uv",
+          "add"
+        ],
+        "baseline_file": "uv_add.txt",
+        "json_definition_file": "uv/uv_add.json",
+        "crc": "0x1A87B87E",
+        "updated_timestamp": 1746121550.967997,
+        "checked_timestamp": 1746121550.967997,
+        "source": "zlt_tools_sync"
+      }
+    }
   },
   "zlt": {
     "command": [

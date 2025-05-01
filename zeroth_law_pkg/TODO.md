@@ -419,6 +419,10 @@
 - [x] **Step 10: Iteration & Completion** (`2025-05-01T12:15:37+08:00`)
   - [x] 10.1 Check: If `new_sequences_added` was `True`, report need to re-run `sync` and exit. (`2025-05-01T13:47:53+08:00`)
   - [x] 10.2 Check: If Step 7 completed AND `new_sequences_added` was `False`, report successful completion and exit 0. (`2025-05-01T13:47:53+08:00`)
+  - [x] Test Step 10 Completion: Run `sync` where Steps 7 & 9 find nothing to do. Assert exit code 0 and success message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 10 Iteration: Run `sync` after Step 9 added a sequence. Assert exit code 0 and re-run message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test `--dry-run`: Run various scenarios with `--dry-run`, assert no file changes occur and appropriate log messages appear. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test `--prune` (requires careful mocking of `shutil.rmtree`). (`2025-05-01T17:23:43+08:00`)
 
 ## **Phase M: Test Coverage for Tool Sync Workflow (Phase L)**
 # Goal: Implement comprehensive unit and integration tests for the Phase L functionality.
@@ -450,7 +454,7 @@
   - [x] Test `save_tool_index`: Successful save, check sorting, check trailing newline. (`2025-05-01T17:10:35+08:00`)
   - [x] Test `get_index_entry`: Base command found/not found, subcommand found/not found (nested), invalid base entry type. (`2025-05-01T17:10:35+08:00`)
   - [x] Test `update_index_entry`: Update existing base, update existing sub, create new base, create new sub (incl. creating intermediate dicts), update with different data types. (`2025-05-01T17:10:35+08:00`)
-  - [ ] Test `load_update_and_save_entry` (requires mocking `FileLock` and other utils).
+  - [ ] Test `load_update_and_save_entry` (requires mocking `FileLock` and other utils). *(Note: Function may be obsolete; direct load/update/save utils are tested).*
   - [x] Test `update_json_crc_tool.py` script: (`2025-05-01T13:52:13+08:00`)
     - [x] Handles file not found (target JSON). (`2025-05-01T13:52:13+08:00`)
     - [x] Handles file not found (index). (`2025-05-01T13:52:13+08:00`)
@@ -462,22 +466,25 @@
     - [x] No update needed (CRC matches). (`2025-05-01T13:52:13+08:00`)
     - [x] Edge case path parsing. (`2025-05-01T13:52:13+08:00`)
 
-- [ ] **4. Unit Tests: `tool_path_utils.py`**
+- [x] **4. Unit Tests: `tool_path_utils.py`** (`2025-05-01T17:10:35+08:00`)
   - [x] Test `command_sequence_to_filepath`: Base, sub, subsub, non-existent. (`2025-05-01T17:10:35+08:00`)
   - [x] Test `command_sequence_to_id`. (`2025-05-01T17:10:35+08:00`)
   - [x] Test `calculate_crc32_hex` with known inputs. (`2025-05-01T17:10:35+08:00`)
 
-- [x] **5. Unit Tests: `podman_utils.py` & `baseline_generator.py` (Mocking `subprocess`)**
+- [x] **5. Unit Tests: `podman_utils.py` & `baseline_generator.py` (Mocking `subprocess`)** (`2025-05-01T17:10:35+08:00`)
   - [x] Test `podman_utils._run_podman_command`: Mock `subprocess.run`, test success, non-zero exit, exception scenarios, capture stdout/stderr. (`2025-05-01T17:10:35+08:00`)
   - [x] Test `baseline_generator._capture_command_output`: Verify correct construction of `podman exec` command (incl. `sh -c`, PATH, `| cat`). Test handling of Python script override vs standard tool. Mock `_execute_capture_in_podman` return values (success, failure, empty output). (`2025-05-01T17:10:35+08:00`)
   - [x] Test `baseline_generator._execute_capture_in_podman`: Mock `_run_podman_command` return values (CompletedProcess with different stdout/stderr/returncode, including 127). Verify correct return tuple (stdout bytes, stderr bytes, exit code) or exception handling. (`2025-05-01T17:10:35+08:00`)
 
-- [ ] **6. Integration Tests: `sync.py` (`zlt tools sync` using `CliRunner`)**
+- [x] **6. Integration Tests: `sync.py` (`zlt tools sync` using `CliRunner`)** (`2025-05-01T17:23:43+08:00`)
   - [ ] Setup: Use fixtures to create temporary `pyproject.toml`, mock `venv/bin` contents, mock `tools/` structure, mock Podman interactions (e.g., mock `_start/stop_podman_runner`, `_capture_command_output`).
-  - [ ] Test Step 3 Failures: Run `sync` with mock venv containing unclassified tool. Assert exit code > 0 and expected error message.
-  - [ ] Test Step 4 Failures: Run `sync` with mock `tools/` containing orphan dir. Assert exit code > 0 and expected error message.
-  - [ ] Test Step 6 Success (No Change): Run `sync --generate` with consistent index/txt/json. Assert exit code 0, no file changes, index check timestamps updated.
-  - [ ] Test Step 6 Success (Baseline Update): Run `sync --generate` with inconsistent index/txt (CRC mismatch). Assert exit code 0, `.txt` file updated, index entry updated (CRC, timestamps).
-  - [ ] Test Step 6 Timestamp Logic: Test `--force`, `--check-since-hours` skipping/processing scenarios.
-  - [ ] Test Step 6 Warning/Failure: Simulate >3 rapid updates (mock `time.time`?), assert exit code > 0 and warning message.
-  - [ ] Test Step 7 Failure (Missing JSON): Run `sync` with `.txt` present but `.json`
+  - [x] Test Step 3 Failures: Run `sync` with mock venv containing unclassified tool. Assert exit code > 0 and expected error message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 4 Failures: Run `sync` with mock `tools/` containing orphan dir. Assert exit code > 0 and expected error message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 6 Success (No Change): Run `sync --generate` with consistent index/txt/json. Assert exit code 0, no file changes, index check timestamps updated. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 6 Success (Baseline Update): Run `sync --generate` with inconsistent index/txt (CRC mismatch). Assert exit code 0, `.txt` file updated, index entry updated (CRC, timestamps). (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 6 Timestamp Logic: Test `--force`, `--check-since-hours` skipping/processing scenarios. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 6 Warning/Failure: Simulate >3 rapid updates (mock `time.time`?), assert exit code > 0 and warning message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 7 Failure (Missing JSON): Run `sync` with `.txt` present but `.json` missing. Assert exit code > 0 and specific failure message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 7 Failure (Outdated JSON): Run `sync` with `.json` CRC mismatch. Assert exit code > 0 and specific failure message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 9 Discovery: Run `sync` with consistent parent JSON containing a new, whitelisted subcommand. Assert exit code 0, new entry added to index (with `crc=None`), correct reporting message. (`2025-05-01T17:23:43+08:00`)
+  - [x] Test Step 10 Completion: Run `sync` where Steps 7 & 9 find nothing to do. Assert exit code 0 and success message. (`2025-05-01T17:23:43+08:00`)

@@ -2,6 +2,7 @@
 
 import structlog
 from typing import List, Dict, Union, Optional, Tuple, Literal
+from tomlkit.items import Array
 
 log = structlog.get_logger()
 
@@ -14,24 +15,28 @@ ParsedHierarchy = Dict[str, NodeData]
 # --- Parsing --- #
 
 
-def parse_to_nested_dict(raw_list: list[str] | set[str]) -> ParsedHierarchy:
+def parse_to_nested_dict(raw_list: list[str] | set[str] | Array) -> ParsedHierarchy:
     """Parses a list or set of strings with hierarchy into a nested dictionary.
 
     Handles entries like "tool", "tool:*", "tool:sub", "tool:sub:subsub", "tool:sub:*".
     Uses special keys '_explicit' and '_all' within nodes.
     Comma separation applies only to the *last* component.
+    Accepts standard list/set or tomlkit.items.Array.
     """
     root: ParsedHierarchy = {}
 
-    # Accept both list and set as input
-    if not isinstance(raw_list, (list, set)):
+    # Accept list, set, or tomlkit Array as input
+    if not isinstance(raw_list, (list, set, Array)):
         log.warning(
-            "Managed tools list is not a valid list or set. Returning empty structure.",
+            "Managed tools list is not a valid list, set, or tomlkit.items.Array. Returning empty structure.",
             received_type=type(raw_list).__name__,
         )
         return {}
 
-    for entry in raw_list:
+    # Convert to list for uniform processing if it's an Array
+    processed_list = list(raw_list) if isinstance(raw_list, Array) else raw_list
+
+    for entry in processed_list:
         if not isinstance(entry, str):
             log.warning("Ignoring non-string entry in managed tools list.", entry=entry)
             continue

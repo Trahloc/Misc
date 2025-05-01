@@ -9,11 +9,14 @@ import shutil
 import itertools
 import subprocess
 import hashlib
+import logging  # Add logging import for level names
 from pathlib import Path
 from typing import Tuple, List, Dict, Any, Optional, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed, Future
 import os
 import json as json_lib  # Alias to avoid conflict
+from ...common.config_loader import load_config
+from ...common.logging_utils import setup_structlog_logging  # ADD NEW IMPORT
 
 # TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module needs to filter command sequences based on resolved hierarchical status.
 
@@ -28,7 +31,13 @@ from .reconcile import (
     # _get_effective_status, # Import checker from tool_reconciler
 )
 from ...lib.tooling.tool_reconciler import _get_effective_status  # Import checker
-from ...common.hierarchical_utils import ParsedHierarchy  # Import type
+from ...common.hierarchical_utils import (
+    ParsedHierarchy,
+    check_list_conflicts,
+    get_effective_status,
+    parse_to_nested_dict,
+)
+from ...common.path_utils import list_executables_in_venv_bin  # ADDED IMPORT
 
 # Need baseline generation logic
 # TODO: Move baseline_generator to a shared location
@@ -96,8 +105,14 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
     wheel_dir.mkdir()
     try:
         # Use python -m build to build the wheel
+        # Correct path construction: venv_path should already point to the bin dir
+        host_python_exe = venv_path / "python"
+        if not host_python_exe.is_file():
+            log.error(f"Host python executable not found in venv bin: {host_python_exe}")
+            return False
+
         build_cmd = [
-            str(venv_path / "bin" / "python"),  # Use python from host venv
+            str(host_python_exe),  # Use python from host venv
             "-m",
             "build",
             "--wheel",  # Build only wheel
@@ -124,7 +139,8 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
     # --- End Build local project wheel --- #
 
     # --- Ensure host venv exists (to get python) --- #
-    host_python_path = venv_path / "bin" / "python"
+    # Correct path construction: venv_path should already point to the bin dir
+    host_python_path = venv_path / "python"
     if not host_python_path.is_file():
         log.error(f"Host `python` executable not found at: {host_python_path}. Cannot proceed.")
         return False
@@ -730,12 +746,136 @@ def _update_and_save_index(
     return final_index_data, index_errors, updated_count, skipped_count
 
 
-# === Main Sync Command (Orchestrator) ===
+# === Helper Functions ===
+
+
+def _load_initial_config_and_state(
+    ctx: click.Context,
+) -> Tuple[Path, Dict[str, Any], Path, List[str], ParsedHierarchy, ParsedHierarchy]:
+    """Handles Steps 1-3: Load config, find venv, discover executables, classify."""
+    log.debug("Entering _load_initial_config_and_state...")
+
+    # --- Step 1: Project Root and Config --- #
+    # Get project_root from context (assuming cli.py set it up)
+    project_root = ctx.obj.get("project_root")
+    if not project_root or not isinstance(project_root, Path):
+        ctx.fail("Project root not found or invalid in context.")
+
+    # --- REMOVE WORKAROUND --- #
+    # config_file_path = project_root / "pyproject.toml"
+    # log.debug("Attempting direct config load (simplified)", path=str(config_file_path))
+    # # Simplified load_config now returns just the [tool.zeroth-law] section
+    # zlt_config = load_config(config_file_path)
+    # if not zlt_config:
+    #     log.warning("Direct config loading returned empty dict. Proceeding with defaults.")
+    #     # Handle defaults if needed, or rely on downstream .get() with defaults
+    # --- END REMOVE WORKAROUND --- #
+
+    # --- USE CONTEXT CONFIG --- #
+    config = ctx.obj.get("config")
+    if not config or not isinstance(config, dict):
+        log.warning("Config not found or invalid in context. Proceeding with empty config.")
+        config = {}
+    # Add debug log for context config
+    log.debug("Using config from context", config_id=id(config), config_keys=list(config.keys()))
+    # --- END USE CONTEXT CONFIG --- #
+
+    # Venv Path Determination (relative to project root)
+    # TODO: Make this configurable?
+    venv_bin_path = project_root / ".venv" / "bin"
+    if not venv_bin_path.is_dir():
+        ctx.fail(f"Virtual environment bin directory not found: {venv_bin_path}")
+    log.info(f"Using virtual environment bin path: {venv_bin_path}")
+
+    # --- Step 2: Discover Executables --- #
+    log.info("Step 2: Discovering executables in venv bin...")
+    try:
+        all_executables = list_executables_in_venv_bin(venv_bin_path)
+    except FileNotFoundError as e:
+        ctx.fail(str(e))
+    except OSError as e:
+        ctx.fail(f"Error reading executables from {venv_bin_path}: {e}")
+    log.info(f"Found {len(all_executables)} potential executables in venv bin.")
+    log.debug("Raw executables found:", executables=sorted(all_executables))
+
+    # --- Step 3: Filter based on Whitelist/Blacklist --- #
+    log.info("Step 3: Filtering executables based on whitelist/blacklist...")
+    managed_executables = []
+    unclassified_executables = []
+    blacklisted_found = []
+    whitelist_tree = {}
+    blacklist_tree = {}
+
+    try:
+        # Extract managed-tools section directly from the CONTEXT config
+        # Note: load_config now includes managed-tools in its return dict
+        managed_tools_config = config.get("managed-tools", {})
+        log.debug(
+            "Accessing managed-tools from CONTEXT config",
+            type=type(managed_tools_config).__name__,
+            value=repr(managed_tools_config),
+        )
+
+        # Get raw lists
+        raw_whitelist = managed_tools_config.get("whitelist", [])
+        raw_blacklist = managed_tools_config.get("blacklist", [])
+
+        # Check for conflicts before parsing
+        # Pass the PARSED trees, not the raw lists
+        conflict_msg = check_list_conflicts(whitelist_tree, blacklist_tree)
+        if conflict_msg:
+            ctx.fail(f"Configuration Error: {conflict_msg}")
+
+        # Parse lists into hierarchical trees
+        # Need to import parse_to_nested_dict
+        whitelist_tree = parse_to_nested_dict(raw_whitelist)
+        blacklist_tree = parse_to_nested_dict(raw_blacklist)
+        log.debug("Whitelist tree parsed", tree=whitelist_tree)
+        log.debug("Blacklist tree parsed", tree=blacklist_tree)
+
+        # Classify executables
+        for exe in all_executables:
+            status = get_effective_status([exe], whitelist_tree, blacklist_tree)
+            if status == "WHITELISTED":
+                managed_executables.append(exe)
+            elif status == "BLACKLISTED":
+                blacklisted_found.append(exe)
+            else:  # UNSPECIFIED
+                unclassified_executables.append(exe)
+
+        # Report results
+        log.info(
+            "Executable classification complete.",
+            whitelisted_count=len(managed_executables),
+            blacklisted_count=len(blacklisted_found),
+            unclassified_count=len(unclassified_executables),
+        )
+        if blacklisted_found:
+            log.debug("Blacklisted executables found and ignored:", blacklisted=sorted(blacklisted_found))
+
+        # Check for unclassified executables (Step 3.7 - Failure condition)
+        if unclassified_executables:
+            log.error(
+                "Sync Failed: The following executables found in venv are not classified in whitelist or blacklist:",
+                unclassified=sorted(unclassified_executables),
+            )
+            log.error(
+                "Please classify them using `zlt tools whitelist add <tool>` or `zlt tools blacklist add <tool>`."
+            )
+            ctx.fail("Unclassified executables found.")  # Use ctx.fail
+
+    except Exception as e:
+        log.exception(f"Failed during whitelist/blacklist processing: {e}")
+        ctx.fail(f"Failed during whitelist/blacklist processing: {e}")
+
+    # --- Return values --- #
+    # Return project_root, the CONTEXT config, venv_bin_path, managed_executables, and parsed trees
+    return project_root, config, venv_bin_path, sorted(managed_executables), whitelist_tree, blacklist_tree
 
 
 @click.command("sync")
-# @common_options # Apply common options using the decorator - Temporarily disable
-# Manually add ALL options for debugging
+# @common_options # Apply common options using the decorator - RE-ENABLED -- REMOVE THIS LINE
+# Manually add ALL options for debugging - REMOVED -- RESTORE THESE
 @click.option(
     "--tool",
     "specific_tools",
@@ -783,9 +923,17 @@ def _update_and_save_index(
     help="Exit sync after this many baseline generation errors (FAILED_CAPTURE).",
     show_default="No limit",
 )
+@click.option("--debug", is_flag=True, default=False, help="Enable DEBUG level logging for sync.")
+# Add back other necessary options MANUALLY if common_options added them before
+# Example: Check zlt_options_definitions.json for verbose, config, quiet, color
+# These are typically handled by the main CLI group and accessed via ctx
 @click.pass_context
 def sync(
     ctx: click.Context,
+    # Manually list expected arguments from common_options and sync-specific ones -- REVERT THIS
+    # Arguments from common_options (verify these match zlt_options_definitions.json) -- REMOVE
+    # verbose: int, # Maps to -v count -- REMOVE
+    # Arguments specific to 'sync' that were previously manually defined -- Keep these args
     specific_tools: Tuple[str, ...],
     force: bool,
     prune: bool,
@@ -794,92 +942,40 @@ def sync(
     update_since_hours: int,
     dry_run: bool,
     exit_errors: Optional[int],
+    debug: bool,  # Add debug flag parameter
 ) -> None:
     """Syncs the local tool definitions with the managed tools and generates baselines."""
     start_time = time.time()
+
+    # --- Add NEW Logging Setup --- #
+    if debug:
+        # Simplest approach for now: reconfigure globally
+        global_options = ctx.obj.get("options", {})
+        color = global_options.get("color")  # Get color preference if set globally
+        setup_structlog_logging("debug", color)
+        log.info("DEBUG logging enabled for sync command.")
+    # --- End NEW Logging Setup --- #
+
+    # Original start message
     log.info(f"Starting zlt tools sync... (Dry Run: {dry_run})")
 
-    # --- Step 1: Environment Setup ---
-    try:
-        venv_path = Path(sys.prefix)
-        venv_bin_path = venv_path / "bin"
-        if not venv_bin_path.is_dir():
-            log.error(f"Could not locate 'bin' directory in virtual environment: {venv_path}")
-            ctx.exit(1)
-        log.info(f"Using virtual environment bin path: {venv_bin_path.resolve()}")
-    except Exception as e:
-        log.exception(f"Failed during environment setup: {e}")
-        ctx.exit(1)
-    # --- End Step 1 ---
+    # === Call new helper for Steps 1-3 ===
+    project_root, config, venv_bin_path, managed_executables, whitelist_tree, blacklist_tree = (
+        _load_initial_config_and_state(ctx)
+    )
 
-    # --- Step 2: Discover Executables ---
-    try:
-        raw_executables = [f.name for f in venv_bin_path.iterdir() if f.is_file() and os.access(f, os.X_OK)]
-        log.info(f"Found {len(raw_executables)} potential executables in venv bin.")
-        if not raw_executables:
-            log.warning(f"No executables found in {venv_bin_path}. Cannot proceed with sync.")
-            ctx.exit(0)  # Not an error, just nothing to sync
-    except Exception as e:
-        log.exception(f"Failed during executable discovery: {e}")
-        ctx.exit(1)
-    # --- End Step 2 ---
+    # Check if managed_executables is empty after initial load
+    if not managed_executables:
+        log.warning("No whitelisted executables identified. Nothing further to sync.")
+        ctx.exit(0)
+    # === End call ===
 
-    # --- Step 3: Filter & Validate Whitelist/Blacklist ---
-    managed_executables = []
-    unclassified_executables = []
-    whitelist_tree: ParsedHierarchy = {}
-    blacklist_tree: ParsedHierarchy = {}
-    try:
-        # 3.1 Load hierarchical lists
-        raw_whitelist = config.get("managed-tools", {}).get("whitelist", [])
-        raw_blacklist = config.get("managed-tools", {}).get("blacklist", [])
-        whitelist_tree = parse_to_nested_dict(raw_whitelist)
-        blacklist_tree = parse_to_nested_dict(raw_blacklist)
-        log.debug(f"Whitelist tree parsed: {whitelist_tree}")
-        log.debug(f"Blacklist tree parsed: {blacklist_tree}")
-
-        # 3.2 & 3.3 Check for conflicts
-        conflicts = check_list_conflicts(whitelist_tree, blacklist_tree)
-        if conflicts:
-            log.error(
-                "Configuration Error: The following items are explicitly listed in BOTH whitelist and blacklist in pyproject.toml:",
-                conflicts=conflicts,
-            )
-            ctx.exit(1)
-
-        # 3.4 (Function exists), 3.5 (Init lists), 3.6 (Iterate and classify)
-        for exe_name in raw_executables:
-            status = get_effective_status([exe_name], whitelist_tree, blacklist_tree)
-            if status == "UNSPECIFIED":
-                unclassified_executables.append(exe_name)
-            elif status == "WHITELISTED":
-                managed_executables.append(exe_name)
-            # Ignore BLACKLISTED
-
-        # 3.7 Fail if unclassified found
-        if unclassified_executables:
-            log.error(
-                "Sync Failed: The following executables found in venv are not classified in whitelist or blacklist:",
-                unclassified=sorted(unclassified_executables),
-            )
-            log.error(
-                "Please classify them using `zlt tools add-whitelist <tool>` or `zlt tools add-blacklist <tool>`."
-            )
-            ctx.exit(1)
-
-        # 3.8 Verification Log
-        log.info(f"Identified {len(managed_executables)} effectively whitelisted executables.")
-        if not managed_executables:
-            log.warning("No whitelisted executables found. Nothing to sync.")
-            ctx.exit(0)
-
-    except Exception as e:
-        log.exception(f"Failed during whitelist/blacklist processing: {e}")
-        ctx.exit(1)
-    # --- End Step 3 ---
-
-    # --- Step 4: Reconcile tools/ Directory Structure ---
+    # Also define tool_defs_dir and tool_index_path here as they depend on project_root
     tool_defs_dir = project_root / "src" / "zeroth_law" / "tools"
+    tool_index_path = tool_defs_dir / "tool_index.json"
+
+    # --- Step 4: Reconcile tools/ Directory Structure --- (Keep inline for now)
+    log.info("Step 4: Reconciling tools/ directory structure...")
     orphan_dirs = []
     try:
         # 4.1 Define tools_base_dir (done above)
@@ -903,7 +999,7 @@ def sync(
                 orphans=sorted(orphan_dirs),
             )
             log.error("Please add relevant tools to the whitelist or manually remove these directories.")
-            ctx.exit(1)
+            ctx.fail("Orphaned/Blacklisted tool directories found.")  # Use ctx.fail
 
         # 4.6 Ensure directories exist for managed executables
         for tool_name in managed_executables:
@@ -917,10 +1013,11 @@ def sync(
 
     except Exception as e:
         log.exception(f"Failed during tools/ directory reconciliation: {e}")
-        ctx.exit(1)
-    # --- End Step 4 ---
+        ctx.fail(f"Failed during tools/ directory reconciliation: {e}")
+    # --- End Step 4 --- #
 
-    # --- Step 5: Identify Effectively Whitelisted Command Sequences ---
+    # --- Step 5: Identify Effectively Whitelisted Command Sequences --- (Keep inline for now)
+    log.info("Step 5: Identifying effectively whitelisted command sequences...")
     whitelisted_sequences: List[Tuple[str, ...]] = []
     try:
         # 5.1-5.4 Call the new scanner function
@@ -931,25 +1028,24 @@ def sync(
         # 5.6 Verification Log (moved inside function, but can log summary here too)
         log.info(f"Total effectively whitelisted command sequences identified: {len(whitelisted_sequences)}")
         if not whitelisted_sequences:
-            log.warning("No effectively whitelisted command sequences found. Nothing to sync.")
+            log.warning("No effectively whitelisted command sequences found. Nothing further to sync.")
             ctx.exit(0)
     except Exception as e:
         log.exception(f"Failed during command sequence identification: {e}")
-        ctx.exit(1)
-    # --- End Step 5 ---
+        ctx.fail(f"Failed during command sequence identification: {e}")
+    # --- End Step 5 --- #
 
-    # --- Podman Setup (Steps 6.3, 6.4) ---
+    # --- Podman Setup (Steps 6.3, 6.4) --- # Restore Podman Block
     container_name: Optional[str] = None  # Initialize
     podman_setup_successful = False
     if generate_baselines:
         try:
             container_name = _get_container_name(project_root)
-            # TODO: Need to pass the venv_path determined in Step 1
-            podman_setup_successful = _start_podman_runner(container_name, project_root, venv_path)
+            podman_setup_successful = _start_podman_runner(
+                container_name, project_root, venv_bin_path
+            )  # Pass venv_bin_path
             if not podman_setup_successful:
                 log.error("Podman runner setup failed. Cannot generate baselines.")
-                # Decide if this is a fatal error for the whole sync or just baseline part
-                # For now, let's make it fatal if --generate was explicitly requested.
                 ctx.exit(1)
             else:
                 log.info(f"Podman runner container '{container_name}' started successfully.")
@@ -963,364 +1059,78 @@ def sync(
             ctx.exit(1)
     else:
         log.info("Skipping Podman setup as --generate flag was not provided.")
-    # --- End Podman Setup ---
+    # --- End Podman Setup --- #
 
-    # --- Main Sync Logic within Podman Context ---
+    # --- Main Sync Logic within Podman Context --- # Restore Main Logic
     exit_code = 0
     all_errors: List[str] = []
     generated_outputs_dir = project_root / "generated_command_outputs"
     generated_outputs_dir.mkdir(parents=True, exist_ok=True)
-    tool_index_path = tool_defs_dir / "tool_index.json"
+    tool_index_path = tool_defs_dir / "tool_index.json"  # Define index path here
+    initial_index_data = load_tool_index()
+    final_index_data = initial_index_data.copy()
+    processed_count = 0
+    updated_count = 0
+    skipped_count = 0
+
+    # Timestamp for --skip-hours logic
+    since_timestamp = time.time() - (ground_truth_txt_skip_hours * 3600) if ground_truth_txt_skip_hours > 0 else None
 
     try:
-        # --- Step 6: .txt Baseline Generation & Verification --- #
-        # 6.1 Init warning count
-        recent_update_warning_count = 0
-        # 6.2 Load index (using standalone function)
-        initial_index_data = load_tool_index()  # Load using the util function
-        current_index_data = initial_index_data.copy()  # Work on a copy
+        # --- Step 6 & Parts of 7, 9, 10 (Parallel Processing) --- # Restore Parallel Processing
+        if generate_baselines and not podman_setup_successful:
+            log.error("Cannot proceed with baseline generation, Podman setup failed.")
+            all_errors.append("Podman setup failed.")
+            exit_code = 1
+        elif whitelisted_sequences:
+            # Only run if generate_baselines is true OR if we just need to check index/skeletons?
+            # Current logic implies baseline check/gen always happens if sequences exist.
+            # TODO: Revisit if sync should run without --generate to only check JSON/index.
+            if not container_name and generate_baselines:
+                log.error("Logic error: generate_baselines is true but container_name is not set.")
+                ctx.exit(1)  # Should not happen if setup logic is correct
 
-        results_list: List[Dict[str, Any]] = []  # Store results for final index update
+            # Determine max workers (e.g., based on CPU count, capped)
+            # TODO: Make max_workers configurable?
+            max_workers = max(1, os.cpu_count() // 2 if os.cpu_count() else 4)  # Example logic
 
-        if generate_baselines and podman_setup_successful and container_name:
-            log.info(f"Starting baseline generation/verification for {len(whitelisted_sequences)} sequences...")
-            # Convert --since string to timestamp if provided
-            since_dt = None
-            # ... (Add logic to parse --since string to datetime/timestamp) ...
-
-            # Loop 6.5
-            for sequence in whitelisted_sequences:
-                command_id = "_".join(sequence)
-                log.info(f"Processing sequence: {command_id}")
-                check_timestamp = time.time()  # Timestamp for this specific check
-                sequence_updated = False
-                calculated_crc: Optional[str] = None
-
-                # 6.5.1 Lookup entry using util
-                index_entry = get_index_entry(current_index_data, sequence)
-
-                # 6.5.2 Timestamp Check
-                should_process = True
-                if not force and index_entry:
-                    last_checked = index_entry.get("checked_timestamp", 0.0)
-                    if last_checked > (check_timestamp - ground_truth_txt_skip_hours * 3600):
-                        log.debug(
-                            f"Skipping {command_id}: Checked recently within {ground_truth_txt_skip_hours} hours."
-                        )
-                        should_process = False
-
-                if should_process:
-                    # 6.5.3 Podman Execution
-                    # Construct the full command including --help
-                    help_command_sequence = sequence + ("--help",)
-                    captured_output_bytes: Optional[bytes] = None
-                    exit_code_capture: int = -1
-                    try:
-                        captured_output_bytes, _, exit_code_capture = _capture_command_output(
-                            help_command_sequence,
-                            project_root=project_root,
-                            container_name=container_name,
-                        )
-                    except Exception as capture_err:
-                        log.error(f"Failed to capture output for {command_id}: {capture_err}", exc_info=True)
-                        all_errors.append(f"Capture failed: {command_id}")
-                        # Optionally implement --exit-errors limit here
-                        continue  # Skip to next sequence on capture failure
-
-                    if captured_output_bytes is None:
-                        log.error(f"Capture failed for {command_id} (Exit: {exit_code_capture}). Skipping.")
-                        all_errors.append(f"Capture failed: {command_id} (Exit: {exit_code_capture})")
-                        continue
-
-                    # 6.5.4 CRC Calculation
-                    # Use the util function for consistency
-                    calculated_crc = calculate_crc32_hex(captured_output_bytes)
-
-                    # 6.5.5 Comparison & Update
-                    index_crc = index_entry.get("crc") if index_entry else None
-
-                    if calculated_crc != index_crc:
-                        log.info(
-                            f"CRC mismatch for {command_id} (Index: {index_crc}, Calc: {calculated_crc}). Updating."
-                        )
-                        # Check --update-since
-                        last_updated = index_entry.get("updated_timestamp", 0.0) if index_entry else 0.0
-                        if not force and last_updated > (check_timestamp - update_since_hours * 3600):
-                            log.warning(
-                                f"Baseline for '{command_id}' updated again within {update_since_hours}h period."
-                            )
-                            recent_update_warning_count += 1
-
-                        # Write .txt file
-                        txt_path = command_sequence_to_filepath(sequence, tool_defs_dir, ".txt")
-                        try:
-                            txt_path.parent.mkdir(parents=True, exist_ok=True)
-                            txt_path.write_bytes(captured_output_bytes)
-                            log.debug(f"Wrote baseline to {txt_path.relative_to(project_root)}")
-                        except OSError as write_err:
-                            log.error(f"Failed to write baseline file {txt_path}: {write_err}")
-                            all_errors.append(f"Write failed: {command_id}")
-                            continue  # Skip index update if write fails
-
-                        # Update index data (in memory copy)
-                        update_data = {
-                            "crc": calculated_crc,
-                            "updated_timestamp": check_timestamp,  # Use current check time as update time
-                            "checked_timestamp": check_timestamp,
-                            "baseline_file": txt_path.relative_to(
-                                txt_path.parent.parent
-                            ).as_posix(),  # Store relative path
-                            "json_definition_file": command_sequence_to_filepath(sequence, tool_defs_dir, ".json")
-                            .relative_to(tool_defs_dir)
-                            .as_posix(),
-                        }
-                        if not update_index_entry(current_index_data, sequence, update_data):
-                            log.error(f"Failed to update index in memory for {command_id}")
-                            all_errors.append(f"Index update failed: {command_id}")
-                        else:
-                            sequence_updated = True  # Mark that this sequence was updated
-                    else:
-                        log.debug(f"CRC match for {command_id}. Updating check timestamp only.")
-                        # Update only check timestamp
-                        if index_entry:  # Should exist if CRC matched
-                            update_data = {"checked_timestamp": check_timestamp}
-                            if not update_index_entry(current_index_data, sequence, update_data):
-                                log.error(f"Failed to update check timestamp for {command_id}")
-                                all_errors.append(f"Check timestamp update failed: {command_id}")
-                else:
-                    # Timestamp check indicated skip, but update check time if entry exists
-                    if index_entry:
-                        update_data = {"checked_timestamp": check_timestamp}
-                        if not update_index_entry(current_index_data, sequence, update_data):
-                            log.error(f"Failed to update check timestamp (skipped seq): {command_id}")
-                            all_errors.append(f"Check timestamp update failed (skipped): {command_id}")
-
-                # --- TODO: Store results for final summary/index save? ---
-                # if sequence_updated or should_process:
-                #     results_list.append({"sequence": command_id, "status": "UPDATED" if sequence_updated else "CHECKED", "crc": calculated_crc})
-
-            # 6.7 Check warning count
-            if recent_update_warning_count >= 3:
-                log.error(
-                    "Sync Failed: >= 3 baselines updated within --update-since period. Investigate potential instability."
-                )
-                # Decide if this is fatal (ctx.exit?) or just an error message
-                all_errors.append("Rapid baseline update detected.")
-                exit_code = 1  # Mark error
-
-            # 6.6 Save index (using util function)
-            # Save the potentially modified index data *after* the loop
-            if not dry_run:
-                if not save_tool_index(current_index_data):
-                    log.error("Failed to save updated tool index.")
-                    all_errors.append("Index save failure.")
-                    exit_code = 1
-                else:
-                    log.info("Tool index saved successfully.")
-            else:
-                log.info("[Dry Run] Skipping final tool index save.")
-        elif generate_baselines:
-            log.warning("Skipping baseline generation because Podman setup failed or container name is missing.")
-        else:
-            log.info("Skipping baseline generation (--generate not specified).")
-
-        # --- Step 7: Identify Missing/Outdated JSON --- #
-        log.info("Checking for missing or outdated JSON definitions...")
-        interpretation_needed = False
-        first_needed_sequence = None
-        first_needed_json_path = None
-
-        # 7.1 Use current_index_data loaded/updated in Step 6
-        # 7.2 Loop through index entries
-        for sequence_tuple, entry_data in current_index_data.items():
-            # Ensure sequence_tuple is used correctly (it should be the tuple key if index uses tuples)
-            # If index uses string keys, split it:
-            # sequence = tuple(sequence_key.split(" ")) # Adjust if using string keys
-            sequence = sequence_tuple  # Assuming tuple keys for now based on util structure
-
-            # 7.3.1 Check effective status
-            status = get_effective_status(list(sequence), whitelist_tree, blacklist_tree)
-            if status != "WHITELISTED":
-                # log.debug(f"Skipping JSON check for non-whitelisted sequence: {sequence}")
-                continue
-
-            # 7.3.2 Determine paths
-            txt_path = command_sequence_to_filepath(sequence, tool_defs_dir, ".txt")
-            json_path = command_sequence_to_filepath(sequence, tool_defs_dir, ".json")
-
-            # 7.3.3 Check TXT baseline existence
-            if not txt_path.exists():
-                log.warning(f"Cannot check JSON consistency for '{sequence}', baseline TXT missing at {txt_path}")
-                continue  # Cannot determine consistency without ground truth TXT
-
-            # 7.3.4 Check JSON existence
-            needs_interpretation_flag = False
-            if not json_path.exists():
-                log.info(f"JSON definition missing for whitelisted sequence '{sequence}' at {json_path}")
-                needs_interpretation_flag = True
-            else:
-                # 7.3.5 Load JSON and check CRC
-                try:
-                    json_content = json_lib.load(json_path.open(encoding="utf-8"))
-                    json_crc = json_content.get("metadata", {}).get("ground_truth_crc")
-                    index_crc = entry_data.get("crc")
-
-                    # Handle potential hex strings vs int if needed, assume strings for now
-                    # Normalize comparison
-                    norm_json_crc = str(json_crc).lower() if json_crc is not None else None
-                    norm_index_crc = str(index_crc).lower() if index_crc is not None else None
-
-                    placeholder_crcs = {None, "0x0", "0x00000000"}
-
-                    if norm_json_crc != norm_index_crc or norm_json_crc in placeholder_crcs:
-                        log.info(
-                            f"JSON definition outdated/placeholder for '{sequence}' (Index CRC: {norm_index_crc}, JSON CRC: {norm_json_crc})"
-                        )
-                        needs_interpretation_flag = True
-
-                except (json_lib.JSONDecodeError, OSError) as json_err:
-                    log.warning(
-                        f"Could not load or parse existing JSON for '{sequence}' at {json_path}: {json_err}. Flagging for interpretation."
-                    )
-                    needs_interpretation_flag = True
-                except Exception as unexpected_err:
-                    log.exception(f"Unexpected error checking JSON for '{sequence}' at {json_path}: {unexpected_err}")
-                    needs_interpretation_flag = True  # Err on safe side
-
-            # 7.3.6 Fail fast if interpretation needed
-            if needs_interpretation_flag:
-                interpretation_needed = True
-                first_needed_sequence = sequence
-                first_needed_json_path = json_path
-                break  # Stop checking others
-
-        # Check outcome of the loop
-        if interpretation_needed:
-            log.error(f"Sync Halted: Interpretation needed for '{first_needed_sequence}'.")
-            log.error(f"Target JSON: {first_needed_json_path.relative_to(project_root)}")
-            log.error(
-                "Please run AI interpretation (Step 8) for this file, ensuring metadata.ground_truth_crc is updated via script, then re-run sync."
+            results, parallel_errors, processed_count = _run_parallel_baseline_processing(
+                tasks_to_run=whitelisted_sequences,
+                tool_defs_dir=tool_defs_dir,
+                project_root=project_root,
+                container_name=container_name if generate_baselines else "",  # Pass empty if not generating
+                index_data=initial_index_data,
+                force=force,
+                since_timestamp=since_timestamp,
+                ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
+                generated_outputs_dir=generated_outputs_dir,
+                max_workers=max_workers,
+                exit_errors_limit=exit_errors,
             )
-            ctx.exit(1)  # Fail the command
+            all_errors.extend(parallel_errors)
+
+            # Process results to update index
+            final_index_data, index_errors, updated_count, skipped_count = _update_and_save_index(
+                results=results,
+                initial_index_data=initial_index_data,
+                tool_index_path=tool_index_path,
+                dry_run=dry_run,
+            )
+            all_errors.extend(index_errors)
+
+            # Set exit code based on errors during parallel processing or index update
+            if all_errors:
+                exit_code = 1
         else:
-            log.info("JSON definition consistency check passed.")
-            # Proceed to Step 9
-
-        # --- Step 9: Discover Subcommands --- #
-        log.info("Checking for new subcommands defined in consistent JSON files...")
-        new_sequences_added = False
-        # 9.1 Reload index data (or use current_index_data if updates were in-memory)
-        # Let's assume current_index_data is up-to-date after Step 6 save
-
-        items_to_check = list(current_index_data.items())  # Iterate over a copy of items
-
-        # 9.2 Loop through index entries
-        for parent_sequence_tuple, parent_entry_data in items_to_check:
-            parent_sequence = parent_sequence_tuple  # Assuming tuple keys
-            parent_json_path = command_sequence_to_filepath(parent_sequence, tool_defs_dir, ".json")
-
-            # 9.2.1 Consistency Check
-            if not parent_json_path.exists():
-                # log.debug(f"Skipping subcommand discovery for {parent_sequence}: JSON missing.")
-                continue
-            try:
-                parent_json_content = json_lib.load(parent_json_path.open(encoding="utf-8"))
-                parent_json_crc = parent_json_content.get("metadata", {}).get("ground_truth_crc")
-                parent_index_crc = parent_entry_data.get("crc")
-                norm_parent_json_crc = str(parent_json_crc).lower() if parent_json_crc is not None else None
-                norm_parent_index_crc = str(parent_index_crc).lower() if parent_index_crc is not None else None
-
-                if norm_parent_json_crc != norm_parent_index_crc:
-                    # log.debug(f"Skipping subcommand discovery for {parent_sequence}: JSON CRC mismatch.")
-                    continue
-            except Exception:
-                # log.warning(f"Skipping subcommand discovery for {parent_sequence}: Error loading/parsing JSON.")
-                continue  # Skip if JSON is unloadable
-
-            # 9.2.2 Parse JSON (already loaded)
-            # 9.2.3 Find Subcommands (adjust key based on final schema, e.g., 'subcommands_detail')
-            subcommands_to_check = parent_json_content.get("subcommands_detail", {})  # Using example key
-            if not isinstance(subcommands_to_check, dict):
-                # log.debug(f"No valid 'subcommands_detail' dict found in {parent_json_path}")
-                continue
-
-            # 9.2.4 Process Subcommands
-            for subcommand_name in subcommands_to_check.keys():
-                if not isinstance(subcommand_name, str) or not subcommand_name:
-                    continue  # Skip invalid names
-
-                # 9.2.4.1 Construct new sequence
-                new_sequence_list = list(parent_sequence) + [subcommand_name]
-                new_sequence_tuple = tuple(new_sequence_list)
-
-                # 9.2.4.2 Recursion Check
-                if parent_sequence and subcommand_name == parent_sequence[-1]:
-                    log.error(f"Recursive subcommand definition detected: {new_sequence_tuple}")
-                    all_errors.append(f"Recursive subcommand: {new_sequence_tuple}")
-                    # Fail fast on recursion detection?
-                    ctx.exit(1)
-                    # continue # Or just skip this one?
-
-                # 9.2.4.3 Check effective status
-                status = get_effective_status(new_sequence_list, whitelist_tree, blacklist_tree)
-
-                if status == "WHITELISTED":
-                    # 9.2.4.4 Check if already in index & add if not
-                    existing_entry = get_index_entry(current_index_data, new_sequence_tuple)
-                    if not existing_entry:  # Not found
-                        log.info(f"Discovered new whitelisted subcommand sequence: {new_sequence_tuple}")
-                        # Calculate paths for the new entry
-                        new_txt_path = command_sequence_to_filepath(new_sequence_tuple, tool_defs_dir, ".txt")
-                        new_json_path = command_sequence_to_filepath(new_sequence_tuple, tool_defs_dir, ".json")
-                        # Ensure subdirectory exists
-                        new_json_path.parent.mkdir(parents=True, exist_ok=True)
-
-                        # Add entry with placeholder CRC
-                        update_data = {
-                            "crc": None,  # Indicates baseline needs generation
-                            "updated_timestamp": time.time(),
-                            "checked_timestamp": 0.0,  # Needs check
-                            "baseline_file": new_txt_path.relative_to(new_txt_path.parent.parent).as_posix(),
-                            "json_definition_file": new_json_path.relative_to(tool_defs_dir).as_posix(),
-                            "source": "zlt_tools_sync_discovery",
-                        }
-                        if update_index_entry(current_index_data, new_sequence_tuple, update_data):
-                            new_sequences_added = True
-                        else:
-                            log.error(f"Failed to add newly discovered sequence {new_sequence_tuple} to index.")
-                            all_errors.append(f"Index add failed: {new_sequence_tuple}")
-
-        # 9.3 Save index if changes were made
-        if new_sequences_added:
-            log.info(f"Saving index after discovering new subcommand(s)...")
-            if not dry_run:
-                if not save_tool_index(current_index_data):
-                    log.error("Failed to save tool index after subcommand discovery.")
-                    all_errors.append("Index save failure post-discovery.")
-                    exit_code = 1  # Mark error
-            else:
-                log.info("[Dry Run] Skipping index save after subcommand discovery.")
-
-        # --- Step 10: Iteration & Completion --- #
-        # 10.1 Check if new sequences were added
-        if new_sequences_added:
-            log.info("New subcommand sequences were added to the index.")
-            log.info("Please re-run `zlt tools sync --generate` to generate their baselines and continue the process.")
-            # Exit code 0 here, as adding sequences isn't an error, just requires another run.
-            exit_code = 0
-        else:
-            # 10.2 If Step 7 passed (i.e., interpretation_needed was False) and no new sequences added
-            log.info("Sync process complete. Tool index and definitions appear consistent.")
-            exit_code = 0  # Explicitly set success code
-
-        # --- End Step 10 ---
+            log.info("No whitelisted sequences to process.")
+        # --- End Parallel Processing --- #
 
     except Exception as main_e:
         log.exception(f"Error during main sync logic: {main_e}")
         all_errors.append(f"Main sync error: {main_e}")
         exit_code = 1
     finally:
-        # --- Podman Teardown (Step 6.4) --- #
+        # --- Podman Teardown (Step 6.4) --- # Restore Teardown
         if container_name:  # Only try to stop if setup was attempted/successful
             log.info(f"Attempting to stop and remove Podman container: {container_name}")
             try:
@@ -1328,16 +1138,23 @@ def sync(
                 log.info(f"Successfully stopped and removed Podman container: {container_name}")
             except Exception as cleanup_e:
                 log.exception(f"Error during Podman cleanup: {cleanup_e}")
-                # Don't override original exit code if there was one
                 if exit_code == 0:
                     exit_code = 1
                     all_errors.append(f"Podman cleanup error: {cleanup_e}")
-        # --- End Podman Teardown ---
+        # --- End Podman Teardown --- #
 
-    # --- Final Reporting --- #
+    # --- Final Reporting --- # Restore Reporting
     end_time = time.time()
     duration = end_time - start_time
-    log.info(f"Sync completed in {duration:.2f} seconds.")
+    log.info(
+        "Sync summary",
+        duration_seconds=round(duration, 2),
+        processed=processed_count,
+        updated=updated_count,
+        skipped=skipped_count,
+        errors=len(all_errors),
+        exit_code=exit_code,
+    )
     if all_errors:
         log.error("Sync finished with errors:", errors=all_errors)
     else:

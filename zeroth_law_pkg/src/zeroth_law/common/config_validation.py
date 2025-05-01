@@ -79,6 +79,13 @@ class ConfigModel(BaseModel):
         description="Violation rules to ignore during analysis",
     )
 
+    # --- Add managed-tools field --- #
+    managed_tools: dict[str, list[str]] = Field(
+        default={"whitelist": [], "blacklist": []},  # Default empty lists
+        description="Whitelist and blacklist for managed executables in the venv",
+    )
+    # --- End managed-tools field --- #
+
     # Additional validation
     @field_validator("exclude_dirs", "exclude_files")
     @classmethod
@@ -103,6 +110,26 @@ class ConfigModel(BaseModel):
             log.debug("Mapped 'ignore_codes' to 'ignore_rules' for backward compatibility")
 
         return data
+
+    # --- Add validator for managed_tools --- #
+    @field_validator("managed_tools")
+    @classmethod
+    def validate_managed_tools(cls, v: Any) -> dict[str, list[str]]:
+        if not isinstance(v, dict):
+            raise ValueError("managed_tools must be a dictionary")
+        whitelist = v.get("whitelist", [])
+        blacklist = v.get("blacklist", [])
+        if not isinstance(whitelist, list) or not all(isinstance(i, str) for i in whitelist):
+            raise ValueError("managed_tools['whitelist'] must be a list of strings")
+        if not isinstance(blacklist, list) or not all(isinstance(i, str) for i in blacklist):
+            raise ValueError("managed_tools['blacklist'] must be a list of strings")
+        # TODO: Consider adding conflict check validation here?
+        # conflict_msg = check_list_conflicts(whitelist, blacklist)
+        # if conflict_msg:
+        #     raise ValueError(f"Conflict detected: {conflict_msg}")
+        return {"whitelist": whitelist, "blacklist": blacklist}
+
+    # --- End validator --- #
 
 
 def validate_config(config_dict: dict[str, Any]) -> ConfigModel:

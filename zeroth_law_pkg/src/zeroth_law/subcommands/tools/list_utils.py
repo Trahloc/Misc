@@ -61,34 +61,6 @@ def _apply_modification_recursive(
         initial_other_effective_status = _get_effective_status(path, other_hierarchy, target_hierarchy)
 
     if action == "add":
-        # --- Check for Effective No-Op (adding something already covered) --- #
-        if initial_target_effective_status == target_list_name:
-            target_node = get_node(target_hierarchy, path)
-            # Check if the _explicit flag needs setting or if _all matches
-            current_is_explicit = target_node.get("_explicit", False) if target_node else False
-            current_has_all = target_node.get("_all", False) if target_node else False
-
-            # Check if any ancestor has _all=True
-            ancestor_has_all = False
-            for i in range(len(path) - 1, -1, -1):
-                ancestor_path = path[: i + 1]
-                ancestor_node = get_node(target_hierarchy, ancestor_path)
-                if ancestor_node and ancestor_node.get("_all", False):
-                    ancestor_has_all = True
-                    break
-
-            # No-op conditions:
-            # 1. Trying to add exact item that exists explicitly with same _all flag
-            is_identical_existing_node = current_is_explicit and (current_has_all == apply_all)
-            # 2. Trying to add item under an ancestor that already has _all=True
-            is_covered_by_ancestor = ancestor_has_all
-
-            if is_identical_existing_node or is_covered_by_ancestor:
-                log.debug(
-                    f"Item '{path_str}{':*' if apply_all else ''}' already effectively exists in {target_list_name}. No change needed. (Identical: {is_identical_existing_node}, Covered: {is_covered_by_ancestor})"
-                )
-                return False, False
-
         # --- NEW Comprehensive Conflict Check --- #
         conflict_found = False
         conflicting_paths_in_other = []  # Store paths to remove if force=True
@@ -339,9 +311,18 @@ def modify_tool_list(
             other_array.multiline(True)
             managed_tools_table[other_list_name] = other_array
 
-            log.info(f"Writing updated configuration to {pyproject_path}")
-            pyproject_path.write_text(tomlkit.dumps(doc), encoding="utf-8")
-            return True  # Return True as modification happened
+            # --- ADDED STEP: Write toml_doc back to pyproject_path ---
+            try:
+                log.debug("TOML doc before final dump", doc_structure=tomlkit.dumps(doc))
+                with open(pyproject_path, "w", encoding="utf-8") as f:
+                    f.write(tomlkit.dumps(doc))
+                log.debug(f"Successfully saved updated {target_list_name} and {other_list_name} to {pyproject_path}")
+            except Exception as e:
+                log.exception(f"Error writing updated TOML back to {pyproject_path}", error=str(e))
+                return False  # Failed to save changes
+            # --- End Added Step ---
+
+            return True  # Report modification happened and saved
         else:
             log.info(f"No effective changes made to {target_list_name} or opposing list.")
             return False
