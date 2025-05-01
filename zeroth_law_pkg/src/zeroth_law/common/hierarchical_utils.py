@@ -1,7 +1,7 @@
 """Utilities for handling hierarchical list structures (whitelist/blacklist)."""
 
 import structlog
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, Tuple, Literal
 
 log = structlog.get_logger()
 
@@ -359,3 +359,142 @@ def set_node_flags(hierarchy: ParsedHierarchy, path: List[str], is_explicit: Opt
 
     # Return True ONLY if a flag was actually changed or children were deleted
     return made_change
+
+
+# --- Conflict and Status Checks --- #
+
+
+def check_list_conflicts(whitelist_tree: ParsedHierarchy, blacklist_tree: ParsedHierarchy) -> List[str]:
+    """Checks for items explicitly listed in both whitelist and blacklist.
+
+    Returns:
+        A list of conflicting sequence paths (e.g., ['tool:sub']).
+    """
+    conflicts = []
+
+    def _traverse(node_w: NodeData, node_b: NodeData, current_path: List[str]):
+        # Check current level for explicit conflict
+        is_explicit_w = node_w.get("_explicit", False)
+        is_explicit_b = node_b.get("_explicit", False)
+
+        if is_explicit_w and is_explicit_b:
+            conflicts.append(":".join(current_path))
+
+        # Find common keys to recurse into (excluding internal keys)
+        common_keys = {k for k in node_w if not k.startswith("_")} & {k for k in node_b if not k.startswith("_")}
+
+        for key in sorted(list(common_keys)):
+            child_node_w = node_w.get(key)
+            child_node_b = node_b.get(key)
+
+            # Recurse only if both children are valid dictionaries
+            if isinstance(child_node_w, dict) and isinstance(child_node_b, dict):
+                _traverse(child_node_w, child_node_b, current_path + [key])
+
+    # Start traversal from the root of both trees
+    # Need to iterate through top-level keys present in both
+    root_common_keys = set(whitelist_tree.keys()) & set(blacklist_tree.keys())
+    for root_key in sorted(list(root_common_keys)):
+        root_node_w = whitelist_tree.get(root_key)
+        root_node_b = blacklist_tree.get(root_key)
+        if isinstance(root_node_w, dict) and isinstance(root_node_b, dict):
+            _traverse(root_node_w, root_node_b, [root_key])
+
+    return conflicts
+
+
+def get_effective_status(
+    sequence: List[str],
+    whitelist_tree: ParsedHierarchy,
+    blacklist_tree: ParsedHierarchy,
+) -> Literal["WHITELISTED", "BLACKLISTED", "UNSPECIFIED"]:
+    """Determines the effective status (whitelist/blacklist/unspecified)
+       of a command sequence based on hierarchical rules and precedence.
+
+    Precedence Rules:
+    1. Explicit match (_explicit=True) at any level beats any wildcard match (_all=True).
+    2. A more specific match (deeper path) beats a less specific match (parent path).
+    3. If conflicting rules match at the *same* level (e.g., explicit whitelist vs
+       explicit blacklist for the exact same sequence), blacklist wins.
+       (Note: `check_list_conflicts` should catch identical _explicit flags beforehand).
+
+    Args:
+        sequence: The command sequence (e.g., ["tool", "sub", "subsub"]).
+        whitelist_tree: Parsed whitelist hierarchy.
+        blacklist_tree: Parsed blacklist hierarchy.
+
+    Returns:
+        'WHITELISTED', 'BLACKLISTED', or 'UNSPECIFIED'.
+    """
+    from typing import Literal  # Local import for Literal type hint
+
+    # Track the most specific rule found so far from each list
+    # (level, is_explicit, is_all)
+    most_specific_whitelist: Optional[Tuple[int, bool, bool]] = None
+    most_specific_blacklist: Optional[Tuple[int, bool, bool]] = None
+
+    # --- Traverse Whitelist --- #
+    current_level_w = whitelist_tree
+    for i, part in enumerate(sequence):
+        node_w = current_level_w.get(part)
+        level = i + 1
+
+        if isinstance(node_w, dict):
+            is_explicit = node_w.get("_explicit", False)
+            is_all = node_w.get("_all", False)
+            if is_explicit or is_all:
+                most_specific_whitelist = (level, is_explicit, is_all)
+            if is_all:
+                break  # Stop descent if wildcard found
+            current_level_w = node_w
+        else:
+            break  # Path doesn't exist further
+
+    # --- Traverse Blacklist --- #
+    current_level_b = blacklist_tree
+    for i, part in enumerate(sequence):
+        node_b = current_level_b.get(part)
+        level = i + 1
+
+        if isinstance(node_b, dict):
+            is_explicit = node_b.get("_explicit", False)
+            is_all = node_b.get("_all", False)
+            if is_explicit or is_all:
+                most_specific_blacklist = (level, is_explicit, is_all)
+            if is_all:
+                break  # Stop descent if wildcard found
+            current_level_b = node_b
+        else:
+            break  # Path doesn't exist further
+
+    # --- Determine Final Status --- #
+
+    # Case 1: Neither list has any matching rule
+    if most_specific_whitelist is None and most_specific_blacklist is None:
+        return "UNSPECIFIED"
+
+    # Case 2: Only one list has a matching rule
+    if most_specific_whitelist is None:
+        return "BLACKLISTED"
+    if most_specific_blacklist is None:
+        return "WHITELISTED"
+
+    # Case 3: Both lists have matching rules, apply precedence
+    level_w, explicit_w, all_w = most_specific_whitelist
+    level_b, explicit_b, all_b = most_specific_blacklist
+
+    # If levels differ, the deeper match wins
+    if level_w > level_b:
+        return "WHITELISTED"
+    if level_b > level_w:
+        return "BLACKLISTED"
+
+    # Levels are the same, explicit beats wildcard
+    if explicit_w and not explicit_b:
+        return "WHITELISTED"
+    if explicit_b and not explicit_w:
+        return "BLACKLISTED"
+
+    # Same level, both explicit or both wildcard - Blacklist wins tie
+    # (check_list_conflicts should prevent explicit_w and explicit_b both being true)
+    return "BLACKLISTED"

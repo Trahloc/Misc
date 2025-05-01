@@ -306,9 +306,6 @@
     - [ ] Ensure ZLT CLI generation (Phase I.3) uses this file.
     - [ ] Ensure tool definition validation (J.3) uses this file to check `option_map` references.
 
-## **Phase K: ... (Next Phase)**
-# ...
-
 ## **Phase L: Implement Tool Sync Workflow (10-Step Plan)**
 # Goal: Implement the robust, deterministic `zlt tools sync` workflow based on the 10-step plan defined on 2025-05-01.
 # NOTE: Add completion timestamp `(YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - Run 'date --iso-8601=seconds')` to each item upon completion.
@@ -422,4 +419,62 @@
 - [ ] **Step 10: Iteration & Completion** (`2025-05-01T12:15:37+08:00`)
   - [ ] 10.1 Check: If `new_sequences_added` was `True`, report need to re-run `sync` and exit.
   - [ ] 10.2 Check: If Step 7 completed AND `new_sequences_added` was `False`, report successful completion and exit 0.
+
+## **Phase M: Test Coverage for Tool Sync Workflow (Phase L)**
+# Goal: Implement comprehensive unit and integration tests for the Phase L functionality.
+# NOTE: Add completion timestamp `(YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - Run 'date --iso-8601=seconds')` to each item upon completion.
+
+- [ ] **1. Unit Tests: `hierarchical_utils.py`**
+  - [ ] Test `parse_to_nested_dict`: Basic parsing, nested parsing, comma handling (last part only), wildcard (`:*`) handling, invalid inputs (empty strings, `::`, etc.).
+  - [ ] Test `check_list_conflicts`: No conflicts, conflicts at root, conflicts nested, no common keys.
+  - [ ] Test `get_effective_status`:
+    - [ ] No match (UNSPECIFIED).
+    - [ ] Whitelist only (explicit, wildcard).
+    - [ ] Blacklist only (explicit, wildcard).
+    - [ ] Both match: Deeper path wins (W>B, B>W).
+    - [ ] Both match (same level): Explicit beats wildcard (W>B, B>W).
+    - [ ] Both match (same level, same type): Blacklist wins tie (explicit W vs explicit B, wildcard W vs wildcard B).
+
+- [ ] **2. Unit Tests: `tools_dir_scanner.py`**
+  - [ ] Test `scan_whitelisted_sequences`:
+    - [ ] Mock `get_effective_status`. Test scanning various directory structures.
+    - [ ] Scenario: Only base tools whitelisted.
+    - [ ] Scenario: Base tool and some subcommands whitelisted.
+    - [ ] Scenario: Only specific subcommands whitelisted (base implicitly needed).
+    - [ ] Scenario: Blacklisted tool/subcommand encountered during scan (should not be returned or descended into).
+    - [ ] Scenario: Empty tools directory.
+    - [ ] Scenario: Directory scan error handling (mock `os.iterdir` exception?).
+
+- [ ] **3. Unit Tests: `tool_index_utils.py`**
+  - [ ] Test `load_tool_index`: File not found, invalid JSON, empty file, valid file (nested structure).
+  - [ ] Test `save_tool_index`: Successful save, check sorting, check trailing newline.
+  - [ ] Test `get_index_entry`: Base command found/not found, subcommand found/not found (nested), invalid base entry type.
+  - [ ] Test `update_index_entry`: Update existing base, update existing sub, create new base, create new sub (incl. creating intermediate dicts), update with different data types.
+  - [ ] Test `load_update_and_save_entry` (requires mocking `FileLock` and other utils).
+
+- [ ] **4. Unit Tests: `tool_path_utils.py`**
+  - [ ] Test `command_sequence_to_filepath`: Base command, subcommand, nested subcommand paths for `.txt` and `.json`.
+  - [ ] Test `command_sequence_to_id`.
+  - [ ] Test `calculate_crc32_hex` with known inputs.
+
+- [ ] **5. Unit Tests: `podman_utils.py` & `baseline_generator.py` (Mocking `subprocess`)**
+  - [ ] Test `podman_utils._run_podman_command`: Mock `subprocess.run`, test success, non-zero exit, exception scenarios, capture stdout/stderr.
+  - [ ] Test `baseline_generator._capture_command_output`: Verify correct construction of `podman exec` command (incl. `sh -c`, PATH, `| cat`). Test handling of Python script override vs standard tool. Mock `_execute_capture_in_podman` return values (success, failure, empty output).
+  - [ ] Test `baseline_generator._execute_capture_in_podman`: Mock `_run_podman_command` return values (CompletedProcess with different stdout/stderr/returncode, including 127). Verify correct return tuple (stdout bytes, stderr bytes, exit code) or exception handling.
+
+- [ ] **6. Integration Tests: `sync.py` (`zlt tools sync` using `CliRunner`)**
+  - [ ] Setup: Use fixtures to create temporary `pyproject.toml`, mock `venv/bin` contents, mock `tools/` structure, mock Podman interactions (e.g., mock `_start/stop_podman_runner`, `_capture_command_output`).
+  - [ ] Test Step 3 Failures: Run `sync` with mock venv containing unclassified tool. Assert exit code > 0 and expected error message.
+  - [ ] Test Step 4 Failures: Run `sync` with mock `tools/` containing orphan dir. Assert exit code > 0 and expected error message.
+  - [ ] Test Step 6 Success (No Change): Run `sync --generate` with consistent index/txt/json. Assert exit code 0, no file changes, index check timestamps updated.
+  - [ ] Test Step 6 Success (Baseline Update): Run `sync --generate` with inconsistent index/txt (CRC mismatch). Assert exit code 0, `.txt` file updated, index entry updated (CRC, timestamps).
+  - [ ] Test Step 6 Timestamp Logic: Test `--force`, `--check-since-hours` skipping/processing scenarios.
+  - [ ] Test Step 6 Warning/Failure: Simulate >3 rapid updates (mock `time.time`?), assert exit code > 0 and warning message.
+  - [ ] Test Step 7 Failure (Missing JSON): Run `sync` with `.txt` present but `.json` missing. Assert exit code > 0 and specific failure message.
+  - [ ] Test Step 7 Failure (Outdated JSON): Run `sync` with `.json` CRC mismatch. Assert exit code > 0 and specific failure message.
+  - [ ] Test Step 9 Discovery: Run `sync` with consistent parent JSON containing a new, whitelisted subcommand. Assert exit code 0, new entry added to index (with `crc=None`), correct reporting message.
+  - [ ] Test Step 10 Completion: Run `sync` where Steps 7 & 9 find nothing to do. Assert exit code 0 and success message.
+  - [ ] Test Step 10 Iteration: Run `sync` after Step 9 added a sequence. Assert exit code 0 and re-run message.
+  - [ ] Test `--dry-run`: Run various scenarios with `--dry-run`, assert no file changes occur and appropriate log messages appear.
+  - [ ] Test `--prune` (requires careful mocking of `shutil.rmtree`).
 
