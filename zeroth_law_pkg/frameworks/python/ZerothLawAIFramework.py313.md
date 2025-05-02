@@ -80,7 +80,7 @@ These principles form the foundation of the ZLF and guide the AI developer's act
 
 1.  **Test-Driven Development (TDD) First**: **Require** all production code to be driven by tests. Follow the strict **Red-Green-Refactor** cycle: write a failing test (Red), write the minimum code to pass the test (Green), then improve the code while keeping tests green (Refactor). This ensures inherent testability, verifiable correctness, and drives emergent design. (Enforced via `pytest` results and coverage checks by ZLT).
 2.  **Data-Driven Testing (DDT) Efficiency**: **Require** leveraging DDT techniques, primarily using `pytest.mark.parametrize`, when testing the same logic path against multiple input/output variations. Separate test data from test logic for clarity and maintainability, especially for complex inputs (see Section [4.2](#42-data-driven-testing-ddt-practices)). This complements TDD by efficiently handling variations. (Verification relies on test structure analysis, potentially a future ZLT feature).
-3.  **Single Responsibility & Clear API Boundaries**: Keep components focused on one reason to change, making them easier to test and reason about via TDD/DDT. Expose minimal necessary interfaces via `__init__.py` (managed by `autoinit` if desired). Isolation simplifies AI reasoning and independent refinement. (Partially assessed via complexity/size metrics).
+3.  **Single Responsibility & Clear API Boundaries**: Keep components focused on one reason to change, making them easier to test and reason about via TDD/DDT. Expose minimal necessary interfaces via `__init__.py` (managed by `autoinit` if desired). Isolation simplifies AI reasoning and independent refinement. (Partially assessed via complexity/size metrics). This principle is reinforced by the practice of defaulting to private naming (`_` prefix) for functions/methods, requiring justification for public exposure (see Section [4.5](#45-code-quality)).
 4.  **First Principles Simplicity**: Solve problems directly with minimal complexity, driven by the need to pass the current test. **Prefer** clear Python 3.13+ features over intricate abstractions. Minimalism reduces error surface and boosts AI refactoring confidence within the TDD cycle. (Assessed via complexity/size metrics).
 5.  **Minimize Backslash Escape Fragility**: **Strongly prefer** methods that avoid complex backslash (`\\`) escaping, especially when dealing with text parsing (e.g., command-line help output) or regular expressions that need to pass through the AI-Tool-File-Python toolchain. Backslashes are highly prone to misinterpretation or corruption at various layers (AI generation, tool application, shell interaction, file encoding, Python string literals, regex engine parsing). **Favor** procedural parsing (string methods, loops, conditional logic based on indentation or simple markers) over intricate regex patterns requiring heavy escaping. While standard escapes like `\\n` or `\\t` are acceptable, avoid relying on complex sequences (e.g., excessive escaping of regex metacharacters) where simpler, more direct parsing logic can achieve the same result. (Verification via code review and analysis of parsing logic complexity, potentially a future ZLT check).
 6.  **Leverage Existing Libraries (Configured Enforcement & No Reinvention)**:
@@ -157,6 +157,7 @@ This section details specific practices and metrics used to assess compliance wi
 *   **Cyclomatic Complexity**: **Prefer** < 8 (via `ruff mccabe` check executed by ZLT). Keep units simple for testability.
 *   **Code Duplication**: Eliminate duplication during the Refactor TDD step (verify via `pylint R0801` check executed by ZLT). See Section [4.12](#412-validation-metrics-outcomes--enforcements).
 *   **Mandatory Type Annotation**: **Require** explicit, modern (Python 3.13+) type hints. Enforce with `mypy --strict` (executed by ZLT). See Section [4.12](#412-validation-metrics-outcomes--enforcements).
+*   **Default to Private Naming (Underscore Prefix):** **Require** functions and methods to be prefixed with a single underscore (`_`) by default, indicating they are internal implementation details not intended for direct use outside the defining module or class. Making a function/method public (no underscore) is an exception and **must** be justified in its docstring (see Section [5.2](#52-implementation-example-conceptual-tddddt-flow)), explaining its role in the module's or class's intended public API. This encourages strong encapsulation and deliberate interface design.
 *   **Minimize Mutable Global State**: **Require** avoiding module-level mutable variables. Pass state explicitly. (Checked by `ruff` rules via ZLT).
 *   **Favor Immutability (Mandatory Practice)**:
     *   **Universally prefer** immutable data structures. Mutability requires strong justification documented via Principle #7.
@@ -321,8 +322,8 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
     ```
 
 * **Naming Convention:**
-  * **Public Entry Points:** Methods in the facade file should have descriptive names without underscore prefixes.
-  * **Implementation Details:** Files and functions that implement specific functionality should use underscore prefixes (`_function_name.py`, `_function_name()`) to indicate they are not intended for direct external use.
+  * **Public Entry Points:** Methods in the facade file should have descriptive names without underscore prefixes **and be explicitly justified as part of the public API per Section 4.5**.
+  * **Implementation Details:** Files and functions that implement specific functionality *intended only for use by the facade* should use underscore prefixes (`_function_name.py`, `_function_name()`) **as per the default convention (Section 4.5)** to indicate they are not intended for direct external use.
 
 * **Responsibility Distribution:**
   * **Facade's Responsibility:** Command coordination, argument parsing, and delegation to implementation modules. Facade files should be kept thin with minimal direct implementation logic.
@@ -376,6 +377,7 @@ def process_item(item_data: InputData, config: Config) -> OutputResult:
     """PURPOSE: Processes a validated item based on configuration.
     CONTEXT: Developed via TDD/DDT. Assumes immutable inputs (Principle #4.5). Handles X, Y, Z cases.
              Rationale for using Algorithm A documented below (Principle #7).
+             **PUBLIC API RATIONALE:** [Explain why this function must be public, e.g., "Serves as the primary entry point for processing items accessed by module X and Y."] (Required per Sec 4.5)
     PRE-CONDITIONS:
      - item_data is validated by Pydantic upstream (Sec 4.7).
      - config is a valid, immutable Config object.
@@ -436,7 +438,7 @@ def _perform_complex_step(data: InputData, setting: str) -> int:
 # Assumes CommandArgs, CommandResult are defined Pydantic models or similar
 
 def execute_command(args: CommandArgs) -> CommandResult:
-    \"\"\"PURPOSE: Primary entry point for the '<example_command>' command.
+    """PURPOSE: Primary entry point for the '<example_command>' command.
     CONTEXT: This facade coordinates the overall flow but delegates specific implementation
              details to the appropriate helper modules (Sec 4.19).
     RESPONSIBILITY: Orchestrates the command process by delegating to specialized modules.
@@ -459,7 +461,7 @@ def execute_command(args: CommandArgs) -> CommandResult:
      >>> cmd_args = CommandArgs(...) # Example args
      >>> result = execute_command(cmd_args) # Example from test_command_success
      >>> assert isinstance(result, CommandResult)
-    \"\"\"
+    """
     cmd_log = log.bind(command_name="<example_command>")
     cmd_log.info("command_started")
 
