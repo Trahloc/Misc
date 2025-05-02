@@ -104,7 +104,7 @@ def load_zlt_option_definitions() -> Dict[str, Dict[str, Any]]:
 def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click.Option:
     """Creates a Click Option object from a definition dictionary."""
     kwargs = definition.get("kwargs", {})
-    param_decls = list(definition["param_decls"])
+    param_decls = list(definition["cli_names"])
 
     # Handle boolean flags (store_true/store_false)
     is_flag = definition.get("is_flag", False)

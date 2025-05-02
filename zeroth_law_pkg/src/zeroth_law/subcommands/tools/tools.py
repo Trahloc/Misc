@@ -35,7 +35,7 @@ from .whitelist_cmd import whitelist  # Import new command
 from .blacklist_cmd import blacklist  # Import new command
 
 # Import and add sync command
-from .sync import sync
+from .sync import sync  # <<< Import from sync.py file
 
 # Import the definition group from its new location
 from .definition import definition_group

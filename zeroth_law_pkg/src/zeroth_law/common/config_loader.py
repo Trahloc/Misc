@@ -351,7 +351,7 @@ def load_config(config_path_override: str | Path | None = None) -> dict[str, Any
         return copy.deepcopy(DEFAULT_CONFIG)
 
         # 3. Extract ZLT Section
-        config_section = extract_config_section(toml_data, _TOOL_SECTION_PATH)
+    config_section = extract_config_section(toml_data, _TOOL_SECTION_PATH)
     if not config_section:
         log.info("No [tool.zeroth-law] section found in config. Using defaults.")
         # Return a complete default structure if section is missing

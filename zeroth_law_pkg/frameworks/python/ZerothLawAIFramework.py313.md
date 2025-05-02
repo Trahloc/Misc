@@ -307,18 +307,18 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
   * **Primary Facade File:** The main entry point for a command follows the path structure that reflects the command hierarchy:
     ```
     src/zeroth_law/subcommands/<command>.py             # For top-level commands
-    src/zeroth_law/subcommands/<command>/<subcommand>.py # For nested subcommands
+    src/zeroth_law/subcommands/_<command>/_<subcommand>.py # For nested subcommands
     ```
   * **Implementation Modules:** Helper modules should be organized in a dedicated subdirectory with a name matching the command they support:
     ```
-    src/zeroth_law/subcommands/<command>/_<functionality>.py         # For top-level commands
-    src/zeroth_law/subcommands/<command>/<subcommand>/_<functionality>.py # For nested subcommands
+    src/zeroth_law/subcommands/_<command>/_<functionality>.py         # For top-level commands
+    src/zeroth_law/subcommands/_<command>/_<subcommand>/_<functionality>.py # For nested subcommands
     ```
   * For example:
     ```
     src/zeroth_law/subcommands/tools/sync.py              # Command facade for "zlt tools sync"
-    src/zeroth_law/subcommands/tools/sync/_reconcile_and_prune.py  # Performs reconciliation and optional pruning
-    src/zeroth_law/subcommands/tools/sync/_identify_target_tools.py   # Determines the final set of tool names to target based on --tool option
+    src/zeroth_law/subcommands/tools/_sync/_reconcile_and_prune.py  # Performs reconciliation and optional pruning
+    src/zeroth_law/subcommands/tools/_sync/_identify_target_tools.py   # Determines the final set of tool names to target based on --tool option
     ```
 
 * **Naming Convention:**
@@ -574,8 +574,17 @@ project_pkg/            # Project Root (e.g., zeroth_law_pkg)
 │   └── project/        # Primary Python package (e.g., zeroth_law)
 │       ├── __init__.py
 │       ├── common/     # Example: Shared utilities
-│       ├── commands/   # Example: CLI commands (CDDS)
-│       │   └── <cmd>/
+│       │
+│       ├── subcommands/# Example: CLI commands (Sec 4.19)
+│       │   └── <cmd>/    # Example: 'tools' group directory
+│       │       ├── __init__.py
+│       │       ├── <group_cmd>.py # Example: tools.py (defines the group)
+│       │       │
+│       │       ├── <cmd_facade>.py # Example: sync.py (Facade file)
+│       │       └── _<cmd_facade>/  # Example: _sync/ (Helpers directory)
+│       │           ├── __init__.py
+│       │           └── _<helper>.py # Example: _reconcile.py (Helper module)
+│       │
 │       ├── dev_scripts/ # Example: Development scripts
 │       └── <area>/     # Example: Other functional areas
 │
@@ -584,7 +593,7 @@ project_pkg/            # Project Root (e.g., zeroth_law_pkg)
 │   ├── conftest.py     # Global fixtures
 │   │
 │   ├── test_data/      # TOP-LEVEL: External data files for testing
-│   │   └── ... (Structure mirrors tests/zeroth_law/ hierarchy)
+│   │   └── ... (Structure mirrors tests/test_project/ hierarchy)
 │   │
 │   ├── test_interaction/ # TOP-LEVEL: Tests for interactions BETWEEN components
 │   │   ├── __init__.py
@@ -593,13 +602,18 @@ project_pkg/            # Project Root (e.g., zeroth_law_pkg)
 │   ├── test_project_integrity/ # TOP-LEVEL: Tests for project health/rules
 │   │   └── ...
 │   │
-│   └── test_zeroth_law/     # <<<< CONTAINER for MIRRORED Unit/CLI Tests >>>>
+│   └── test_project/     # <<<< CONTAINER for MIRRORED Unit/CLI Tests >>>>
 │       ├── __init__.py
 │       ├── test_common/    # Mirrors src/project/common/
-│       ├── test_commands/  # Mirrors src/project/commands/
-│       │   └── test_<cmd>/ # Mirrors src/project/commands/<cmd>/
-│       │       ├── test_<cmd>.py   # Unit tests for orchestrator + CLI tests
-│       │       └── test_helpers.py # Unit tests for helpers.py
+│       │
+│       ├── test_subcommands/# Mirrors src/project/subcommands/
+│       │   └── test_<cmd>/ # Mirrors src/project/subcommands/<cmd>/
+│       │       ├── __init__.py
+│       │       ├── test_<group_cmd>.py # Test the group definition
+│       │       │
+│       │       ├── test_<cmd_facade>.py   # Test facade + integration + CLI args
+│       │       └── test_<helper>.py # Unit tests for individual helpers in _<cmd_facade>/
+│       │
 │       ├── test_dev_scripts/ # Mirrors src/project/dev_scripts/
 │       │   └── ...
 │       ├── test_<area>/    # Mirrors src/project/<area>/

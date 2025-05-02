@@ -1,0 +1,20 @@
+{
+    "command": [
+        "wheel"
+    ],
+    "description": "Tool definition for wheel (auto-generated skeleton)",
+    "usage": "wheel [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "wheel",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}

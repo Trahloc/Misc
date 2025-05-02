@@ -1,0 +1,20 @@
+{
+    "command": [
+        "pip"
+    ],
+    "description": "Tool definition for pip (auto-generated skeleton)",
+    "usage": "pip [options] [arguments]",
+    "options": [],
+    "arguments": [],
+    "metadata": {
+        "name": "pip",
+        "version": null,
+        "language": "unknown",
+        "categories": [],
+        "tags": [
+            "skeleton"
+        ],
+        "url": "",
+        "other": {}
+    }
+}
