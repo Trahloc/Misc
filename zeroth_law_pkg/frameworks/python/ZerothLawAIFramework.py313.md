@@ -1,7 +1,7 @@
 # Zeroth Law Framework (ZLF): AI-Driven Python Code Quality
 
 **Co-Author**: Trahloc colDhart
-**Version**: 2025-04-25T13:14:17+08:00 # AI run `date --iso-8601=seconds` to update
+**Version**: 2025-05-02T13:52:51+08:00 # AI run `date --iso-8601=seconds` to update
 
 ---
 
@@ -295,6 +295,47 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
   * **Complecting Prevention:** When AI code review detects "complecting" (intertwining of separate concerns), the code must be refactored before merging.
   * **Tests as Specifications:** Tests must serve as clear specifications of behavior, written in terms of inputs and outputs rather than implementation details.
 
+### 4.19 Command Facade Organization
+*(Supports Principles #3, #8)*
+
+**Command Facade Pattern:** The ZLF formalizes the use of "Command Facade" files (also known as "Command Orchestrators") as follows:
+
+* **Definition & Purpose:** A Command Facade is a module that serves as the primary entry point for a specific command or functionality, providing a simplified interface while delegating implementation details to specialized helper modules or functions.
+
+* **Structure:**
+  * **Primary Facade File:** The main entry point for a command follows the path structure that reflects the command hierarchy:
+    ```
+    src/zeroth_law/subcommands/<command>.py             # For top-level commands
+    src/zeroth_law/subcommands/<command>/<subcommand>.py # For nested subcommands
+    ```
+  * **Implementation Modules:** Helper modules should be organized in a dedicated subdirectory with a name matching the command they support:
+    ```
+    src/zeroth_law/subcommands/<command>/_<functionality>.py         # For top-level commands
+    src/zeroth_law/subcommands/<command>/<subcommand>/_<functionality>.py # For nested subcommands
+    ```
+  * For example:
+    ```
+    src/zeroth_law/subcommands/tools/sync.py              # Command facade for "zlt tools sync"
+    src/zeroth_law/subcommands/tools/sync/_reconcile_and_prune.py  # Performs reconciliation and optional pruning
+    src/zeroth_law/subcommands/tools/sync/_identify_target_tools.py   # Determines the final set of tool names to target based on --tool option
+    ```
+
+* **Naming Convention:**
+  * **Public Entry Points:** Methods in the facade file should have descriptive names without underscore prefixes.
+  * **Implementation Details:** Files and functions that implement specific functionality should use underscore prefixes (`_function_name.py`, `_function_name()`) to indicate they are not intended for direct external use.
+
+* **Responsibility Distribution:**
+  * **Facade's Responsibility:** Command coordination, argument parsing, and delegation to implementation modules. Facade files should be kept thin with minimal direct implementation logic.
+  * **Implementation Modules' Responsibility:** Specific functionality implementation, data processing, and business logic. Each module should have a clear, focused purpose.
+
+* **Documentation Requirements:**
+  * The command facade file's header docstring must explicitly state its role as a facade.
+  * Each public method should document which implementation modules it delegates to.
+
+* **Testing Strategy:**
+  * Tests for the facade should focus on proper delegation and integration of components.
+  * Implementation modules should have their own focused unit tests.
+
 ---
 
 ## 5. IN-FILE DOCUMENTATION PATTERN
@@ -305,8 +346,8 @@ These metrics represent the **Programmatic Ground Truth** assessed by ZLT:
 ```python
 # FILE: <path/to/file.py>
 """
-# PURPOSE: [Single responsibility, often derived from the initial test's goal.]
-#          [Should be clear and concise for AI understanding.]
+# PURPOSE: [Define the single, primary responsibility. If this is a Command Facade (Sec 4.19), state: "Command Facade for '<command_name>', orchestrating <helper_modules/tasks>." Otherwise, describe the core goal derived from TDD.]
+#          [Must be clear and concise for AI understanding.]
 """
 # --- IMPORTS --- (Standard library, 3rd party, own packages - Follow ruff sorting)
 import logging # Or specific imports
@@ -390,6 +431,79 @@ def _perform_complex_step(data: InputData, setting: str) -> int:
     pass # Placeholder
 ```
 
+```python
+# Example Command Facade implementation (See Sec 4.19)
+# Assumes CommandArgs, CommandResult are defined Pydantic models or similar
+
+def execute_command(args: CommandArgs) -> CommandResult:
+    \"\"\"PURPOSE: Primary entry point for the '<example_command>' command.
+    CONTEXT: This facade coordinates the overall flow but delegates specific implementation
+             details to the appropriate helper modules (Sec 4.19).
+    RESPONSIBILITY: Orchestrates the command process by delegating to specialized modules.
+    DELEGATED FUNCTIONS:
+     - _validate_input() -> _validation.py (Example helper)
+     - _perform_action() -> _processor.py (Example helper)
+     - _report_results() -> _reporting.py (Example helper)
+    PRE-CONDITIONS:
+     - args is validated by argument parsing framework (e.g., Typer).
+    POST-CONDITIONS:
+     - Returns a CommandResult object.
+     - Raises SpecificError on failure conditions tested in helper modules.
+    PARAMS:
+     - args: Parsed command-line arguments or input parameters.
+    RETURNS:
+     - Result of the command execution.
+    EXCEPTIONS:
+     - SpecificError: If a delegated function raises a tested error.
+    USAGE EXAMPLES:
+     >>> cmd_args = CommandArgs(...) # Example args
+     >>> result = execute_command(cmd_args) # Example from test_command_success
+     >>> assert isinstance(result, CommandResult)
+    \"\"\"
+    cmd_log = log.bind(command_name="<example_command>")
+    cmd_log.info("command_started")
+
+    # --- DELEGATION TO HELPERS (Driven by Tests for Facade Integration) ---
+    try:
+        # Import helpers inside the function if preferred to avoid circular dependencies
+        # or keep module-level scope clean. Naming convention uses underscores.
+        from ._validation import _validate_input
+        from ._processor import _perform_action
+        from ._reporting import _report_results
+
+        # Validate input parameters
+        validated_args = _validate_input(args, cmd_log)
+        cmd_log.debug("input_validated")
+
+        # Perform the actual command operation
+        action_results = _perform_action(validated_args, cmd_log)
+        cmd_log.debug("action_performed")
+
+        # Generate and return/display results
+        final_result = _report_results(action_results, cmd_log)
+        cmd_log.info("command_completed", success=True)
+        return final_result
+
+    except SpecificError as e: # Catch specific errors bubbled up from helpers
+        cmd_log.warning("command_failed_specific", reason=str(e))
+        raise # Re-raise to be handled upstream or terminate
+    except Exception as e: # Broader catch for unexpected issues during orchestration
+        cmd_log.error("command_failed_unexpected", exc_info=True)
+        # Map to a standard error type if appropriate
+        raise SpecificError(f"Unexpected error in command orchestration: {e}") from e
+
+# --- HELPER MODULES (_validation.py, _processor.py, _reporting.py) ---
+# Each helper module would contain its own focused functions, developed via TDD/DDT,
+# with their own tests verifying their specific logic. Example:
+#
+# File: src/zeroth_law/subcommands/<command>/_processor.py
+# def _perform_action(validated_args: ValidatedArgs, parent_log: BoundLogger) -> ActionResult:
+#    proc_log = parent_log.bind(module="processor")
+#    proc_log.info("action_step_started")
+#    # ... TDD-developed implementation ...
+#    return ActionResult(...)
+```
+
 ### 5.3 Footer
 ```python
 """
@@ -403,7 +517,6 @@ def _perform_complex_step(data: InputData, setting: str) -> int:
 # Penalties: [List of ZLF sections/rules violated, e.g., 'FAIL: 4.5 Cyclomatic Complexity > 8', 'FAIL: 4.12 Test Coverage < 95%']
 # Timestamp: [e.g., YYYY-MM-DDTHH:MM:SS+ZZ:ZZ] (Timestamp of ZLT assessment)
 """
-
 ```
 
 ---
