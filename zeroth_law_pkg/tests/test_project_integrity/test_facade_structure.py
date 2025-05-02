@@ -1,89 +1,169 @@
 # FILE: tests/test_project_integrity/test_facade_structure.py
 """
 Tests to ensure the Command Facade structure (Sec 4.19) is followed within subcommands.
+
+Structure Rules:
+1. Top-level facade files (e.g., `subcommands/tools.py`) define main groups/commands.
+2. If a facade file `foo.py` exists (and is not a utility file), its corresponding helper dir `_foo/` must also exist.
+3. If a helper dir `_foo/` exists, its corresponding facade file `foo.py` must also exist.
+4. Helper directories (`_foo/`) must contain at least one Python file (excluding `__init__.py`).
+5. Files inside the deepest helper directory (e.g., `_tools/_whitelist/*.py`) must start with `_`, except for `__init__.py`.
+6. Utility files (e.g., `_tools/list_utils.py`) can exist alongside facades in underscore directories.
+7. No `*_cmd.py` files allowed.
+8. Facade files (`foo.py`, unless ending `_utils.py`) must define *only one* function: the main click group/command function (name matching file stem or ending `_group`). No other functions allowed.
 """
 
 import pytest
 from pathlib import Path
+import os
+import ast
+import sys  # DEBUG
 
-# TODO: Broaden scope beyond subcommands eventually. Start focused.
 # Define the base directory to scan
 SUBCOMMANDS_DIR = Path("src/zeroth_law/subcommands")
 
 # Skip all tests in this file if the base directory doesn't exist
-if not SUBCOMMANDS_DIR.is_dir():
-    pytest.skip(f"Subcommands directory not found: {SUBCOMMANDS_DIR}", allow_module_level=True)
+pytestmark = pytest.mark.skipif(
+    not SUBCOMMANDS_DIR.is_dir() or not SUBCOMMANDS_DIR.exists(),  # Added exists()
+    reason=f"Subcommands directory not found or inaccessible: {SUBCOMMANDS_DIR}",
+)
 
 
-def test_command_facade_structure():
+def test_command_facade_structure_and_content():
     """
-    Verifies that subcommands adhere to the Facade structure:
-    - No '*_cmd.py' files exist.
-    - Facade files (e.g., 'sync.py') have a corresponding helper directory ('_sync/').
-    - Helper directories (e.g., '_sync/') have a corresponding facade file ('sync.py').
-    - Python files (potential helpers) are not siblings of facade files unless they are
-      the facade itself, __init__.py, or a group definition file (e.g., tools.py).
+    Verifies the hierarchical Command Facade structure and limits functions in facades.
     """
     violations = []
-    processed_facades = set()  # Keep track of facades verified against helper dirs
+    # Use rglob to get current filesystem state
+    print(f"DEBUG: Scanning {SUBCOMMANDS_DIR}...", file=sys.stderr)  # DEBUG
+    all_fs_paths = list(SUBCOMMANDS_DIR.rglob("*"))
+    all_py_files = {p for p in all_fs_paths if p.is_file() and p.suffix == ".py"}
+    all_dirs = {p for p in all_fs_paths if p.is_dir()}
+    print(f"DEBUG: Found {len(all_py_files)} py files, {len(all_dirs)} dirs.", file=sys.stderr)  # DEBUG
 
-    # 1. Check for invalid '*_cmd.py' files
-    for cmd_file in SUBCOMMANDS_DIR.rglob("*_cmd.py"):
-        violations.append(f"Invalid '*_cmd.py' file found (should be renamed): {cmd_file.relative_to(SUBCOMMANDS_DIR)}")
+    # --- Rule 7: Check for invalid '*_cmd.py' files ---
+    for py_file in all_py_files:
+        if py_file.name.endswith("_cmd.py"):
+            # Double check it actually exists before reporting
+            if py_file.exists():
+                violations.append(f"[Rule 7] Invalid '*_cmd.py' file found: {py_file.relative_to(SUBCOMMANDS_DIR)}")
 
-    # 2. Check Python files for proper placement (facade vs. helper)
-    for py_file in SUBCOMMANDS_DIR.rglob("*.py"):
-        parent = py_file.parent
-        relative_path = py_file.relative_to(SUBCOMMANDS_DIR)
+    # --- Identify Potential Facades and Helpers from current FS state ---
+    potential_facade_files = {
+        f
+        for f in all_py_files
+        if f.exists()  # Ensure file exists
+        and not f.name.startswith("_")
+        and f.name != "__init__.py"
+        and f.parent != SUBCOMMANDS_DIR.parent
+    }
+    all_helper_dirs = {d for d in all_dirs if d.exists() and d.name.startswith("_")}
 
-        # Ignore files directly inside the base subcommands directory
-        if parent == SUBCOMMANDS_DIR:
+    # DEBUG: Print identified potential facades
+    print("DEBUG: Potential Facade Files:", file=sys.stderr)
+    for f in sorted(list(potential_facade_files)):
+        print(f"  - {f.relative_to(SUBCOMMANDS_DIR.parent)}", file=sys.stderr)
+    print("DEBUG: All Helper Dirs:", file=sys.stderr)
+    for d in sorted(list(all_helper_dirs)):
+        print(f"  - {d.relative_to(SUBCOMMANDS_DIR.parent)}", file=sys.stderr)
+    # --- End DEBUG ---
+
+    # --- Check Relationships and Content ---
+
+    # Rules 3 & 4: Check Helper Dirs
+    for helper_dir in all_helper_dirs:
+        # Ensure helper_dir exists before proceeding
+        if not helper_dir.exists():
             continue
 
-        # Ignore files inside correctly named helper directories (e.g., _sync/)
-        if parent.name.startswith("_"):
-            continue
+        facade_name = helper_dir.name[1:]
+        parent_dir = helper_dir.parent
+        expected_facade_file = parent_dir / f"{facade_name}.py"
 
-        # Ignore __init__.py files
-        if py_file.name == "__init__.py":
-            continue
-
-        # Ignore group definition files (e.g., tools.py inside tools/)
-        if py_file.stem == parent.name:
-            continue
-
-        # --- At this point, it's potentially a facade file or a misplaced helper ---
-        facade_name = py_file.stem
-        expected_helper_dir = parent / f"_{facade_name}"
-        processed_facades.add(py_file)  # Mark as potentially processed facade
-
-        if not expected_helper_dir.is_dir():
+        # Rule 3: Helper dir implies facade file exists
+        if not expected_facade_file.exists():  # Use exists()
             violations.append(
-                f"Potential facade/misplaced helper: '{relative_path}' exists but corresponding helper directory '_{facade_name}/' is missing in '{parent.relative_to(SUBCOMMANDS_DIR)}'."
+                f"[Rule 3] Helper directory '{helper_dir.relative_to(SUBCOMMANDS_DIR)}' exists, but facade file '{expected_facade_file.relative_to(SUBCOMMANDS_DIR)}' is missing."
             )
 
-    # 3. Check helper directories for corresponding facade files
-    for helper_dir in SUBCOMMANDS_DIR.rglob("_*"):
-        # Ensure it's a directory and directly inside a command group dir
-        if not helper_dir.is_dir() or not helper_dir.name.startswith("_") or helper_dir.parent == SUBCOMMANDS_DIR:
+        # Rule 4: Helper dir is not empty
+        try:
+            py_helpers_in_dir = {
+                item
+                for item in helper_dir.iterdir()
+                if item.exists() and item.is_file() and item.suffix == ".py" and item.name != "__init__.py"
+            }
+            if not py_helpers_in_dir:
+                violations.append(
+                    f"[Rule 4] Helper directory '{helper_dir.relative_to(SUBCOMMANDS_DIR)}' contains no Python files (excluding __init__.py)."
+                )
+        except FileNotFoundError:  # Handle case where iterdir fails if dir vanished
+            violations.append(
+                f"[Internal Test Error] Could not iterate helper directory {helper_dir.relative_to(SUBCOMMANDS_DIR)}"
+            )
             continue
 
-        facade_name = helper_dir.name[1:]  # e.g., 'sync' from '_sync'
-        expected_facade_file = helper_dir.parent / f"{facade_name}.py"
-        relative_dir_path = helper_dir.relative_to(SUBCOMMANDS_DIR)
+        # Rule 5: Check files inside *leaf* helper dirs start with _
+        nested_helper_dirs_inside = {
+            d for d in all_dirs if d.exists() and d.parent == helper_dir and d.name.startswith("_")
+        }
+        if not nested_helper_dirs_inside:  # This is a leaf helper directory
+            for item in py_helpers_in_dir:
+                # Check item exists before checking name
+                if item.exists() and not item.name.startswith("_"):
+                    violations.append(
+                        f"[Rule 5] Non-helper file ('{item.name}') found inside leaf helper directory '{helper_dir.relative_to(SUBCOMMANDS_DIR)}'. Files here must start with '_'."
+                    )
 
-        if not expected_facade_file.is_file():
-            violations.append(
-                f"Helper directory '{relative_dir_path}' exists but corresponding facade file '{facade_name}.py' is missing in '{helper_dir.parent.relative_to(SUBCOMMANDS_DIR)}'."
-            )
-        # Ensure the corresponding facade file was actually found in the previous loop
-        elif expected_facade_file not in processed_facades:
-            # This case should be rare if the file loop ran correctly
-            violations.append(
-                f"Helper directory '{relative_dir_path}' has facade '{expected_facade_file.relative_to(SUBCOMMANDS_DIR)}' but it wasn't identified correctly in the file scan."
-            )
+    # Rules 2 & 8: Check Facade Files
+    for facade_file in potential_facade_files:
+        # Ensure facade_file exists before processing
+        if not facade_file.exists():
+            continue
+
+        facade_name = facade_file.stem
+        parent_dir = facade_file.parent
+        expected_helper_dir = parent_dir / f"_{facade_name}"
+        is_utility_file = facade_file.name.endswith("_utils.py")  # Check if it's a utility
+
+        # Rule 2: Facade file implies helper directory exists (unless it's a utility file or inside helper structure)
+        is_inside_helper_structure = any(
+            part.startswith("_") for part in parent_dir.parts[len(SUBCOMMANDS_DIR.parts) :]
+        )
+        # DEBUG Rule 2 Check
+        # print(f"DEBUG Rule 2: File={facade_file.relative_to(SUBCOMMANDS_DIR.parent)}, Util={is_utility_file}, InsideHelper={is_inside_helper_structure}, ExpHelper={expected_helper_dir.relative_to(SUBCOMMANDS_DIR.parent)}, Exists={expected_helper_dir.exists()}", file=sys.stderr)
+
+        if not is_utility_file and not is_inside_helper_structure:
+            if not expected_helper_dir.exists():  # Use exists()
+                violations.append(
+                    f"[Rule 2] Facade file '{facade_file.relative_to(SUBCOMMANDS_DIR)}' exists, but helper directory '{expected_helper_dir.relative_to(SUBCOMMANDS_DIR)}' is missing."
+                )
+
+        # Rule 8: Facade defines only the main click function (unless it's a utility file)
+        if not is_utility_file:
+            try:
+                source = facade_file.read_text(encoding="utf-8")
+                tree = ast.parse(source, filename=str(facade_file))
+                defined_functions = []
+                for node in ast.iter_child_nodes(tree):
+                    if isinstance(node, ast.FunctionDef):
+                        is_main_func = (node.name == facade_name) or node.name.endswith("_group")
+                        if not is_main_func:
+                            defined_functions.append(node.name)
+
+                if len(defined_functions) > 0:
+                    violations.append(
+                        f"[Rule 8] Facade file '{facade_file.relative_to(SUBCOMMANDS_DIR)}' defines extra functions: {defined_functions}. Only the main click group/command function is allowed."
+                    )
+            except FileNotFoundError:  # Handle case where file vanished between listing and reading
+                violations.append(f"[AST] File vanished before read: {facade_file.relative_to(SUBCOMMANDS_DIR)}")
+            except SyntaxError as e:
+                violations.append(f"[AST] SyntaxError parsing {facade_file.relative_to(SUBCOMMANDS_DIR)}: {e}")
+            except Exception as e:
+                violations.append(f"[AST] Error processing {facade_file.relative_to(SUBCOMMANDS_DIR)}: {e}")
 
     # Final Assertion
-    assert not violations, f"Command Facade structure violations found in '{SUBCOMMANDS_DIR}':\n - " + "\n - ".join(
-        sorted(violations)
+    assert not violations, (
+        f"Command Facade structure/content violations found relative to '{SUBCOMMANDS_DIR}':\n - "
+        + "\n - ".join(sorted(violations))
     )

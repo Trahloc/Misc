@@ -20,7 +20,7 @@ import pytest
 from zeroth_law.common.path_utils import find_project_root
 
 # Import the *actual* exception class
-from zeroth_law.subcommands.tools.reconcile import ReconciliationError
+from zeroth_law.subcommands._tools.reconcile import ReconciliationError
 
 # Explicitly import the session-scoped fixture
 # from tests.test_tool_defs.conftest import WORKSPACE_ROOT
