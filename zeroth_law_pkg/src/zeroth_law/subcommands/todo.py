@@ -10,6 +10,6 @@ def todo_group():
 
 
 # Import and add subcommands here (from _todo helpers)
-from ._todo.complete import complete # Adjusted import path
+from ._todo.complete import complete  # Adjusted import path
 
 todo_group.add_command(complete)
