@@ -37,7 +37,7 @@ from zeroth_law.analysis_runner import (
 )
 from .subcommands.audit.audit import audit as audit_command  # NEW import of function
 from .subcommands.git_hooks import install_git_hook, restore_git_hooks  # Correct: Import individual commands
-from .subcommands.tools.tools import tools_group  # Tools GROUP
+from .subcommands.tools import tools_group  # Tools GROUP - Import from tools.py
 from .subcommands.todo.todo_group import todo_group  # Todo GROUP
 from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config  # Analyzer
 
