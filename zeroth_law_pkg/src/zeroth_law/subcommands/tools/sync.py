@@ -244,7 +244,7 @@ def sync(
             if not whitelisted_sequences:
                 log.warning("No effectively whitelisted sequences to process. Exiting.")
                 log.debug("Exiting: No whitelisted sequences.")
-                ctx.exit(0)
+            ctx.exit(0)
 
             # === Podman Setup for GENERATE (Step 5a) ===
             container_name: Optional[str] = None
