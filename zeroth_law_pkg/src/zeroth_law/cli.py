@@ -35,12 +35,12 @@ from zeroth_law.analysis_runner import (
     log_violations_as_text,
     run_all_checks,
 )
-from .subcommands.audit.audit import audit as audit_command  # NEW import of function
-from .subcommands._git_hooks._install import install_git_hook  # NEW IMPORT
-from .subcommands._git_hooks._restore import restore_git_hooks  # NEW IMPORT
-from .subcommands.tools import tools_group  # Tools GROUP - Import from tools.py
-from .subcommands.todo.todo_group import todo_group  # Todo GROUP
-from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config  # Analyzer
+from .subcommands.audit import audit as audit_command
+from .subcommands._git_hooks._install import install_git_hook
+from .subcommands._git_hooks._restore import restore_git_hooks
+from .subcommands.tools import tools_group
+from .subcommands.todo import todo_group
+from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 
 # Import sync command directly for testing
 # from .subcommands.tools.sync import sync as sync_command

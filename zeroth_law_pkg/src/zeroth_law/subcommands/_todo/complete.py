@@ -1,15 +1,13 @@
-#!/usr/bin/env python3 # Keep shebang?
 """Facade for the 'zlt todo complete' subcommand."""
 
 import click
 import structlog
 from pathlib import Path
 
-# Import the core logic helper
+# Import the core logic helper (adjust path)
 from ._complete._run_complete import _run_complete_logic
 
 log = structlog.get_logger()
-
 
 @click.command("complete")
 @click.argument("phase_header", type=str)
