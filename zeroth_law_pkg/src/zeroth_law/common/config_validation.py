@@ -81,6 +81,7 @@ class ConfigModel(BaseModel):
 
     # --- Add managed-tools field --- #
     managed_tools: dict[str, list[str]] = Field(
+        alias="managed-tools",
         default={"whitelist": [], "blacklist": []},  # Default empty lists
         description="Whitelist and blacklist for managed executables in the venv",
     )

@@ -38,32 +38,33 @@ class ReconciliationError(Exception):
 
 def _perform_reconciliation_logic(
     project_root_dir: Path,
-    config_data: dict,  # Pass loaded config data
+    config_data: dict,  # Expects the fully loaded config from load_config
 ) -> Tuple[
     Dict[str, ToolStatus],
     Set[str],
-    ParsedHierarchy,
-    ParsedHierarchy,
+    ParsedHierarchy,  # Return parsed whitelist
+    ParsedHierarchy,  # Return parsed blacklist
     List[str],
     List[str],
     bool,
 ]:
     """Internal logic, adapted from dev_scripts/reconciliation_logic.py.
 
+    Args:
+        project_root_dir: Path to the project root.
+        config_data: The fully processed configuration dictionary returned by load_config,
+                     containing keys like 'parsed_whitelist', 'parsed_blacklist'.
+
     Returns tuple:
         - reconciliation_results: Dict[tool_name, ToolStatus]
         - managed_tools_set: Set[str] (Top-level tools considered managed by whitelist)
-        - parsed_whitelist: ParsedHierarchy
-        - parsed_blacklist: ParsedHierarchy
+        - parsed_whitelist: ParsedHierarchy (The structure used for reconciliation)
+        - parsed_blacklist: ParsedHierarchy (The structure used for reconciliation)
         - error_messages: List[str]
         - warning_messages: List[str]
         - has_errors: bool
     """
     logger = log  # Use module logger
-
-    # <<<--- REMOVE DEBUG PRINT HERE --->>>
-    # logger.warning(f"DEBUG _perform_reconciliation_logic: Received config_data = {config_data}")
-    # <<<--- END REMOVE DEBUG PRINT --->>>
 
     logger.info("Performing tool discovery and reconciliation logic...")
     errors_found = False
@@ -72,18 +73,23 @@ def _perform_reconciliation_logic(
 
     tool_defs_dir = project_root_dir / "src" / "zeroth_law" / "tools"
 
-    # 1. Read Config (use the PARSED dictionaries from config_data)
+    # 1. Get PRE-PARSED Config data
     try:
-        # Extract parsed dictionaries directly from the loaded config object
-        managed_tools_config = config_data.get("managed-tools", {})
-        # These are now expected to be Dict[str, Set[str]]
-        whitelist: Dict[str, Set[str]] = managed_tools_config.get("whitelist", {})
-        blacklist: Dict[str, Set[str]] = managed_tools_config.get("blacklist", {})
-        logger.info(f"Whitelist (parsed): {whitelist}, Blacklist (parsed): {blacklist}")
-    except Exception as e:
-        # Keep this error handling, although type issues should be less likely now
-        msg = f"Failed to extract parsed whitelist/blacklist from loaded config data: {e}"
-        logger.error(msg)
+        # Directly retrieve the parsed dictionaries from the config_data object
+        whitelist: ParsedHierarchy = config_data.get("parsed_whitelist", {})
+        blacklist: ParsedHierarchy = config_data.get("parsed_blacklist", {})
+        if not isinstance(whitelist, dict) or not isinstance(blacklist, dict):
+            raise TypeError("Parsed whitelist/blacklist in config_data are not dictionaries.")
+        logger.info(f"Using pre-parsed Whitelist: {whitelist}, Blacklist: {blacklist}")
+        # Optional: Check for conflicts again here? Assumes load_config already checked.
+        # try:
+        #     check_list_conflicts(whitelist, blacklist)
+        # except ValueError as e:
+        #     raise ReconciliationError(f"Conflict detected: {e}") from e
+
+    except (TypeError, KeyError, Exception) as e:
+        msg = f"Failed to retrieve or validate parsed whitelist/blacklist from config_data: {e}"
+        logger.error(msg, exc_info=True)
         raise ReconciliationError(msg) from e
 
     # 2. Scan Environment & Tool Defs Dir
@@ -92,8 +98,27 @@ def _perform_reconciliation_logic(
             raise FileNotFoundError(f"Tool definitions directory not found: {tool_defs_dir}")
         dir_tools = get_tool_dirs(tool_defs_dir)
         logger.info(f"Found {len(dir_tools)} tool definitions in {tool_defs_dir}.")
-        # Pass the KEYS of the whitelist dict for filtering env tools
-        env_tools = get_executables_from_env(set(whitelist.keys()), dir_tools)
+
+        # Pass the KEYS of the parsed whitelist dict for filtering env tools
+        # Ensure we handle the structure correctly ({tool: {sub: True}, _explicit: True})
+        # Get top-level tool names from the parsed dictionary keys
+        whitelist_top_level_tools = set(whitelist.keys())
+        logger.debug(f"Filtering env executables based on whitelist keys: {whitelist_top_level_tools}")
+
+        # --- FIX: Get venv path and call updated scanner --- #
+        # Assume standard venv location relative to project root
+        venv_path = project_root_dir / ".venv"
+        venv_bin_path = venv_path / "bin"
+        if not venv_bin_path.is_dir():
+            # Handle case where venv might not exist or path is wrong
+            # This might indicate a setup issue, raise or log warning?
+            log.warning(f"Expected venv bin path not found: {venv_bin_path}. Proceeding with empty env_tools list.")
+            env_tools = set()
+        else:
+            log.debug(f"Scanning environment executables in: {venv_bin_path}")
+            env_tools = get_executables_from_env(venv_bin_path)
+        # --- END FIX --- #
+
         logger.info(f"Found {len(env_tools)} relevant executables in environment after filtering.")
     except FileNotFoundError as e:
         logger.error(str(e))
@@ -103,10 +128,10 @@ def _perform_reconciliation_logic(
         logger.error(msg, exc_info=True)
         raise ReconciliationError(msg) from e
 
-    # 3. Reconcile
+    # 3. Reconcile (Uses the parsed dictionaries directly)
     logger.debug(f"Reconciling with:")
-    logger.debug(f"  Whitelist: {whitelist}")
-    logger.debug(f"  Blacklist: {blacklist}")
+    logger.debug(f"  Whitelist (Parsed): {whitelist}")
+    logger.debug(f"  Blacklist (Parsed): {blacklist}")
     logger.debug(f"  Env Tools (filtered): {env_tools}")
     logger.debug(f"  Dir Tools: {dir_tools}")
     reconciliation_results = reconcile_tools(
@@ -118,9 +143,7 @@ def _perform_reconciliation_logic(
     logger.info("Tool reconciliation logic complete.")
 
     # 4. Analyze Results & Collect Messages
-    managed_tools_set = {  # Derive top-level managed tools from whitelist
-        tool for tool, node in whitelist.items() if node.get("_explicit") or node.get("_all")
-    }
+    managed_tools_set = {tool for tool, node in whitelist.items() if node.get("_explicit") or node.get("_all")}
 
     # 5. Analyze Results & Collect Messages
     managed_tools_for_processing = set()
@@ -174,12 +197,12 @@ def _perform_reconciliation_logic(
 
     logger.info(f"Identified {len(managed_tools_for_processing)} tools considered effectively managed.")
 
-    # Return results including error status and the parsed blacklist
+    # Return results including error status and the parsed lists
     return (
         reconciliation_results,
         managed_tools_for_processing,
-        whitelist,
-        blacklist,
+        whitelist,  # Return the parsed dict
+        blacklist,  # Return the parsed dict
         error_messages,
         warning_messages,
         errors_found,
@@ -197,7 +220,7 @@ def _perform_reconciliation_logic(
 @click.pass_context
 def reconcile(ctx: click.Context, output_json: bool) -> None:
     """Compares config, environment, and tool definitions to report discrepancies."""
-    config = ctx.obj["config"]
+    config = ctx.obj["config"]  # This should be the dict returned by load_config
     project_root = ctx.obj.get("project_root")
     log.info("Starting tool reconciliation command...")
     exit_code = 0

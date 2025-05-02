@@ -4,6 +4,97 @@
 
 ---
 
+## Phase N: Automated TODO Management State Machine Logic (YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - AI: Run `date --iso-8601=seconds`)
+
+**Context:** This section documents the intended state machine logic for the `zlt todo` command suite outlined in Phase N of `TODO.md`. The goal is to provide explicit, AI-centric workflow guidance based on task status transitions.
+
+**States:**
+
+*   `[ ]`: **Pending**
+*   `[T]`: **Tests Defined (Failing)**
+*   `[I]`: **Implementation (In Progress)**
+*   `[V]`: **Verify Implementation**
+*   `[R]`: **Refactoring (In Progress)**
+*   `[X]`: **Verify Refactoring**
+*   `[B]`: **Blocked**
+*   `[C]`: **Complete**
+
+**Transitions & Flowchart Logic:**
+
+1.  **From `[ ]` (Pending):**
+    *   **Action:** Define Tests (`zlt todo set-status <id> T`)
+    *   **Outcome:** Tests defined.
+    *   **--> Transition:** To `[T]` (Tests Defined - Failing)
+    *   **Next Instruction:** "Write implementation code to pass defined tests."
+    *   **Branch (Block):** If requirements are unclear, etc. (`zlt todo set-status <id> B`)
+        *   **--> Transition:** To `[B]` (Blocked)
+        *   **Next Instruction:** "Task blocked. Awaiting clarification/resolution."
+
+2.  **From `[T]` (Tests Defined - Failing):**
+    *   **Action:** Start Implementation (`zlt todo set-status <id> I`)
+    *   **Outcome:** Implementation work begins.
+    *   **--> Transition:** To `[I]` (Implementation - In Progress)
+    *   **Next Instruction:** "Implement code; aim to complete and move to verification (`[V]`)."
+    *   **Branch (Block):** If implementation cannot start (`zlt todo set-status <id> B`)
+        *   **--> Transition:** To `[B]` (Blocked)
+        *   **Next Instruction:** "Task blocked. Awaiting prerequisite/resolution."
+
+3.  **From `[I]` (Implementation - In Progress):**
+    *   **Action:** Signal Implementation ready for check (`zlt todo set-status <id> V`)
+    *   **Outcome:** Code believed to meet test requirements.
+    *   **--> Transition:** To `[V]` (Verify Implementation)
+    *   **Next Instruction:** "Run tests using `complete-verification --passed / --failed`."
+    *   **Branch (Block):** If implementation hits a wall (`zlt todo set-status <id> B`)
+        *   **--> Transition:** To `[B]` (Blocked)
+        *   **Next Instruction:** "Task blocked. Awaiting resource/resolution."
+
+4.  **From `[V]` (Verify Implementation):**
+    *   **Action:** Report Test Outcome (`zlt todo complete-verification <id> --passed | --failed`)
+    *   **Outcome (Passed):** Code works according to tests.
+        *   **--> Transition:** To `[R]` (Refactoring - In Progress)
+        *   **Next Instruction:** "Refactor code for ZLF compliance; aim to complete and move to verification (`[X]`)."
+    *   **Outcome (Failed):** Code does not pass tests.
+        *   **--> Transition:** To `[I]` (Implementation - In Progress) - **Repeat Stage**
+        *   **Next Instruction:** "Tests failed. Fix implementation; aim to complete and move to verification (`[V]`)."
+    *   **Branch (Block):** If verification cannot run (`zlt todo set-status <id> B`)
+        *   **--> Transition:** To `[B]` (Blocked)
+        *   **Next Instruction:** "Task blocked. Awaiting test environment/resolution."
+
+5.  **From `[R]` (Refactoring - In Progress):**
+    *   **Action:** Signal Refactoring ready for check (`zlt todo set-status <id> X`)
+    *   **Outcome:** Code believed to be ZLF compliant and still functional.
+    *   **--> Transition:** To `[X]` (Verify Refactoring)
+    *   **Next Instruction:** "Re-run tests using `complete-verification --passed / --failed`."
+    *   **Branch (Block):** If refactoring hits a wall (`zlt todo set-status <id> B`)
+        *   **--> Transition:** To `[B]` (Blocked)
+        *   **Next Instruction:** "Task blocked. Awaiting clarification/resolution."
+
+6.  **From `[X]` (Verify Refactoring):**
+    *   **Action:** Report Test Outcome (`zlt todo complete-verification <id> --passed | --failed`)
+    *   **Outcome (Passed):** Code is clean, tests pass. Task Done.
+        *   **--> Transition:** To `[C]` (Complete)
+        *   **Next Instruction:** "Task complete. Run `zlt todo next` for next task."
+    *   **Outcome (Failed):** Refactoring broke tests.
+        *   **--> Transition:** To `[R]` (Refactoring - In Progress) - **Repeat Stage**
+        *   **Next Instruction:** "Regression tests failed. Fix refactoring; aim to complete and move to verification (`[X]`)."
+    *   **Branch (Block):** If verification cannot run (`zlt todo set-status <id> B`)
+        *   **--> Transition:** To `[B]` (Blocked)
+        *   **Next Instruction:** "Task blocked. Awaiting test environment/resolution."
+
+7.  **From `[B]` (Blocked):**
+    *   **Action:** Blocker resolved (Requires *manual* action by user/AI)
+    *   **Outcome:** Ready to resume.
+    *   **--> Transition:** User determines appropriate next state via `zlt todo set-status <id> <STATUS>`.
+    *   **Next Instruction:** Varies based on the status chosen by the user.
+
+8.  **From `[C]` (Complete):**
+    *   **Action:** None (Terminal state)
+    *   **Outcome:** Task finished.
+    *   **--> Transition:** None.
+    *   **Next Instruction:** None for this task.
+
+---
+
 ## Current Tool Interface Workflow: Ground Truth & AI Interpretation (Consolidated 2025-04-13 & v3)
 
 **--- MANDATE ---**

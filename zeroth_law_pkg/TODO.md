@@ -59,6 +59,16 @@
 - [ ] **Investigate Podman Stop Warning:** The `zlt-baseline-runner-...` container often requires SIGKILL instead of stopping gracefully with SIGTERM during `zlt tools sync`. Investigate the cause (e.g., process handling in `container_runner.py`, resource limits, Podman cleanup) and resolve.
 - [ ] Investigate and fix root cause of `mypy` "Source file found twice" error when executed via `action_runner.py`. Re-enable `mypy` in `tool_mapping.json` for the `lint` action once resolved. (Currently handled by pre-commit hook).
 - [ ] Review and refactor suppressed `E402` (module import not at top of file) errors identified in `CODE_TODOS.md`. Remove `sys.path` modifications if redundant due to Poetry's editable install.
+- [ ] **Investigate Disappearing Baseline Output:** The `generated_command_outputs/` directory (or its subdirs) disappears after `zlt tools sync --generate` completes, despite successful writes during the run. Investigate potential causes (Podman cleanup timing, filesystem caching, unexpected side effects in sync logic or dependencies).
+    - [ ] **Troubleshooting Notes (2025-05-02):**
+        - Debug logs confirm `baseline_generator.py` successfully opens files for writing (`open(..., 'wb')`).
+        - Debug logs confirm `f.write()` completes without error.
+        - Debug logs confirm internal verification (`output_capture_path.is_file()`) passes immediately after closing the file.
+        - Added explicit `f.flush()`, `os.fsync(f.fileno())`, and `time.sleep(0.1)` before the verification check; issue persists.
+        - Running sequentially (`--tool uv`) *seemed* to work once, but subsequent `list_dir` checks confirmed the output directory was still empty.
+        - Podman volume mounts (`--volume=...:/app:ro`, `--volume=...:/root/.cache/python:rw`) appear correct.
+        - Parallelism (`_run_parallel_baseline_processing`) vs. sequential execution might be a factor, but the sequential test also ultimately failed to produce files.
+        - Root cause remains unknown; filesystem interaction or Podman behavior is highly suspect.
 
 ## **Phase D: ZLT Core Orchestration Engine**
 # Goal: Develop ZLT to directly execute and interpret consultant tools as the primary ZLF enforcement mechanism.
@@ -351,18 +361,19 @@
 
 ### **Phase 2: Baseline Generation & Indexing (Step 6)**
 
-- [x] **Step 6: `.txt` Baseline Generation & Verification** (`2025-05-01T12:15:37+08:00`)
+- [ ] **Step 6: `.txt` Baseline Generation & Verification** (`2025-05-01T12:15:37+08:00`)
   - [x] 6.1 Action: Initialize `recent_update_warning_count = 0`. (`2025-05-01T13:47:53+08:00`)
   - [x] 6.2 Action: Implement/Verify `ToolIndexHandler` class (in `src/zeroth_law/lib/tooling/tool_index_handler.py`?) with load/save/update/add methods for `tool_index.json`. Load index. (Using functions from `tool_index_utils.py`) (`2025-05-01T13:47:53+08:00`)
   - [x] 6.3 Action: Define deterministic Podman container name. (`2025-05-01T13:47:53+08:00`)
   - [x] 6.4 Action: Implement Podman container setup/teardown context management within `sync` command (stop/rm existing, start new, stop/rm finally, read-only mounts). (`2025-05-01T13:47:53+08:00`)
-  - [x] 6.5 Action: Loop through each `sequence` in `whitelisted_sequences`: (`2025-05-01T13:47:53+08:00`)
+  - [ ] 6.5 Action: Loop through each `sequence` in `whitelisted_sequences`: (`2025-05-01T13:47:53+08:00`)
     - [x] 6.5.1 Lookup: Get entry from loaded index via `ToolIndexHandler`. Continue if not found. (`2025-05-01T13:47:53+08:00`)
     - [x] 6.5.2 Timestamp Check: Use `--check-since` (default 24h) and `--force`. Continue if check passes. (`2025-05-01T13:47:53+08:00`)
-    - [x] 6.5.3 Podman Execution:
+    - [ ] 6.5.3 Podman Execution:
       - [x] 6.5.3.1 Construct help command args (e.g., `['ruff', 'check', '--help']`). (`2025-05-01T13:47:53+08:00`)
       - [x] 6.5.3.2 Implement/Verify `_execute_capture_in_podman(sequence_args, container_name, ...)` in `src/zeroth_law/lib/tooling/baseline_generator.py` (builds `podman exec sh -c "export PATH...; timeout ... | cat"`, runs `subprocess`, handles errors, returns stdout). (`2025-05-01T13:47:53+08:00`)
       - [x] 6.5.3.3 Call `_execute_capture_in_podman`, handle exceptions. (`2025-05-01T13:47:53+08:00`)
+      - [ ] **6.5.3.4 (INCOMPLETE)** Modify `_execute_capture_in_podman` (or calling logic) to determine the *actual* command arguments (e.g., `--help`, `--version`, specific subcommand help) based on the interpreted `.json` definition (from Step 8/9), not just hardcoding `--help`.
     - [x] 6.5.4 CRC Calculation: Calculate `new_crc = zlib.crc32(output)` -> hex string. (`2025-05-01T13:47:53+08:00`)
     - [x] 6.5.5 Comparison & Update:
       - [x] 6.5.5.1 If `new_crc == index_crc`: Call `ToolIndexHandler.update_checked_timestamp(sequence, now)`. (`2025-05-01T13:47:53+08:00`)
@@ -416,13 +427,15 @@
       - [x] 9.2.4.4 If WHITELISTED and `new_sequence_key` not in index: Calculate paths, create subdir, call `ToolIndexHandler.add_entry(new_sequence_key, crc=None, ...)`, set `new_sequences_added = True`. (`2025-05-01T13:47:53+08:00`)
   - [x] 9.3 Action: If `new_sequences_added`, call `ToolIndexHandler.save_index()`. (`2025-05-01T13:47:53+08:00`)
 
-- [x] **Step 10: Iteration & Completion** (`2025-05-01T12:15:37+08:00`)
+- [ ] **Step 10: Iteration & Completion** (`2025-05-01T12:15:37+08:00`)
   - [x] 10.1 Check: If `new_sequences_added` was `True`, report need to re-run `sync` and exit. (`2025-05-01T13:47:53+08:00`)
   - [x] 10.2 Check: If Step 7 completed AND `new_sequences_added` was `False`, report successful completion and exit 0. (`2025-05-01T13:47:53+08:00`)
   - [x] Test Step 10 Completion: Run `sync` where Steps 7 & 9 find nothing to do. Assert exit code 0 and success message. (`2025-05-01T17:23:43+08:00`)
   - [x] Test Step 10 Iteration: Run `sync` after Step 9 added a sequence. Assert exit code 0 and re-run message. (`2025-05-01T17:23:43+08:00`)
   - [x] Test `--dry-run`: Run various scenarios with `--dry-run`, assert no file changes occur and appropriate log messages appear. (`2025-05-01T17:23:43+08:00`)
   - [x] Test `--prune` (requires careful mocking of `shutil.rmtree`). (`2025-05-01T17:23:43+08:00`)
+  - [ ] **6.11 Test Data-Driven Command Generation:** Once L.6.5.3.4 is implemented, add/modify tests to verify that `sync --generate` executes the *correct* commands (e.g., `--help`, `--version`) based on mock `.json` file content, not just a hardcoded command.
+  - [ ] **6.12 Test Disappearing Directory Fix:** Once the root cause of the disappearing `generated_command_outputs` is identified and fixed, add a test to specifically prevent regressions (e.g., ensure the target output file exists after a successful `sync --generate` run with file modification).
 
 ## **Phase M: Test Coverage for Tool Sync Workflow (Phase L)**
 # Goal: Implement comprehensive unit and integration tests for the Phase L functionality.
@@ -488,3 +501,170 @@
   - [x] Test Step 7 Failure (Outdated JSON): Run `sync` with `.json` CRC mismatch. Assert exit code > 0 and specific failure message. (`2025-05-01T17:23:43+08:00`)
   - [x] Test Step 9 Discovery: Run `sync` with consistent parent JSON containing a new, whitelisted subcommand. Assert exit code 0, new entry added to index (with `crc=None`), correct reporting message. (`2025-05-01T17:23:43+08:00`)
   - [x] Test Step 10 Completion: Run `sync` where Steps 7 & 9 find nothing to do. Assert exit code 0 and success message. (`2025-05-01T17:23:43+08:00`)
+
+## **Phase N: Automated TODO Management & Dependency Tracking**
+# Goal: Replace manual editing of `TODO.md` with a `zlt todo` command suite that parses the file according to a chosen standard, generates/manages immutable Unique IDs (UIDs) alongside potentially changing Structured IDs (SIDs), allows structured modifications, understands task dependencies, provides AI-centric TDD workflow statuses, enforces parent/child dependencies, suggests the next actionable task, and provides explicit next-step instructions. (**Note:** `pytest` linking via UIDs is deferred).
+
+- [ ] **1. Define `TODO.md` Parsing Schema, Rules, Linting, Statuses, IDs & Dependencies:**
+    - [ ] 1.1. Formalize expected structure: Phase headers, task lines (`- [Status] SID UID Task Text # DEPENDS_ON...`), hierarchy, etc., based on chosen linting standard.
+    - [ ] 1.2. Research & Select MD Linting Standard/Tool (e.g., `markdownlint` ruleset). Document the chosen standard.
+    - [ ] 1.3. Define AI-Centric TDD Task Statuses & Markers (`[ ]`, `[T]`, `[I]`, `[V]`, `[R]`, `[X]`, `[B]`, `[C]`).
+    - [ ] 1.4. Define ID System:
+        - [ ] SID (Structured ID): Human-readable, hierarchical (e.g., `M.6.5`), recalculated on write based on position.
+        - [ ] UID (Unique ID): Immutable identifier (e.g., UUID string), generated on task creation.
+    - [ ] 1.5. Define "Active Phase" marker convention (e.g., `<!-- ZLT_ACTIVE_PHASE -->`).
+    - [ ] 1.6. Define Dependency Syntax: Use comment `# DEPENDS_ON: UID1, UID2...` (references the immutable UID).
+    - [ ] 1.7. Define "Next Action" mapping based on status transitions.
+    - [ ] 1.8. Document all rules, statuses, IDs, dependencies, conventions in `docs/todo_format_guidelines.md`.
+- [ ] **1.bis. Codify State Machine Logic (Reference):**
+    - The workflow progresses through defined states: `[ ]` (Pending), `[T]` (Tests Defined), `[I]` (Implementation), `[V]` (Verify Impl), `[R]` (Refactoring), `[X]` (Verify Refactor), `[B]` (Blocked), `[C]` (Complete).
+    - Transitions are driven by `zlt todo set-status` and `zlt todo complete-verification --passed/--failed`.
+    - Each successful stage transition or verification failure provides a specific "Next Action" instruction to guide the AI.
+    - Key Flows:
+        - `Pending -> T -> I -> V` (Define Test, Implement, Verify)
+        - `V --passed--> R -> X` (If Verify Pass: Refactor, Verify Refactor)
+        - `V --failed--> I` (If Verify Fail: Loop back to fix Implementation)
+        - `X --passed--> C` (If Refactor Verify Pass: Complete)
+        - `X --failed--> R` (If Refactor Verify Fail: Loop back to fix Refactoring)
+        - Any stage can transition to `[B]` (Blocked).
+    - (Detailed transition list maintained in `NOTES.md`)
+- [ ] **2. Implement `TODO.md` Parser:**
+    - [ ] 2.1. Choose parsing strategy (robust Markdown library + regex/post-processing for UIDs/comments).
+    - [ ] 2.2. Implement parser -> internal tree (extracts SID, UID, status, dependencies, text; stores UID as primary key).
+    - [ ] 2.3. Implement optimized reading (use Active Phase markers).
+    - [ ] 2.4. Handle parsing errors gracefully.
+- [ ] **3. Implement Internal Task Tree Representation:**
+    - [ ] 3.1. Define classes/structures for Phases and Tasks (store immutable UID, parsed SID, status, dependencies list using UIDs, text, etc.).
+    - [ ] 3.2. Include methods for traversal, search (by UID, SID, status), and modification (operating on UID).
+    - [ ] 3.3 Add method `get_task_status(task_uid)` for dependency checking.
+- [ ] **4. Implement `TODO.md` Writer:**
+    - [ ] 4.1. Implement writer tree -> `TODO.md` (recalculates SIDs based on hierarchy, writes immutable UID, status, text, dependency comments, preserves standard compliance).
+    - [ ] 4.2. Define strategy for non-task comments.
+    - [ ] 4.3 Ensure output is compliant with the chosen Linting standard.
+- [ ] **5. Implement Core Dependency Logic:**
+    - [ ] 5.1. Implement upward propagation for non-`[C]` status based on UID relationships.
+    - [ ] 5.2. Define parent/sibling completion check logic based on UIDs.
+    - [ ] 5.3. Implement `is_actionable(task_uid, tree)` checking dependency UIDs.
+    - [ ] 5.4. Integrate logic into status modification and `next` command.
+- [ ] **6. Implement `zlt todo` Subcommands (using `click`):**
+    - [ ] 6.1. **`zlt todo add <parent_sid_or_uid> "<task_text>" [--id <new_sid_suffix>] [--status <S>] [--depends UID1,UID2]`**: Adds task, generates+stores UID, calculates initial SID. Adds `# DEPENDS_ON:`.
+    - [ ] 6.2. **`zlt todo set-status <sid_or_uid> <STATUS> [--recursive]`**: Finds task by SID/UID, updates status via UID. Outputs "Next Action".
+    - [ ] 6.3. **`zlt todo complete-verification <sid_or_uid> --passed` / `--failed`**: Finds task by SID/UID, triggers status change via UID, outputs next action.
+    - [ ] 6.4. **`zlt todo depends <sid_or_uid> <dependency_uid> [--remove]`**: Finds task by SID/UID, modifies `# DEPENDS_ON:` comment using UIDs.
+    - [ ] 6.5. **`zlt todo remove <sid_or_uid>`**: Finds task by SID/UID, removes node (identified by UID) and children.
+    - [ ] 6.6. **`zlt todo list [--phase <X>] [--status <S>] [--all-phases] [--actionable]`**: Lists tasks (showing SID, UID, Status, Text). `--actionable` uses UID logic.
+    - [ ] 6.7. **`zlt todo show <sid_or_uid>`**: Finds task by SID/UID, shows details (incl. UID, dependency UIDs).
+    - [ ] 6.8. **`zlt todo next`**: Finds first actionable task based on UID dependencies, prints SID/UID/Text, outputs next action.
+    - [ ] 6.9. **`zlt todo add-phase "<Phase Title>" [--activate]`**: Adds phase header.
+    - [ ] 6.10. **`zlt todo activate-phase <phase_id>` / `deactivate-phase <phase_id>`**: Adds/removes Active Phase marker.
+    - [ ] 6.11 Ensure commands load, modify tree (via UIDs), and save tree back to `TODO.md` (recalculating SIDs).
+- [ ] **7. Implement Timestamp Management:**
+    - [ ] 7.1. Decide when to update timestamps (e.g., on transition *to* `[C]`).
+    - [ ] 7.2. Implement parsing/updating logic, storing alongside task status/UID.
+- [ ] **8. Write Comprehensive Tests (TDD):**
+    - [ ] 8.1. Test parser (statuses, SID/UID extraction, active marker, dependencies via UID, malformed inputs).
+    - [ ] 8.2. Test writer (SID recalculation, UID output, status output, standard compliance, dependency comments).
+    - [ ] 8.3. Test each command (SID/UID lookup, tree modification via UID, status handling, next action output, verification outcomes).
+    - [ ] 8.4. **Crucially:** Test dependency logic thoroughly (upward propagation via UID, `is_actionable` via UID, `zlt todo next` finding correct task via UID).
+    - [ ] 8.5 Test edge cases (root tasks, empty file, circular dependencies via UID).
+    - [ ] 8.6. Add test step: Validate `TODO.md` output using the chosen external Markdown linter tool.
+- [ ] **9. Documentation:**
+    - [ ] 9.1. Update user docs (commands, statuses, SID/UID concept, dependencies via UID, active phase, `next` usage, verification commands).
+    - [ ] 9.2. Ensure `docs/todo_format_guidelines.md` is comprehensive (incl. UID format/placement).
+    - [ ] 9.3 **Add note that `pytest` linking via UIDs (`@zlf_task_id(<UID>)`) is deferred to a future phase.**
+
+## **Phase O: Tool Execution & Integration**
+# Goal: Develop a seamless integration between ZLT and the selected tool ecosystem, ensuring that tools are executed efficiently and results are accurately interpreted.
+
+- [ ] **1. Develop Tool Execution Framework:**
+    - [ ] Implement a generic framework for tool execution that abstracts away tool-specific details.
+    - [ ] Define a common interface for tool execution and result interpretation.
+- [ ] **2. Integrate with Existing Tools:**
+    - [ ] Identify and integrate with existing tools that are part of the tool ecosystem.
+    - [ ] Develop tool-specific modules to handle tool-specific configurations and execution logic.
+- [ ] **3. Implement Tool-Specific Configuration:**
+    - [ ] Develop configuration templates for each tool that can be customized via `pyproject.toml`.
+    - [ ] Implement tool-specific configuration management to ensure consistency across tools.
+- [ ] **4. Implement Tool-Specific Result Interpretation:**
+    - [ ] Develop specific parsers for tool-specific output formats.
+    - [ ] Implement tool-specific result interpretation logic to extract meaningful information.
+- [ ] **5. Implement Tool-Specific Reporting:**
+    - [ ] Develop tool-specific reporting modules to generate standardized reports.
+    - [ ] Implement tool-specific reporting integration into the ZLT workflow.
+- [ ] **6. Implement Tool-Specific Error Handling:**
+    - [ ] Develop tool-specific error handling mechanisms to manage and report tool-specific errors.
+- [ ] **7. Implement Tool-Specific Logging:**
+    - [ ] Develop tool-specific logging modules to capture tool-specific logs.
+    - [ ] Implement tool-specific logging integration into the ZLT workflow.
+- [ ] **8. Implement Tool-Specific Configuration Management:**
+    - [ ] Develop tool-specific configuration management modules to handle tool-specific configurations.
+    - [ ] Implement tool-specific configuration management integration into the ZLT workflow.
+- [ ] **9. Implement Tool-Specific Dependency Tracking:**
+    - [ ] Develop tool-specific dependency tracking modules to track tool-specific dependencies.
+    - [ ] Implement tool-specific dependency tracking integration into the ZLT workflow.
+- [ ] **10. Implement Tool-Specific Test Integration:**
+    - [ ] Develop tool-specific test integration modules to integrate tool-specific tests into the ZLT workflow.
+    - [ ] Implement tool-specific test integration integration into the ZLT workflow.
+
+## **Phase P: ZLT-Dev Documentation & Best Practices**
+# Goal: Document the ZLT development process, best practices, and common pitfalls to aid future development and maintenance.
+
+- [ ] **1. Develop ZLT-Dev Documentation:**
+    - [ ] Create a comprehensive developer guide that covers all aspects of ZLT development.
+    - [ ] Include detailed API documentation for all modules and components.
+    - [ ] Provide examples and best practices for common use cases.
+- [ ] **2. Develop Best Practices Document:**
+    - [ ] Create a document that outlines best practices for ZLT development.
+    - [ ] Include guidelines for code quality, testing, and deployment.
+- [ ] **3. Develop Common Pitfalls Document:**
+    - [ ] Create a document that highlights common pitfalls and how to avoid them.
+    - [ ] Include troubleshooting tips and debugging strategies.
+- [ ] **4. Implement Code Review Process:**
+    - [ ] Develop a code review process that ensures code quality and consistency.
+    - [ ] Include automated code review tools and integration into the development workflow.
+- [ ] **5. Implement Continuous Integration/Continuous Deployment (CI/CD) Pipeline:**
+    - [ ] Develop a CI/CD pipeline that integrates with GitHub Actions.
+    - [ ] Implement automated testing and deployment workflows.
+- [ ] **6. Implement Version Control Best Practices:**
+    - [ ] Develop version control best practices document.
+    - [ ] Include guidelines for branching, merging, and tagging.
+- [ ] **7. Implement Documentation Best Practices:**
+    - [ ] Develop documentation best practices document.
+    - [ ] Include guidelines for writing clear and concise documentation.
+- [ ] **8. Implement Code Quality Tools:**
+    - [ ] Develop code quality tools and integration into the development workflow.
+    - [ ] Include static analysis tools, linting, and formatting tools.
+- [ ] **9. Implement Testing Best Practices:**
+    - [ ] Develop testing best practices document.
+    - [ ] Include guidelines for unit testing, integration testing, and end-to-end testing.
+- [ ] **10. Implement Deployment Best Practices:**
+    - [ ] Develop deployment best practices document.
+    - [ ] Include guidelines for packaging, deployment, and monitoring.
+
+## **Phase M: Test Coverage for Phase L (`zlt tools sync`)**
+# Goal: Ensure robust test coverage for the complex logic implemented in Phase L before proceeding.
+- [x] **M.1:** Unit tests for `hierarchical_utils.py` (specifically `parse_to_nested_dict`, `check_list_conflicts`, `get_effective_status`).
+- [x] **M.2:** Unit tests for `tools_dir_scanner.py::scan_directory_for_definitions`.
+- [x] **M.3:** Unit tests for `tool_index_utils.py` (all functions, including CRC script logic/helpers if not covered separately).
+  - [x] Tests for `scripts/update_json_crc_tool.py` (covering success, errors: file not found, missing entries/CRCs, JSON errors, write errors, arg parsing, edge cases).
+- [x] **M.4:** Unit tests for `tool_path_utils.py::command_sequence_to_path_parts`.
+- [x] **M.5:** Unit tests for Podman/baseline generation helper functions in `sync.py` (e.g., `_prepare_command_for_container`, `_run_podman_command`) mocking `subprocess.run`.
+- [x] **M.6:** Integration tests for `zlt tools sync` using `CliRunner`.
+  - [x] Mock `_start_podman_runner` and `_run_parallel_baseline_processing` initially.
+  - [x] Test Step 3/4/7 failures (invalid JSON, conflicts, unclassified tools).
+  - [x] Test Step 6 success/update logic (mocking baseline generator return values).
+  - [x] Test Step 6 timestamp logic (`--check-since`, `--update-since`).
+  - [x] Test Step 6 warning for missing definition files.
+  - [x] Test Step 9 subcommand discovery/indexing.
+  - [x] Test Step 10 completion message and index update (mocking).
+  - [x] Test `--dry-run` flag.
+  - [x] Test `--prune` flag.
+  - [ ] **M.7:** Integration tests for Podman execution (unmocked `_start_podman_runner`, `_run_parallel_baseline_processing`).
+    - [ ] Requires Podman installed.
+    - [ ] Test actual container setup, dependency installation, command execution (`--help`), baseline file creation, and cleanup.
+    - [ ] Test handling of Podman errors (start failure, exec failure).
+- [ ] **M.8:** Add `TODO` for Podman Optimization:
+    - [ ] Add a TODO item to optimize the Podman setup in `sync.py` to persist the container or reuse installed dependencies, avoiding redundant environment creation and downloads on each run.
+
+
+## **Phase N: ZLT Dev Capabilities and Initial Usage**

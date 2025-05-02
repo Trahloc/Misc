@@ -103,62 +103,84 @@ def load_zlt_option_definitions() -> Dict[str, Dict[str, Any]]:
 # --- Helper to create Click option from definition ---
 def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click.Option:
     """Creates a Click Option object from a definition dictionary."""
-    # Use 'name' from definition as the intended internal parameter name (dest)
-    dest_name = name
-    cli_names = definition.get("cli_names", [f"--{name}"])  # CLI flags
+    kwargs = definition.get("kwargs", {})
+    param_decls = list(definition["param_decls"])
 
-    # Determine the name click would automatically assign based on cli_names
-    # (Simplified logic based on click docs - assumes first long opt or first short opt)
-    auto_name = None
-    long_opts = [opt for opt in cli_names if opt.startswith("--")]
-    short_opts = [opt for opt in cli_names if opt.startswith("-") and not opt.startswith("--")]
-    if long_opts:
-        auto_name = long_opts[0].lstrip("-").replace("-", "_")
-    elif short_opts:
-        auto_name = short_opts[0].lstrip("-").replace("-", "_")
-
-    # If the intended dest_name differs from the auto-generated one,
-    # append the dest_name to the declarations.
-    param_decls = list(cli_names)  # Copy
-    if auto_name and dest_name != auto_name:
-        param_decls.append(dest_name)
-
-    option_type = definition.get("type", "flag")
-    opts = {
-        "help": definition.get("description", ""),
-        "default": definition.get("default"),
-    }
-
-    if option_type == "flag":
-        opts["is_flag"] = True
-        # Check if it should be a counting flag
-        if definition.get("count", False):
-            opts["count"] = True
-            if "is_flag" in opts:
-                del opts["is_flag"]
-    elif option_type == "value":
-        value_type_str = definition.get("value_type")
-        click_type = click.STRING  # Default
-        if value_type_str == "path":
-            click_type = click.Path(path_type=Path)
-        elif value_type_str == "integer":
-            click_type = click.INT
-        # Add more type mappings as needed
-        opts["type"] = click_type
-        opts["metavar"] = definition.get("value_name")  # Use value_name for metavar
-    elif option_type == "positional":
-        # Note: Positional arguments are handled differently (click.Argument)
-        # This helper might need splitting or adjustment for arguments.
-        # For now, assuming global options are not positional.
-        raise ValueError(f"Positional argument definition '{name}' cannot be created as a global Click Option.")
+    # Handle boolean flags (store_true/store_false)
+    is_flag = definition.get("is_flag", False)
+    if is_flag:
+        kwargs["is_flag"] = True
+        # Default 'type' is implicitly boolean for flags
+        # Ensure 'default' is set appropriately (usually False)
+        kwargs.setdefault("default", False)
+        # Remove 'type' if explicitly set to bool, as it's implied
+        if kwargs.get("type") == bool:
+            del kwargs["type"]
     else:
-        raise ValueError(f"Unknown option type '{option_type}' for option '{name}'")
+        # Handle other types
+        type_str = definition.get("type")
+        if type_str == "Path":
+            kwargs["type"] = click.Path()
+        elif type_str == "int":
+            kwargs["type"] = int
+        elif type_str == "str":
+            kwargs["type"] = str
+        # Add more type mappings as needed
 
-    # Remove None values from opts to avoid passing them to click.Option
-    opts = {k: v for k, v in opts.items() if v is not None}
+    # Handle 'count' option
+    is_count = definition.get("count", False)
+    if is_count:
+        kwargs["count"] = True
+        # Default 'type' is implicitly int for counts
+        kwargs.setdefault("default", 0)
+        # Remove 'type' if explicitly set to int, as it's implied
+        if kwargs.get("type") == int:
+            del kwargs["type"]
 
-    # Pass the potentially updated param_decls (incl. dest name if needed)
-    return click.Option(param_decls, **opts)
+    # Handle 'required' attribute
+    if definition.get("required", False):
+        kwargs["required"] = True
+
+    # Handle 'help' attribute
+    if "help" in definition:
+        kwargs["help"] = definition["help"]
+
+    # Handle 'default' attribute
+    if "default" in definition and "default" not in kwargs:  # Don't override if already set by flag/count logic
+        kwargs["default"] = definition["default"]
+
+    # Handle 'envvar' attribute
+    if "envvar" in definition:
+        kwargs["envvar"] = definition["envvar"]
+
+    # Handle 'show_default' attribute
+    kwargs["show_default"] = definition.get("show_default", True)
+
+    # Ensure the destination name (like 'verbose') is included if not automatically derived
+    # from param_decls (e.g., if param_decls is just ['-v'])
+    expected_dest = name.replace("-", "_")
+    has_dest_decl = any(decl.lstrip("-").replace("-", "_") == expected_dest for decl in param_decls)
+    if not has_dest_decl:
+        # Click usually derives the dest from the first long option (--option-name -> option_name)
+        # or the first short option if no long options exist (-o -> o).
+        # If our desired `name` doesn't match an existing declaration, we might need to add it
+        # explicitly, though usually Click handles this well. Let's rely on Click's default
+        # behavior for now unless issues arise.
+        pass  # Revisit if options aren't stored correctly
+
+    # Handle choices
+    choices = definition.get("choices")
+    if choices:
+        kwargs["type"] = click.Choice(choices)
+
+    # Create the option
+    try:
+        option = click.Option(param_decls=param_decls, **kwargs)
+        # log.debug(f"Created option: {option.name}, Params: {param_decls}, Kwargs: {kwargs}")
+        return option
+    except TypeError as e:
+        log.error(f"TypeError creating option '{name}' with params {param_decls} and kwargs {kwargs}: {e}")
+        raise
 
 
 # --- Core File Finding Logic ---
@@ -280,10 +302,10 @@ def create_cli_group() -> click.Group:
         try:
             project_root = find_project_root(start_path=Path.cwd())
             config_file_to_load = config_path_override or (project_root / "pyproject.toml")
-            # ... (rest of config loading logic remains the same)
             if config_file_to_load and Path(config_file_to_load).is_file():
                 log.info("attempting_config_load", path=str(config_file_to_load))
                 config_data = load_config(config_file_to_load)
+                log.debug("Inspect config_data after load_config", data=config_data)
                 if config_data is None:
                     log.warning("config_loading_returned_none", path=str(config_file_to_load))
                     config_data = {}  # Use empty dict if load_config returns None
@@ -294,8 +316,9 @@ def create_cli_group() -> click.Group:
                 log.warning("default_config_not_found_or_override_invalid", path=str(config_file_to_load))
                 config_data = {}
 
-            context_update = {"project_root": project_root, "config": copy.deepcopy(config_data)}
-            ctx.obj.update(context_update)
+            ctx.obj["project_root"] = project_root
+            ctx.obj["config"] = config_data
+            log.debug("Storing config in context", config_stored=ctx.obj["config"])
             log.info("configuration_processed", loaded=bool(config_data), project_root=str(project_root))
 
         except ZLFProjectRootNotFoundError as e:
@@ -304,6 +327,9 @@ def create_cli_group() -> click.Group:
         except Exception as e:
             log.exception("project_root_or_config_loading_failed", error=str(e))
             ctx.fail(f"Fatal Error during project root detection or configuration loading: {e}")
+
+        # --- FINAL DEBUG: Log context state before returning --- #
+        log.debug("Final context object state in base_cli_group", ctx_obj=repr(ctx.obj))
 
     # --- Restore Dynamic Option Loading --- #
     dynamic_options: List[click.Option] = []

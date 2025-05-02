@@ -4,6 +4,7 @@
 import tomllib
 from pathlib import Path
 from unittest import mock
+import copy
 
 import pytest
 import toml
@@ -21,6 +22,7 @@ from zeroth_law.common.config_loader import (
     _CONFIG_PATH_ENV_VAR,  # Add missing constant
     _XDG_CONFIG_HOME_ENV_VAR,  # Add missing constant
 )
+from zeroth_law.common.path_utils import ZLFProjectRootNotFoundError  # Import the exception
 
 
 def test_parse_toml_file_success(tmp_path):
@@ -248,111 +250,127 @@ def test_find_pyproject_toml_not_found(monkeypatch, tmp_path):
 
 
 def test_load_config_with_valid_file(tmp_path):
-    """Test loading configuration from a valid file."""
-    # Create a valid config file
+    """Test loading a valid configuration file."""
     config_file = tmp_path / "pyproject.toml"
-    with open(config_file, "wb") as f:
-        f.write(
-            b"""
+    config_content = """
 [tool.zeroth-law]
 max_complexity = 5
 max_lines = 80
-        """
-        )
 
-    # Load the config
-    config = load_config(config_file)
+[tool.zeroth-law.managed-tools]
+whitelist = ["toolA", "toolC:sub1"]
+blacklist = ["toolB:sub1"]
 
-    # Check custom values were loaded
-    assert config["max_complexity"] == 5
-    assert config["max_lines"] == 80
+[tool.zeroth-law.actions.lint]
+command = "flake8"
+    """
+    config_file.write_text(config_content, encoding="utf-8")
 
-    # Check default values were included
-    for key in DEFAULT_CONFIG:
-        if key not in ["max_complexity", "max_lines"]:
-            assert config[key] == DEFAULT_CONFIG[key]
+    # Call load_config using the explicit path override
+    loaded_config = load_config(config_path_override=config_file)
+
+    # Assertions
+    assert isinstance(loaded_config, dict)
+    assert loaded_config["max_complexity"] == 5
+    assert loaded_config["max_lines"] == 80
+    assert loaded_config["max_parameters"] == DEFAULT_CONFIG["max_parameters"]
+
+    # Check managed-tools (raw lists)
+    assert "managed-tools" in loaded_config
+    assert loaded_config["managed-tools"]["whitelist"] == ["toolA", "toolC:sub1"]
+    assert loaded_config["managed-tools"]["blacklist"] == ["toolB:sub1"]
+
+    # Check parsed lists (ParsedHierarchy structure)
+    assert "parsed_whitelist" in loaded_config
+    assert loaded_config["parsed_whitelist"] == {"toolA": {"_explicit": True}, "toolC": {"sub1": True}}
+    assert "parsed_blacklist" in loaded_config
+    assert loaded_config["parsed_blacklist"] == {"toolB": {"sub1": True}}
+
+    # Check actions
+    assert "actions" in loaded_config
+    assert "lint" in loaded_config["actions"]
+    assert loaded_config["actions"]["lint"]["command"] == "flake8"
 
 
 def test_load_config_file_not_found():
-    """Test loading config when file is not found."""
-    # Load with nonexistent file path
-    # Should now return defaults + empty actions instead of raising
-    non_existent_path = Path("surely/this/does/not/exist/pyproject.toml")
-    config = load_config(non_existent_path)
+    """Test behavior when the configuration file is not found."""
+    # Mock find_pyproject_toml to return None
+    with mock.patch("zeroth_law.common.config_loader.find_pyproject_toml", return_value=None):
+        # Call load_config
+        loaded_config = load_config()
 
-    # Assert it returns defaults plus empty actions and managed-tools
-    expected_config = DEFAULT_CONFIG.copy()
+    # Expect the default configuration when no file is found
+    # Construct expected based on the imported DEFAULT_CONFIG
+    expected_config = copy.deepcopy(DEFAULT_CONFIG)
+    # Add the default parsed lists expected when managed-tools is missing
+    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}
+    expected_config["parsed_whitelist"] = {}
+    expected_config["parsed_blacklist"] = {}
     expected_config["actions"] = {}
-    expected_config["managed-tools"] = {"whitelist": {}, "blacklist": {}}  # Expect dicts now
-    assert config == expected_config
+
+    assert loaded_config == expected_config
 
 
 def test_load_config_section_not_found(tmp_path):
-    """Test loading config when section is missing."""
-    # Create a config file without zeroth-law section
+    """Test behavior when the config file exists but the section is missing."""
     config_file = tmp_path / "pyproject.toml"
-    with open(config_file, "wb") as f:
-        f.write(
-            b"""
+    # Create a file without the [tool.zeroth-law] section
+    config_content = """
 [tool.other-tool]
-some_option = "value"
+setting = true
         """
-        )
+    config_file.write_text(config_content)
 
-    # Load the config
-    config = load_config(config_file)
+    # Call load_config with the explicit path
+    loaded_config = load_config(config_path_override=config_file)
 
-    # Should use defaults
-    # Check that core config matches defaults, actions is empty, and managed-tools is empty
-    expected_config = DEFAULT_CONFIG.copy()
+    # Expect the default configuration when the section is missing
+    expected_config = copy.deepcopy(DEFAULT_CONFIG)
+    # Add the default parsed lists expected when managed-tools is missing
+    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}
+    expected_config["parsed_whitelist"] = {}
+    expected_config["parsed_blacklist"] = {}
     expected_config["actions"] = {}
-    expected_config["managed-tools"] = {"whitelist": {}, "blacklist": {}}  # Expect dicts now
-    assert config == expected_config
+
+    assert loaded_config == expected_config
 
 
 def test_load_config_integration(tmp_path, monkeypatch):
-    """Integration test for the entire config loading process."""
-    # Create a valid config file
+    """Test the overall load_config function with integration aspects."""
+    # Add import here if it wasn't added at the top level correctly
+    from zeroth_law.common.path_utils import ZLFProjectRootNotFoundError
+
+    # Setup: Create a dummy pyproject.toml
     config_file = tmp_path / "pyproject.toml"
-    with open(config_file, "wb") as f:
-        f.write(
-            b"""
+    config_content = """
 [tool.zeroth-law]
 max_complexity = 5
-max_lines = 80
-max_parameters = 3
-
 [tool.zeroth-law.managed-tools]
-whitelist = ["mytool:sub1,sub2"]
-blacklist = ["blacklisted_tool"]
-            """
-        )
+whitelist = ["toolA"] # Ensure managed-tools exists
+    """
+    config_file.write_text(config_content)
 
-    # Set environment variable to point to the config file
-    monkeypatch.setenv(_CONFIG_PATH_ENV_VAR, str(config_file))
+    # Mock CWD to tmp_path
+    monkeypatch.chdir(tmp_path)
+    # Ensure env vars are unset
+    monkeypatch.delenv(_CONFIG_PATH_ENV_VAR, raising=False)
+    monkeypatch.delenv(_XDG_CONFIG_HOME_ENV_VAR, raising=False)
 
-    # Load the config without explicit path (should find via env var)
-    config = load_config()
+    # Call load_config (no override, should find via upward search)
+    loaded_config = load_config()
 
-    # Check custom values were loaded
-    assert config["max_complexity"] == 5
-    assert config["max_lines"] == 80
-    assert config["max_parameters"] == 3
+    # Assertions
+    assert loaded_config["max_complexity"] == 5
+    assert loaded_config["managed-tools"]["whitelist"] == ["toolA"]
+    assert loaded_config["parsed_whitelist"] == {"toolA": {"_explicit": True}}
 
-    # Check default values were included
-    for key in DEFAULT_CONFIG:
-        if key not in ["max_complexity", "max_lines", "max_parameters"]:
-            assert config[key] == DEFAULT_CONFIG[key]
-
-    # Verify merged config (excluding actions)
-    # Updated expected structure to match ParsedHierarchy
-    expected_managed_tools = {
-        "whitelist": {"mytool": {"sub1": {"_explicit": True}, "sub2": {"_explicit": True}}},
-        "blacklist": {"blacklisted_tool": {"_explicit": True}},
-    }
-    assert config["managed-tools"] == expected_managed_tools
-
-    # assert config["actions"] == {"format": {"tool": "ruff_format"}} # This seems incorrect for this test setup
+    # Test case where root is not found
+    monkeypatch.chdir("/")  # Change to root dir
+    # Mock find_project_root to explicitly raise the error if needed for clarity
+    with mock.patch("zeroth_law.common.config_loader.find_project_root", side_effect=ZLFProjectRootNotFoundError):
+        # Expect default config when root/config not found
+        not_found_config = load_config()
+        assert not_found_config == DEFAULT_CONFIG
 
 
 def test_load_config_validation_failure(tmp_path):

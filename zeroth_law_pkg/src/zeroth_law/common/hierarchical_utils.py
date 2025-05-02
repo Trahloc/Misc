@@ -449,8 +449,8 @@ def get_effective_status(
             is_all = node_w.get("_all", False)
             if is_explicit or is_all:
                 most_specific_whitelist = (level, is_explicit, is_all)
-            if is_all:
-                break  # Stop descent if wildcard found
+                break  # <<< FIXED: Stop descent once *any* rule (explicit or all) is found
+            # Only continue descent if no rule applied at this level
             current_level_w = node_w
         else:
             break  # Path doesn't exist further
@@ -466,8 +466,8 @@ def get_effective_status(
             is_all = node_b.get("_all", False)
             if is_explicit or is_all:
                 most_specific_blacklist = (level, is_explicit, is_all)
-            if is_all:
-                break  # Stop descent if wildcard found
+                break  # <<< FIXED: Stop descent once *any* rule (explicit or all) is found
+            # Only continue descent if no rule applied at this level
             current_level_b = node_b
         else:
             break  # Path doesn't exist further

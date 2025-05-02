@@ -13,13 +13,14 @@ import os
 import tomllib
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, List, Union, Set
+import copy
 
 import structlog  # Import structlog
 import tomlkit
 from .config_validation import validate_config
 
 # Import the new parser
-from .hierarchical_utils import parse_to_nested_dict, ParsedHierarchy
+from .hierarchical_utils import parse_to_nested_dict, ParsedHierarchy, check_list_conflicts
 
 # Import defaults from shared module
 from zeroth_law.config_defaults import DEFAULT_CONFIG
@@ -286,97 +287,178 @@ def load_action_definitions(config_section: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_config(config_path_override: str | Path | None = None) -> dict[str, Any]:
-    """Load Zeroth Law config, process actions separately, merge rest with defaults.
+    """Load and validate Zeroth Law configuration.
 
-    Returns the processed configuration dictionary.
+    Finds pyproject.toml, parses it, extracts the [tool.zeroth-law] section,
+    merges with defaults, validates, parses hierarchical lists, loads actions,
+    and returns the comprehensive configuration dictionary.
+
+    Args:
+        config_path_override: Explicit path to a config file (optional).
+
+    Returns:
+        A dictionary containing the full configuration, including parsed
+        whitelist/blacklist and action definitions.
+        Returns DEFAULT_CONFIG if no config file is found or if errors occur.
     """
-    # Find the config file
-    found_path: Path | None
-    if config_path_override is None:
-        found_path = find_pyproject_toml()
-        if found_path is None:
-            log.warning("No config file found (XDG or upwards search). Using defaults + empty actions/managed.")
-            # Return structure consistent with successful load but empty lists
-            final_config = DEFAULT_CONFIG.copy()
-            final_config["actions"] = {}
-            final_config["managed-tools"] = {"whitelist": [], "blacklist": []}
-            return final_config
+    log.debug("Attempting to load Zeroth Law configuration...")
+    config_file_path: Optional[Path] = None
+
+    # 1. Find Config File
+    if isinstance(config_path_override, (str, Path)):
+        config_file_path = Path(config_path_override).resolve()
+        if not config_file_path.is_file():
+            log.error("Config file override specified but not found.", path=str(config_file_path))
+            # Consider if this should raise an error or fall back to defaults?
+            # Falling back to defaults might hide issues.
+            # Let's return defaults for now, consistent with finding no file.
+            return copy.deepcopy(DEFAULT_CONFIG)
+        log.info("Using explicit config file path.", path=str(config_file_path))
     else:
-        found_path = Path(config_path_override)
+        # Search for pyproject.toml
+        # Try finding project root relative to CWD first for standard cases
+        try:
+            project_root = find_project_root()
+            if project_root:
+                config_file_path = project_root / _PYPROJECT_FILENAME
+                if not config_file_path.is_file():
+                    config_file_path = None  # Reset if not found at project root
+            if config_file_path:
+                log.info("Found config file via project root search.", path=str(config_file_path))
+            else:
+                log.info("Config file not found via project root search. No config loaded.")
+                # Return defaults if no pyproject.toml is found via upward search
+                # This is the expected behavior if run outside a project.
+                return copy.deepcopy(DEFAULT_CONFIG)
 
-    if not found_path or not found_path.exists():
-        log.warning(f"Config file not found at {found_path}. Using defaults + empty actions/managed.")
-        final_config = DEFAULT_CONFIG.copy()
-        final_config["actions"] = {}
-        final_config["managed-tools"] = {"whitelist": [], "blacklist": []}
-        return final_config
+        except ZLFProjectRootNotFoundError:
+            log.info("Project root not found. Cannot load config relative to it. Returning defaults.")
+            return copy.deepcopy(DEFAULT_CONFIG)
 
+    # Ensure we actually have a path
+    if not config_file_path:
+        log.warning("No configuration file found. Using default settings.")
+        return copy.deepcopy(DEFAULT_CONFIG)
+
+    # 2. Parse TOML File
     try:
-        # Parse the TOML file
-        toml_data = parse_toml_file(found_path)
-        # Extract the main tool section
+        toml_data = parse_toml_file(config_file_path)
+    except (FileNotFoundError, OSError, TomlDecodeError, RuntimeError):
+        log.warning("Failed to load or parse config file. Using default settings.")
+        return copy.deepcopy(DEFAULT_CONFIG)  # Return defaults on parse failure
+    except Exception as e:
+        log.exception("Unexpected error during config parsing, using defaults.", error=e)
+        return copy.deepcopy(DEFAULT_CONFIG)
+
+        # 3. Extract ZLT Section
         config_section = extract_config_section(toml_data, _TOOL_SECTION_PATH)
+    if not config_section:
+        log.info("No [tool.zeroth-law] section found in config. Using defaults.")
+        # Return a complete default structure if section is missing
+        config = copy.deepcopy(DEFAULT_CONFIG)
+        # Ensure expected nested structures exist even in defaults
+        config["actions"] = config.get("actions", {})
+        config["managed-tools"] = config.get(
+            "managed-tools", {"whitelist": [], "blacklist": []}
+        )  # Add default structure
+        config["parsed_whitelist"] = parse_to_nested_dict([])
+        config["parsed_blacklist"] = parse_to_nested_dict([])
+        return config
 
-        # Get the core config settings (excluding actions and managed-tools initially)
-        core_config_settings = {k: v for k, v in config_section.items() if k not in ("actions", "managed-tools")}
+    # 4. Merge File Config with Defaults
+    merged_config = copy.deepcopy(DEFAULT_CONFIG)  # Start with defaults
+    # Update with ALL keys from the loaded config section
+    # This ensures file settings override defaults and extra keys from file are included
+    # We might want stricter validation later to reject unknown keys if desired.
+    merged_config.update(config_section)  # Overwrite defaults with file values
 
-        # Merge core settings with defaults and validate
-        merged_core_config = merge_with_defaults(core_config_settings, DEFAULT_CONFIG)
-
-        # Extract actions config
-        actions_config = load_action_definitions(config_section)
-
-        # Extract managed-tools config SECTION
-        managed_tools_section = config_section.get("managed-tools", {})
-        log.debug(
-            "Extracted managed_tools_section inside load_config",
-            type=type(managed_tools_section).__name__,
-            value=repr(managed_tools_section),  # Use repr for detailed view
-            is_dict=isinstance(managed_tools_section, dict),
+    # Ensure 'managed-tools' structure exists if not present in either default or file
+    # Use .setdefault to add it only if missing, preserving existing content if present
+    managed_tools_data = merged_config.setdefault("managed-tools", {"whitelist": [], "blacklist": []})
+    if not isinstance(managed_tools_data, dict):
+        log.warning(
+            "Invalid 'managed-tools' format in config, reverting to default.", found_type=type(managed_tools_data)
         )
-        if not isinstance(managed_tools_section, dict):
-            log.warning(
-                "Invalid type for [tool.zeroth-law.managed-tools], expected dict.",
-                received_type=type(managed_tools_section).__name__,
-            )
-            managed_tools_section = {}
+        managed_tools_data = {"whitelist": [], "blacklist": []}
+        merged_config["managed-tools"] = managed_tools_data
+    managed_tools_data.setdefault("whitelist", [])
+    managed_tools_data.setdefault("blacklist", [])
 
-        # Get the raw lists
-        raw_whitelist = managed_tools_section.get("whitelist", [])
-        raw_blacklist = managed_tools_section.get("blacklist", [])
+    # Ensure 'actions' structure exists (though it's loaded separately later)
+    merged_config.setdefault("actions", {})
 
-        # Type validation for raw lists
-        if not isinstance(raw_whitelist, (list, tomlkit.items.Array)):
-            log.warning("managed-tools.whitelist is not a list/array.", type=type(raw_whitelist).__name__)
-            raw_whitelist = []
-        if not isinstance(raw_blacklist, (list, tomlkit.items.Array)):
-            log.warning("managed-tools.blacklist is not a list/array.", type=type(raw_blacklist).__name__)
-            raw_blacklist = []
+    validation_errors = []
+    validated_config = merged_config  # Temporarily assign, will be replaced by model dump
 
-        # Construct the final config
-        final_config = merged_core_config
-        final_config["actions"] = actions_config
-        final_config["managed-tools"] = {
-            "whitelist": raw_whitelist,
-            "blacklist": raw_blacklist,
-        }
+    # 5. Validate the Fully Merged Configuration
+    try:
+        validated_model = validate_config(merged_config)  # Validate the merged config
+        # --- DEBUG: Inspect model attribute before dump --- #
+        log.debug(
+            "Inspecting validated_model.managed_tools before dump",
+            data=getattr(validated_model, "managed_tools", "Attribute Missing"),
+        )
+        # --- END DEBUG ---
+        validated_config = validated_model.model_dump(mode="python")
+        # --- DEBUG: Inspect dumped dictionary --- #
+        log.debug(
+            "Inspecting validated_config dictionary after dump",
+            data=validated_config.get("managed_tools", "Key Missing"),
+        )
+        # --- END DEBUG ---
 
-        log.debug(f"Successfully loaded and processed config from: {found_path}")
-        return final_config
+        log.debug("Configuration validated successfully.")
+
+        # 6. Parse Hierarchical Whitelist/Blacklist
+        # --- FIX: Access using underscore key from model dump --- #
+        # raw_whitelist = validated_config["managed-tools"].get("whitelist", [])
+        # raw_blacklist = validated_config["managed-tools"].get("blacklist", [])
+        managed_tools_data = validated_config.get("managed_tools", {})  # Use underscore
+        raw_whitelist = managed_tools_data.get("whitelist", [])
+        raw_blacklist = managed_tools_data.get("blacklist", [])
+        # --- END FIX --- #
+
+        whitelist_tree = parse_to_nested_dict(raw_whitelist)
+        blacklist_tree = parse_to_nested_dict(raw_blacklist)
+
+        # --- ADD PARSED TREES TO RETURNED CONFIG --- #
+        validated_config["parsed_whitelist"] = whitelist_tree
+        validated_config["parsed_blacklist"] = blacklist_tree
+        log.debug("Added parsed whitelist/blacklist trees to config dict.")
+        # --- END ADD PARSED TREES --- #
 
     except Exception as e:
+        log.error("Configuration validation failed. Using default settings.", error=str(e), exc_info=True)
+        validation_errors.append(str(e))
+        # Return defaults on validation failure
+        # Make sure defaults also have the nested structures
+        config = copy.deepcopy(DEFAULT_CONFIG)
+        config["actions"] = config.get("actions", {})
+        config["managed-tools"] = config.get("managed-tools", {"whitelist": [], "blacklist": []})
+        config["parsed_whitelist"] = parse_to_nested_dict([])
+        config["parsed_blacklist"] = parse_to_nested_dict([])
+        config["_validation_errors"] = validation_errors  # Include error info
+        return config
+
+    # 7. Check for conflicts between parsed trees
+    conflict_errors = check_list_conflicts(whitelist_tree, blacklist_tree)
+    if conflict_errors:
+        conflict_details = ", ".join(conflict_errors)
         log.error(
-            f"Failed to load or process config file {found_path}: {e}. Using defaults.",
-            exc_info=True,
+            "Configuration conflict detected between parsed whitelist and blacklist.",
+            conflicts=conflict_details,
         )
-        # Return defaults + empty raw lists on error
-        final_config = DEFAULT_CONFIG.copy()
-        final_config["actions"] = {}
-        final_config["managed-tools"] = {
-            "whitelist": [],
-            "blacklist": [],
-        }
-        return final_config
+        raise ValueError(f"Explicit conflicts found: {conflict_details}")
+
+    # 8. Load Action Definitions (from original section, not merged)
+    validated_config["actions"] = load_action_definitions(config_section)
+    log.debug("Loaded action definitions.", actions=list(validated_config["actions"].keys()))
+
+    # Add validation error info if any occurred during load
+    validated_config["_validation_errors"] = validation_errors
+
+    log.info("Configuration loaded successfully.", path=str(config_file_path))
+    return validated_config
 
 
 def _load_python_version_constraint(

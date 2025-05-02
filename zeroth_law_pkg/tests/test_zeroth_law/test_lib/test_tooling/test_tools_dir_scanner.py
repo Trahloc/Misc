@@ -2,8 +2,10 @@ from pathlib import Path
 
 import pytest
 from unittest.mock import patch, MagicMock
+import os
 
-from zeroth_law.lib.tooling.tools_dir_scanner import get_tool_dirs
+from zeroth_law.lib.tooling.tools_dir_scanner import get_tool_dirs, scan_whitelisted_sequences
+from zeroth_law.common.hierarchical_utils import parse_to_nested_dict, get_effective_status
 
 
 def test_scan_with_tool_dirs(tmp_path):

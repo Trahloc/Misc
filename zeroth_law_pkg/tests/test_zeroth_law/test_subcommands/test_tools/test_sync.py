@@ -7,11 +7,29 @@ import zlib
 from pathlib import Path
 from unittest.mock import patch, MagicMock, call
 import shutil
+import time
+import os
 
 from click.testing import CliRunner
 
-# Assuming zlt is the entry point registered in cli.py
-from zeroth_law.cli import cli as zlt_cli
+# --- Corrected import for CLI group --- #
+from zeroth_law.cli import create_cli_group
+
+zlt_cli = create_cli_group()
+
+# --- Import the command function directly --- #
+from zeroth_law.subcommands.tools.sync import sync as sync_command
+
+# --- Import hierarchical utils --- #
+from zeroth_law.common.hierarchical_utils import (
+    parse_to_nested_dict,
+    ParsedHierarchy,
+    check_list_conflicts,
+    get_effective_status,
+)
+
+# --- Import tooling utils --- #
+from zeroth_law.lib.tooling.tools_dir_scanner import scan_whitelisted_sequences
 
 # Default config structure for pyproject.toml
 DEFAULT_PYPROJECT_CONTENT = """

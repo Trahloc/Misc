@@ -19,6 +19,9 @@ import pytest
 # Import the path utility function
 from zeroth_law.common.path_utils import find_project_root
 
+# Import the *actual* exception class
+from zeroth_law.subcommands.tools.reconcile import ReconciliationError
+
 # Explicitly import the session-scoped fixture
 # from tests.test_tool_defs.conftest import WORKSPACE_ROOT
 
@@ -863,54 +866,55 @@ def tool_index_handler(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path):
 
 @pytest.fixture(scope="session")
 def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]:  # Removed TOOLS_DIR dependency
-    """Discovers managed tool *names* based on reconciliation logic.
+    """Fixture to perform tool reconciliation and return the set of managed tool names."""
+    # Import necessary functions locally within the fixture
+    from zeroth_law.common.config_loader import load_config
 
-    Performs reconciliation within the fixture scope by calling the core logic
-    from the reconcile subcommand.
+    # Import the logic function, but rely on the imported Exception class
+    from zeroth_law.subcommands.tools.reconcile import _perform_reconciliation_logic
+    from zeroth_law.lib.tooling.tool_reconciler import ToolStatus
 
-    Returns:
-        A set of managed tool names.
-    """
-    log.info("Discovering managed tool names within managed_sequences fixture scope...")
+    logger = logging.getLogger(__name__)  # Use standard logging for fixture setup
+    logger.info("Discovering managed tool names within managed_sequences fixture scope...")  # Corrected log call
+
     try:
-        # Need to load config first, mimicking cli.py context setup
-        config_data = {}
-        effective_config_path = WORKSPACE_ROOT / "pyproject.toml"
-        if effective_config_path.is_file():
-            # --- FORCE Corrected Import Path (from common) --- #
-            from zeroth_law.common.config_loader import load_config  # Use common loader
+        # 1. Load configuration
+        config = load_config(WORKSPACE_ROOT)
+        if config is None:
+            raise ValueError("Failed to load configuration from pyproject.toml")
+        logger.info(f"Fixture 'managed_sequences': Loaded config: {config}")
 
-            config_data = load_config(effective_config_path)
-        else:
-            log.warning("managed_sequences fixture: pyproject.toml not found, using empty config.")
+        # 2. Perform reconciliation
+        (
+            reconciliation_results,
+            managed_tools_set,
+            parsed_whitelist,
+            parsed_blacklist,
+            error_messages,
+            warning_messages,
+            has_errors,
+        ) = _perform_reconciliation_logic(project_root_dir=WORKSPACE_ROOT, config_data=config)
 
-        # Call the internal reconciliation logic directly
-        from zeroth_law.subcommands.tools.reconcile import (
-            _perform_reconciliation_logic,
-            ReconciliationError,
-        )
+        # 3. Handle reconciliation errors
+        if has_errors:
+            logger.error("Tool reconciliation failed within managed_sequences fixture:")
+            for msg in error_messages:
+                logger.error(f"- {msg}")
+            raise ValueError(f"Tool reconciliation failed: {'; '.join(error_messages)}")
 
-        _results, managed_set, _whitelist, _blacklist, _errors, _warnings, _has_errors = _perform_reconciliation_logic(
-            project_root_dir=WORKSPACE_ROOT, config_data=config_data
-        )
+        logger.info(f"Fixture 'managed_sequences': Reconciliation successful. Managed tools: {managed_tools_set}")
+        return managed_tools_set
 
-        if not managed_set:
-            log.warning("Fixture 'managed_sequences' determined the set of managed tools is empty.")
-        else:
-            log.info(f"Fixture 'managed_sequences' identified {len(managed_set)} managed tools.")
-        return managed_set
-
-    except ReconciliationError as e:
-        # Fail the test setup if reconciliation itself fails
-        pytest.fail(f"Tool reconciliation failed within managed_sequences fixture: {e}")
-    except ImportError as e:
-        pytest.fail(f"Failed to import reconciliation logic or config loader within managed_sequences fixture: {e}")
-    except Exception as e:
-        log.error(
-            f"Unexpected error during managed_sequences fixture setup: {e}",
-            exc_info=True,
-        )
-        pytest.fail(f"Unexpected error in managed_sequences fixture: {e}")
+    # Catch the *imported* ReconciliationError
+    except (ReconciliationError, ValueError, FileNotFoundError) as e:
+        logger.exception("Error during managed_sequences fixture setup.")
+        # Use f-string for clearer error message
+        pytest.fail(f"Fixture 'managed_sequences' setup failed: {e!r}", pytrace=False)
+        return set()
+    except Exception as e:  # Catch any other unexpected errors
+        logger.exception("Unexpected error during managed_sequences fixture setup.")
+        pytest.fail(f"Fixture 'managed_sequences' setup failed unexpectedly: {e!r}", pytrace=False)
+        return set()
 
 
 # --- END Moved/Added Fixtures ---

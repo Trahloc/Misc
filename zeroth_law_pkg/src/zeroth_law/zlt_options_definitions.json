@@ -30,5 +30,29 @@
         "nargs": "*",
         "description": "Files or directories to process.",
         "help_group": "Input"
+    },
+    "verbose": {
+        "cli_names": [
+            "--verbose",
+            "-v"
+        ],
+        "type": "flag_count",
+        "value_type": null,
+        "value_name": null,
+        "nargs": null,
+        "description": "Increase verbosity level (-v, -vv, -vvv).",
+        "help_group": "Output"
+    },
+    "quiet": {
+        "cli_names": [
+            "--quiet",
+            "-q"
+        ],
+        "type": "flag",
+        "value_type": null,
+        "value_name": null,
+        "nargs": null,
+        "description": "Suppress all output except errors.",
+        "help_group": "Output"
     }
 }

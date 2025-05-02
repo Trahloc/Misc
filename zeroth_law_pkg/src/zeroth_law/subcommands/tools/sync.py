@@ -16,7 +16,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, Future
 import os
 import json as json_lib  # Alias to avoid conflict
 from ...common.config_loader import load_config
-from ...common.logging_utils import setup_structlog_logging  # ADD NEW IMPORT
+from ...common.logging_utils import setup_structlog_logging  # Correct import
+from ...utils.subprocess_utils import run_subprocess_no_check  # ADD IMPORT
 
 # TODO: [Implement Subcommand Blacklist] Reference TODO H.14 in TODO.md - This module needs to filter command sequences based on resolved hierarchical status.
 
@@ -24,12 +25,10 @@ from ...common.logging_utils import setup_structlog_logging  # ADD NEW IMPORT
 
 # Need reconciliation logic, status enum, and the effective status checker
 from .reconcile import (
-    _perform_reconciliation_logic,
     ReconciliationError,
     ToolStatus,
-    # ParsedHierarchy, # Import type from common
-    # _get_effective_status, # Import checker from tool_reconciler
 )
+from ...lib.tooling.tool_reconciler import reconcile_tools
 from ...lib.tooling.tool_reconciler import _get_effective_status  # Import checker
 from ...common.hierarchical_utils import (
     ParsedHierarchy,
@@ -37,7 +36,7 @@ from ...common.hierarchical_utils import (
     get_effective_status,
     parse_to_nested_dict,
 )
-from ...common.path_utils import list_executables_in_venv_bin  # ADDED IMPORT
+from ...lib.tooling.environment_scanner import get_executables_from_env  # ADDED IMPORT
 
 # Need baseline generation logic
 # TODO: Move baseline_generator to a shared location
@@ -72,8 +71,10 @@ from ...lib.tool_path_utils import (
 
 # Need sequence generation logic
 # --- Corrected imports for sequence scanning --- #
-# from ...lib.tooling.tools_dir_scanner import scan_for_command_sequences # Old scanner
-from ...lib.tooling.tools_dir_scanner import scan_whitelisted_sequences  # New scanner
+from ...lib.tooling.tools_dir_scanner import scan_for_command_sequences  # Need scanner for reconcile
+from ...lib.tooling.tools_dir_scanner import (
+    scan_whitelisted_sequences,
+)  # Already imported above, ensure no duplicates if logic changes
 
 # Need skeleton creation logic (adapted from conftest)
 
@@ -91,9 +92,9 @@ def _get_container_name(project_root: Path) -> str:
     return f"zlt-baseline-runner-{project_hash}"
 
 
-def _start_podman_runner(container_name: str, project_root: Path, venv_path: Path) -> bool:
+def _start_podman_runner(container_name: str, project_root: Path, venv_path: Path, read_only_app: bool = False) -> bool:
     """STAGE 1: Starts the podman container, creates internal venv, and installs deps."""
-    log.info(f"STAGE 1: Attempting to start Podman baseline runner: {container_name}")
+    log.info(f"STAGE 1: Attempting to start Podman baseline runner: {container_name} (App RO: {read_only_app})")
 
     # --- Build local project wheel --- #
     log.info("Building project wheel locally...")
@@ -164,8 +165,15 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
     host_python_cache.mkdir(parents=True, exist_ok=True)  # Ensure host cache dir exists
     container_python_cache = "/root/.cache/python"  # Standard location for root user
 
+    # --- Define host output path --- #
+    host_output_dir = project_root / "generated_command_outputs"
+    host_output_dir.mkdir(parents=True, exist_ok=True)  # Ensure host output dir exists
+    container_output_dir = "/app_outputs"  # Use a distinct path inside container
+
     try:
         # Mount project root read-only AND host python cache read-write.
+        app_mount_mode = "ro" if read_only_app else "rw"
+        log.debug(f"Setting /app mount mode to: {app_mount_mode}")
         _run_podman_command(
             [
                 "run",
@@ -173,7 +181,9 @@ def _start_podman_runner(container_name: str, project_root: Path, venv_path: Pat
                 "-d",
                 "--name",
                 container_name,
-                f"--volume={str(project_root.resolve())}:/app:ro",  # Mount project root read-only
+                # --- Conditionally set RO/RW for /app --- #
+                f"--volume={str(project_root.resolve())}:/app:{app_mount_mode}",
+                # --- End Conditional Mount --- #
                 f"--volume={str(host_python_cache.resolve())}:{container_python_cache}:rw",  # Mount python cache
                 python_image,
                 "sleep",
@@ -326,24 +336,87 @@ def _reconcile_and_prune(
     sync_errors: List[str] = []
     pruned_count = 0
 
-    reconciliation_results, managed_tools_set, parsed_whitelist, parsed_blacklist, errors, warnings, has_errors = (
-        _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
-    )
+    # --- Call the original _perform_reconciliation_logic from reconcile.py --- #
+    # This needs updating to use the modified reconcile_tools logic internally
+    # For now, we adapt the call here to match the *old* signature of reconcile_tools
+    # by scanning for sequences first.
 
+    # 1. Get required inputs for the NEW reconcile_tools signature
+    env_tools = set()  # Need to get this from environment scan
+    defined_sequences = set()  # Need to get this from directory scan
+    parsed_whitelist = config.get("parsed_whitelist", {})
+    parsed_blacklist = config.get("parsed_blacklist", {})
+
+    try:
+        # Get env tools (moved logic from _load_initial_config_and_state)
+        venv_path = project_root / ".venv"
+        venv_bin_path = venv_path / "bin"
+        if venv_bin_path.is_dir():
+            env_tools = get_executables_from_env(venv_bin_path)
+        else:
+            log.warning(f"Venv bin path {venv_bin_path} not found during reconcile stage.")
+
+        # Scan for defined sequences
+        if not tool_defs_dir.is_dir():
+            log.warning(f"Tool definitions directory not found: {tool_defs_dir}")
+            # If dir doesn't exist, treat as empty sequences
+        else:
+            try:
+                # Use the scanner that finds ALL sequences, not just whitelisted ones
+                defined_sequences = set(scan_for_command_sequences(tool_defs_dir))
+                log.info(f"Found {len(defined_sequences)} defined command sequences in {tool_defs_dir}.")
+            except Exception as scan_e:
+                log.error(f"Error scanning for command sequences: {scan_e}")
+                sync_errors.append(f"Sequence Scan Error: {scan_e}")
+                # Continue with empty set?
+
+    except Exception as setup_e:
+        log.error(f"Error getting env tools or scanning sequences: {setup_e}")
+        sync_errors.append(f"Reconcile Setup Error: {setup_e}")
+        # Return empty/error state if setup fails badly
+        return {}, set(), {}, {}, sync_errors, 0
+
+    # 2. Call the UPDATED reconcile_tools function
+    try:
+        reconciliation_results = reconcile_tools(
+            env_tools=env_tools,
+            defined_sequences=defined_sequences,
+            whitelist=parsed_whitelist,
+            blacklist=parsed_blacklist,
+        )
+    except Exception as recon_e:
+        log.error(f"Error during tool reconciliation: {recon_e}")
+        sync_errors.append(f"Reconciliation Logic Error: {recon_e}")
+        return {}, set(), parsed_whitelist, parsed_blacklist, sync_errors, 0
+
+    # --- DEBUG: Log reconciliation results --- #
+    log.debug("Reconciliation results received", results=reconciliation_results)
+    # --- END DEBUG --- #
+
+    # 3. Determine Managed Tools based on NEW logic (whitelisted AND has defs OR needs defs)
+    managed_tools_set = {
+        tool
+        for tool, status in reconciliation_results.items()
+        if status in {ToolStatus.MANAGED_OK, ToolStatus.MANAGED_MISSING_ENV, ToolStatus.WHITELISTED_NO_DEFS}
+    }
+    log.info(f"Identified {len(managed_tools_set)} managed tools after reconciliation.")
+
+    # 4. Pruning Logic (needs update based on NEW statuses)
     if prune:
-        blacklisted_present = {
-            t for t, s in reconciliation_results.items() if s == ToolStatus.ERROR_BLACKLISTED_IN_TOOLS_DIR
+        # Prune based on ERROR_BLACKLISTED_HAS_DEFS or ERROR_ORPHAN_HAS_DEFS
+        dirs_to_prune = {
+            tool
+            for tool, status in reconciliation_results.items()
+            if status in {ToolStatus.ERROR_BLACKLISTED_HAS_DEFS, ToolStatus.ERROR_ORPHAN_HAS_DEFS}
         }
-        orphaned_present = {t for t, s in reconciliation_results.items() if s == ToolStatus.ERROR_ORPHAN_IN_TOOLS_DIR}
-        dirs_to_prune = blacklisted_present.union(orphaned_present)
 
         if dirs_to_prune:
             log.warning(
-                f"--prune specified: {len(dirs_to_prune)} directories will be removed: {sorted(list(dirs_to_prune))}"
+                f"--prune specified: {len(dirs_to_prune)} directories with definitions marked for removal: {sorted(list(dirs_to_prune))}"
             )
             for tool_name in dirs_to_prune:
                 dir_path = tool_defs_dir / tool_name
-                if dir_path.is_dir():
+                if dir_path.is_dir():  # Double-check it exists
                     try:
                         if dry_run:
                             log.info(f"[DRY RUN] Would prune directory: {dir_path}")
@@ -356,14 +429,15 @@ def _reconcile_and_prune(
                         log.error(err_msg)
                         sync_errors.append(err_msg)
                 else:
-                    log.warning(f"Requested prune for {tool_name}, but directory {dir_path} not found.")
+                    # This shouldn't happen if has_defs was true, but log just in case
+                    log.warning(f"Requested prune for {tool_name}, but directory {dir_path} not found unexpectedly.")
         else:
-            log.info("--prune specified, but no unmanaged or blacklisted directories found.")
+            log.info(
+                "--prune specified, but no directories found matching prune criteria (BLACKLISTED_HAS_DEFS or ORPHAN_HAS_DEFS)."
+            )
 
-    if sync_errors:
-        log.error("Errors occurred during pruning phase.")
-        # Raise exception to halt sync? Or just return errors?
-        # Let's return errors for now.
+    # 5. Collect final errors/warnings from reconciliation results (optional, if needed)
+    # errors_found = any(status.name.startswith("ERROR") for status in reconciliation_results.values())
 
     log.info("STAGE 2: Reconciliation and pruning complete.")
     return reconciliation_results, managed_tools_set, parsed_whitelist, parsed_blacklist, sync_errors, pruned_count
@@ -451,40 +525,6 @@ def _generate_and_filter_sequences(
 # === Stage 5: Parallel Baseline Processing ===
 
 
-# Helper for Skeleton Creation (Moved here for use by Stage 5 helper)
-def _create_skeleton_json_if_missing(json_file_path: Path, command_sequence: tuple[str, ...]) -> bool:
-    """Creates a schema-compliant skeleton JSON if it doesn't exist."""
-    created = False
-    if not json_file_path.exists():
-        command_name = command_sequence[0]
-        command_id = command_sequence_to_id(command_sequence)
-        log.info(f"Skeleton Action: Creating skeleton JSON for {command_id} at {json_file_path}")
-        skeleton_data = {
-            "command": list(command_sequence),
-            "description": f"Tool definition for {command_name} (auto-generated skeleton)",
-            "usage": f"{command_name} [options] [arguments]",
-            "options": [],
-            "arguments": [],
-            "metadata": {
-                "name": command_name,
-                "version": None,
-                "language": "unknown",
-                "categories": [],
-                "tags": ["skeleton"],
-                "url": "",
-                "other": {},
-            },
-        }
-        try:
-            json_file_path.parent.mkdir(parents=True, exist_ok=True)
-            with json_file_path.open("w", encoding="utf-8") as f:
-                json_lib.dump(skeleton_data, f, indent=4)
-            created = True
-        except IOError as e:
-            log.error(f"Skeleton Action Error: Failed to write skeleton JSON {json_file_path}: {e}")
-    return created
-
-
 # Helper Function for Processing a Single Command Sequence (Moved here for use by Stage 5)
 def _process_command_sequence(
     command_sequence: Tuple[str, ...],
@@ -495,7 +535,8 @@ def _process_command_sequence(
     force: bool,
     since_timestamp: Optional[float],
     ground_truth_txt_skip_hours: int,
-    generated_outputs_dir: Path,
+    host_generated_outputs_dir: Path,
+    container_generated_outputs_dir: Path,
 ) -> Dict[str, Any]:
     """Processes a single command sequence (ground truth gen, skeleton check, prep update data)."""
     log.debug(f"--->>> Worker thread processing: {command_sequence_to_id(command_sequence)}")
@@ -541,15 +582,20 @@ def _process_command_sequence(
         result["check_timestamp"] = check_timestamp
         result["status"] = status_enum  # Store the actual or simulated status
 
-        if status_enum not in {
+        if status_enum in {
             BaselineStatus.UP_TO_DATE,
             BaselineStatus.UPDATED,
             BaselineStatus.CAPTURE_SUCCESS,
         }:
-            result["error_message"] = (
-                f"Ground truth TXT generation failed for {' '.join(command_sequence)} with status: {status_enum.name}"
-            )
-            log.error(result["error_message"])
+            if calculated_crc:
+                result["calculated_crc"] = calculated_crc
+                result["check_timestamp"] = check_timestamp
+                result["status"] = status_enum
+            else:
+                result["error_message"] = (
+                    f"Ground truth TXT generation failed for {' '.join(command_sequence)} with status: {status_enum.name}"
+                )
+                log.error(result["error_message"])
 
         # 3. Ensure Skeleton JSON exists
         skeleton_created = _create_skeleton_json_if_missing(json_file_path, command_sequence)
@@ -562,7 +608,7 @@ def _process_command_sequence(
 
         # 4. Prepare update data (always prepare, even for failures, but CRC might be None)
         relative_baseline_path_str = (
-            str(baseline_file_path.relative_to(generated_outputs_dir))
+            str(baseline_file_path.relative_to(host_generated_outputs_dir))
             if baseline_file_path.exists()
             else None  # Set to None if baseline doesn't exist
         )
@@ -601,7 +647,8 @@ def _run_parallel_baseline_processing(
     force: bool,
     since_timestamp: Optional[float],
     ground_truth_txt_skip_hours: int,
-    generated_outputs_dir: Path,
+    host_generated_outputs_dir: Path,
+    container_generated_outputs_dir: Path,
     max_workers: int,
     exit_errors_limit: Optional[int],
 ) -> Tuple[List[Dict[str, Any]], List[str], int]:
@@ -628,7 +675,8 @@ def _run_parallel_baseline_processing(
                 force,
                 since_timestamp,
                 ground_truth_txt_skip_hours,
-                generated_outputs_dir,
+                host_generated_outputs_dir,
+                container_generated_outputs_dir,
             ): sequence
             for sequence in tasks_to_run
         }
@@ -749,128 +797,117 @@ def _update_and_save_index(
 # === Helper Functions ===
 
 
-def _load_initial_config_and_state(
+# --- Import Hostility Checker HERE --- #
+from ...lib.tooling.podman_utils import _execute_for_hostility_check  # Import the new checker
+
+# --- Import Skeleton Creation Helper --- #
+from ...lib.tooling.tools_dir_scanner._definition_utils import _create_skeleton_json_if_missing  # UPDATED IMPORT PATH
+
+
+# --- NEW FUNCTION for Hostility Audit Workflow --- #
+def _run_hostility_audit(
     ctx: click.Context,
-) -> Tuple[Path, Dict[str, Any], Path, List[str], ParsedHierarchy, ParsedHierarchy]:
-    """Handles Steps 1-3: Load config, find venv, discover executables, classify."""
-    log.debug("Entering _load_initial_config_and_state...")
+    project_root: Path,
+    config: Dict[str, Any],
+    tool_defs_dir: Path,
+    venv_bin_path: Path,
+) -> Tuple[List[str], List[str]]:
+    """Runs all whitelisted sequences in RO mode to check for hostility."""
+    log.info("Starting Hostility Audit (Read-Only Execution)...")
+    hostile_sequences: List[str] = []
+    other_errors: List[str] = []
 
-    # --- Step 1: Project Root and Config --- #
-    # Get project_root from context (assuming cli.py set it up)
-    project_root = ctx.obj.get("project_root")
-    if not project_root or not isinstance(project_root, Path):
-        ctx.fail("Project root not found or invalid in context.")
-
-    # --- REMOVE WORKAROUND --- #
-    # config_file_path = project_root / "pyproject.toml"
-    # log.debug("Attempting direct config load (simplified)", path=str(config_file_path))
-    # # Simplified load_config now returns just the [tool.zeroth-law] section
-    # zlt_config = load_config(config_file_path)
-    # if not zlt_config:
-    #     log.warning("Direct config loading returned empty dict. Proceeding with defaults.")
-    #     # Handle defaults if needed, or rely on downstream .get() with defaults
-    # --- END REMOVE WORKAROUND --- #
-
-    # --- USE CONTEXT CONFIG --- #
-    config = ctx.obj.get("config")
-    if not config or not isinstance(config, dict):
-        log.warning("Config not found or invalid in context. Proceeding with empty config.")
-        config = {}
-    # Add debug log for context config
-    log.debug("Using config from context", config_id=id(config), config_keys=list(config.keys()))
-    # --- END USE CONTEXT CONFIG --- #
-
-    # Venv Path Determination (relative to project root)
-    # TODO: Make this configurable?
-    venv_bin_path = project_root / ".venv" / "bin"
-    if not venv_bin_path.is_dir():
-        ctx.fail(f"Virtual environment bin directory not found: {venv_bin_path}")
-    log.info(f"Using virtual environment bin path: {venv_bin_path}")
-
-    # --- Step 2: Discover Executables --- #
-    log.info("Step 2: Discovering executables in venv bin...")
+    # 1. Get sequences (simplified Steps 1-5, assuming config/dirs are okay for audit)
+    # We might want more robust error handling here in a real implementation
     try:
-        all_executables = list_executables_in_venv_bin(venv_bin_path)
-    except FileNotFoundError as e:
-        ctx.fail(str(e))
-    except OSError as e:
-        ctx.fail(f"Error reading executables from {venv_bin_path}: {e}")
-    log.info(f"Found {len(all_executables)} potential executables in venv bin.")
-    log.debug("Raw executables found:", executables=sorted(all_executables))
+        _, managed_tools_set, parsed_whitelist, parsed_blacklist, _, _ = _reconcile_and_prune(
+            project_root=project_root, config=config, tool_defs_dir=tool_defs_dir, prune=False, dry_run=True
+        )
+        if not managed_tools_set:
+            log.warning("Hostility Audit: No managed tools found.")
+            return [], []
+        target_tool_names = managed_tools_set  # Audit all managed tools
+        whitelisted_sequences, _, _ = _generate_and_filter_sequences(
+            tool_defs_dir=tool_defs_dir,
+            target_tool_names=target_tool_names,
+            parsed_whitelist=parsed_whitelist,
+            parsed_blacklist=parsed_blacklist,
+        )
+        if not whitelisted_sequences:
+            log.warning("Hostility Audit: No effectively whitelisted sequences found.")
+            return [], []
+        log.info(f"Hostility Audit: Identified {len(whitelisted_sequences)} sequences to check.")
+    except Exception as setup_e:
+        log.error(f"Hostility Audit failed during setup: {setup_e}")
+        return [], [f"Audit Setup Error: {setup_e}"]
 
-    # --- Step 3: Filter based on Whitelist/Blacklist --- #
-    log.info("Step 3: Filtering executables based on whitelist/blacklist...")
-    managed_executables = []
-    unclassified_executables = []
-    blacklisted_found = []
-    whitelist_tree = {}
-    blacklist_tree = {}
-
+    # 2. Start RO container
+    container_name: Optional[str] = None
+    audit_container_started = False
     try:
-        # Extract managed-tools section directly from the CONTEXT config
-        # Note: load_config now includes managed-tools in its return dict
-        managed_tools_config = config.get("managed-tools", {})
-        log.debug(
-            "Accessing managed-tools from CONTEXT config",
-            type=type(managed_tools_config).__name__,
-            value=repr(managed_tools_config),
+        container_name = _get_container_name(project_root)
+        audit_container_started = _start_podman_runner(
+            container_name=container_name,
+            project_root=project_root,
+            venv_path=venv_bin_path,
+            read_only_app=True,  # <<< START READ-ONLY >>>
         )
+        if not audit_container_started:
+            log.error("Hostility Audit: Failed to start read-only container.")
+            return [], ["Failed to start RO container"]
 
-        # Get raw lists
-        raw_whitelist = managed_tools_config.get("whitelist", [])
-        raw_blacklist = managed_tools_config.get("blacklist", [])
+        # 3. Run checks in parallel (or sequentially for simplicity first?)
+        # Let's use parallel for consistency
+        log.info(f"Running hostility checks for {len(whitelisted_sequences)} sequences...")
+        max_workers = config.get("max_sync_workers", 4)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_sequence = {
+                executor.submit(
+                    _execute_for_hostility_check,
+                    sequence,
+                    container_name,
+                    project_root,
+                ): sequence
+                for sequence in whitelisted_sequences
+            }
 
-        # Check for conflicts before parsing
-        # Pass the PARSED trees, not the raw lists
-        conflict_msg = check_list_conflicts(whitelist_tree, blacklist_tree)
-        if conflict_msg:
-            ctx.fail(f"Configuration Error: {conflict_msg}")
+            for future in as_completed(future_to_sequence):
+                sequence = future_to_sequence[future]
+                command_id = command_sequence_to_id(sequence)
+                try:
+                    is_safe, error_details = future.result()
+                    if not is_safe:
+                        log.error(f"Hostility Audit FAILED for sequence: {command_id}", details=error_details)
+                        hostile_sequences.append(command_id)
+                        if error_details:
+                            other_errors.append(f"{command_id}: {error_details}")
+                        # --- FAIL FAST --- #
+                        log.warning("Detected hostile sequence. Stopping audit early.")
+                        # Optionally: Try to cancel remaining futures? (Difficult with ThreadPoolExecutor)
+                        # executor.shutdown(wait=False, cancel_futures=True) # Not available in stdlib
+                        break  # Exit the loop immediately
+                        # --- END FAIL FAST --- #
+                except Exception as check_exc:
+                    log.exception(f"Hostility Audit: Error checking sequence {command_id}: {check_exc}")
+                    other_errors.append(f"Error checking {command_id}: {check_exc}")
+                    # --- FAIL FAST on Exception too? --- #
+                    log.error("Encountered exception during audit. Stopping early.")
+                    break  # Also stop on unexpected errors
+                    # --- END FAIL FAST --- #
 
-        # Parse lists into hierarchical trees
-        # Need to import parse_to_nested_dict
-        whitelist_tree = parse_to_nested_dict(raw_whitelist)
-        blacklist_tree = parse_to_nested_dict(raw_blacklist)
-        log.debug("Whitelist tree parsed", tree=whitelist_tree)
-        log.debug("Blacklist tree parsed", tree=blacklist_tree)
+    except Exception as audit_e:
+        log.exception(f"Hostility Audit failed during execution: {audit_e}")
+        other_errors.append(f"Audit Execution Error: {audit_e}")
+    finally:
+        # 4. Stop container
+        if container_name and audit_container_started:
+            _stop_podman_runner(container_name)
 
-        # Classify executables
-        for exe in all_executables:
-            status = get_effective_status([exe], whitelist_tree, blacklist_tree)
-            if status == "WHITELISTED":
-                managed_executables.append(exe)
-            elif status == "BLACKLISTED":
-                blacklisted_found.append(exe)
-            else:  # UNSPECIFIED
-                unclassified_executables.append(exe)
+    log.info("Hostility Audit finished.")
+    return hostile_sequences, other_errors
 
-        # Report results
-        log.info(
-            "Executable classification complete.",
-            whitelisted_count=len(managed_executables),
-            blacklisted_count=len(blacklisted_found),
-            unclassified_count=len(unclassified_executables),
-        )
-        if blacklisted_found:
-            log.debug("Blacklisted executables found and ignored:", blacklisted=sorted(blacklisted_found))
 
-        # Check for unclassified executables (Step 3.7 - Failure condition)
-        if unclassified_executables:
-            log.error(
-                "Sync Failed: The following executables found in venv are not classified in whitelist or blacklist:",
-                unclassified=sorted(unclassified_executables),
-            )
-            log.error(
-                "Please classify them using `zlt tools whitelist add <tool>` or `zlt tools blacklist add <tool>`."
-            )
-            ctx.fail("Unclassified executables found.")  # Use ctx.fail
-
-    except Exception as e:
-        log.exception(f"Failed during whitelist/blacklist processing: {e}")
-        ctx.fail(f"Failed during whitelist/blacklist processing: {e}")
-
-    # --- Return values --- #
-    # Return project_root, the CONTEXT config, venv_bin_path, managed_executables, and parsed trees
-    return project_root, config, venv_bin_path, sorted(managed_executables), whitelist_tree, blacklist_tree
+# --- End NEW FUNCTION --- #
 
 
 @click.command("sync")
@@ -924,6 +961,14 @@ def _load_initial_config_and_state(
     show_default="No limit",
 )
 @click.option("--debug", is_flag=True, default=False, help="Enable DEBUG level logging for sync.")
+# --- Add new audit flag --- #
+@click.option(
+    "--audit-hostility",
+    is_flag=True,
+    default=False,
+    help="Run commands in read-only mode to detect disallowed write attempts.",
+)
+# --- End new audit flag --- #
 # Add back other necessary options MANUALLY if common_options added them before
 # Example: Check zlt_options_definitions.json for verbose, config, quiet, color
 # These are typically handled by the main CLI group and accessed via ctx
@@ -943,6 +988,7 @@ def sync(
     dry_run: bool,
     exit_errors: Optional[int],
     debug: bool,  # Add debug flag parameter
+    audit_hostility: bool,  # Add audit flag parameter
 ) -> None:
     """Syncs the local tool definitions with the managed tools and generates baselines."""
     start_time = time.time()
@@ -957,207 +1003,192 @@ def sync(
     # --- End NEW Logging Setup --- #
 
     # Original start message
-    log.info(f"Starting zlt tools sync... (Dry Run: {dry_run})")
+    log.info(f"Starting zlt tools sync... (Dry Run: {dry_run}) (Audit: {audit_hostility})")
 
-    # === Call new helper for Steps 1-3 ===
-    project_root, config, venv_bin_path, managed_executables, whitelist_tree, blacklist_tree = (
-        _load_initial_config_and_state(ctx)
-    )
+    # === Initial Setup (Get project_root and config from context) ===
+    project_root = ctx.obj.get("project_root")
+    if not project_root or not isinstance(project_root, Path):
+        ctx.fail("Project root not found or invalid in context.")
+    config = ctx.obj.get("config")  # This should now contain parsed trees
+    if not config or not isinstance(config, dict):
+        log.warning("Config not found or invalid in context. Proceeding with empty config?")
+        config = {}
 
-    # Check if managed_executables is empty after initial load
-    if not managed_executables:
-        log.warning("No whitelisted executables identified. Nothing further to sync.")
-        ctx.exit(0)
-    # === End call ===
-
-    # Also define tool_defs_dir and tool_index_path here as they depend on project_root
+    # Derive tool_defs_dir directly
     tool_defs_dir = project_root / "src" / "zeroth_law" / "tools"
     tool_index_path = tool_defs_dir / "tool_index.json"
+    generated_outputs_dir = project_root / "generated_command_outputs"  # Still needed?
+    generated_outputs_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- Step 4: Reconcile tools/ Directory Structure --- (Keep inline for now)
-    log.info("Step 4: Reconciling tools/ directory structure...")
-    orphan_dirs = []
-    try:
-        # 4.1 Define tools_base_dir (done above)
-        # 4.2 Get existing directories
-        if not tool_defs_dir.is_dir():
-            log.warning(f"Tools definition directory does not exist, creating: {tool_defs_dir}")
-            tool_defs_dir.mkdir(parents=True)
-        existing_tool_dirs = [d.name for d in tool_defs_dir.iterdir() if d.is_dir()]
+    # === Branch based on audit flag ===
+    if audit_hostility:
+        # --- Run Audit --- #
+        # Need venv_bin_path for audit's call to _start_podman_runner
+        venv_bin_path = project_root / ".venv" / "bin"  # Assume standard path
+        if not venv_bin_path.is_dir():
+            ctx.fail(f"Hostility Audit Error: Expected venv bin path not found: {venv_bin_path}")
 
-        # 4.3 Init list (done above)
-        # 4.4 Check existing dirs for orphans
-        for dir_name in existing_tool_dirs:
-            status = get_effective_status([dir_name], whitelist_tree, blacklist_tree)
-            if status == "BLACKLISTED" or status == "UNSPECIFIED":
-                orphan_dirs.append(dir_name)
-
-        # 4.5 Fail if orphans found
-        if orphan_dirs:
-            log.error(
-                "Sync Failed: The following directories exist in tools/ but are blacklisted or unclassified:",
-                orphans=sorted(orphan_dirs),
-            )
-            log.error("Please add relevant tools to the whitelist or manually remove these directories.")
-            ctx.fail("Orphaned/Blacklisted tool directories found.")  # Use ctx.fail
-
-        # 4.6 Ensure directories exist for managed executables
-        for tool_name in managed_executables:
-            expected_dir_path = tool_defs_dir / tool_name
-            if not expected_dir_path.is_dir():
-                log.info(f"Creating missing tool directory: {expected_dir_path.relative_to(project_root)}")
-                expected_dir_path.mkdir()
-
-        # 4.7 Verification implicit (no failure)
-        log.info("Validated tools/ directory structure against managed tools list.")
-
-    except Exception as e:
-        log.exception(f"Failed during tools/ directory reconciliation: {e}")
-        ctx.fail(f"Failed during tools/ directory reconciliation: {e}")
-    # --- End Step 4 --- #
-
-    # --- Step 5: Identify Effectively Whitelisted Command Sequences --- (Keep inline for now)
-    log.info("Step 5: Identifying effectively whitelisted command sequences...")
-    whitelisted_sequences: List[Tuple[str, ...]] = []
-    try:
-        # 5.1-5.4 Call the new scanner function
-        whitelisted_sequences = scan_whitelisted_sequences(
-            base_tools_dir=tool_defs_dir, whitelist_tree=whitelist_tree, blacklist_tree=blacklist_tree
+        hostile_sequences, audit_errors = _run_hostility_audit(
+            ctx=ctx,
+            project_root=project_root,
+            config=config,
+            tool_defs_dir=tool_defs_dir,
+            venv_bin_path=venv_bin_path,
         )
-        # 5.5 (Implicitly done by the function)
-        # 5.6 Verification Log (moved inside function, but can log summary here too)
-        log.info(f"Total effectively whitelisted command sequences identified: {len(whitelisted_sequences)}")
-        if not whitelisted_sequences:
-            log.warning("No effectively whitelisted command sequences found. Nothing further to sync.")
+        # ... (audit reporting and exit logic) ...
+        if audit_errors:
+            log.error("Hostility audit encountered errors:", errors=audit_errors)
+        if hostile_sequences:
+            log.error("Hostility audit FAILED: The following command sequences attempted disallowed writes:")
+            for seq_id in hostile_sequences:
+                log.error(f"  - {seq_id}")
+            log.error("Please review these tools/commands and potentially blacklist them.")
+            ctx.exit(1)
+        else:
+            log.info("Hostility audit PASSED: No disallowed write attempts detected.")
             ctx.exit(0)
-    except Exception as e:
-        log.exception(f"Failed during command sequence identification: {e}")
-        ctx.fail(f"Failed during command sequence identification: {e}")
-    # --- End Step 5 --- #
+    else:
+        # --- Proceed with Normal Sync/Generate Workflow --- #
+        log.info("Proceeding with standard sync/generate workflow...")
 
-    # --- Podman Setup (Steps 6.3, 6.4) --- # Restore Podman Block
-    container_name: Optional[str] = None  # Initialize
-    podman_setup_successful = False
-    if generate_baselines:
+        # === Call Reconcile Directly (Step 2) ===
+        all_errors = []
+        exit_code = 0
         try:
-            container_name = _get_container_name(project_root)
-            podman_setup_successful = _start_podman_runner(
-                container_name, project_root, venv_bin_path
-            )  # Pass venv_bin_path
-            if not podman_setup_successful:
-                log.error("Podman runner setup failed. Cannot generate baselines.")
-                ctx.exit(1)
+            (
+                reconciliation_results,
+                managed_tools_set,
+                parsed_whitelist,
+                parsed_blacklist,
+                prune_errors,
+                pruned_count,
+            ) = _reconcile_and_prune(project_root, config, tool_defs_dir, prune, dry_run)
+            all_errors.extend(prune_errors)
+            if prune_errors:
+                log.warning("Errors occurred during pruning. Continuing sync...")
+
+            if not managed_tools_set:
+                log.warning("No managed tools identified by reconciliation. Nothing to sync.")
+            ctx.exit(0)
+
+            # === Identify Target Tools (Step 3) ===
+            target_tool_names = _identify_target_tools(specific_tools, reconciliation_results, managed_tools_set)
+            if not target_tool_names:
+                log.info("No target tools identified. Exiting.")
+                ctx.exit(0)
+
+            # === Generate & Filter Sequences (Step 4) ===
+            whitelisted_sequences, _, skipped_blacklist = _generate_and_filter_sequences(
+                tool_defs_dir, target_tool_names, parsed_whitelist, parsed_blacklist
+            )
+            if not whitelisted_sequences:
+                log.warning("No effectively whitelisted sequences to process. Exiting.")
+                ctx.exit(0)
+
+            # === Podman Setup for GENERATE (Step 5a) ===
+            container_name: Optional[str] = None
+            podman_setup_successful = False
+            if generate_baselines:
+                # Need venv_bin_path for _start_podman_runner
+                venv_bin_path = project_root / ".venv" / "bin"  # Assume standard path
+                if not venv_bin_path.is_dir():
+                    ctx.fail(f"Sync Error: Expected venv bin path not found for Podman setup: {venv_bin_path}")
+
+                try:
+                    container_name = _get_container_name(project_root)
+                    podman_setup_successful = _start_podman_runner(
+                        container_name, project_root, venv_bin_path, read_only_app=False
+                    )
+                    if not podman_setup_successful:
+                        log.error("Podman runner setup failed. Cannot generate baselines.")
+                        ctx.exit(1)
+                    else:
+                        log.info(f"Podman runner container '{container_name}' started successfully.")
+                except Exception as e:
+                    log.exception(f"Error during Podman setup: {e}")
+                    if container_name:
+                        try:
+                            _stop_podman_runner(container_name)
+                        except Exception:
+                            pass  # Ignore errors during cleanup on initial setup failure
+                    ctx.exit(1)  # Exit after cleanup attempt
+            elif not dry_run:
+                log.info("Skipping Podman setup as --generate flag was not provided.")
+
+            # === Load Index (Step 5b) ===
+            initial_index_data = load_tool_index()
+            final_index_data = initial_index_data.copy()
+            processed_count = 0
+            updated_count = 0
+            skipped_count = 0
+
+            # Timestamp for --skip-hours logic
+            since_timestamp = (
+                time.time() - (ground_truth_txt_skip_hours * 3600) if ground_truth_txt_skip_hours > 0 else None
+            )
+
+            # === Run Baseline Processing (Step 5c) ===
+            if generate_baselines and podman_setup_successful:
+                container_base_output_dir = Path("/app/src/zeroth_law/tools")
+                host_base_output_dir = tool_defs_dir
+                results, sync_errors, processed_count = _run_parallel_baseline_processing(
+                    tasks_to_run=whitelisted_sequences,
+                    tool_defs_dir=tool_defs_dir,
+                    project_root=project_root,
+                    container_name=container_name,
+                    index_data=initial_index_data,
+                    force=force,
+                    since_timestamp=since_timestamp,
+                    ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
+                    host_generated_outputs_dir=host_base_output_dir,
+                    container_generated_outputs_dir=container_base_output_dir,
+                    max_workers=ctx.obj.get("config", {}).get("max_sync_workers", 4),
+                    exit_errors_limit=exit_errors,
+                )
+                all_errors.extend(sync_errors)
+
+                # === Update Index (Step 6) ===
+                final_index_data, index_errors, updated_count, skipped_count = _update_and_save_index(
+                    results=results,
+                    initial_index_data=initial_index_data,
+                    tool_index_path=tool_index_path,
+                    dry_run=dry_run,
+                )
+                all_errors.extend(index_errors)
+            elif dry_run:
+                log.info("[DRY RUN] Skipping baseline generation and index update.")
             else:
-                log.info(f"Podman runner container '{container_name}' started successfully.")
-        except Exception as e:
-            log.exception(f"Error during Podman setup: {e}")
-            if container_name:  # Attempt cleanup even if start failed midway
+                log.info("Skipping baseline generation as --generate was not specified.")
+
+        except Exception as main_e:
+            log.exception(f"Error during main sync logic: {main_e}")
+            all_errors.append(f"Main sync error: {main_e}")
+            exit_code = 1
+        finally:
+            # === Podman Cleanup (Step 7) ===
+            if container_name and podman_setup_successful:
+                log.info(f"Attempting to stop and remove Podman container: {container_name}")
                 try:
                     _stop_podman_runner(container_name)
+                    log.info(f"Successfully stopped and removed Podman container: {container_name}")
                 except Exception as cleanup_e:
-                    log.exception(f"Error during Podman cleanup after setup failure: {cleanup_e}")
-            ctx.exit(1)
-    else:
-        log.info("Skipping Podman setup as --generate flag was not provided.")
-    # --- End Podman Setup --- #
+                    log.exception(f"Error during Podman cleanup: {cleanup_e}")
 
-    # --- Main Sync Logic within Podman Context --- # Restore Main Logic
-    exit_code = 0
-    all_errors: List[str] = []
-    generated_outputs_dir = project_root / "generated_command_outputs"
-    generated_outputs_dir.mkdir(parents=True, exist_ok=True)
-    tool_index_path = tool_defs_dir / "tool_index.json"  # Define index path here
-    initial_index_data = load_tool_index()
-    final_index_data = initial_index_data.copy()
-    processed_count = 0
-    updated_count = 0
-    skipped_count = 0
-
-    # Timestamp for --skip-hours logic
-    since_timestamp = time.time() - (ground_truth_txt_skip_hours * 3600) if ground_truth_txt_skip_hours > 0 else None
-
-    try:
-        # --- Step 6 & Parts of 7, 9, 10 (Parallel Processing) --- # Restore Parallel Processing
-        if generate_baselines and not podman_setup_successful:
-            log.error("Cannot proceed with baseline generation, Podman setup failed.")
-            all_errors.append("Podman setup failed.")
-            exit_code = 1
-        elif whitelisted_sequences:
-            # Only run if generate_baselines is true OR if we just need to check index/skeletons?
-            # Current logic implies baseline check/gen always happens if sequences exist.
-            # TODO: Revisit if sync should run without --generate to only check JSON/index.
-            if not container_name and generate_baselines:
-                log.error("Logic error: generate_baselines is true but container_name is not set.")
-                ctx.exit(1)  # Should not happen if setup logic is correct
-
-            # Determine max workers (e.g., based on CPU count, capped)
-            # TODO: Make max_workers configurable?
-            max_workers = max(1, os.cpu_count() // 2 if os.cpu_count() else 4)  # Example logic
-
-            results, parallel_errors, processed_count = _run_parallel_baseline_processing(
-                tasks_to_run=whitelisted_sequences,
-                tool_defs_dir=tool_defs_dir,
-                project_root=project_root,
-                container_name=container_name if generate_baselines else "",  # Pass empty if not generating
-                index_data=initial_index_data,
-                force=force,
-                since_timestamp=since_timestamp,
-                ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
-                generated_outputs_dir=generated_outputs_dir,
-                max_workers=max_workers,
-                exit_errors_limit=exit_errors,
-            )
-            all_errors.extend(parallel_errors)
-
-            # Process results to update index
-            final_index_data, index_errors, updated_count, skipped_count = _update_and_save_index(
-                results=results,
-                initial_index_data=initial_index_data,
-                tool_index_path=tool_index_path,
-                dry_run=dry_run,
-            )
-            all_errors.extend(index_errors)
-
-            # Set exit code based on errors during parallel processing or index update
-            if all_errors:
-                exit_code = 1
+        # --- Final Reporting --- #
+        end_time = time.time()
+        duration = end_time - start_time
+        log.info(
+            "Sync summary",
+            duration_seconds=round(duration, 2),
+            processed=processed_count,
+            updated=updated_count,
+            skipped=skipped_count,
+            errors=len(all_errors),
+            exit_code=exit_code,
+        )
+        if all_errors:
+            log.error("Sync finished with errors:", errors=all_errors)
         else:
-            log.info("No whitelisted sequences to process.")
-        # --- End Parallel Processing --- #
-
-    except Exception as main_e:
-        log.exception(f"Error during main sync logic: {main_e}")
-        all_errors.append(f"Main sync error: {main_e}")
-        exit_code = 1
-    finally:
-        # --- Podman Teardown (Step 6.4) --- # Restore Teardown
-        if container_name:  # Only try to stop if setup was attempted/successful
-            log.info(f"Attempting to stop and remove Podman container: {container_name}")
-            try:
-                _stop_podman_runner(container_name)
-                log.info(f"Successfully stopped and removed Podman container: {container_name}")
-            except Exception as cleanup_e:
-                log.exception(f"Error during Podman cleanup: {cleanup_e}")
-                if exit_code == 0:
-                    exit_code = 1
-                    all_errors.append(f"Podman cleanup error: {cleanup_e}")
-        # --- End Podman Teardown --- #
-
-    # --- Final Reporting --- # Restore Reporting
-    end_time = time.time()
-    duration = end_time - start_time
-    log.info(
-        "Sync summary",
-        duration_seconds=round(duration, 2),
-        processed=processed_count,
-        updated=updated_count,
-        skipped=skipped_count,
-        errors=len(all_errors),
-        exit_code=exit_code,
-    )
-    if all_errors:
-        log.error("Sync finished with errors:", errors=all_errors)
-    else:
-        log.info("Sync finished successfully.")
+            log.info("Sync finished successfully.")
 
     ctx.exit(exit_code)

@@ -138,7 +138,7 @@ MOCK_TOOL_INDEX_MISSING_CRC = (
 
 # Use mark.skipif to gracefully handle cases where the import fails
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_success_base_tool(mock_open_func, mock_is_file, tmp_path):
     """Test successfully updating CRC for a base tool JSON."""
@@ -196,7 +196,7 @@ def test_update_crc_success_base_tool(mock_open_func, mock_is_file, tmp_path):
 # --- Add more tests here for subcommands, missing CRC, no update needed, errors etc. ---
 # Example skeleton for subcommand test:
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_success_subcommand(mock_open_func, mock_is_file, tmp_path):
     """Test successfully updating CRC for a subcommand JSON."""
@@ -238,7 +238,7 @@ def test_update_crc_success_subcommand(mock_open_func, mock_is_file, tmp_path):
 
 
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 # No mock_open needed as target file shouldn't be opened
 def test_update_crc_target_json_not_found(mock_is_file, tmp_path):
     """Test script exits with error if target JSON file is not found."""
@@ -247,7 +247,7 @@ def test_update_crc_target_json_not_found(mock_is_file, tmp_path):
     target_json_path = workspace_root / "src/zeroth_law/tools/tool_missing/missing.json"
 
     # Mock only index existence
-    mock_is_file.return_value = False  # Default to not found
+    # mock_is_file.return_value = False  # Default to not found
 
     def is_file_side_effect(path_arg):
         return path_arg == tool_index_path  # Only index exists
@@ -270,7 +270,7 @@ def test_update_crc_target_json_not_found(mock_is_file, tmp_path):
 
 
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 # No mock_open needed as index file shouldn't be opened if not found
 def test_update_crc_index_not_found(mock_is_file, tmp_path):
     """Test script exits with error if tool_index.json file is not found."""
@@ -279,7 +279,7 @@ def test_update_crc_index_not_found(mock_is_file, tmp_path):
     target_json_path = workspace_root / "src/zeroth_law/tools/tool1/tool1.json"
 
     # Mock only target JSON existence
-    mock_is_file.return_value = False  # Default
+    # mock_is_file.return_value = False  # Default
 
     def is_file_side_effect(path_arg):
         return path_arg == target_json_path  # Only target exists
@@ -304,7 +304,7 @@ def test_update_crc_index_not_found(mock_is_file, tmp_path):
 
 
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_missing_index_entry(mock_open_func, mock_is_file, tmp_path):
     """Test script exits with error if the tool_id isn't found in the index."""
@@ -339,7 +339,7 @@ def test_update_crc_missing_index_entry(mock_open_func, mock_is_file, tmp_path):
 
 
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_missing_crc_in_index(mock_open_func, mock_is_file, tmp_path):
     """Test script exits with error if the CRC value is missing in the index entry."""
@@ -372,7 +372,7 @@ def test_update_crc_missing_crc_in_index(mock_open_func, mock_is_file, tmp_path)
 
 # --- JSON Load Error Tests ---
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_invalid_index_json(mock_open_func, mock_is_file, tmp_path):
     """Test script exits with error if tool_index.json is invalid JSON."""
@@ -397,7 +397,7 @@ def test_update_crc_invalid_index_json(mock_open_func, mock_is_file, tmp_path):
 
 
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_invalid_target_json(mock_open_func, mock_is_file, tmp_path):
     """Test script exits with error if target JSON file is invalid JSON."""
@@ -426,7 +426,7 @@ def test_update_crc_invalid_target_json(mock_open_func, mock_is_file, tmp_path):
 
 # --- File Write Error Test ---
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_write_error(mock_open_func, mock_is_file, tmp_path):
     """Test script exits with error if writing the updated JSON fails."""
@@ -502,7 +502,7 @@ MOCK_TOOL1_JSON_MATCHING_CRC = (
 
 
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_no_update_needed(mock_open_func, mock_is_file, tmp_path):
     """Test script completes successfully without writing if CRC already matches."""
@@ -535,7 +535,7 @@ def test_update_crc_no_update_needed(mock_open_func, mock_is_file, tmp_path):
 
 # --- Edge Case Path Parsing Test ---
 @pytest.mark.skipif(update_crc_main is None, reason="Could not import script main function for testing")
-@patch("scripts.update_json_crc_tool.Path.is_file")
+@patch("pathlib.Path.is_file")
 @patch("builtins.open", new_callable=mock_open)
 def test_update_crc_edge_path_parsing(mock_open_func, mock_is_file, tmp_path):
     """Test script handles a path that *might* confuse simple parsing (but should still work if using relative path logic)."""
