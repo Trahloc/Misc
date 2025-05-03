@@ -1,4 +1,4 @@
-# File: src/zeroth_law/config_loader.py
+# File: src/zeroth_law/common/config_loader.py
 """Configuration handling for Zeroth Law.
 
 This module loads and validates project configuration for Zeroth Law auditing.
@@ -14,16 +14,21 @@ import tomllib
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, List, Union, Set
 import copy
+import sys
 
 import structlog  # Import structlog
 import tomlkit
 from .config_validation import validate_config
+from pydantic import ValidationError
 
 # Import the new parser
 from .hierarchical_utils import parse_to_nested_dict, ParsedHierarchy, check_list_conflicts
 
 # Import defaults from shared module
 from zeroth_law.config_defaults import DEFAULT_CONFIG
+
+# Import from path_utils (ensure these are available)
+from zeroth_law.common.path_utils import find_project_root, ZLFProjectRootNotFoundError
 
 # Setup logging
 log = structlog.get_logger()  # Use structlog

@@ -45,6 +45,9 @@ def find_project_root(start_path: Path) -> Path:
         has_pyproject = pyproject_path.is_file()
         has_src = src_path.is_dir()
         has_tests = tests_path.is_dir()
+        log.debug(f"  - pyproject.toml exists? {has_pyproject}")
+        log.debug(f"  - src/ exists? {has_src}")
+        log.debug(f"  - tests/ exists? {has_tests}")
 
         if has_pyproject and has_src and has_tests:
             log.info(f"Found ZLF project root at: {current_path}")
@@ -57,6 +60,7 @@ def find_project_root(start_path: Path) -> Path:
             # Continue searching upwards without returning this path
 
         parent = current_path.parent
+        log.debug(f"Checking parent directory: {parent}")
         if parent == current_path:
             # Reached the filesystem root
             error_msg = f"Could not find ZLF project root (pyproject.toml + src/ + tests/) starting from {start_path}"

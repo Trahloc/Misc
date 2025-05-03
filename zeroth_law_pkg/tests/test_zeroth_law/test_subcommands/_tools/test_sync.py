@@ -18,7 +18,10 @@ from zeroth_law.cli import create_cli_group
 zlt_cli = create_cli_group()
 
 # --- Import the command function directly --- #
-from zeroth_law.subcommands.tools.sync import sync as sync_command
+from zeroth_law.common import path_utils
+from zeroth_law.common.config_loader import load_config
+from zeroth_law.common.git_utils import find_git_root
+from zeroth_law.subcommands._tools.sync import sync as sync_command
 
 # --- Import hierarchical utils --- #
 from zeroth_law.common.hierarchical_utils import (

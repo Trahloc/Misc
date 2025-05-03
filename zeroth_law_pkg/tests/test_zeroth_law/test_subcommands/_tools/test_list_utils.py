@@ -5,8 +5,8 @@ import tomlkit
 from pathlib import Path
 from typing import List, Dict, Set, Tuple, Any, Union
 
-# Module under test
-from zeroth_law.subcommands.tools.list_utils import (
+# Module under test (update import path)
+from zeroth_law.subcommands._tools.list_utils import (
     modify_tool_list,
     list_tool_list,
     # _format_nested_dict_to_list, # Import from common
@@ -71,49 +71,49 @@ def write_config(path: Path, content: Dict[str, Any]):
 PARSE_TEST_CASES = [
     # Input List                        Expected Nested Dictionary
     ([], {}),  # Empty list
-    (["tool_a"], {"tool_a": {"_explicit": True}}),  # Simple tool
+    (["tool_a"], {"tool_a": {"_explicit": True, "_all": False}}),  # Simple tool
     (["tool_a:*"], {"tool_a": {"_explicit": True, "_all": True}}),  # Tool with *
-    (["tool_a:sub1"], {"tool_a": {"sub1": {"_explicit": True}}}),  # Tool with sub
+    (["tool_a:sub1"], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Tool with sub
     (
         ["tool_a:sub1,sub2"],
-        {"tool_a": {"sub1": {"_explicit": True}, "sub2": {"_explicit": True}}},
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}, "sub2": {"_explicit": True, "_all": False}}},
     ),  # Tool with multiple subs
-    (["tool_a:sub1:*"], {"tool_a": {"sub1": {"_explicit": True, "_all": True}}}),  # Sub with *
-    (["tool_a:sub1:subsub1"], {"tool_a": {"sub1": {"subsub1": {"_explicit": True}}}}),  # Nested sub
+    (["tool_a:sub1:*"], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": True}}}),  # Sub with *
+    (["tool_a:sub1:subsub1"], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": False, "subsub1": {"_explicit": True, "_all": False}}}}),  # Nested sub
     (
         ["tool_a:sub1:subsub1,subsub2"],
-        {"tool_a": {"sub1": {"subsub1": {"_explicit": True}, "subsub2": {"_explicit": True}}}},
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": False, "subsub1": {"_explicit": True, "_all": False}, "subsub2": {"_explicit": True, "_all": False}}}},
     ),  # Nested multiple subs
-    (["tool_a", "tool_a:sub1"], {"tool_a": {"_explicit": True, "sub1": {"_explicit": True}}}),  # Explicit tool and sub
-    (["tool_a:sub1", "tool_a"], {"tool_a": {"_explicit": True, "sub1": {"_explicit": True}}}),  # Order shouldn't matter
+    (["tool_a", "tool_a:sub1"], {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Explicit tool and sub
+    (["tool_a:sub1", "tool_a"], {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Order shouldn't matter
     (
         ["tool_a:*", "tool_a:sub1"],
-        {"tool_a": {"_explicit": True, "_all": True}},
+        {"tool_a": {"_explicit": True, "_all": True}}, # :* wipes sub definitions
     ),  # Tool:* overrides specific sub later defined
     (
         ["tool_a:sub1", "tool_a:*"],
-        {"tool_a": {"_explicit": True, "_all": True}},
+        {"tool_a": {"_explicit": True, "_all": True}}, # :* wipes sub definitions
     ),  # Specific sub overridden by later Tool:*
     (
         ["tool_a:sub1:*", "tool_a:sub1:subsub1"],
-        {"tool_a": {"sub1": {"_explicit": True, "_all": True}}},
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": True}}}, # :* wipes sub definitions
     ),  # Sub:* overrides deeper subsub
     (
         ["tool_a:sub1:subsub1", "tool_a:sub1:*"],
-        {"tool_a": {"sub1": {"_explicit": True, "_all": True}}},
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": True}}}, # :* wipes sub definitions
     ),  # Deeper subsub overridden by later Sub:*
     (
         ["tool_a:sub1", "tool_b", "tool_a:sub2"],
-        {"tool_a": {"sub1": {"_explicit": True}, "sub2": {"_explicit": True}}, "tool_b": {"_explicit": True}},
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}, "sub2": {"_explicit": True, "_all": False}}, "tool_b": {"_explicit": True, "_all": False}},
     ),  # Mixed
     (["tool_a::sub1"], {}),  # Invalid empty component
-    (["tool_a:,"], {"tool_a": {}}),  # Invalid empty sub after comma - should parse tool node only
-    (["tool_a", ""], {"tool_a": {"_explicit": True}}),  # Empty string in list
-    (["  tool_a : sub1  "], {"tool_a": {"sub1": {"_explicit": True}}}),  # Whitespace handling
+    (["tool_a:,"], {}),  # Invalid empty sub after comma
+    (["tool_a", ""], {"tool_a": {"_explicit": True, "_all": False}}),  # Empty string in list ignored
+    (["  tool_a : sub1  "], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Whitespace handling
     ([":*"], {}),  # Invalid :* alone
     (
         ["tool_a:sub1:", "tool_b"],
-        {"tool_a": {"sub1": {"_explicit": True}}, "tool_b": {"_explicit": True}},
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}, "tool_b": {"_explicit": True, "_all": False}},
     ),  # Trailing colon ignored
 ]
 

@@ -3,16 +3,18 @@
 import structlog
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Tuple
 
 # Add project root to sys.path BEFORE attempting src import
 PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()  # Go up 3 levels: dev_scripts -> zeroth_law -> src
 sys.path.insert(0, str(PROJECT_ROOT.parent))  # Add the directory containing 'src'
 
-# Import the function to test
-from src.zeroth_law.analyzer.python.analyzer import (
+# Import the function to test and utilities
+from zeroth_law.subcommands._analyze._python.analyzer import (
+    check_footer_compliance,
     check_header_compliance,
-)  # noqa: E402
+)
+from zeroth_law.common.path_utils import find_project_root
 
 # Configure logging
 log = structlog.get_logger()

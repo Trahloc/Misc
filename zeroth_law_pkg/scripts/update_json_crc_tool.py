@@ -19,30 +19,67 @@ TOOLS_DIR = WORKSPACE_ROOT / "src" / "zeroth_law" / "tools"
 
 
 def get_tool_id_from_path(json_path: Path) -> tuple[str | None, str | None]:
-    """Derives tool_id and potentially base_tool_name from the json file path."""
+    """Derives tool_id and potentially base_tool_name from the json file path.
+
+    Revised logic to handle nested directories by calculating path relative to TOOLS_DIR
+    and stopping ID construction when a directory part matches the filename stem.
+    """
     try:
-        # Expected format: .../tools/<tool_name>/<tool_id>.json or .../tools/<tool_name>/<subcommand_id>.json
-        tool_id = json_path.stem  # e.g., 'ruff_check' or 'safety'
-        tool_name = json_path.parent.name  # e.g., 'ruff' or 'safety'
+        abs_json_path = json_path.resolve()
+        abs_tools_dir = TOOLS_DIR.resolve()
 
-        # Handle cases where tool_id might contain the tool_name (like ruff_check)
-        # or be the same as tool_name (like safety)
-        if tool_id == tool_name:
-            # Simple case: safety/safety.json -> tool_id='safety', base_tool_name='safety'
-            return tool_id, tool_name
-        elif tool_id.startswith(tool_name + "_"):
-            # Subcommand case: ruff/ruff_check.json -> tool_id='ruff_check', base_tool_name='ruff'
-            # It's also possible the base_tool_name is needed to find nested CRCs
-            return tool_id, tool_name
-        else:
-            # If naming convention is different, might need adjustment
-            log.warning(
-                f"Could not confidently determine base tool name for {tool_id} from path {json_path}. Assuming top-level lookup."
-            )
-            return tool_id, None  # Fallback to just using tool_id
+        if not abs_json_path.is_relative_to(abs_tools_dir):
+            log.error(f"JSON path {abs_json_path} is not inside TOOLS_DIR {abs_tools_dir}")
+            return None, None
 
-    except IndexError:
-        log.error(f"Could not derive tool_id from path: {json_path}")
+        relative_path = abs_json_path.relative_to(abs_tools_dir)
+        parts = relative_path.parts
+
+        if not parts:
+            log.error(f"Could not extract path parts from {relative_path}")
+            return None, None
+
+        tool_name = parts[0]  # Base tool name is always the first directory
+        tool_id_stem = abs_json_path.stem
+
+        # Construct ID from path parts, stopping when a part matches the stem
+        path_based_id_parts = []
+        for part in parts[:-1]:  # Iterate through directories leading up to the file
+            path_based_id_parts.append(part)
+            if part == tool_id_stem:  # If dir name matches stem, assume this is the end of the ID hierarchy
+                break
+        else:  # If no directory part matched the stem (e.g., tool1/tool1.json or ruff/ruff_check.json)
+            # Check if the first part (tool_name) itself matches the stem
+            if len(path_based_id_parts) == 1 and path_based_id_parts[0] == tool_id_stem:
+                # This covers the tool1/tool1.json case, ID is just tool1
+                pass  # ID is already correct from the loop
+            else:
+                # This covers ruff/ruff_check.json case where stem is different
+                # and also potentially tool/sub/different_stem.json (though less likely)
+                # We might need just the stem as the ID, or tool_stem?
+                # Let's assume for now, if no dir part matches stem,
+                # and the first dir part doesn't match the stem,
+                # the intended ID *might* just be the stem itself (like ruff_check).
+                # OR it might be tool_stem.
+                # For the ruff_check example, find_expected_crc handles looking up tool_id=ruff_check
+                # OR tool_id=ruff, subcommand=check.
+                # Let's try constructing tool_stem as the ID here.
+                # If the stem itself is the ID (like ruff_check), find_expected_crc should handle it.
+                # If the ID is truly tool_stem (like foo_bar where foo/bar.json exists), this works.
+                if tool_name != tool_id_stem:
+                    path_based_id_parts.append(tool_id_stem)
+
+        tool_id = "_".join(path_based_id_parts)
+
+        log.debug(
+            f"Derived from path {relative_path}: tool_name='{tool_name}', tool_id='{tool_id}', stem='{tool_id_stem}'"
+        )
+
+        # Always return the first part as base_tool_name for hierarchical lookup in find_expected_crc
+        return tool_id, tool_name
+
+    except (ValueError, IndexError) as e:
+        log.error(f"Error deriving tool_id from path: {json_path}. Error: {e}")
         return None, None
 
 
@@ -104,7 +141,20 @@ def main():
     )
     args = parser.parse_args()
 
+    # --- DEBUG --- #
+    log.debug(f"args.file type: {type(args.file)}, value: {args.file}")
+    # --- END DEBUG --- #
+
     target_json_path = args.file.resolve()  # Ensure absolute path
+
+    # --- DEBUG --- #
+    log.debug(f"target_json_path type: {type(target_json_path)}, value: {target_json_path}")
+    try:
+        is_file_result = target_json_path.is_file()
+        log.debug(f"target_json_path.is_file() result: {is_file_result}")
+    except Exception as e:
+        log.debug(f"Error calling is_file(): {e}")
+    # --- END DEBUG --- #
 
     if not target_json_path.is_file():
         log.error(f"Target JSON file not found: {target_json_path}")

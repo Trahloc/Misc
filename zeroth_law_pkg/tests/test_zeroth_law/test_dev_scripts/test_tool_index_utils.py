@@ -1,138 +1,138 @@
-"""Placeholder test file."""
+"""
+Tests for src/zeroth_law/lib/tool_index_handler.py
+"""
 
 import pytest
 import json
-import sys
-from unittest.mock import patch, mock_open
 from pathlib import Path
+from typing import Any, Dict, Tuple, Optional
+from unittest.mock import patch, mock_open
+
+# Module under test
+from zeroth_law.lib.tool_index_handler import ToolIndexHandler
+
+# --- Helper Fixtures ---
 
 
-def test_placeholder():
-    assert True
+@pytest.fixture
+def mock_index_file(tmp_path: Path) -> Path:
+    """Provides a path for a temporary mock index file."""
+    return tmp_path / "tool_index.json"
 
 
-# --- Unit Tests for Utility Functions ---
-
-# (Assuming functions are imported from src/zeroth_law/dev_scripts/tool_index_utils.py)
-try:
-    from src.zeroth_law.dev_scripts.tool_index_utils import (
-        load_tool_index,
-        save_tool_index,
-        get_index_entry,
-        update_index_entry,
-        # load_update_and_save_entry # Skip testing this complex one for now
-    )
-except ImportError:
-    load_tool_index = None
-    save_tool_index = None
-    get_index_entry = None
-    update_index_entry = None
-    print("Warning: Could not import tool_index_utils functions directly.", file=sys.stderr)
-
-INDEX_DATA_NESTED = {"toolA": {"crc": "0xAAA", "subcommands": {"sub1": {"crc": "0xA1A"}}}, "toolB": {"crc": "0xBBB"}}
+@pytest.fixture
+def sample_index_data() -> Dict[str, Any]:
+    """Provides sample index data."""
+    return {
+        "toolA": {"crc": "0x1111", "checked_timestamp": 1678886400.0},
+        "toolB_sub1": {"crc": "0x2222", "checked_timestamp": 1678886500.0},
+    }
 
 
-@pytest.mark.skipif(load_tool_index is None, reason="Could not import function")
-@patch("builtins.open", new_callable=mock_open)
-@patch("src.zeroth_law.dev_scripts.tool_index_utils.Path.exists")
-def test_load_tool_index(mock_exists, mock_open_func):
-    """Test loading tool index under different conditions."""
-    mock_file_path = Path("/fake/tool_index.json")
-
-    # File not found
-    mock_exists.return_value = False
-    assert load_tool_index(mock_file_path) == {}
-    mock_open_func.assert_not_called()
-
-    # Empty file
-    mock_exists.return_value = True
-    mock_open_func.return_value = mock_open(read_data="").return_value
-    assert load_tool_index(mock_file_path) == {}
-    mock_open_func.assert_called_once_with(mock_file_path, "r", encoding="utf-8")
-    mock_open_func.reset_mock()
-
-    # Invalid JSON
-    mock_exists.return_value = True
-    mock_open_func.return_value = mock_open(read_data="{invalid").return_value
-    with pytest.raises(json.JSONDecodeError):
-        load_tool_index(mock_file_path)
-    mock_open_func.assert_called_once_with(mock_file_path, "r", encoding="utf-8")
-    mock_open_func.reset_mock()
-
-    # Valid JSON
-    mock_exists.return_value = True
-    mock_open_func.return_value = mock_open(read_data=json.dumps(INDEX_DATA_NESTED)).return_value
-    assert load_tool_index(mock_file_path) == INDEX_DATA_NESTED
-    mock_open_func.assert_called_once_with(mock_file_path, "r", encoding="utf-8")
+# --- Tests for ToolIndexHandler --- #
 
 
-@pytest.mark.skipif(save_tool_index is None, reason="Could not import function")
-@patch("builtins.open", new_callable=mock_open)
-def test_save_tool_index(mock_open_func):
-    """Test saving the tool index, checking sorting and newline."""
-    mock_file_path = Path("/fake/tool_index.json")
-    # Unsorted data
-    data_to_save = {"toolC": {"crc": "0xCCC"}, "toolA": {"crc": "0xAAA"}, "toolB": {"crc": "0xBBB"}}
-    expected_saved_json_str = (
-        json.dumps(
-            {"toolA": {"crc": "0xAAA"}, "toolB": {"crc": "0xBBB"}, "toolC": {"crc": "0xCCC"}}, indent=2, sort_keys=True
-        )
-        + "\n"
-    )  # Expect sorted keys and trailing newline
-
-    save_tool_index(mock_file_path, data_to_save)
-
-    mock_open_func.assert_called_once_with(mock_file_path, "w", encoding="utf-8")
-    # Get all written data
-    written_data = "".join(call.args[0] for call in mock_open_func().write.call_args_list)
-    assert written_data == expected_saved_json_str
+def test_load_tool_index_success(mock_index_file: Path, sample_index_data: Dict[str, Any]):
+    """Test successful loading of the index via the constructor."""
+    mock_index_file.write_text(json.dumps(sample_index_data), encoding="utf-8")
+    handler = ToolIndexHandler(mock_index_file)
+    assert handler.get_raw_index_data() == sample_index_data
 
 
-@pytest.mark.skipif(get_index_entry is None, reason="Could not import function")
-@pytest.mark.parametrize(
-    "sequence, index_data, expected_entry",
-    [
-        (("toolA",), INDEX_DATA_NESTED, {"crc": "0xAAA", "subcommands": {"sub1": {"crc": "0xA1A"}}}),
-        (("toolB",), INDEX_DATA_NESTED, {"crc": "0xBBB"}),
-        (("toolA", "sub1"), INDEX_DATA_NESTED, {"crc": "0xA1A"}),
-        (("toolC",), INDEX_DATA_NESTED, None),  # Base not found
-        (("toolA", "sub2"), INDEX_DATA_NESTED, None),  # Sub not found
-        (("toolB", "sub1"), INDEX_DATA_NESTED, None),  # Base has no subcommands key
-        (("toolA",), {"toolA": "not_a_dict"}, None),  # Invalid entry type
-    ],
-)
-def test_get_index_entry(sequence, index_data, expected_entry):
-    """Test retrieving index entries for various sequences."""
-    assert get_index_entry(index_data, sequence) == expected_entry
+def test_load_tool_index_file_not_found(mock_index_file: Path):
+    """Test initialization when the index file doesn't exist."""
+    assert not mock_index_file.exists()  # Ensure it doesn't exist
+    handler = ToolIndexHandler(mock_index_file)
+    assert handler.get_raw_index_data() == {}  # Should initialize empty
 
 
-@pytest.mark.skipif(update_index_entry is None, reason="Could not import function")
-def test_update_index_entry():
-    """Test updating and adding index entries."""
-    # Start with a copy
-    index_data = json.loads(json.dumps(INDEX_DATA_NESTED))
+def test_load_tool_index_invalid_json(mock_index_file: Path):
+    """Test initialization with an invalid JSON file."""
+    mock_index_file.write_text("this is not json", encoding="utf-8")
+    handler = ToolIndexHandler(mock_index_file)
+    assert handler.get_raw_index_data() == {}  # Should initialize empty
 
-    # Update existing base
-    update_index_entry(index_data, ("toolB",), crc="0xBBB_new", extra="data")
-    assert index_data["toolB"] == {"crc": "0xBBB_new", "extra": "data"}
 
-    # Update existing sub
-    update_index_entry(index_data, ("toolA", "sub1"), crc="0xA1A_new")
-    assert index_data["toolA"]["subcommands"]["sub1"] == {"crc": "0xA1A_new"}
+def test_load_tool_index_json_not_dict(mock_index_file: Path):
+    """Test initialization when JSON is valid but not a dictionary."""
+    mock_index_file.write_text(json.dumps([1, 2, 3]), encoding="utf-8")
+    handler = ToolIndexHandler(mock_index_file)
+    assert handler.get_raw_index_data() == {}  # Should initialize empty
 
-    # Create new base
-    update_index_entry(index_data, ("toolC",), crc="0xCCC", timestamp=123)
-    assert index_data["toolC"] == {"crc": "0xCCC", "timestamp": 123}
 
-    # Create new sub (intermediate created)
-    update_index_entry(index_data, ("toolC", "sub1"), crc="0xC1C")
-    assert "subcommands" in index_data["toolC"]
-    assert index_data["toolC"]["subcommands"]["sub1"] == {"crc": "0xC1C"}
+# Test cases for get_entry
+GET_ENTRY_TEST_CASES = [
+    (("toolA",), ("toolA",), {"crc": "0x1111", "checked_timestamp": 1678886400.0}),
+    (("toolB", "sub1"), ("toolB", "sub1"), {"crc": "0x2222", "checked_timestamp": 1678886500.0}),
+    (("toolC",), ("toolC",), None),  # Not in index
+    ((), (), None),  # Empty sequence
+]
 
-    # Create new deeper sub (intermediates created)
-    update_index_entry(index_data, ("toolD", "sub1", "subsub1"), crc="0xD11")
-    assert "toolD" in index_data
-    assert "subcommands" in index_data["toolD"]
-    assert "sub1" in index_data["toolD"]["subcommands"]
-    assert "subcommands" in index_data["toolD"]["subcommands"]["sub1"]
-    assert index_data["toolD"]["subcommands"]["sub1"]["subcommands"]["subsub1"] == {"crc": "0xD11"}
+
+@pytest.mark.parametrize("sequence, tool_id_ignored, expected_entry", GET_ENTRY_TEST_CASES)
+def test_get_index_entry(
+    mock_index_file: Path,
+    sample_index_data: Dict[str, Any],
+    sequence: Tuple[str, ...],
+    tool_id_ignored: Tuple[str, ...],  # No longer needed as input
+    expected_entry: Optional[Dict[str, Any]],
+):
+    """Tests retrieving entries using get_entry."""
+    mock_index_file.write_text(json.dumps(sample_index_data), encoding="utf-8")
+    handler = ToolIndexHandler(mock_index_file)
+    assert handler.get_entry(sequence) == expected_entry
+
+
+# --- Tests for update_entry ---
+
+
+def test_update_index_entry_existing(mock_index_file: Path, sample_index_data: Dict[str, Any]):
+    """Test updating an existing entry."""
+    mock_index_file.write_text(json.dumps(sample_index_data), encoding="utf-8")
+    handler = ToolIndexHandler(mock_index_file)
+
+    sequence = ("toolA",)
+    update_data = {"crc": "0xAAAA", "new_field": True}
+    handler.update_entry(sequence, update_data)
+
+    expected_data = sample_index_data.copy()
+    expected_data["toolA"].update(update_data)
+
+    assert handler.get_entry(sequence) == expected_data["toolA"]
+    assert handler._dirty is True  # Check dirty flag
+
+
+def test_update_index_entry_new(mock_index_file: Path, sample_index_data: Dict[str, Any]):
+    """Test adding a new entry."""
+    mock_index_file.write_text(json.dumps(sample_index_data), encoding="utf-8")
+    handler = ToolIndexHandler(mock_index_file)
+
+    sequence = ("newTool", "sub")
+    update_data = {"crc": "0xBBBB", "checked_timestamp": 1700000000.0}
+    handler.update_entry(sequence, update_data)
+
+    expected_data = sample_index_data.copy()
+    expected_data["newTool_sub"] = update_data  # Key is joined sequence
+
+    assert handler.get_entry(sequence) == update_data
+    assert handler.get_raw_index_data() == expected_data
+    assert handler._dirty is True
+
+
+def test_update_index_entry_empty_sequence(mock_index_file: Path, sample_index_data: Dict[str, Any]):
+    """Test attempting to update with an empty sequence."""
+    initial_data = sample_index_data.copy()
+    mock_index_file.write_text(json.dumps(initial_data), encoding="utf-8")
+    handler = ToolIndexHandler(mock_index_file)
+
+    handler.update_entry((), {"crc": "0xCCCC"})
+
+    # Data should remain unchanged
+    assert handler.get_raw_index_data() == initial_data
+    assert handler._dirty is False
+
+
+# TODO: Add tests for get_tool_definition if needed
+# TODO: Add tests for saving the index if that functionality is added
+
+# <<< ZEROTH LAW FOOTER >>>

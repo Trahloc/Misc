@@ -6,8 +6,9 @@ import structlog
 import click
 from pathlib import Path
 
-# Adjust imports for moved utils
-from ..common.git_utils import find_git_root, restore_git_hooks
+# Correct relative import: Go up three levels to reach src/zeroth_law, then down to common
+from ...common.git_utils import find_git_root, restore_git_hooks
+from ...common.path_utils import ZLFProjectRootNotFoundError
 # No path_utils needed here
 
 log = structlog.get_logger()

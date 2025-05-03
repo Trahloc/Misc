@@ -288,7 +288,7 @@ markers = [
     "zlf_compliance: marks tests related to Zeroth Law Framework compliance checks",
 ]
 # Default options
-addopts = "-ra -q --color=yes --disable-warnings"
+addopts = "-ra --color=yes --disable-warnings"
 
 [tool.ruff]
 # Allow fixing errors automatically.

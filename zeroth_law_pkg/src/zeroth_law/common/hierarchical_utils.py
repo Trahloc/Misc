@@ -71,6 +71,12 @@ def parse_to_nested_dict(raw_list: list[str] | set[str] | Array) -> ParsedHierar
             if not stripped_part:
                 if is_last_part and i > 0:  # Allow if it's the last part AND not the only part (e.g. ":")
                     log.debug(f"Ignoring trailing empty component in entry '{entry}'.")
+                    # If the last part was empty, we don't set explicit=True on the parent later
+                    # Mark that the last effective part was the previous one
+                    is_last_part = False  # Treat the previous part as the last for flag setting
+                    i = i - 1  # Adjust index to point to the effective last part
+                    # Fall through to process the previous part's flags if needed?
+                    # No, the outer loop handles setting flags based on the final is_last_part state
                     continue  # Skip adding the empty part to cleaned_parts
                 else:
                     # Disallow empty components elsewhere (e.g., "::", ":tool", ":")
@@ -103,22 +109,64 @@ def parse_to_nested_dict(raw_list: list[str] | set[str] | Array) -> ParsedHierar
                 [p.strip() for p in part.split(",") if p.strip()] if is_last_part else [part]
             )  # Use validated part
 
+            # This check needs to happen *before* potentially skipping the part
+            is_last_part = i == len(cleaned_parts) - 1
+
+            # Allow a *single* trailing empty component, but disallow others
+            if not stripped_part:
+                if is_last_part and i > 0:  # Allow if it's the last part AND not the only part (e.g. ":")
+                    log.debug(f"Ignoring trailing empty component in entry '{entry}'.")
+                    # If the last part was empty, we don't set explicit=True on the parent later
+                    # Mark that the last effective part was the previous one
+                    is_last_part = False  # Treat the previous part as the last for flag setting
+                    i = i - 1  # Adjust index to point to the effective last part
+                    # Fall through to process the previous part's flags if needed?
+                    # No, the outer loop handles setting flags based on the final is_last_part state
+                    continue  # Skip adding the empty part to cleaned_parts
+                else:
+                    # Disallow empty components elsewhere (e.g., "::", ":tool", ":")
+                    log.warning(f"Skipping entry '{entry}' due to invalid empty component at index {i}.")
+                    valid_path = False
+                    break
+
+            # Check for commas in non-final parts
+            if not is_last_part and "," in stripped_part:
+                log.warning(f"Skipping entry '{entry}': Commas are only allowed in the final component.")
+                valid_path = False
+                break
+            cleaned_parts.append(stripped_part)
+
             # This should not happen now due to earlier validation, but check defensively
             if not node_names:
-                log.error(f"Internal error: Empty node_names after validation for entry '{entry}'")
-                break
+                log.error(
+                    f"Internal error: Empty node_names after validation for entry '{entry}', stopping processing for this entry."
+                )
+                # Skip processing for this part if node_names is empty
+                # This prevents creating nodes based on invalid comma-separated parts
+                # continue # Continue to the next part of the *current* entry if any, or next entry
+                break  # Break out of the inner loop for this entry entirely
 
             next_level_holders = []
             for node_name in node_names:
-                # Get or create node
-                node = current_level.setdefault(node_name, {})
-                if not isinstance(node, dict):
-                    log.error(
-                        f"Config structure error: Trying to create node '{node_name}' where a boolean flag exists.",
-                        path=path_accumulator,
-                    )
-                    # How to recover? Maybe skip this node_name? For now, log and continue.
-                    continue
+                # Get or create node, ensuring flags are initialized for intermediates
+                if node_name not in current_level:
+                    # New node, initialize flags
+                    node = current_level.setdefault(node_name, {})
+                    if not is_last_part:  # Initialize intermediate nodes explicitly
+                        node.setdefault("_explicit", False)
+                        node.setdefault("_all", False)
+                else:
+                    node = current_level[node_name]
+                    if not isinstance(node, dict):
+                        log.error(
+                            f"Config structure error: Trying to access node '{node_name}' which is not a dict.",
+                            path=path_accumulator,
+                        )
+                        continue
+                    # Ensure flags exist even if node existed (might have only been implied before)
+                    if not is_last_part:
+                        node.setdefault("_explicit", False)
+                        node.setdefault("_all", False)
 
                 # Handle :* overriding existing children
                 if is_last_part and is_fully_listed_at_end:
@@ -133,9 +181,13 @@ def parse_to_nested_dict(raw_list: list[str] | set[str] | Array) -> ParsedHierar
                 # Set flags if last part
                 if is_last_part:
                     node["_explicit"] = True
+                    node.setdefault("_all", False)  # Ensure _all flag exists
                     if is_fully_listed_at_end:
                         node["_all"] = True
                 elif not is_last_part:  # Prepare for descent
+                    # Ensure intermediate nodes have flags initialized
+                    node.setdefault("_explicit", False)
+                    node.setdefault("_all", False)
                     if node.get("_all", False):
                         # This entry is trying to define something under an _all node, which is disallowed.
                         # This case should be caught by validation ideally, but double-check here.

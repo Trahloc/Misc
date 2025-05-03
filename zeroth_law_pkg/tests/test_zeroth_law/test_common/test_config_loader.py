@@ -5,9 +5,10 @@ import tomllib
 from pathlib import Path
 from unittest import mock
 import copy
-
 import pytest
 import toml
+import tomlkit
+from unittest.mock import patch, mock_open
 
 # Import necessary components from the config_loader module
 from zeroth_law.common.config_loader import (
@@ -23,6 +24,16 @@ from zeroth_law.common.config_loader import (
     _XDG_CONFIG_HOME_ENV_VAR,  # Add missing constant
 )
 from zeroth_law.common.path_utils import ZLFProjectRootNotFoundError  # Import the exception
+
+# Commenting out potentially problematic import
+# from zeroth_law.common.config_validation import (
+#     validate_config,
+#     ConfigModel
+# )
+from zeroth_law.common.path_utils import (
+    find_project_root,
+    # ZLFProjectRootNotFoundError,  # Already imported from config_loader
+)
 
 
 def test_parse_toml_file_success(tmp_path):

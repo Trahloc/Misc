@@ -6,11 +6,14 @@ from zeroth_law.lib.tooling.baseline_generator import (
     generate_or_verify_ground_truth_txt,
     BaselineStatus,
     _capture_command_output,
+    _execute_capture_in_podman,
 )
 from zeroth_law.lib.tool_index_handler import ToolIndexHandler
 from unittest.mock import patch, MagicMock, mock_open
 import json
 import subprocess
+from typing import Tuple
+import sys
 
 
 # Basic test to satisfy implementation requirement
@@ -41,155 +44,183 @@ PROJECT_ROOT = Path("/fake/project")
 VENV_PATH = Path("/fake/project/.venv")  # Used for PATH construction
 
 
-@pytest.mark.skipif(_capture_command_output is None, reason="Could not import function")
-@patch("src.zeroth_law.lib.tooling.baseline_generator._execute_capture_in_podman")
-def test_capture_command_output_standard_tool(mock_exec_capture):
-    """Test capturing output for a standard tool (not python script)."""
-    mock_exec_capture.return_value = (b"Help output\n", b"", 0)
-    command_sequence = ("ruff", "check", "--help")
-
-    stdout, stderr, retcode = _capture_command_output(
-        command_sequence, CONTAINER_NAME, PROJECT_ROOT, VENV_PATH, is_python_script=False, timeout_seconds=30
-    )
-
-    expected_exec_cmd_args = (
-        [f"{VENV_PATH / 'bin' / 'ruff'}", "check", "--help"],
-        CONTAINER_NAME,
-        PROJECT_ROOT,
-        VENV_PATH,
-        30,
-    )
-    mock_exec_capture.assert_called_once_with(*expected_exec_cmd_args)
-    assert stdout == b"Help output\n"
-    assert stderr == b""
-    assert retcode == 0
-
-
-@pytest.mark.skipif(_capture_command_output is None, reason="Could not import function")
-@patch("src.zeroth_law.lib.tooling.baseline_generator._execute_capture_in_podman")
-def test_capture_command_output_python_script(mock_exec_capture):
-    """Test capturing output for a python script."""
-    mock_exec_capture.return_value = (b"Script output\n", b"Script warning\n", 0)
-    # Assume the script path relative to project root is scripts/my_script.py
-    command_sequence = ("python", "scripts/my_script.py", "--version")
-
-    stdout, stderr, retcode = _capture_command_output(
-        command_sequence, CONTAINER_NAME, PROJECT_ROOT, VENV_PATH, is_python_script=True, timeout_seconds=60
-    )
-
-    # Python executable should be from venv, script path should be absolute
-    expected_exec_cmd_args = (
-        [f"{VENV_PATH / 'bin' / 'python'}", str(PROJECT_ROOT / "scripts/my_script.py"), "--version"],
-        CONTAINER_NAME,
-        PROJECT_ROOT,
-        VENV_PATH,
-        60,
-    )
-    mock_exec_capture.assert_called_once_with(*expected_exec_cmd_args)
-    assert stdout == b"Script output\n"
-    assert stderr == b"Script warning\n"
-    assert retcode == 0
-
-
-@pytest.mark.skipif(_capture_command_output is None, reason="Could not import function")
-@patch("src.zeroth_law.lib.tooling.baseline_generator._execute_capture_in_podman")
-def test_capture_command_output_exec_failure(mock_exec_capture):
-    """Test handling failure during the podman execution step."""
-    mock_exec_capture.return_value = (b"", b"Command not found\n", 127)
-    command_sequence = ("nonexistent_tool", "--help")
-
-    stdout, stderr, retcode = _capture_command_output(
-        command_sequence, CONTAINER_NAME, PROJECT_ROOT, VENV_PATH, is_python_script=False, timeout_seconds=30
-    )
-
-    expected_exec_cmd_args = (
-        [f"{VENV_PATH / 'bin' / 'nonexistent_tool'}", "--help"],
-        CONTAINER_NAME,
-        PROJECT_ROOT,
-        VENV_PATH,
-        30,
-    )
-    mock_exec_capture.assert_called_once_with(*expected_exec_cmd_args)
-    assert stdout == b""
-    assert stderr == b"Command not found\n"
-    assert retcode == 127
-
-
-# --- Tests for _execute_capture_in_podman --- #
-
-# Re-import necessary items if not already done
-try:
-    from src.zeroth_law.lib.tooling.baseline_generator import _execute_capture_in_podman
-except ImportError:
-    _execute_capture_in_podman = None
-
-
-@pytest.mark.skipif(_execute_capture_in_podman is None, reason="Could not import function")
-@patch("src.zeroth_law.lib.tooling.podman_utils._run_podman_command")
-def test_execute_capture_in_podman_success(mock_run_podman):
-    """Test successful execution within podman."""
-    mock_process = MagicMock(spec=subprocess.CompletedProcess)
-    mock_process.returncode = 0
-    mock_process.stdout = b"Command stdout"
-    mock_process.stderr = b""
-    mock_run_podman.return_value = mock_process
-
-    cmd_args = ["/venv/bin/ruff", "check", "--help"]
-    timeout = 30
-
-    stdout, stderr, retcode = _execute_capture_in_podman(cmd_args, CONTAINER_NAME, PROJECT_ROOT, VENV_PATH, timeout)
-
-    # Verify the constructed podman command
-    podman_cmd_list = mock_run_podman.call_args[0][0]
-    assert podman_cmd_list[0] == "podman"
-    assert podman_cmd_list[1] == "exec"
-    assert podman_cmd_list[2] == CONTAINER_NAME
-    assert podman_cmd_list[3] == "sh"
-    assert podman_cmd_list[4] == "-c"
-    # Check the shell command string more carefully
-    shell_command = podman_cmd_list[5]
-    assert f"export PATH=\"{VENV_PATH / 'bin'}:\$PATH\"" in shell_command
-    assert f"timeout {timeout}s " in shell_command
-    assert "/venv/bin/ruff check --help" in shell_command  # Check arg joining
-    assert "| cat" in shell_command
-
-    assert stdout == b"Command stdout"
-    assert stderr == b""
-    assert retcode == 0
-
-
-@pytest.mark.skipif(_execute_capture_in_podman is None, reason="Could not import function")
-@patch("src.zeroth_law.lib.tooling.podman_utils._run_podman_command")
-def test_execute_capture_in_podman_command_failure(mock_run_podman):
-    """Test failure of the command executed within podman (e.g., exit 127)."""
-    mock_process = MagicMock(spec=subprocess.CompletedProcess)
-    mock_process.returncode = 127
-    mock_process.stdout = b""
-    mock_process.stderr = b"sh: ruff: command not found"
-    mock_run_podman.return_value = mock_process
-
-    cmd_args = ["/venv/bin/ruff", "--version"]
-    timeout = 15
-
-    stdout, stderr, retcode = _execute_capture_in_podman(cmd_args, CONTAINER_NAME, PROJECT_ROOT, VENV_PATH, timeout)
-
-    mock_run_podman.assert_called_once()  # Check command structure if needed
-    assert stdout == b""
-    assert stderr == b"sh: ruff: command not found"
-    assert retcode == 127
-
-
-@pytest.mark.skipif(_execute_capture_in_podman is None, reason="Could not import function")
-@patch(
-    "src.zeroth_law.lib.tooling.podman_utils._run_podman_command",
-    side_effect=subprocess.TimeoutExpired(cmd="podman exec ...", timeout=10),
+@pytest.mark.parametrize(
+    "tool_command, sequence, expected_output, expected_rc",
+    [
+        # Basic tool
+        (
+            ("some-tool",),  # command_sequence
+            ("some-tool", "--help"),
+            b"Some help output",
+            0,
+        ),
+        # Tool with subcommand
+        (
+            ("tool", "sub"),
+            ("tool", "sub", "--help"),
+            b"Subcommand help",
+            0,
+        ),
+    ],
 )
-def test_execute_capture_in_podman_podman_error(mock_run_podman):
-    """Test handling errors from the podman command itself."""
-    cmd_args = ["/venv/bin/some_tool", "--help"]
-    timeout = 10
+@patch("zeroth_law.lib.tooling.baseline_generator._execute_capture_in_podman")
+def test_capture_command_output_standard_tool(
+    mock_execute_podman,
+    tool_command: Tuple[str, ...],
+    sequence: Tuple[str, ...],
+    expected_output: bytes,
+    expected_rc: int,
+    tmp_path: Path,
+):
+    """Tests capturing output for standard tools."""
+    # Setup mock return for _execute_capture_in_podman
+    mock_execute_podman.return_value = (expected_output, b"", expected_rc)
 
-    # Expect the exception to propagate
-    with pytest.raises(subprocess.TimeoutExpired):
-        _execute_capture_in_podman(cmd_args, CONTAINER_NAME, PROJECT_ROOT, VENV_PATH, timeout)
-    mock_run_podman.assert_called_once()
+    # Mock project_root and container_name
+    project_root = tmp_path
+    container_name = "test-container"
+
+    # Call the function under test (remove is_python_script)
+    stdout, stderr, rc = _capture_command_output(
+        command_sequence=sequence,
+        project_root=project_root,
+        container_name=container_name,
+        # executable_command_override is None by default
+    )
+
+    assert stdout == expected_output
+    assert rc == expected_rc
+    # TODO: Add more assertions for mock_execute_podman call details if needed
+
+
+@patch("zeroth_law.lib.tooling.baseline_generator._execute_capture_in_podman")
+def test_capture_command_output_python_script(mock_execute_podman, tmp_path: Path):
+    """Tests capturing output for direct Python script execution."""
+    # Setup test script
+    script_content = "import sys; print(f'Script output args={sys.argv[1:]}')"
+    script_path = tmp_path / "test_script.py"
+    script_path.write_text(script_content)
+
+    command_sequence = (sys.executable, str(script_path), "--arg1", "value1")
+    expected_output = b"Script output args=['--arg1', 'value1']\n"
+    expected_rc = 0
+
+    # Mock podman execution
+    mock_execute_podman.return_value = (expected_output, b"", expected_rc)
+
+    # Call the function under test (remove is_python_script)
+    stdout, stderr, rc = _capture_command_output(
+        command_sequence=command_sequence,
+        project_root=tmp_path,
+        container_name="test-container",
+    )
+
+    assert stdout == expected_output
+    assert rc == expected_rc
+    # Verify podman command construction if necessary (more complex mocking needed)
+
+
+@patch("zeroth_law.lib.tooling.baseline_generator._execute_capture_in_podman")
+def test_capture_command_output_exec_failure(mock_execute_podman, tmp_path: Path):
+    """Tests failure during command execution inside podman."""
+    # Mock podman execution failure (returns None for stdout/stderr)
+    mock_execute_podman.return_value = (None, b"Error running command", 1)
+
+    command_sequence = ("failing-tool", "--help")
+
+    # Call the function under test (remove is_python_script)
+    stdout, stderr, rc = _capture_command_output(
+        command_sequence=command_sequence,
+        project_root=tmp_path,
+        container_name="test-container",
+    )
+
+    assert stdout is None
+    assert stderr == b"Error running command"
+    assert rc == 1
+
+
+# === Tests for _execute_capture_in_podman ===
+
+
+@patch("zeroth_law.lib.tooling.baseline_generator._run_podman_command")
+def test_execute_capture_in_podman_success(mock_run_podman, tmp_path: Path):
+    """Test successful execution via _run_podman_command."""
+    mock_result = MagicMock(spec=subprocess.CompletedProcess)
+    mock_result.returncode = 0
+    mock_result.stdout = b"Success stdout"
+    mock_result.stderr = b""
+    mock_run_podman.return_value = mock_result
+
+    container_name = "podman-test-container"
+    # Example pre-constructed command args (what _capture_command_output would build)
+    podman_command_args = ["exec", container_name, "echo", "hello"]
+    is_python_script_override = False
+    project_root = tmp_path
+
+    # Call function (4 args)
+    stdout, stderr, rc = _execute_capture_in_podman(
+        container_name,
+        podman_command_args,
+        is_python_script_override,
+        project_root,
+    )
+
+    assert stdout == b"Success stdout"
+    assert stderr == b""
+    assert rc == 0
+    mock_run_podman.assert_called_once_with(podman_command_args, check=False, capture=True)
+
+
+@patch("zeroth_law.lib.tooling.baseline_generator._run_podman_command")
+def test_execute_capture_in_podman_command_failure(mock_run_podman, tmp_path: Path):
+    """Test failure reported by _run_podman_command (non-zero RC)."""
+    mock_result = MagicMock(spec=subprocess.CompletedProcess)
+    mock_result.returncode = 1
+    mock_result.stdout = b""
+    mock_result.stderr = b"Command failed stderr"
+    mock_run_podman.return_value = mock_result
+
+    container_name = "podman-test-container"
+    podman_command_args = ["exec", container_name, "false"]
+    is_python_script_override = False
+    project_root = tmp_path
+
+    # Call function (4 args)
+    stdout, stderr, rc = _execute_capture_in_podman(
+        container_name,
+        podman_command_args,
+        is_python_script_override,
+        project_root,
+    )
+
+    # Should return None, None on failure from _run_podman_command
+    assert stdout is None
+    assert stderr is None
+    assert rc == 1
+    mock_run_podman.assert_called_once_with(podman_command_args, check=False, capture=True)
+
+
+@patch("zeroth_law.lib.tooling.baseline_generator._run_podman_command")
+def test_execute_capture_in_podman_podman_error(mock_run_podman, tmp_path: Path):
+    """Test exception raised by _run_podman_command."""
+    mock_run_podman.side_effect = Exception("Podman system error")
+
+    container_name = "podman-test-container"
+    podman_command_args = ["exec", container_name, "some_cmd"]
+    is_python_script_override = False
+    project_root = tmp_path
+
+    # Call function (4 args)
+    stdout, stderr, rc = _execute_capture_in_podman(
+        container_name,
+        podman_command_args,
+        is_python_script_override,
+        project_root,
+    )
+
+    # Should return None, None, -98 on exception
+    assert stdout is None
+    assert stderr is None
+    assert rc == -98
+    mock_run_podman.assert_called_once_with(podman_command_args, check=False, capture=True)

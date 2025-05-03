@@ -155,18 +155,25 @@ def _get_source_py_files() -> Set[Path]:
 def _expected_test_path(src_file: Path) -> Path:
     """Calculates the expected corresponding test file path based on ZLF convention."""
     # Handle the special case for src/zeroth_law/commands/audit.py
-    if src_file == SRC_PKG_ROOT / "commands" / "audit.py":
-        return TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py"
+    # if src_file == SRC_PKG_ROOT / "commands" / "audit.py":
+    #     return TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py"
 
     relative_path = src_file.relative_to(SRC_PKG_ROOT)
     parts = list(relative_path.parts)
-    # Prefix directory parts
-    test_parts = [f"test_{p}" for p in parts[:-1]]
-    # Prefix filename part
+
+    # Prefix directory parts ONLY if they don't start with '_'
+    test_parts = []
+    for p in parts[:-1]:
+        if p.startswith("_"):
+            test_parts.append(p)  # Keep underscore dirs as-is
+        else:
+            test_parts.append(f"test_{p}")
+
+    # Prefix filename part (always prefixed)
     filename = parts[-1]
     test_filename = f"test_{filename}"
     test_parts.append(test_filename)
-    # return TESTS_ROOT.joinpath(*test_parts) # Old base
+
     return TESTS_MIRROR_ROOT.joinpath(*test_parts)  # FINAL base
 
 
@@ -193,18 +200,27 @@ def _get_test_py_files() -> Set[Path]:
 def _expected_source_path(test_file: Path) -> Path:
     """Calculates the expected corresponding source file path."""
     # --- Special Cases ---
-    # Handle the special case for the renamed audit test file (if it still exists)
-    # if test_file == TESTS_MIRROR_ROOT / "test_commands" / "test_audit_command_module.py":
-    #     return SRC_PKG_ROOT / "commands" / "audit.py"
-
     # Handle the special case for dynamic options test
     if test_file == TESTS_MIRROR_ROOT / "test_cli" / "test_dynamic_options.py":
         return SRC_PKG_ROOT / "cli.py"  # Dynamic options are part of cli.py
     # --- End Special Cases ---
 
     relative_path = test_file.relative_to(TESTS_MIRROR_ROOT)
-    # Remove 'test_' prefix from all parts
-    src_parts = [p.removeprefix("test_") for p in relative_path.parts]
+
+    # Remove 'test_' prefix from directory parts ONLY if they start with it
+    # Remove 'test_' prefix from filename (always)
+    src_parts = []
+    for p in relative_path.parts[:-1]:
+        if p.startswith("test_"):
+            src_parts.append(p.removeprefix("test_"))
+        else:
+            src_parts.append(p)  # Keep underscore dirs as-is
+
+    # Remove 'test_' from filename
+    filename = relative_path.parts[-1]
+    src_filename = filename.removeprefix("test_")
+    src_parts.append(src_filename)
+
     return SRC_PKG_ROOT.joinpath(*src_parts)
 
 

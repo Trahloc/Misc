@@ -626,16 +626,20 @@ def check_uv_environment(WORKSPACE_ROOT: Path):
 # --- Import ZLT Components (add try-except block) ---
 try:
     from zeroth_law.lib.tool_index_handler import ToolIndexHandler
-    from zeroth_law.dev_scripts.reconciliation_logic import (
-        perform_tool_reconciliation,
-        ReconciliationError,
+    from zeroth_law.common.hierarchical_utils import (
+        get_effective_status,
+        ParsedHierarchy,
+        NodeData,
     )
-    from zeroth_law.dev_scripts.tool_reconciler import (
-        ToolStatus,
-    )  # Assuming this is the correct location
 
     # Attempt to import the path helper
     from zeroth_law.lib.tool_path_utils import command_sequence_to_filepath
+
+    # Import Status from reconciler, Error from _logic
+    from zeroth_law.lib.tooling.tool_reconciler import ToolStatus
+
+    # Corrected import for ReconciliationError
+    from zeroth_law.subcommands._tools._reconcile._logic import ReconciliationError
 
     # Note: These might not be strictly needed by the moved fixtures but are related
     # from zeroth_law.dev_scripts.subcommand_discoverer import get_subcommands_from_json
@@ -663,14 +667,15 @@ except ImportError as e:
         def update_entry(*args, **kwargs):
             pass
 
-    def perform_tool_reconciliation(*args, **kwargs):
-        pytest.fail("perform_tool_reconciliation import failed")
-        return {}, set()
-
     # Define dummy path helper if import failed
     def command_sequence_to_filepath(*args, **kwargs):
         pytest.fail("command_sequence_to_filepath import failed")
         return Path("dummy/path.json"), Path("dummy/path.txt")  # Return dummy paths to allow definition
+
+    # Define dummy reconciler function if import failed (Not typically needed here)
+    # def _perform_reconciliation_logic(*args, **kwargs):
+    #     pytest.fail("_perform_reconciliation_logic import failed")
+    #     return {}, set(), {}, {}, [], [], False
 
     class ReconciliationError(Exception):
         pass

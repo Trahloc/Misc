@@ -158,9 +158,20 @@ def _apply_modification_recursive(
                     )
 
         # --- Proceed with adding/updating the target list --- #
-        target_changed_by_set = set_node_flags(target_hierarchy, path, is_explicit=True, is_all=apply_all)
-        if target_changed_by_set:
-            modified_target = True
+        # Check if parent has _all=True before calling set_node_flags
+        parent_has_all = False
+        if len(path) > 1:
+            parent_path = path[:-1]
+            parent_node = get_node(target_hierarchy, parent_path)
+            if parent_node and parent_node.get("_all", False):
+                parent_has_all = True
+                log.debug(f"Parent '{':'.join(parent_path)}:*' already covers '{path_str}'. Add action is redundant.")
+
+        if not parent_has_all:
+            target_changed_by_set = set_node_flags(target_hierarchy, path, is_explicit=True, is_all=apply_all)
+            if target_changed_by_set:
+                modified_target = True
+        # else: If parent has _all, no modification needed for target
 
     elif action == "remove":
         # Get the node *before* potentially modifying it
