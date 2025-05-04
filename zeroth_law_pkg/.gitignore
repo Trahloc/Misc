@@ -152,13 +152,6 @@ coverage_total.txt
 # Temporary Directory
 tmp/
 
-# Tool-specific
-environment.yml
-
-# Generated requirements files
-requirements.txt
-requirements-dev.txt
-
 # Generated code todos
 .ignore/
 .github/

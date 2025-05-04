@@ -257,12 +257,12 @@ def create_cli_group() -> click.Group:
     @click.version_option(version=zlt_version, package_name="zeroth-law", prog_name="zeroth-law")
     # --- Define ACTUAL Global options ONLY here --- #
     @click.option(
-        "-V",
+        "-v",
         "--verbose",
         "verbose",  # Explicit destination name
         count=True,
         default=0,
-        help="Increase verbosity. -V for INFO, -VV for DEBUG.",
+        help="Increase verbosity. -v for INFO, -vv for DEBUG.",
     )
     @click.option(
         "-q",

@@ -160,7 +160,9 @@ def _perform_reconciliation_logic(
             # sys.stderr.flush()
             logger.debug("Calling get_executables_from_env", path=str(venv_bin_path))  # Restore logger
             env_scan_start = time.monotonic()
-            env_tools = get_executables_from_env(venv_bin_path)
+            # Pass config_data to the scanner
+            # env_tools = get_executables_from_env(venv_bin_path, config_data=config_data)
+            env_tools = get_executables_from_env(venv_bin_path)  # Revert: remove config_data
             env_scan_duration = time.monotonic() - env_scan_start
             # print(f"INFO [_logic]: get_executables_from_env took {env_scan_duration:.4f} seconds", file=sys.stderr)
             # sys.stderr.flush()
