@@ -17,7 +17,9 @@ import os
 
 # --- Added for testing CLI --- #
 from click.testing import CliRunner
-from zeroth_law.cli import main  # Import the main entry point
+
+# from zeroth_law.cli import main  # Import the main entry point - OLD
+from zeroth_law.cli import cli_group  # Import the group object - NEW
 
 # Assuming tool_discovery.py is now in src/zeroth_law/dev_scripts/
 # Add the src directory to the path to allow importing the discovery script
@@ -46,7 +48,8 @@ def test_check_for_new_tools():
     """Check if 'zlt tools reconcile' reports any NEW_ENV_TOOL errors."""
     runner = CliRunner()
     # Run the reconcile command with JSON output for easier parsing
-    result = runner.invoke(main, ["tools", "reconcile", "--json"], catch_exceptions=False)
+    # result = runner.invoke(main, ["tools", "reconcile", "--json"], catch_exceptions=False) # OLD
+    result = runner.invoke(cli_group, ["tools", "reconcile", "--json"], catch_exceptions=False)  # NEW
 
     # Check if the command executed successfully (exit code 0 or 1 is expected)
     # Exit code 2 or higher indicates a crash in the command itself.

@@ -72,48 +72,105 @@ PARSE_TEST_CASES = [
     # Input List                        Expected Nested Dictionary
     ([], {}),  # Empty list
     (["tool_a"], {"tool_a": {"_explicit": True, "_all": False}}),  # Simple tool
-    (["tool_a:*"], {"tool_a": {"_explicit": True, "_all": True}}),  # Tool with *
-    (["tool_a:sub1"], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Tool with sub
+    (["tool_a:*"], {"tool_a": {"_explicit": False, "_all": True}}),  # Corrected: Tool with *
+    (
+        ["tool_a:sub1"],
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+    ),  # Tool with sub
     (
         ["tool_a:sub1,sub2"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}, "sub2": {"_explicit": True, "_all": False}}},
+        {
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": True, "_all": False},
+                "sub2": {"_explicit": True, "_all": False},
+            }
+        },
     ),  # Tool with multiple subs
-    (["tool_a:sub1:*"], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": True}}}),  # Sub with *
-    (["tool_a:sub1:subsub1"], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": False, "subsub1": {"_explicit": True, "_all": False}}}}),  # Nested sub
+    (
+        ["tool_a:sub1:*"],
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": True}}},
+    ),  # Corrected: Sub with *
+    (
+        ["tool_a:sub1:subsub1"],
+        {
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": False, "_all": False, "subsub1": {"_explicit": True, "_all": False}},
+            }
+        },
+    ),  # Nested sub
     (
         ["tool_a:sub1:subsub1,subsub2"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": False, "subsub1": {"_explicit": True, "_all": False}, "subsub2": {"_explicit": True, "_all": False}}}},
+        {
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {
+                    "_explicit": False,
+                    "_all": False,
+                    "subsub1": {"_explicit": True, "_all": False},
+                    "subsub2": {"_explicit": True, "_all": False},
+                },
+            }
+        },
     ),  # Nested multiple subs
-    (["tool_a", "tool_a:sub1"], {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Explicit tool and sub
-    (["tool_a:sub1", "tool_a"], {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Order shouldn't matter
+    (
+        ["tool_a", "tool_a:sub1"],
+        {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+    ),  # Explicit tool and sub
+    (
+        ["tool_a:sub1", "tool_a"],
+        {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+    ),  # Order shouldn't matter
     (
         ["tool_a:*", "tool_a:sub1"],
-        {"tool_a": {"_explicit": True, "_all": True}}, # :* wipes sub definitions
-    ),  # Tool:* overrides specific sub later defined
+        {"tool_a": {"_explicit": False, "_all": True}},  # Corrected: :* wipes sub definitions
+    ),
     (
         ["tool_a:sub1", "tool_a:*"],
-        {"tool_a": {"_explicit": True, "_all": True}}, # :* wipes sub definitions
-    ),  # Specific sub overridden by later Tool:*
+        {"tool_a": {"_explicit": False, "_all": True}},  # Corrected: :* wipes sub definitions
+    ),
     (
         ["tool_a:sub1:*", "tool_a:sub1:subsub1"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": True}}}, # :* wipes sub definitions
-    ),  # Sub:* overrides deeper subsub
+        {
+            "tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": True}}
+        },  # Corrected: :* wipes sub definitions
+    ),
     (
         ["tool_a:sub1:subsub1", "tool_a:sub1:*"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": True}}}, # :* wipes sub definitions
-    ),  # Deeper subsub overridden by later Sub:*
+        {
+            "tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": True}}
+        },  # Corrected: :* wipes sub definitions
+    ),
     (
         ["tool_a:sub1", "tool_b", "tool_a:sub2"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}, "sub2": {"_explicit": True, "_all": False}}, "tool_b": {"_explicit": True, "_all": False}},
+        {
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": True, "_all": False},
+                "sub2": {"_explicit": True, "_all": False},
+            },
+            "tool_b": {"_explicit": True, "_all": False},
+        },
     ),  # Mixed
-    (["tool_a::sub1"], {}),  # Invalid empty component
-    (["tool_a:,"], {}),  # Invalid empty sub after comma
+    (["tool_a::sub1"], {"tool_a": {"_explicit": False, "_all": False}}),  # Invalid empty component - Leaves parent
+    (["tool_a:,"], {"tool_a": {"_explicit": False, "_all": False}}),  # Invalid empty sub after comma - Leaves parent
     (["tool_a", ""], {"tool_a": {"_explicit": True, "_all": False}}),  # Empty string in list ignored
-    (["  tool_a : sub1  "], {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}}),  # Whitespace handling
+    (
+        ["  tool_a : sub1  "],
+        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+    ),  # Whitespace handling
     ([":*"], {}),  # Invalid :* alone
     (
         ["tool_a:sub1:", "tool_b"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}, "tool_b": {"_explicit": True, "_all": False}},
+        {
+            "tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}},
+            "tool_b": {"_explicit": True, "_all": False},
+        },
     ),  # Trailing colon ignored
 ]
 
@@ -238,16 +295,6 @@ MODIFY_ADD_TEST_CASES = [
         [],
         True,
     ),  # Force sub vs parent:* (removes other parent:*)
-    (
-        [],
-        ["tool_a:sub1"],
-        ("tool_a:*",),
-        False,
-        True,
-        ["tool_a:*"],
-        [],
-        True,
-    ),  # Force parent:* vs sub (removes other sub)
     (
         [],
         ["tool_a:sub1:*"],

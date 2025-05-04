@@ -114,14 +114,14 @@ def test_reconcile_orphan_dir():
     blacklist = {"tool_b"}
     # Error state is now ERROR_ORPHAN_HAS_DEFS
     # Corrected based on has_defs=False logic:
-    expected = {"orphan_tool": ToolStatus.NEW_ENV_TOOL}
+    expected = {"orphan_tool": ToolStatus.ERROR_ORPHAN_IN_ENV}
     parsed_whitelist = parse_to_nested_dict(whitelist)
     parsed_blacklist = parse_to_nested_dict(blacklist)
     # Simulate definitions existing for orphan_tool - NO, this test assumes no defs
     # Pass defined_sequences instead of dir_tools
     result = reconcile_tools(env_tools, defined_sequences, parsed_whitelist, parsed_blacklist)
     # Correct assertion
-    assert result.get("orphan_tool") == ToolStatus.NEW_ENV_TOOL
+    assert result.get("orphan_tool") == ToolStatus.ERROR_ORPHAN_IN_ENV
     # Old assert:
     # assert result.get("orphan_tool") == ToolStatus.ERROR_ORPHAN_HAS_DEFS
 
@@ -133,12 +133,12 @@ def test_reconcile_new_env_tool():
     defined_sequences = set()  # Pass empty set for now
     whitelist = {"tool_a"}
     blacklist = {"tool_b"}
-    expected = {"new_tool": ToolStatus.NEW_ENV_TOOL}
+    expected = {"new_tool": ToolStatus.ERROR_ORPHAN_IN_ENV}
     parsed_whitelist = parse_to_nested_dict(whitelist)
     parsed_blacklist = parse_to_nested_dict(blacklist)
     # Pass defined_sequences instead of dir_tools
     result = reconcile_tools(env_tools, defined_sequences, parsed_whitelist, parsed_blacklist)
-    assert result.get("new_tool") == ToolStatus.NEW_ENV_TOOL
+    assert result.get("new_tool") == ToolStatus.ERROR_ORPHAN_IN_ENV
 
 
 def test_reconcile_whitelisted_missing_dir():
@@ -185,8 +185,8 @@ def test_reconcile_mixed_complex():
         "missing_env": ToolStatus.WHITELISTED_NO_DEFS,  # Corrected from ERROR_MISSING_WHITELISTED
         "blacklisted_env": ToolStatus.BLACKLISTED_IN_ENV,  # Correct
         "blacklisted_tools": ToolStatus.BLACKLISTED_IN_ENV,  # Was ERROR_BLACKLISTED_HAS_DEFS
-        "new": ToolStatus.NEW_ENV_TOOL,  # Correct
-        "orphan": ToolStatus.NEW_ENV_TOOL,  # Was ERROR_ORPHAN_HAS_DEFS
+        "new": ToolStatus.ERROR_ORPHAN_IN_ENV,  # Correct
+        "orphan": ToolStatus.ERROR_ORPHAN_IN_ENV,  # Was ERROR_ORPHAN_HAS_DEFS
         "missing_all": ToolStatus.ERROR_MISSING_WHITELISTED,  # Correct
     }
     parsed_whitelist = parse_to_nested_dict(whitelist)

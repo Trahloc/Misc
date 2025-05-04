@@ -1,31 +1,30 @@
 import pytest
-from click.testing import CliRunner
-
-# Assume zlt.cli.main is the entry point
-from zeroth_law.cli import main as zlt_cli
-
-# Helper function to load expected options (adjust path if needed)
 import json
 from pathlib import Path
+from click.testing import CliRunner
+
+# Assuming zlt_cli is the main entry point function
+# from zeroth_law.cli import main as zlt_cli # OLD
+from zeroth_law.cli import cli_group as zlt_cli  # NEW: Use the group object
+
+# Get the directory of the current test file
+_TEST_DIR = Path(__file__).parent
+_ZLT_ROOT = _TEST_DIR.parent.parent.parent / "src" / "zeroth_law"
+_OPTIONS_DEF_PATH = _ZLT_ROOT / "zlt_options_definitions.json"
+
+# Load option definitions for parametrization
+with open(_OPTIONS_DEF_PATH, "r", encoding="utf-8") as f:
+    OPTION_DEFS = json.load(f)
 
 
-def load_option_defs():
-    options_path = Path(__file__).parents[3] / "src" / "zeroth_law" / "zlt_options_definitions.json"
-    with open(options_path, "r") as f:
-        return json.load(f)
-
-
-OPTION_DEFS = load_option_defs()
-
-
+# --- Test Cases --- #
 @pytest.mark.parametrize(
     "option_name, expected_flags, expected_description",
     [
-        ("verbose", "-v, --verbose", OPTION_DEFS["verbose"]["description"]),
-        # Add more test cases for other options here later
-        ("quiet", "-q, --quiet", OPTION_DEFS["quiet"]["description"]),
-        ("config", "--config FILE_PATH", OPTION_DEFS["config"]["description"]),
-        ("recursive", "-r, --recursive", OPTION_DEFS["recursive"]["description"]),
+        ("verbose", "-V, --verbose", "Increase verbosity. -V for INFO, -VV for DEBUG."),
+        ("quiet", "-q, --quiet", "Suppress all output except errors."),
+        ("config", "--config FILE_PATH", "Path to the ZLT configuration file (pyproject.toml section overrides this)."),
+        # ("recursive", "-r, --recursive", OPTION_DEFS["recursive"]["description"]), # Recursive removed as global
         # ("paths", "PATHS", OPTION_DEFS["paths"]["description"]), # Positional args don't appear in options help
     ],
 )
@@ -36,22 +35,20 @@ def test_dynamic_cli_options_in_help(option_name, expected_flags, expected_descr
     # If options are per-subcommand, this test needs adjustment
     result = runner.invoke(zlt_cli, ["--help"])
 
-    assert result.exit_code == 0
-    # Check if the flags and description appear together in the help output
-    # Simple check: Look for the flag part and description on the same line or nearby
-    # More robust check might involve parsing the help text structure
-    # Example check (might need refinement based on Click's help format):
-    help_lines = result.output.splitlines()
-    option_line_found = False
-    for line in help_lines:
-        line_stripped = line.strip()
-        # Handle flags potentially split from description by whitespace
-        if line_stripped.startswith(expected_flags):
-            # Check if description follows on the same line (common pattern)
-            if expected_description in line_stripped:
-                option_line_found = True
-                break
-            # TODO: Handle cases where description might be on the next line
-            #       or formatting is different.
+    # Check exit code
+    assert result.exit_code == 0, f"CLI exited with code {result.exit_code}: {result.output}"
 
-    assert option_line_found, f"Help output did not contain expected line for option '{option_name}' with flags '{expected_flags}' and description '{expected_description}'.\nOutput:\n{result.output}"
+    # Check if the option flags are present
+    assert (
+        expected_flags in result.output
+    ), f"Expected flags '{expected_flags}' not found in help output for '{option_name}'"
+
+    # Check if the description is present
+    # Be slightly flexible with whitespace
+    cleaned_output = " ".join(result.output.split())
+    cleaned_description = " ".join(expected_description.split())
+    assert (
+        cleaned_description in cleaned_output
+    ), f"Expected description '{expected_description}' not found in help output for '{option_name}'"
+
+    print(f"Test passed for option: {option_name}")  # Optional: Print success message

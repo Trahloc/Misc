@@ -1,20 +1,22 @@
 {
-    "command": [
-        "wheel"
+  "command": "wheel",
+  "description": "Tool definition for wheel (auto-generated skeleton)",
+  "usage": "wheel [options] [arguments]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "name": "wheel",
+    "version": null,
+    "language": "unknown",
+    "categories": [],
+    "tags": [
+      "skeleton"
     ],
-    "description": "Tool definition for wheel (auto-generated skeleton)",
-    "usage": "wheel [options] [arguments]",
-    "options": [],
-    "arguments": [],
-    "metadata": {
-        "name": "wheel",
-        "version": null,
-        "language": "unknown",
-        "categories": [],
-        "tags": [
-            "skeleton"
-        ],
-        "url": "",
-        "other": {}
-    }
+    "url": "",
+    "other": {},
+    "tool_name": "wheel",
+    "command_name": "wheel",
+    "ground_truth_crc": "0x00000000"
+  },
+  "subcommand": null
 }

@@ -2,6 +2,7 @@
 
 import pytest
 from pathlib import Path
+from typing import List, Tuple
 
 from zeroth_law.common.hierarchical_utils import parse_to_nested_dict, check_list_conflicts, get_effective_status
 
@@ -51,13 +52,13 @@ def test_parse_to_nested_dict_comma_handling():
 def test_parse_to_nested_dict_wildcard():
     """Test parsing of wildcards (':*')."""
     items = ["toolA:*", "toolB:sub1:*", "toolC:sub2"]  # Mix wildcard and explicit
-    # Updated expected: Intermediate nodes get flags
+    # Updated expected: Node ending in :* has _explicit=False, _all=True
     expected = {
-        "toolA": {"_explicit": True, "_all": True},  # Explicit True because 'toolA' itself was the last part before :*
+        "toolA": {"_explicit": False, "_all": True},
         "toolB": {
             "_explicit": False,
             "_all": False,
-            "sub1": {"_explicit": True, "_all": True},  # Explicit True because 'sub1' was last part before :*
+            "sub1": {"_explicit": False, "_all": True},
         },
         "toolC": {"_explicit": False, "_all": False, "sub2": {"_explicit": True, "_all": False}},
     }
@@ -82,7 +83,7 @@ def test_parse_to_nested_dict_wildcard_beats_implicit_parent():
             "_explicit": False,
             "_all": False,  # Parent isn't wildcard
             "sub1": {
-                "_explicit": True,
+                "_explicit": False,
                 "_all": True,
             },  # Subcommand is wildcard (and explicit because it was last before :*)
         }
@@ -107,65 +108,6 @@ def test_parse_to_nested_dict_invalid_strings():
     # or the structure if split(":") creates empty strings
     # assert parse_to_nested_dict(items) == {}  # Assuming invalid entries are skipped
     assert parse_to_nested_dict(items) == expected  # Updated expectation
-
-
-# --- Tests for check_list_conflicts --- #
-
-
-def test_check_list_conflicts_no_conflicts():
-    """Test when whitelist and blacklist have no overlapping explicit entries."""
-    wl_tree = parse_to_nested_dict(["toolA", "toolB:sub1"])
-    bl_tree = parse_to_nested_dict(["toolC", "toolB:sub2"])
-    assert check_list_conflicts(wl_tree, bl_tree) == []
-
-
-def test_check_list_conflicts_root_conflict():
-    """Test conflict at the root level."""
-    wl_tree = parse_to_nested_dict(["toolA"])
-    bl_tree = parse_to_nested_dict(["toolA"])
-    assert check_list_conflicts(wl_tree, bl_tree) == ["toolA"]
-
-
-def test_check_list_conflicts_nested_conflict():
-    """Test conflict at a nested level."""
-    wl_tree = parse_to_nested_dict(["toolA:sub1:subsubA"])
-    bl_tree = parse_to_nested_dict(["toolA:sub1:subsubA"])
-    assert check_list_conflicts(wl_tree, bl_tree) == ["toolA:sub1:subsubA"]
-
-
-def test_check_list_conflicts_multiple_conflicts():
-    """Test multiple conflicts at different levels."""
-    wl_tree = parse_to_nested_dict(["toolA", "toolB:sub1"])
-    bl_tree = parse_to_nested_dict(["toolA", "toolB:sub1", "toolC"])
-    # Need to sort the result for consistent comparison
-    assert sorted(check_list_conflicts(wl_tree, bl_tree)) == sorted(["toolA", "toolB:sub1"])
-
-
-def test_check_list_conflicts_wildcard_no_conflict():
-    """Test that wildcards do not cause explicit conflicts."""
-    wl_tree = parse_to_nested_dict(["toolA:*"])
-    bl_tree = parse_to_nested_dict(["toolA:sub1"])
-    assert check_list_conflicts(wl_tree, bl_tree) == []
-
-    wl_tree = parse_to_nested_dict(["toolA:sub1"])
-    bl_tree = parse_to_nested_dict(["toolA:*"])
-    assert check_list_conflicts(wl_tree, bl_tree) == []
-
-
-def test_check_list_conflicts_implicit_parent_no_conflict():
-    """Test that implicitly defined parents don't cause conflicts."""
-    # toolA is implicitly defined in wl_tree by its child
-    wl_tree = parse_to_nested_dict(["toolA:sub1"])
-    # toolA is explicitly defined in bl_tree
-    bl_tree = parse_to_nested_dict(["toolA"])
-    assert check_list_conflicts(wl_tree, bl_tree) == []  # No conflict as wl_tree toolA is not explicit
-
-
-def test_check_list_conflicts_empty_trees():
-    """Test with empty input trees."""
-    assert check_list_conflicts({}, {}) == []
-    assert check_list_conflicts(parse_to_nested_dict(["a"]), {}) == []
-    assert check_list_conflicts({}, parse_to_nested_dict(["b"])) == []
 
 
 # --- Tests for get_effective_status --- #
@@ -473,3 +415,104 @@ def test_get_effective_status(sequence, wl_tree_def, bl_tree_def, expected_statu
     wl_tree = parse_to_nested_dict(wl_tree_def)
     bl_tree = parse_to_nested_dict(bl_tree_def)
     assert get_effective_status(sequence, wl_tree, bl_tree) == expected_status
+
+
+# --- Tests for check_list_conflicts --- #
+
+
+@pytest.mark.parametrize(
+    "whitelist, blacklist, expected_conflicts",
+    [
+        # No conflicts
+        (
+            ["toolA", "toolB:sub1"],
+            ["toolC", "toolB:sub2"],
+            [],
+        ),
+        # Root conflict
+        (
+            ["toolA", "toolB:sub1"],
+            ["toolC", "toolA"],
+            [("toolA",)],  # Expect tuple
+        ),
+        # Nested conflict
+        (
+            ["toolA:sub1:subsubA", "toolB"],
+            ["toolC", "toolA:sub1:subsubA"],
+            [("toolA", "sub1", "subsubA")],  # Expect tuple
+        ),
+        # Multiple conflicts
+        (
+            ["toolA", "toolB:sub1"],
+            ["toolA", "toolB:sub1"],
+            [("toolA",), ("toolB", "sub1")],  # Expect tuples
+        ),
+        # Wildcard conflict (WL:* vs BL:explicit)
+        (
+            ["toolA:*", "toolB:sub1"],
+            ["toolA:sub1", "toolC"],
+            # This case should NOT conflict per rule: explicit overrides wildcard
+            [],
+        ),
+        # Wildcard conflict (WL:explicit vs BL:*)
+        (
+            ["toolA:sub1", "toolC"],
+            ["toolA:*", "toolB:sub1"],
+            # This case should NOT conflict per rule: explicit overrides wildcard
+            [],
+        ),
+        # Wildcard conflict (WL:* vs BL:*)
+        (
+            ["toolA:*", "toolC"],
+            ["toolA:*", "toolB:sub1"],
+            # Conflict: Both specify wildcard for the same path
+            [("toolA",)],  # Conflict is at the wildcard level
+        ),
+        # Wildcard no conflict (WL:sub_explicit vs BL:parent_*)
+        (
+            ["toolA:sub1", "toolC"],
+            ["toolA:*", "toolB:sub1"],
+            [],  # Explicit WL overrides BL wildcard
+        ),
+        # Wildcard no conflict (WL:parent_* vs BL:sub_explicit)
+        (
+            ["toolA:*", "toolB:sub1"],
+            ["toolA:sub1", "toolC"],
+            [],  # Explicit BL overrides WL wildcard
+        ),
+        # Conflict: Parent WL explicit, Child BL explicit
+        (
+            ["toolA", "toolB"],  # Explicit allow toolA
+            ["toolA:sub1", "toolC"],  # Explicit block toolA:sub1
+            [],  # No conflict, different levels of specificity
+        ),
+        # Conflict: Parent BL explicit, Child WL explicit
+        (
+            ["toolA:sub1", "toolC"],  # Explicit allow toolA:sub1
+            ["toolA", "toolB"],  # Explicit block toolA
+            [],  # No conflict, different levels of specificity
+        ),
+        # Conflict: Parent WL wildcard, Child BL explicit - SHOULD NOT conflict
+        (
+            ["toolA:*", "toolB"],
+            ["toolA:sub1", "toolC"],
+            [],
+        ),
+        # Conflict: Parent BL wildcard, Child WL explicit - SHOULD NOT conflict
+        (
+            ["toolA:sub1", "toolC"],
+            ["toolA:*", "toolB"],
+            [],
+        ),
+    ],
+)
+def test_check_list_conflicts(
+    whitelist: List[str],
+    blacklist: List[str],
+    expected_conflicts: List[Tuple[str, ...]],
+):
+    wl_tree = parse_to_nested_dict(whitelist)
+    bl_tree = parse_to_nested_dict(blacklist)
+    conflicts = check_list_conflicts(wl_tree, bl_tree)
+    # Sort both lists of tuples for comparison
+    assert sorted(conflicts) == sorted(expected_conflicts)

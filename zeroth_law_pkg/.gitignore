@@ -183,3 +183,7 @@ generated_command_outputs/
 # code_map.db # Test artifact, should live in tests/codebase_map
 
 # OS generated files #
+
+# Python cache
+__pycache__/
+**/__pycache__/

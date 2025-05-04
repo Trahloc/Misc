@@ -41,18 +41,21 @@ DEFAULT_ENCODING = "utf-8"
 # --- Tool Index Handling ---
 
 
-def load_tool_index() -> Dict[str, dict]:
+def load_tool_index(tool_index_path: Optional[Path] = None) -> Dict[str, dict]:
     """Loads the full tool index file. Returns empty dict on error or if not found."""
-    if not TOOL_INDEX_PATH.is_file():
-        log.info(f"Tool index file not found at {TOOL_INDEX_PATH}. Returning empty index for bootstrap.")
+    # Use provided path or default
+    effective_path = tool_index_path if tool_index_path is not None else TOOL_INDEX_PATH
+
+    if not effective_path.is_file():
+        log.info(f"Tool index file not found at {effective_path}. Returning empty index for bootstrap.")
         return {}
     try:
-        with open(TOOL_INDEX_PATH, "r", encoding=DEFAULT_ENCODING) as f:
+        with open(effective_path, "r", encoding=DEFAULT_ENCODING) as f:
             full_index_data = json.load(f)
 
             # Validate the overall structure
             if not isinstance(full_index_data, dict):
-                log.error(f"Tool index format is invalid (must be a Dict). Returning empty index: {TOOL_INDEX_PATH}")
+                log.error(f"Tool index format is invalid (must be a Dict). Returning empty index: {effective_path}")
                 return {}
 
             # Basic validation of entries (ensure they are dicts with at least 'crc')
@@ -64,20 +67,20 @@ def load_tool_index() -> Dict[str, dict]:
                     # Keep track of subcommands even if the parent is slightly malformed? Or skip?
                     # For now, skip malformed entries entirely.
                     log.warning(
-                        f"Invalid or missing metadata structure for tool '{tool_id}' in index {TOOL_INDEX_PATH}. Skipping."
+                        f"Invalid or missing metadata structure for tool '{tool_id}' in index {effective_path}. Skipping."
                     )
 
             if not validated_data:
-                log.warning(f"No valid tool entries found in the index file: {TOOL_INDEX_PATH}")
+                log.warning(f"No valid tool entries found in the index file: {effective_path}")
 
             return validated_data
 
     except (json.JSONDecodeError, IOError) as e:
-        log.error(f"Error loading or parsing tool index {TOOL_INDEX_PATH}: {e}. Returning empty index.")
+        log.error(f"Error loading or parsing tool index {effective_path}: {e}. Returning empty index.")
         return {}
     except Exception as e:
         log.exception(
-            f"Unexpected error loading tool index {TOOL_INDEX_PATH}: {e}. Returning empty index."
+            f"Unexpected error loading tool index {effective_path}: {e}. Returning empty index."
         )  # Log full traceback
         return {}
 
@@ -198,9 +201,19 @@ def update_index_entry(
                     index_data[base_tool_name]["subcommands"] = existing_subs
                 log.info(f"Creating/resetting base entry for '{entry_id}'")
 
-            # Perform the update
-            index_data[base_tool_name].update(update_data)
-            log.info(f"Updated base entry for '{entry_id}' with {update_data.keys()}")
+            # Perform the update - Explicitly assign relevant keys
+            target_entry = index_data[base_tool_name]
+            keys_to_update = ["crc", "checked_timestamp", "updated_timestamp", "baseline_file", "source"]
+            updated_keys_list = []
+            for key in keys_to_update:
+                if key in update_data:
+                    target_entry[key] = update_data[key]
+                    updated_keys_list.append(key)
+            # Remove baseline_file key if update_data has it as None
+            if "baseline_file" in update_data and update_data["baseline_file"] is None:
+                target_entry.pop("baseline_file", None)  # Remove if exists
+
+            log.info(f"Updated base entry for '{entry_id}' with keys: {updated_keys_list}")
             return True
         else:
             # Update subcommand
@@ -225,9 +238,19 @@ def update_index_entry(
                 subcommands_dict[subcommand_name] = {}
                 log.info(f"Creating subcommand entry for '{entry_id}'")
 
-            # Perform the update
-            subcommands_dict[subcommand_name].update(update_data)
-            log.info(f"Updated subcommand entry for '{entry_id}' with {update_data.keys()}")
+            # Perform the update - Explicitly assign relevant keys
+            target_entry = subcommands_dict[subcommand_name]
+            keys_to_update = ["crc", "checked_timestamp", "updated_timestamp", "baseline_file", "source"]
+            updated_keys_list = []
+            for key in keys_to_update:
+                if key in update_data:
+                    target_entry[key] = update_data[key]
+                    updated_keys_list.append(key)
+            # Remove baseline_file key if update_data has it as None
+            if "baseline_file" in update_data and update_data["baseline_file"] is None:
+                target_entry.pop("baseline_file", None)  # Remove if exists
+
+            log.info(f"Updated subcommand entry for '{entry_id}' with keys: {updated_keys_list}")
             return True
 
     except Exception as e:

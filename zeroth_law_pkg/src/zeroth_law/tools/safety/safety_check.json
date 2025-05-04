@@ -1,21 +1,22 @@
 {
-    "command": [
-        "safety",
-        "check"
+  "command": "safety",
+  "description": "Tool definition for safety (auto-generated skeleton)",
+  "usage": "safety [options] [arguments]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "name": "safety",
+    "version": null,
+    "language": "unknown",
+    "categories": [],
+    "tags": [
+      "skeleton"
     ],
-    "description": "Tool definition for safety (auto-generated skeleton)",
-    "usage": "safety [options] [arguments]",
-    "options": [],
-    "arguments": [],
-    "metadata": {
-        "name": "safety",
-        "version": null,
-        "language": "unknown",
-        "categories": [],
-        "tags": [
-            "skeleton"
-        ],
-        "url": "",
-        "other": {}
-    }
+    "url": "",
+    "other": {},
+    "tool_name": "safety",
+    "command_name": "check",
+    "ground_truth_crc": "0x00000000"
+  },
+  "subcommand": "check"
 }

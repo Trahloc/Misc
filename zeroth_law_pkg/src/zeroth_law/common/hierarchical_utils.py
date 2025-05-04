@@ -1,8 +1,10 @@
 """Utilities for handling hierarchical list structures (whitelist/blacklist)."""
 
 import structlog
-from typing import List, Dict, Union, Optional, Tuple, Literal
+from typing import List, Dict, Union, Optional, Tuple, Literal, Set
 from tomlkit.items import Array
+import sys
+import time
 
 log = structlog.get_logger()
 
@@ -15,200 +17,199 @@ ParsedHierarchy = Dict[str, NodeData]
 # --- Parsing --- #
 
 
-def parse_to_nested_dict(raw_list: list[str] | set[str] | Array) -> ParsedHierarchy:
-    """Parses a list or set of strings with hierarchy into a nested dictionary.
-
-    Handles entries like "tool", "tool:*", "tool:sub", "tool:sub:subsub", "tool:sub:*".
-    Uses special keys '_explicit' and '_all' within nodes.
-    Comma separation applies only to the *last* component.
-    Accepts standard list/set or tomlkit.items.Array.
-    """
+def parse_to_nested_dict(raw_list: Union[List[str], Set[str], Array]) -> ParsedHierarchy:
+    """Parses a list of hierarchical strings into a nested dictionary representation."""
+    log.debug("Starting hierarchical list parsing.", input_list=raw_list)
     root: ParsedHierarchy = {}
+    processed_list = list(raw_list)  # Ensure it's a list
 
-    # Accept list, set, or tomlkit Array as input
-    if not isinstance(raw_list, (list, set, Array)):
-        log.warning(
-            "Managed tools list is not a valid list, set, or tomlkit.items.Array. Returning empty structure.",
-            received_type=type(raw_list).__name__,
-        )
-        return {}
-
-    # Convert to list for uniform processing if it's an Array
-    processed_list = list(raw_list) if isinstance(raw_list, Array) else raw_list
-
-    for entry in processed_list:
-        if not isinstance(entry, str):
-            log.warning("Ignoring non-string entry in managed tools list.", entry=entry)
+    for original_entry in processed_list:
+        if not isinstance(original_entry, str) or not original_entry.strip():
             continue
+        entry = original_entry.strip()
 
-        entry = entry.strip()
-        if not entry:
-            continue
+        # --- Pre-process entry for suffix handling ---
+        entry_to_process = entry
+        apply_all_flag = False
+        apply_explicit_flag = False
 
-        # --- Pre-split Validation --- #
-        if entry == ":*" or entry.startswith(":") or entry.endswith("::") or "::" in entry:
-            log.warning(f"Skipping entry '{entry}' due to invalid empty component pattern.")
-            continue
-        # --- End Pre-split Validation --- #
+        if entry.endswith(":*"):
+            entry_to_process = entry[:-2]
+            apply_all_flag = True
+            log.debug(f"Detected ':*' suffix for '{original_entry}', processing base '{entry_to_process}'.")
+        elif entry.endswith(":") and len(entry) > 1:
+            entry_to_process = entry[:-1]
+            apply_explicit_flag = True  # Treat 'toolA:' as explicit 'toolA'
+            log.debug(f"Detected trailing ':' suffix for '{original_entry}', processing base '{entry_to_process}'.")
+        elif ":" not in entry and entry != "*":  # Simple entry like "toolA"
+            entry_to_process = entry  # Already correct
+            apply_explicit_flag = True
+            log.debug(f"Detected simple entry '{original_entry}', processing base '{entry_to_process}'.")
+        # else: Entry like "toolA:sub" - flags determined by loop later, or complex like "tool:*" which is handled by apply_all_flag
 
-        parts = entry.split(":")
-        is_fully_listed_at_end = False
-        if parts[-1] == "*":
-            if len(parts) == 1:
-                continue  # Already caught by pre-split validation
-            is_fully_listed_at_end = True
-            parts = parts[:-1]
+        if not entry_to_process:  # Handle ":*", ":", or entries reducing to empty
+            log.warning(
+                f"Skipping invalid or empty entry after suffix processing: '{original_entry}' -> '{entry_to_process}'"
+            )
+            continue  # Skip to next entry in outer loop
 
-        # --- Validate path components --- #
-        valid_path = True
-        cleaned_parts = []
-        num_parts = len(parts)
-        for i, part in enumerate(parts):
-            stripped_part = part.strip()
-            is_last_part = i == num_parts - 1
+        # Check for '*' appearing not at the end after ':'. e.g., toolA:*:subB is invalid
+        if "*" in entry_to_process and not entry_to_process.endswith("*"):
+            # Allow '*' if it's the only part, but handled by apply_all_flag earlier
+            parts_check = entry_to_process.split(":")
+            if not (len(parts_check) == 1 and parts_check[0] == "*"):
+                log.warning(f"Skipping entry '{original_entry}': Wildcard '*' can only appear after the last ':'")
+                continue
 
-            # Allow a *single* trailing empty component, but disallow others
-            if not stripped_part:
-                if is_last_part and i > 0:  # Allow if it's the last part AND not the only part (e.g. ":")
-                    log.debug(f"Ignoring trailing empty component in entry '{entry}'.")
-                    # If the last part was empty, we don't set explicit=True on the parent later
-                    # Mark that the last effective part was the previous one
-                    is_last_part = False  # Treat the previous part as the last for flag setting
-                    i = i - 1  # Adjust index to point to the effective last part
-                    # Fall through to process the previous part's flags if needed?
-                    # No, the outer loop handles setting flags based on the final is_last_part state
-                    continue  # Skip adding the empty part to cleaned_parts
-                else:
-                    # Disallow empty components elsewhere (e.g., "::", ":tool", ":")
-                    log.warning(f"Skipping entry '{entry}' due to invalid empty component at index {i}.")
-                    valid_path = False
-                    break
-
-            # Check for commas in non-final parts
-            if not is_last_part and "," in stripped_part:
-                log.warning(f"Skipping entry '{entry}': Commas are only allowed in the final component.")
-                valid_path = False
-                break
-            cleaned_parts.append(stripped_part)
-
-        # Ensure cleaned_parts is not empty after potential trailing part removal
-        if not cleaned_parts:
-            log.warning(f"Skipping entry '{entry}' as it resulted in no valid components.")
-            valid_path = False
-
-        if not valid_path:
-            continue  # Skip this whole entry
-
-        # --- Process validated path --- #
+        parts = entry_to_process.split(":")
         current_level = root
         path_accumulator = []
-        for i, part in enumerate(cleaned_parts):
-            path_accumulator.append(part)
-            is_last_part = i == len(cleaned_parts) - 1
-            node_names = (
-                [p.strip() for p in part.split(",") if p.strip()] if is_last_part else [part]
-            )  # Use validated part
+        is_valid_entry_path = True
+        nodes_at_final_level = []  # Nodes identified by the last part of entry_to_process
 
-            # This check needs to happen *before* potentially skipping the part
-            is_last_part = i == len(cleaned_parts) - 1
+        # --- Traverse/Create Path ---
+        for i, part in enumerate(parts):
+            is_last_part = i == len(parts) - 1
+            stripped_part = part.strip()
 
-            # Allow a *single* trailing empty component, but disallow others
+            # --- Basic Validation ---
             if not stripped_part:
-                if is_last_part and i > 0:  # Allow if it's the last part AND not the only part (e.g. ":")
-                    log.debug(f"Ignoring trailing empty component in entry '{entry}'.")
-                    # If the last part was empty, we don't set explicit=True on the parent later
-                    # Mark that the last effective part was the previous one
-                    is_last_part = False  # Treat the previous part as the last for flag setting
-                    i = i - 1  # Adjust index to point to the effective last part
-                    # Fall through to process the previous part's flags if needed?
-                    # No, the outer loop handles setting flags based on the final is_last_part state
-                    continue  # Skip adding the empty part to cleaned_parts
-                else:
-                    # Disallow empty components elsewhere (e.g., "::", ":tool", ":")
-                    log.warning(f"Skipping entry '{entry}' due to invalid empty component at index {i}.")
-                    valid_path = False
+                # This should ideally not happen now due to pre-processing, but check anyway
+                log.warning(
+                    f"Skipping entry '{original_entry}' due to unexpected empty component during path traversal at index {i}."
+                )
+                is_valid_entry_path = False
+                break
+            if not is_last_part and ("," in stripped_part or "*" in stripped_part):
+                log.warning(
+                    f"Skipping entry '{original_entry}': Commas or '*' are only allowed in the final component '{parts[-1]}'."
+                )
+                is_valid_entry_path = False
+                break
+            # --- End Validation ---
+
+            # Split by comma ONLY if it's the last part
+            node_names = []
+            if is_last_part:
+                node_names = [name.strip() for name in stripped_part.split(",") if name.strip()]
+                if not node_names:
+                    log.warning(
+                        f"Skipping entry '{original_entry}': Final part '{part}' resulted in no valid node names."
+                    )
+                    is_valid_entry_path = False
+                    break
+                # Handle '*' as a node name if it was *not* removed by suffix processing (e.g., "toolA:*" without the final :)
+                # This case should be caught earlier, but as a safeguard:
+                if "*" in node_names and not apply_all_flag:
+                    log.warning(
+                        f"Skipping entry '{original_entry}': Found '*' in final part but not handled as suffix."
+                    )
+                    is_valid_entry_path = False
                     break
 
-            # Check for commas in non-final parts
-            if not is_last_part and "," in stripped_part:
-                log.warning(f"Skipping entry '{entry}': Commas are only allowed in the final component.")
-                valid_path = False
-                break
-            cleaned_parts.append(stripped_part)
+            else:  # Not the last part
+                if stripped_part == "*":  # '*' not allowed mid-path
+                    log.warning(
+                        f"Skipping entry '{original_entry}': Wildcard '*' not allowed in intermediate path component '{part}'."
+                    )
+                    is_valid_entry_path = False
+                    break
+                node_names = [stripped_part]  # Only one node name allowed mid-path
 
-            # This should not happen now due to earlier validation, but check defensively
-            if not node_names:
-                log.error(
-                    f"Internal error: Empty node_names after validation for entry '{entry}', stopping processing for this entry."
-                )
-                # Skip processing for this part if node_names is empty
-                # This prevents creating nodes based on invalid comma-separated parts
-                # continue # Continue to the next part of the *current* entry if any, or next entry
-                break  # Break out of the inner loop for this entry entirely
+            next_level_dict = None  # Store the dict for the next level (if needed)
+            current_part_nodes_temp = []  # Track nodes created/found at this level for this part
 
-            next_level_holders = []
             for node_name in node_names:
-                # Get or create node, ensuring flags are initialized for intermediates
-                if node_name not in current_level:
-                    # New node, initialize flags
-                    node = current_level.setdefault(node_name, {})
-                    if not is_last_part:  # Initialize intermediate nodes explicitly
-                        node.setdefault("_explicit", False)
-                        node.setdefault("_all", False)
-                else:
-                    node = current_level[node_name]
-                    if not isinstance(node, dict):
-                        log.error(
-                            f"Config structure error: Trying to access node '{node_name}' which is not a dict.",
-                            path=path_accumulator,
-                        )
-                        continue
-                    # Ensure flags exist even if node existed (might have only been implied before)
-                    if not is_last_part:
-                        node.setdefault("_explicit", False)
-                        node.setdefault("_all", False)
+                path_accumulator.append(node_name)
 
-                # Handle :* overriding existing children
-                if is_last_part and is_fully_listed_at_end:
-                    keys_to_delete = [k for k in node if not k.startswith("_")]
+                if node_name not in current_level:
+                    current_level[node_name] = {"_explicit": False, "_all": False}  # Initialize flags
+                node = current_level[node_name]
+
+                if not isinstance(node, dict):
+                    log.error(
+                        f"Config structure error in '{original_entry}': Node '{node_name}' is not a dict.",
+                        path=path_accumulator,
+                    )
+                    is_valid_entry_path = False
+                    break  # Break inner name loop
+
+                current_part_nodes_temp.append(node)  # Store node found/created
+
+                # Prepare for descent if not last part
+                if not is_last_part:
+                    # Check if descent is blocked by _all flag from a previous entry
+                    if node.get("_all", False):
+                        log.warning(
+                            f"Parser: Cannot define sub-nodes under '{':'.join(path_accumulator)}' (marked with ':*'). Skipping deeper parts of entry '{original_entry}'."
+                        )
+                        is_valid_entry_path = False
+                        break  # Break inner name loop
+
+                    # We descend into the first (and should be only) node for non-last parts
+                    if next_level_dict is None:
+                        next_level_dict = node
+                    else:
+                        # This should not happen due to earlier validation
+                        log.error(
+                            f"Internal parser error: Multiple nodes specified in non-final part '{part}' for entry '{original_entry}'."
+                        )
+                        is_valid_entry_path = False
+                        break
+
+                path_accumulator.pop()  # Backtrack for sibling nodes in the same part (if any)
+
+            if not is_valid_entry_path:
+                break  # Break outer part loop if inner loop failed
+
+            if not is_last_part:
+                if next_level_dict is not None:
+                    current_level = next_level_dict  # Descend
+                else:
+                    # Should be caught by node_names check or validation
+                    log.error(
+                        f"Internal parser error: Failed to determine next level for entry '{original_entry}' at part '{part}'."
+                    )
+                    is_valid_entry_path = False
+                    break  # Break outer part loop
+            else:
+                # Reached the end of the path for this entry
+                nodes_at_final_level.extend(current_part_nodes_temp)
+
+        # --- Apply Flags based on original suffix or explicit simple entry ---
+        if is_valid_entry_path and nodes_at_final_level:
+            log.debug(
+                f"Applying flags for '{original_entry}'. All={apply_all_flag}, Explicit={apply_explicit_flag}. Target Nodes: {len(nodes_at_final_level)}"
+            )
+            for final_node in nodes_at_final_level:
+                if apply_all_flag:
+                    # Clear children and set _all=True, _explicit=False
+                    keys_to_delete = [k for k in final_node if not k.startswith("_")]
                     if keys_to_delete:
                         log.debug(
-                            f"Parser: Clearing children of '{node_name}' due to override by ':*' in entry '{entry}'"
+                            f"Parser: Clearing children {keys_to_delete} due to ':*' override for entry '{original_entry}'."
                         )
                     for k in keys_to_delete:
-                        del node[k]
+                        if k in final_node:
+                            del final_node[k]  # Check existence before deleting
+                    final_node["_all"] = True
+                    final_node["_explicit"] = False  # Wildcard overrides explicit
+                elif apply_explicit_flag:
+                    # Set _explicit=True, ensure _all=False (or exists and is False)
+                    # Don't set explicit if _all is already True from a previous wildcard
+                    if not final_node.get("_all", False):
+                        final_node["_explicit"] = True
+                    # Ensure _all key exists if we set explicit
+                    final_node.setdefault("_all", False)
+                else:
+                    # Case like "toolA:sub", no specific suffix. Node exists.
+                    # Set explicit=True on the final node(s) unless _all is already set.
+                    if not final_node.get("_all", False):
+                        final_node["_explicit"] = True
+                    # Ensure _all key exists if we set explicit
+                    final_node.setdefault("_all", False)
 
-                # Set flags if last part
-                if is_last_part:
-                    node["_explicit"] = True
-                    node.setdefault("_all", False)  # Ensure _all flag exists
-                    if is_fully_listed_at_end:
-                        node["_all"] = True
-                elif not is_last_part:  # Prepare for descent
-                    # Ensure intermediate nodes have flags initialized
-                    node.setdefault("_explicit", False)
-                    node.setdefault("_all", False)
-                    if node.get("_all", False):
-                        # This entry is trying to define something under an _all node, which is disallowed.
-                        # This case should be caught by validation ideally, but double-check here.
-                        log.warning(
-                            f"Parser: Cannot define sub-nodes under '{node_name}' (path: {':'.join(path_accumulator)}) as it is marked with ':*'. Skipping deeper parts of entry '{entry}'"
-                        )
-                        # Mark entry as invalid? Or just stop descent?
-                        current_level = None  # Signal error/stop
-                        break  # Break inner node_names loop
-                    next_level_holders.append(node)
-
-            if current_level is None:  # Check if inner loop signalled stop
-                break  # Break outer parts loop
-
-            # Descend
-            if not is_last_part:
-                if not next_level_holders:  # Should not happen
-                    log.error(f"Internal parser error: No valid next level found for entry '{entry}' at part {i}")
-                    break
-                current_level = next_level_holders[0]
-
+    log.debug("Finished parsing all entries", final_structure=root)
     return root
 
 
@@ -391,28 +392,35 @@ def set_node_flags(hierarchy: ParsedHierarchy, path: List[str], is_explicit: Opt
     if is_explicit is not None:
         current_explicit = node.get("_explicit", False)
         if current_explicit != is_explicit:
-            node["_explicit"] = is_explicit
-            made_change = True
-        # --- Added Else --- #
-        # else: # Value is same, no change made for explicit flag
-        #     pass
+            # Only set explicit if _all is not currently True
+            if not node.get("_all", False):
+                node["_explicit"] = is_explicit
+                made_change = True
+            # Implicit: If _all is True, setting explicit makes no difference
+            # and doesn't count as a modification.
 
     # Update _all only if value is provided and different
     if is_all is not None:
         current_all = node.get("_all", False)
         if current_all != is_all:
             node["_all"] = is_all
-            made_change = True
-            if is_all:  # If setting _all=True, remove deeper nodes
+            made_change = True  # Changing _all always matters
+            if is_all:  # If setting _all=True, ensure _explicit=False and remove children
+                node["_explicit"] = False  # Wildcard overrides explicit
                 keys_to_delete = [k for k in node if not k.startswith("_")]
                 if keys_to_delete:
                     log.debug(f"Clearing children of node at '{path}' because _all=True is being set.")
                     for k in keys_to_delete:
-                        del node[k]
-                    made_change = True  # Deleting children is a change
-        # --- Added Else --- #
-        # else: # Value is same, no change made for all flag
-        #    pass
+                        # Check if key exists before deleting, prevent KeyError
+                        if k in node:
+                            del node[k]
+                    # Deleting children counts as a modification, already covered by made_change = True
+            # No need for an else block; if is_all is False, we just set it and made_change is True
+
+    # Ensure both flags exist if either was set, but don't count this as a change
+    if "_explicit" in node or "_all" in node:
+        node.setdefault("_explicit", False)
+        node.setdefault("_all", False)
 
     # Return True ONLY if a flag was actually changed or children were deleted
     return made_change
@@ -421,43 +429,88 @@ def set_node_flags(hierarchy: ParsedHierarchy, path: List[str], is_explicit: Opt
 # --- Conflict and Status Checks --- #
 
 
-def check_list_conflicts(whitelist_tree: ParsedHierarchy, blacklist_tree: ParsedHierarchy) -> List[str]:
-    """Checks for items explicitly listed in both whitelist and blacklist.
+def check_list_conflicts(whitelist_tree: ParsedHierarchy, blacklist_tree: ParsedHierarchy) -> List[Tuple[str, ...]]:
+    """Checks for items explicitly listed in both whitelist and blacklist,
+       including conflicts between parent ':*' and specific children.
 
     Returns:
-        A list of conflicting sequence paths (e.g., ['tool:sub']).
+        A list of conflicting sequence paths as tuples (e.g., [('tool', 'sub')]).
     """
-    conflicts = []
+    conflicts: List[Tuple[str, ...]] = []
 
-    def _traverse(node_w: NodeData, node_b: NodeData, current_path: List[str]):
-        # Check current level for explicit conflict
+    def _traverse(
+        node_w: NodeData,
+        node_b: NodeData,
+        current_path: List[str],
+        parent_all_w: bool = False,  # Track if parent had _all=True
+        parent_all_b: bool = False,
+    ):
+        # Get flags for the current node
         is_explicit_w = node_w.get("_explicit", False)
         is_explicit_b = node_b.get("_explicit", False)
+        is_all_w = parent_all_w or node_w.get("_all", False)  # Consider parent _all
+        is_all_b = parent_all_b or node_b.get("_all", False)
 
+        # --- Conflict Detection Logic --- #
+        # Conflict only if both are EXPLICITLY set at the same level
+        # OR if both use a WILDCARD (*) at the same level.
+        # Explicit definitions override parent wildcards, so those are NOT conflicts.
+        conflict_found = False
         if is_explicit_w and is_explicit_b:
-            conflicts.append(":".join(current_path))
+            conflict_found = True
+            log.debug(f"Explicit conflict found at path: {current_path}")
+        # Conflict if both have _all=True at this exact level (ignoring parent_all flags)
+        elif node_w.get("_all", False) and node_b.get("_all", False):
+            conflict_found = True
+            log.debug(f"Wildcard conflict found at path: {current_path}")
+        # elif is_explicit_w and is_all_b: # REMOVED: Explicit WL vs Parent BL (*) - No longer a conflict
+        #     conflict_found = True
+        #     log.debug(f"Conflict: Explicit Whitelist vs Parent Blacklist (*) at path: {current_path}")
+        # elif is_explicit_b and is_all_w: # REMOVED: Explicit BL vs Parent WL (*) - No longer a conflict
+        #     conflict_found = True
+        #     log.debug(f"Conflict: Explicit Blacklist vs Parent Whitelist (*) at path: {current_path}")
+
+        if conflict_found:
+            # Convert list path to tuple before appending
+            conflicts.append(tuple(current_path))
 
         # Find common keys to recurse into (excluding internal keys)
-        common_keys = {k for k in node_w if not k.startswith("_")} & {k for k in node_b if not k.startswith("_")}
+        keys_w = {k for k in node_w if not k.startswith("_")}
+        keys_b = {k for k in node_b if not k.startswith("_")}
+        common_keys = keys_w & keys_b
+        # If parent_all_w is True, consider all keys in node_b for recursion
+        # If parent_all_b is True, consider all keys in node_w for recursion
+        recurse_keys = common_keys
+        if parent_all_w:
+            recurse_keys.update(keys_b)  # Check all children in blacklist side
+        if parent_all_b:
+            recurse_keys.update(keys_w)  # Check all children in whitelist side
 
-        for key in sorted(list(common_keys)):
-            child_node_w = node_w.get(key)
-            child_node_b = node_b.get(key)
+        for key in sorted(list(recurse_keys)):
+            child_node_w = node_w.get(key, {})  # Default to empty dict if key missing
+            child_node_b = node_b.get(key, {})  # Default to empty dict if key missing
 
-            # Recurse only if both children are valid dictionaries
+            # Ensure we are dealing with dicts (could be empty if defaulted)
             if isinstance(child_node_w, dict) and isinstance(child_node_b, dict):
-                _traverse(child_node_w, child_node_b, current_path + [key])
+                # Propagate _all status down: current level's _all OR parent's _all
+                next_parent_all_w = is_all_w or parent_all_w
+                next_parent_all_b = is_all_b or parent_all_b
+                _traverse(child_node_w, child_node_b, current_path + [key], next_parent_all_w, next_parent_all_b)
 
     # Start traversal from the root of both trees
-    # Need to iterate through top-level keys present in both
-    root_common_keys = set(whitelist_tree.keys()) & set(blacklist_tree.keys())
-    for root_key in sorted(list(root_common_keys)):
-        root_node_w = whitelist_tree.get(root_key)
-        root_node_b = blacklist_tree.get(root_key)
+    root_keys = set(whitelist_tree.keys()) | set(blacklist_tree.keys())
+    for root_key in sorted(list(root_keys)):
+        root_node_w = whitelist_tree.get(root_key, {})  # Default to empty dict
+        root_node_b = blacklist_tree.get(root_key, {})  # Default to empty dict
         if isinstance(root_node_w, dict) and isinstance(root_node_b, dict):
-            _traverse(root_node_w, root_node_b, [root_key])
+            # Pass the initial _all status from the root nodes
+            initial_all_w = root_node_w.get("_all", False)
+            initial_all_b = root_node_b.get("_all", False)
+            _traverse(root_node_w, root_node_b, [root_key], initial_all_w, initial_all_b)
 
-    return conflicts
+    # Sort for consistent output (optional) - REMOVED
+    # return sorted(conflicts)
+    return conflicts  # Return the list directly
 
 
 def get_effective_status(

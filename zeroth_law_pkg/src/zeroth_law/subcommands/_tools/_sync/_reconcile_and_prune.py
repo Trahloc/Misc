@@ -86,6 +86,23 @@ def _reconcile_and_prune(
     log.debug("Reconciliation results received", results=reconciliation_results)
     # --- END DEBUG --- #
 
+    # === Add check for reconciliation errors ===
+    reconciliation_errors = {
+        tool: status for tool, status in reconciliation_results.items() if status.name.startswith("ERROR")
+    }
+    if reconciliation_errors:
+        # Log the specific errors
+        for tool, status in reconciliation_errors.items():
+            log.error(f"Reconciliation error for '{tool}': {status.name}")
+        # Raise an exception to be caught by the main sync function
+        error_summary = ", ".join([f"{tool}({status.name})" for tool, status in reconciliation_errors.items()])
+        # Use the existing ReconciliationError if suitable, or define a new one
+        # Assuming ReconciliationError exists and can take a message
+        from ....subcommands._tools._reconcile._logic import ReconciliationError
+
+        raise ReconciliationError(f"Reconciliation found errors: {error_summary}")
+    # === End error check ===
+
     # 3. Determine Managed Tools based on NEW logic (whitelisted AND has defs OR needs defs)
     managed_tools_set = {
         tool

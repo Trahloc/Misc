@@ -3,11 +3,12 @@
 import click
 import structlog
 from pathlib import Path
+import sys  # Add sys import
 
 # Import the function to find the project root
 from ..common.path_utils import find_project_root, ZLFProjectRootNotFoundError
 
-log = structlog.get_logger()
+log = structlog.get_logger()  # Restore logger
 
 # Propagate CONTEXT_SETTINGS potentially?
 # from ...cli import CONTEXT_SETTINGS
@@ -16,46 +17,32 @@ log = structlog.get_logger()
 @click.group("tools")
 @click.pass_context
 def tools_group(ctx: click.Context) -> None:
-    """Group for managing tool definitions, baselines, and configurations."""
-    # This group function itself doesn't do anything but acts as an entry point
-    # for the subcommands we will add later (reconcile, sync, etc.).
-    # We don't strictly NEED to do anything with ctx here, but passing it
-    # ensures it propagates down to subcommands that use @pass_context.
-    log.debug("Entering tools command group", ctx_obj_keys=list(ctx.obj.keys()) if ctx.obj else [])
-
-    # --- Add necessary paths to context for subcommands like 'definition' ---
-    # Ensure ctx.obj exists
-    ctx.ensure_object(dict)
-
-    project_root = ctx.obj.get("project_root")
+    """Group for managing tool definitions, baselines, and environment synchronization."""
+    log.debug("Entering tools command group", ctx_obj_keys=list(ctx.obj.keys()))  # Restore log call
+    # print(f"DEBUG [tools_group]: Entering tools command group. ctx_obj_keys={list(ctx.obj.keys())}", file=sys.stderr)
+    # sys.stderr.flush()
+    # Ensure project root is available, needed for most tool operations
+    project_root = ctx.obj.get("PROJECT_ROOT")
     if not project_root:
-        try:
-            # Attempt to find project root if not already in context
-            project_root = find_project_root(start_path=Path.cwd())
-            ctx.obj["project_root"] = project_root
-            log.debug("Project root determined within tools_group", path=str(project_root))
-        except ZLFProjectRootNotFoundError:
-            log.warning("Project root could not be determined within tools_group. Some subcommands may fail.")
-            # Don't fail here, let subcommands handle missing context if they need it.
-            project_root = None  # Explicitly set to None if not found
+        log.error("Project root not found in context, cannot proceed with tools commands.")  # Restore log call
+        # print("ERROR [tools_group]: Project root not found in context, cannot proceed.", file=sys.stderr)
+        # sys.stderr.flush()
+        ctx.exit(1)
 
-    if project_root:
-        # Derive other paths based on project_root
-        zlt_root = project_root / "src" / "zeroth_law"
-        ctx.obj["zlt_root"] = zlt_root  # Store zlt_root as well
-        ctx.obj["tools_dir"] = zlt_root / "tools"
-        ctx.obj["zlt_capabilities_path"] = zlt_root / "zlt_capabilities.json"
-        ctx.obj["zlt_options_definitions_path"] = zlt_root / "zlt_options_definitions.json"
-        log.debug("Added derived paths to context", obj_keys=list(ctx.obj.keys()))
-    else:
-        # Set paths to None or handle differently if root is required
-        ctx.obj["zlt_root"] = None
-        ctx.obj["tools_dir"] = None
-        ctx.obj["zlt_capabilities_path"] = None
-        ctx.obj["zlt_options_definitions_path"] = None
-        log.warning("Project root not found, cannot set derived paths in context for tools group.")
+    # Calculate and store derived paths if needed by subcommands
+    zlt_root = project_root / "src" / "zeroth_law"
+    tools_dir = zlt_root / "tools"
+    zlt_capabilities_path = zlt_root / "schemas" / "zlt_capabilities.json"
+    zlt_options_definitions_path = zlt_root / "zlt_options_definitions.json"
 
-    pass
+    ctx.obj["project_root"] = project_root  # Use consistent key
+    ctx.obj["zlt_root"] = zlt_root
+    ctx.obj["tools_dir"] = tools_dir
+    ctx.obj["zlt_capabilities_path"] = zlt_capabilities_path
+    ctx.obj["zlt_options_definitions_path"] = zlt_options_definitions_path
+    log.debug("Added derived paths to context", obj_keys=list(ctx.obj.keys()))  # Restore log call
+    # print(f"DEBUG [tools_group]: Added derived paths to context. obj_keys={list(ctx.obj.keys())}", file=sys.stderr)
+    # sys.stderr.flush()
 
 
 # --- Subcommand Registration --- #
@@ -63,24 +50,18 @@ def tools_group(ctx: click.Context) -> None:
 
 # Import commands/groups from the _tools directory
 
-# Import and add the reconcile command
-from ._tools.reconcile import reconcile
-
-# Import whitelist/blacklist command groups
-from ._tools.whitelist import whitelist
-from ._tools.blacklist import blacklist
-
-# Import and add sync command
-from ._tools.sync import sync
-
-# Import the definition group
+# Import individual tool commands/groups from the _tools directory
+from ._tools.sync import sync as sync_command
+from ._tools.reconcile import reconcile as reconcile_command
 from ._tools.definition import definition_group
+from ._tools.whitelist import whitelist as whitelist_group
+from ._tools.blacklist import blacklist as blacklist_group
 
-tools_group.add_command(reconcile)
-tools_group.add_command(whitelist)
-tools_group.add_command(blacklist)
-tools_group.add_command(sync)
+tools_group.add_command(sync_command)
+tools_group.add_command(reconcile_command)
 tools_group.add_command(definition_group)
+tools_group.add_command(whitelist_group)
+tools_group.add_command(blacklist_group)
 
 # Example (will be added later):
 # from .sync import sync

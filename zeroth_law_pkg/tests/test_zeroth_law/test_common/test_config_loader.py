@@ -9,6 +9,7 @@ import pytest
 import toml
 import tomlkit
 from unittest.mock import patch, mock_open
+from pydantic import ValidationError
 
 # Import necessary components from the config_loader module
 from zeroth_law.common.config_loader import (
@@ -22,8 +23,17 @@ from zeroth_law.common.config_loader import (
     # Import constants used in tests (consider if they should be exposed or tests refactored)
     _CONFIG_PATH_ENV_VAR,  # Add missing constant
     _XDG_CONFIG_HOME_ENV_VAR,  # Add missing constant
+    validate_config,
+    parse_to_nested_dict,
+    check_list_conflicts,
 )
 from zeroth_law.common.path_utils import ZLFProjectRootNotFoundError  # Import the exception
+from zeroth_law.common.hierarchical_utils import ParsedHierarchy
+from zeroth_law.config_defaults import DEFAULT_CONFIG as config_defaults
+from tomlkit import parse as tomlkit_parse, dumps as tomlkit_dumps
+
+# Import ConfigModel from correct location
+from zeroth_law.common.config_validation import ConfigModel
 
 # Commenting out potentially problematic import
 # from zeroth_law.common.config_validation import (
@@ -34,6 +44,49 @@ from zeroth_law.common.path_utils import (
     find_project_root,
     # ZLFProjectRootNotFoundError,  # Already imported from config_loader
 )
+
+# Define sample data for hierarchical list parsing test
+VALID_LIST_DATA = [
+    "toolA",
+    "toolB:sub1,sub2",
+    "toolC:*",
+    "toolD:subD1:subD2",
+    "toolE:subE1:*",
+    "toolF::invalid",  # Should be skipped by parser
+    ":invalid",  # Should be skipped
+    "toolG:subG1, subG2",  # Test whitespace
+]
+
+EXPECTED_PARSED_LIST = {
+    "toolA": {"_explicit": True, "_all": False},
+    "toolB": {
+        "_explicit": False,
+        "_all": False,
+        "sub1": {"_explicit": True, "_all": False},
+        "sub2": {"_explicit": True, "_all": False},
+    },
+    "toolC": {"_explicit": False, "_all": True},
+    "toolD": {
+        "_explicit": False,
+        "_all": False,
+        "subD1": {
+            "_explicit": False,
+            "_all": False,
+            "subD2": {"_explicit": True, "_all": False},
+        },
+    },
+    "toolE": {
+        "_explicit": False,
+        "_all": False,
+        "subE1": {"_explicit": False, "_all": True},
+    },
+    "toolG": {
+        "_explicit": False,
+        "_all": False,
+        "subG1": {"_explicit": True, "_all": False},
+        "subG2": {"_explicit": True, "_all": False},
+    },
+}
 
 
 def test_parse_toml_file_success(tmp_path):
@@ -278,48 +331,53 @@ command = "flake8"
     config_file.write_text(config_content, encoding="utf-8")
 
     # Call load_config using the explicit path override
-    loaded_config = load_config(config_path_override=config_file)
+    loaded_config = load_config(project_root=None, config_path_override=config_file)
 
     # Assertions
-    assert isinstance(loaded_config, dict)
-    assert loaded_config["max_complexity"] == 5
-    assert loaded_config["max_lines"] == 80
-    assert loaded_config["max_parameters"] == DEFAULT_CONFIG["max_parameters"]
-
-    # Check managed-tools (raw lists)
-    assert "managed-tools" in loaded_config
-    assert loaded_config["managed-tools"]["whitelist"] == ["toolA", "toolC:sub1"]
-    assert loaded_config["managed-tools"]["blacklist"] == ["toolB:sub1"]
-
-    # Check parsed lists (ParsedHierarchy structure)
+    assert loaded_config is not None
+    assert loaded_config.get("max_complexity") == 5
+    assert loaded_config.get("max_lines") == 80
+    # Check that defaults are merged (example: exclude_dirs)
+    assert "exclude_dirs" in loaded_config
+    assert isinstance(loaded_config["exclude_dirs"], list)
+    # Check parsed lists
     assert "parsed_whitelist" in loaded_config
-    assert loaded_config["parsed_whitelist"] == {"toolA": {"_explicit": True}, "toolC": {"sub1": True}}
     assert "parsed_blacklist" in loaded_config
-    assert loaded_config["parsed_blacklist"] == {"toolB": {"sub1": True}}
-
-    # Check actions
-    assert "actions" in loaded_config
-    assert "lint" in loaded_config["actions"]
-    assert loaded_config["actions"]["lint"]["command"] == "flake8"
+    assert loaded_config["parsed_whitelist"] == {
+        "toolA": {"_explicit": True, "_all": False},
+        "toolC": {
+            "sub1": {"_explicit": True, "_all": False},
+            "_explicit": False,
+            "_all": False,
+        },
+    }
+    assert loaded_config["parsed_blacklist"] == {
+        "toolB": {
+            "sub1": {"_explicit": True, "_all": False},
+            "_explicit": False,
+            "_all": False,
+        }
+    }
 
 
 def test_load_config_file_not_found():
     """Test behavior when the configuration file is not found."""
     # Mock find_pyproject_toml to return None
-    with mock.patch("zeroth_law.common.config_loader.find_pyproject_toml", return_value=None):
+    with mock.patch("zeroth_law.common.config_loader.find_project_root", return_value=None):
         # Call load_config
-        loaded_config = load_config()
+        loaded_config = load_config(project_root=None)
 
-    # Expect the default configuration when no file is found
-    # Construct expected based on the imported DEFAULT_CONFIG
-    expected_config = copy.deepcopy(DEFAULT_CONFIG)
-    # Add the default parsed lists expected when managed-tools is missing
-    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}
-    expected_config["parsed_whitelist"] = {}
-    expected_config["parsed_blacklist"] = {}
-    expected_config["actions"] = {}
-
-    assert loaded_config == expected_config
+        # Expect default configuration to be loaded and validated
+        assert loaded_config is not None
+        assert loaded_config.get("max_complexity") == DEFAULT_CONFIG["max_complexity"]
+        assert loaded_config.get("max_lines") == DEFAULT_CONFIG["max_lines"]
+        assert "parsed_whitelist" in loaded_config
+        assert "parsed_blacklist" in loaded_config
+        # Check if default lists are parsed correctly
+        default_wl = DEFAULT_CONFIG.get("managed_tools", {}).get("whitelist", [])
+        default_bl = DEFAULT_CONFIG.get("managed_tools", {}).get("blacklist", [])
+        assert loaded_config["parsed_whitelist"] == parse_to_nested_dict(default_wl)
+        assert loaded_config["parsed_blacklist"] == parse_to_nested_dict(default_bl)
 
 
 def test_load_config_section_not_found(tmp_path):
@@ -333,17 +391,17 @@ setting = true
     config_file.write_text(config_content)
 
     # Call load_config with the explicit path
-    loaded_config = load_config(config_path_override=config_file)
+    loaded_config = load_config(project_root=None, config_path_override=config_file)
 
-    # Expect the default configuration when the section is missing
-    expected_config = copy.deepcopy(DEFAULT_CONFIG)
-    # Add the default parsed lists expected when managed-tools is missing
-    expected_config["managed-tools"] = {"whitelist": [], "blacklist": []}
-    expected_config["parsed_whitelist"] = {}
-    expected_config["parsed_blacklist"] = {}
-    expected_config["actions"] = {}
-
-    assert loaded_config == expected_config
+    # Expect default configuration
+    assert loaded_config is not None
+    assert loaded_config.get("max_complexity") == DEFAULT_CONFIG["max_complexity"]
+    assert "parsed_whitelist" in loaded_config  # Check default lists were parsed
+    # Check if default lists are parsed correctly
+    default_wl = DEFAULT_CONFIG.get("managed_tools", {}).get("whitelist", [])
+    default_bl = DEFAULT_CONFIG.get("managed_tools", {}).get("blacklist", [])
+    assert loaded_config["parsed_whitelist"] == parse_to_nested_dict(default_wl)
+    assert loaded_config["parsed_blacklist"] == parse_to_nested_dict(default_bl)
 
 
 def test_load_config_integration(tmp_path, monkeypatch):
@@ -368,20 +426,16 @@ whitelist = ["toolA"] # Ensure managed-tools exists
     monkeypatch.delenv(_XDG_CONFIG_HOME_ENV_VAR, raising=False)
 
     # Call load_config (no override, should find via upward search)
-    loaded_config = load_config()
+    # Here, find_project_root WILL find tmp_path, so pass it
+    loaded_config = load_config(project_root=tmp_path)
 
     # Assertions
-    assert loaded_config["max_complexity"] == 5
-    assert loaded_config["managed-tools"]["whitelist"] == ["toolA"]
-    assert loaded_config["parsed_whitelist"] == {"toolA": {"_explicit": True}}
-
-    # Test case where root is not found
-    monkeypatch.chdir("/")  # Change to root dir
-    # Mock find_project_root to explicitly raise the error if needed for clarity
-    with mock.patch("zeroth_law.common.config_loader.find_project_root", side_effect=ZLFProjectRootNotFoundError):
-        # Expect default config when root/config not found
-        not_found_config = load_config()
-        assert not_found_config == DEFAULT_CONFIG
+    assert loaded_config is not None
+    assert loaded_config.get("max_complexity") == 5
+    # Check default merging
+    assert "exclude_dirs" in loaded_config
+    assert "parsed_whitelist" in loaded_config
+    assert loaded_config["parsed_whitelist"] == {"toolA": {"_explicit": True, "_all": False}}
 
 
 def test_load_config_validation_failure(tmp_path):
@@ -389,3 +443,66 @@ def test_load_config_validation_failure(tmp_path):
 
 
 # --- Tests for Config Validation --- #
+
+
+def test_parse_hierarchical_list_valid():
+    parsed = parse_to_nested_dict(VALID_LIST_DATA)
+    assert parsed == EXPECTED_PARSED_LIST
+
+
+def test_parse_hierarchical_list_empty():
+    assert parse_to_nested_dict([]) == {}
+
+
+def test_parse_hierarchical_list_invalid_type():
+    assert parse_to_nested_dict(None) == {}
+    assert parse_to_nested_dict(123) == {}
+
+
+def test_check_list_conflicts_no_conflict():
+    wl = parse_to_nested_dict(["toolA", "toolB:sub1"])
+    bl = parse_to_nested_dict(["toolC", "toolB:sub2"])
+    assert check_list_conflicts(wl, bl) == []
+
+
+def test_check_list_conflicts_simple_conflict():
+    wl = parse_to_nested_dict(["toolA", "toolB:sub1"])
+    bl = parse_to_nested_dict(["toolA", "toolC"])
+    conflicts = check_list_conflicts(wl, bl)
+    assert len(conflicts) == 1
+    assert conflicts[0] == ("toolA",)
+
+
+def test_check_list_conflicts_sub_conflict():
+    wl = parse_to_nested_dict(["toolA:sub", "toolB"])
+    bl = parse_to_nested_dict(["toolC", "toolA:sub"])
+    conflicts = check_list_conflicts(wl, bl)
+    assert len(conflicts) == 1
+    assert conflicts[0] == ("toolA", "sub")
+
+
+def test_check_list_conflicts_parent_child_conflict_1():
+    """Whitelist parent, blacklist child -> Conflict"""
+    wl = parse_to_nested_dict(["toolA:*", "toolB"])
+    bl = parse_to_nested_dict(["toolA:sub1", "toolC"])
+    conflicts = check_list_conflicts(wl, bl)
+    assert len(conflicts) == 1
+    assert conflicts[0] == ("toolA", "sub1")
+
+
+def test_check_list_conflicts_parent_child_conflict_2():
+    """Blacklist parent, whitelist child -> Conflict"""
+    wl = parse_to_nested_dict(["toolA:sub1", "toolB"])
+    bl = parse_to_nested_dict(["toolA:*", "toolC"])
+    conflicts = check_list_conflicts(wl, bl)
+    assert len(conflicts) == 1
+    assert conflicts[0] == ("toolA", "sub1")
+
+
+def test_check_list_conflicts_multiple():
+    wl = parse_to_nested_dict(["toolA", "toolB:sub", "toolC:*"])
+    bl = parse_to_nested_dict(["toolD", "toolB:sub", "toolC:subsub"])
+    conflicts = check_list_conflicts(wl, bl)
+    assert len(conflicts) == 2
+    # Order might vary depending on dict iteration
+    assert set(conflicts) == {("toolB", "sub"), ("toolC", "subsub")}

@@ -40,6 +40,59 @@ def _run_parallel_baseline_processing(
     processed_count = 0
     error_count = 0  # Track errors specifically for exit_errors_limit
 
+    # --- Run Sequentially for Debugging (Commented Out) --- #
+    # log.warning("Running baseline processing sequentially for debugging...")
+    # for sequence in tasks_to_run:
+    #     command_id = command_sequence_to_id(sequence)
+    #     try:
+    #         result = _process_command_sequence(
+    #             sequence,
+    #             tool_defs_dir,
+    #             project_root,
+    #             container_name,
+    #             index_data,
+    #             force,
+    #             since_timestamp,
+    #             ground_truth_txt_skip_hours,
+    #         )
+    #         results.append(result)
+    #         processed_count += 1
+    #         is_error_status = result.get("error_message") or (
+    #             isinstance(result.get("status"), BaselineStatus)
+    #             and result["status"]
+    #             not in {
+    #                 BaselineStatus.UP_TO_DATE,
+    #                 BaselineStatus.UPDATED,
+    #                 BaselineStatus.CAPTURE_SUCCESS,
+    #             }
+    #         )
+    #         if is_error_status:
+    #             error_count += 1
+    #             log.warning(
+    #                 f"Error encountered for {command_id} (Total errors: {error_count}) status: {result.get('status')}"
+    #             )
+    #             if exit_errors_limit is not None and error_count >= exit_errors_limit:
+    #                 err_msg = f"Reached error limit ({exit_errors_limit}) processing {command_id}."
+    #                 log.error(err_msg)
+    #                 sync_errors.append(err_msg)
+    #                 raise RuntimeError(err_msg)
+    #
+    #     except Exception as exc:
+    #         if isinstance(exc, RuntimeError) and f"Reached error limit ({exit_errors_limit})" in str(exc):
+    #             raise exc
+    #         else:
+    #             err_msg = f"Task for {command_id} generated unexpected exception: {exc}"
+    #             log.exception(err_msg)
+    #             sync_errors.append(err_msg)
+    #             processed_count += 1  # Count as processed even if exception
+    #             error_count += 1  # Count exception as an error
+    #             if exit_errors_limit is not None and error_count >= exit_errors_limit:
+    #                 err_msg_limit = f"Reached error limit ({exit_errors_limit}) due to exception in {command_id}."
+    #                 log.error(err_msg_limit)
+    #                 sync_errors.append(err_msg_limit)
+    #                 raise RuntimeError(err_msg_limit)
+
+    # --- Original Parallel Code (Restored) --- #
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_sequence = {
             executor.submit(
@@ -106,6 +159,8 @@ def _run_parallel_baseline_processing(
                         # Raise exception instead of break
                         raise RuntimeError(err_msg_limit)
                         # break - REMOVED
+    # --- End Original Parallel Code ---
 
+    # log.info(f"STAGE 5: Sequential processing finished. Processed {processed_count} tasks.")
     log.info(f"STAGE 5: Parallel processing finished. Processed {processed_count} tasks.")
     return results, sync_errors, processed_count

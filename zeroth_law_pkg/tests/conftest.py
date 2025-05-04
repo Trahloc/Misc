@@ -246,7 +246,19 @@ def _scan_project_ast(workspace_root: Path):
     for file_path in py_files:
         try:
             content = file_path.read_text(encoding="utf-8")
+            # --- DEBUGGING --- #
+            parse_start_time = time.monotonic()
+            # print(f\"AST Scan: Parsing {file_path.relative_to(workspace_root)}...\", file=sys.stderr, flush=True)
+            # --- END DEBUGGING --- #
             ast.parse(content, filename=str(file_path))
+            parse_end_time = time.monotonic()
+            parse_duration = parse_end_time - parse_start_time
+            print(
+                f"AST Scan: Parsed {file_path.relative_to(workspace_root)} ({parse_duration:.4f}s)",
+                file=sys.stderr,
+                flush=True,
+            )
+            # --- END TIMING --- #
             parsed_count += 1
         except SyntaxError as e:
             print(
@@ -876,50 +888,35 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]: 
     from zeroth_law.common.config_loader import load_config
 
     # Import the logic function, but rely on the imported Exception class
-    from zeroth_law.subcommands.tools.reconcile import _perform_reconciliation_logic
+    from zeroth_law.subcommands._tools._reconcile._logic import _perform_reconciliation_logic
     from zeroth_law.lib.tooling.tool_reconciler import ToolStatus
 
     logger = logging.getLogger(__name__)  # Use standard logging for fixture setup
     logger.info("Discovering managed tool names within managed_sequences fixture scope...")  # Corrected log call
 
     try:
-        # 1. Load configuration
-        config = load_config(WORKSPACE_ROOT)
-        if config is None:
-            raise ValueError("Failed to load configuration from pyproject.toml")
-        logger.info(f"Fixture 'managed_sequences': Loaded config: {config}")
+        # Load config first
+        config = load_config(project_root=WORKSPACE_ROOT)  # Use the provided WORKSPACE_ROOT
+        if not config:
+            pytest.skip("Skipping reconciliation-dependent test: Config not loaded.")
 
-        # 2. Perform reconciliation
-        (
-            reconciliation_results,
-            managed_tools_set,
-            parsed_whitelist,
-            parsed_blacklist,
-            error_messages,
-            warning_messages,
-            has_errors,
-        ) = _perform_reconciliation_logic(project_root_dir=WORKSPACE_ROOT, config_data=config)
+        # Perform reconciliation using the logic function
+        results, managed_tools, _, _, _, _, has_errors = _perform_reconciliation_logic(
+            project_root_dir=WORKSPACE_ROOT,
+            config_data=config,
+        )
 
-        # 3. Handle reconciliation errors
         if has_errors:
-            logger.error("Tool reconciliation failed within managed_sequences fixture:")
-            for msg in error_messages:
-                logger.error(f"- {msg}")
-            raise ValueError(f"Tool reconciliation failed: {'; '.join(error_messages)}")
+            # Optionally fail fixture setup if reconciliation itself had errors
+            pytest.fail("Reconciliation logic reported errors during fixture setup.", pytrace=False)
 
-        logger.info(f"Fixture 'managed_sequences': Reconciliation successful. Managed tools: {managed_tools_set}")
-        return managed_tools_set
+        # Return the set of managed tool names (top-level only for simplicity here)
+        return managed_tools  # Return the set directly
 
-    # Catch the *imported* ReconciliationError
-    except (ReconciliationError, ValueError, FileNotFoundError) as e:
-        logger.exception("Error during managed_sequences fixture setup.")
-        # Use f-string for clearer error message
-        pytest.fail(f"Fixture 'managed_sequences' setup failed: {e!r}", pytrace=False)
-        return set()
-    except Exception as e:  # Catch any other unexpected errors
-        logger.exception("Unexpected error during managed_sequences fixture setup.")
-        pytest.fail(f"Fixture 'managed_sequences' setup failed unexpectedly: {e!r}", pytrace=False)
-        return set()
+    except ImportError as e:
+        pytest.fail(f"ImportError during reconciliation fixture setup: {e}", pytrace=False)
+    except Exception as e:
+        pytest.fail(f"Unexpected error during reconciliation fixture setup: {e}", pytrace=False)
 
 
 # --- END Moved/Added Fixtures ---

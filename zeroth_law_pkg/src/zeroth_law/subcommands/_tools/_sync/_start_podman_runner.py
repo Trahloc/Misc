@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 import structlog
+import os
 
 # --- Import project modules --- #
 # Relative path needs adjustment (add one more dot)
@@ -51,8 +52,29 @@ def _start_podman_runner(
         ]
         log.debug(f"Running wheel build command: {' '.join(build_cmd)}")
         # Note: This runs on the HOST, not in podman. Needs error handling.
-        build_result = subprocess.run(build_cmd, cwd=project_root, check=True, capture_output=True, text=True)
-        log.info(f"Successfully built wheel. Build output:\n{build_result.stdout}")
+        build_result = subprocess.run(build_cmd, cwd=project_root, check=False, capture_output=True, text=True)
+
+        # --- Always log build output --- #
+        log.debug(f"Build command stdout:\n{build_result.stdout}")
+        if build_result.stderr:
+            log.warning(f"Build command stderr:\n{build_result.stderr}")
+        # --- End Log --- #
+
+        if build_result.returncode != 0:
+            raise subprocess.CalledProcessError(
+                build_result.returncode, build_cmd, output=build_result.stdout, stderr=build_result.stderr
+            )
+
+        # --- Add delay and debug logging for wheel finding --- #
+        time.sleep(0.1)  # Short delay for filesystem operations
+        log.debug(f"Checking for wheel file in: {wheel_dir}")
+        try:
+            dir_contents = os.listdir(wheel_dir)
+            log.debug(f"Contents of {wheel_dir}: {dir_contents}")
+        except FileNotFoundError:
+            log.error(f"Wheel directory {wheel_dir} does not exist after build!")
+        # --- End Debug --- #
+
         # Find the built wheel file
         built_wheels = list(wheel_dir.glob("*.whl"))
         if not built_wheels:

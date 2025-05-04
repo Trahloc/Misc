@@ -1,20 +1,22 @@
 {
-    "command": [
-        "pip"
+  "command": "pip",
+  "description": "Tool definition for pip (auto-generated skeleton)",
+  "usage": "pip [options] [arguments]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "name": "pip",
+    "version": null,
+    "language": "unknown",
+    "categories": [],
+    "tags": [
+      "skeleton"
     ],
-    "description": "Tool definition for pip (auto-generated skeleton)",
-    "usage": "pip [options] [arguments]",
-    "options": [],
-    "arguments": [],
-    "metadata": {
-        "name": "pip",
-        "version": null,
-        "language": "unknown",
-        "categories": [],
-        "tags": [
-            "skeleton"
-        ],
-        "url": "",
-        "other": {}
-    }
+    "url": "",
+    "other": {},
+    "tool_name": "pip",
+    "command_name": "pip",
+    "ground_truth_crc": "0x00000000"
+  },
+  "subcommand": null
 }

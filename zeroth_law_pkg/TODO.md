@@ -453,7 +453,7 @@
     - [x] Both match (same level, same type): Blacklist wins tie (explicit W vs explicit B, wildcard W vs wildcard B). (`2025-05-01T17:10:35+08:00`)
 
 - [ ] **2. Unit Tests: `tools_dir_scanner.py`**
-  - [x] Test `scan_whitelisted_sequences`: (`2025-05-01T17:10:35+08:00`)
+  - [ ] Test `scan_whitelisted_sequences`: (`2025-05-01T17:10:35+08:00`)
     - [x] Mock `get_effective_status`. Test scanning various directory structures. (`2025-05-01T17:10:35+08:00`)
     - [x] Scenario: Only base tools whitelisted. (`2025-05-01T17:10:35+08:00`)
     - [x] Scenario: Base tool and some subcommands whitelisted. (`2025-05-01T17:10:35+08:00`)
@@ -490,7 +490,7 @@
   - [x] Test `baseline_generator._execute_capture_in_podman`: Mock `_run_podman_command` return values (CompletedProcess with different stdout/stderr/returncode, including 127). Verify correct return tuple (stdout bytes, stderr bytes, exit code) or exception handling. (`2025-05-01T17:10:35+08:00`)
 
 - [x] **6. Integration Tests: `sync.py` (`zlt tools sync` using `CliRunner`)** (`2025-05-01T17:23:43+08:00`)
-  - [ ] Setup: Use fixtures to create temporary `pyproject.toml`, mock `venv/bin` contents, mock `tools/` structure, mock Podman interactions (e.g., mock `_start/stop_podman_runner`, `_capture_command_output`).
+  - [x] Setup: Use fixtures to create temporary `pyproject.toml`, mock `venv/bin` contents, mock `tools/` structure, mock Podman interactions (e.g., mock `_start/stop_podman_runner`, `_capture_command_output`).
   - [x] Test Step 3 Failures: Run `sync` with mock venv containing unclassified tool. Assert exit code > 0 and expected error message. (`2025-05-01T17:23:43+08:00`)
   - [x] Test Step 4 Failures: Run `sync` with mock `tools/` containing orphan dir. Assert exit code > 0 and expected error message. (`2025-05-01T17:23:43+08:00`)
   - [x] Test Step 6 Success (No Change): Run `sync --generate` with consistent index/txt/json. Assert exit code 0, no file changes, index check timestamps updated. (`2025-05-01T17:23:43+08:00`)
@@ -505,29 +505,21 @@
 ## **Phase N: Automated TODO Management & Dependency Tracking**
 # Goal: Replace manual editing of `TODO.md` with a `zlt todo` command suite that parses the file according to a chosen standard, generates/manages immutable Unique IDs (UIDs) alongside potentially changing Structured IDs (SIDs), allows structured modifications, understands task dependencies, provides AI-centric TDD workflow statuses, enforces parent/child dependencies, suggests the next actionable task, and provides explicit next-step instructions. (**Note:** `pytest` linking via UIDs is deferred).
 
-- [ ] **1. Define `TODO.md` Parsing Schema, Rules, Linting, Statuses, IDs & Dependencies:**
-    - [ ] 1.1. Formalize expected structure: Phase headers, task lines (`- [Status] SID UID Task Text # DEPENDS_ON...`), hierarchy, etc., based on chosen linting standard.
-    - [ ] 1.2. Research & Select MD Linting Standard/Tool (e.g., `markdownlint` ruleset). Document the chosen standard.
-    - [ ] 1.3. Define AI-Centric TDD Task Statuses & Markers (`[ ]`, `[T]`, `[I]`, `[V]`, `[R]`, `[X]`, `[B]`, `[C]`).
-    - [ ] 1.4. Define ID System:
-        - [ ] SID (Structured ID): Human-readable, hierarchical (e.g., `M.6.5`), recalculated on write based on position.
-        - [ ] UID (Unique ID): Immutable identifier (e.g., UUID string), generated on task creation.
-    - [ ] 1.5. Define "Active Phase" marker convention (e.g., `<!-- ZLT_ACTIVE_PHASE -->`).
-    - [ ] 1.6. Define Dependency Syntax: Use comment `# DEPENDS_ON: UID1, UID2...` (references the immutable UID).
-    - [ ] 1.7. Define "Next Action" mapping based on status transitions.
-    - [ ] 1.8. Document all rules, statuses, IDs, dependencies, conventions in `docs/todo_format_guidelines.md`.
-- [ ] **1.bis. Codify State Machine Logic (Reference):**
-    - The workflow progresses through defined states: `[ ]` (Pending), `[T]` (Tests Defined), `[I]` (Implementation), `[V]` (Verify Impl), `[R]` (Refactoring), `[X]` (Verify Refactor), `[B]` (Blocked), `[C]` (Complete).
-    - Transitions are driven by `zlt todo set-status` and `zlt todo complete-verification --passed/--failed`.
-    - Each successful stage transition or verification failure provides a specific "Next Action" instruction to guide the AI.
-    - Key Flows:
-        - `Pending -> T -> I -> V` (Define Test, Implement, Verify)
-        - `V --passed--> R -> X` (If Verify Pass: Refactor, Verify Refactor)
-        - `V --failed--> I` (If Verify Fail: Loop back to fix Implementation)
-        - `X --passed--> C` (If Refactor Verify Pass: Complete)
-        - `X --failed--> R` (If Refactor Verify Fail: Loop back to fix Refactoring)
-        - Any stage can transition to `[B]` (Blocked).
-    - (Detailed transition list maintained in `NOTES.md`)
+- [ ] **N.1: Define & Implement `zlt todo` Multi-File Storage & Logic:** Implement the automated TODO management suite using a multi-file storage approach to mitigate AI editing issues experienced with the monolithic `TODO.md`.
+    - [ ] **N.1.1: Core Logic Design:** Ensure core task processing engine (status, dependencies, `next`) operates on an abstract in-memory task tree (keyed by immutable UUIDs), making it largely agnostic to the storage I/O model.
+    - [ ] **N.1.2: Multi-File Model Implementation:**
+        - [ ] **N.1.2.1 Structure:** Use `docs/todos/` directory. Main `TODO.md` lists Phase titles with associated Phase UUIDs. Detailed tasks reside in `docs/todos/Phase_Title-{PhaseUUID}.md` files. Completed phases/files are moved to `docs/todos/completed/`.
+        - [ ] **N.1.2.2 UUID System:** Tasks have standard immutable, globally unique **UUID** strings (e.g., generated by `uuid.uuid4()`) assigned at creation. This UUID string conceptually represents the task throughout its lifecycle.
+        - [ ] **N.1.2.3 SID System:** SIDs (`M.1.2`) are phase/file-local, representing positional order within their specific `.md` file.
+        - [ ] **N.1.2.4 Placeholders for Moved Tasks:** Use a distinct status marker (e.g., `[M]`) for tasks that have been moved... [rest of N.1.2.4 as before] ...
+        - [ ] **N.1.2.5 Filtering Placeholders:** Tooling logic needing active tasks (e.g., `next`, `list --actionable`) filters out `[M]` placeholder lines during processing.
+        - [ ] **N.1.2.6 Dependency Check:** Always based on the active task's **UUID**... [rest of N.1.2.6 as before] ...
+        - [ ] **N.1.2.7 Move Operation:** Use Copy-On-Write (COW)... [rest of N.1.2.7 as before] ...
+        - [ ] **N.1.2.8 Concatenation for Global Views:** Commands needing a combined view (e.g., `next`, `list --actionable`)... [rest of N.1.2.8 as before] ...
+        - [ ] **N.1.2.9 Save/Write Logic:** Tool identifies modified nodes in the in-memory tree... [rest of N.1.2.9 as before] ...
+    - [ ] **N.1.3: Define Status Markers & State Machine:** Formalize the AI-centric TDD task status markers (`[ ]` Pending, `[T]` Tests Defined, `[I]` Implementation, `[V]` Verify Impl, `[R]` Refactoring, `[X]` Verify Refactor, `[M]` Moved Placeholder, `[B]` Blocked, `[C]` Complete), their meanings, valid transitions (driven by `zlt todo` commands), and the 'Next Action' associated with each state/transition. Ensure this is documented clearly in `docs/todo_format_guidelines.md`. (Captures essence of old `1.bis`).
+        - [ ] **N.1.3.1: Implement Indentation Linting:** Add checks to `zlt todo audit` to verify consistent Markdown list indentation, ensuring child tasks are indented relative to parents and siblings share the same indentation level, according to the chosen Markdown standard.
+    - [ ] **N.1.4: UUID Uniqueness Audit:** Implement validation as part of `zlt todo audit` (or a dedicated sub-task like `_audit/_validate-uuids.py`) to verify that **each UUID string appears exactly once** across all active task lines (i.e., non-`[M]` lines) in all `docs/todos/*.md` files. This check detects errors like failed COW moves resulting in duplicate active UUIDs.
 - [ ] **2. Implement `TODO.md` Parser:**
     - [ ] 2.1. Choose parsing strategy (robust Markdown library + regex/post-processing for UIDs/comments).
     - [ ] 2.2. Implement parser -> internal tree (extracts SID, UID, status, dependencies, text; stores UID as primary key).
@@ -659,7 +651,7 @@
   - [x] Test Step 10 completion message and index update (mocking).
   - [x] Test `--dry-run` flag.
   - [x] Test `--prune` flag.
-  - [ ] **M.7:** Integration tests for Podman execution (unmocked `_start_podman_runner`, `_run_parallel_baseline_processing`).
+- [ ] **M.7:** Integration tests for Podman execution (unmocked `_start_podman_runner`, `_run_parallel_baseline_processing`).
     - [ ] Requires Podman installed.
     - [ ] Test actual container setup, dependency installation, command execution (`--help`), baseline file creation, and cleanup.
     - [ ] Test handling of Podman errors (start failure, exec failure).

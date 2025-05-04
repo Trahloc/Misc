@@ -64,6 +64,9 @@ DEFAULT_LOG_LEVEL_NAME = "warning"  # Use names for clarity
 
 # Get the logger using structlog
 log = structlog.get_logger()
+# log.debug("Initial structlog configuration applied.") # Replace with print
+# print("DEBUG [cli]: Initial structlog configuration would apply here.", file=sys.stderr)
+# sys.stderr.flush()
 log.debug("Initial structlog configuration applied.")
 # --- Early Structlog Setup --- END
 
@@ -76,7 +79,7 @@ except PackageNotFoundError:
 # Context settings for Click
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
-    "ignore_unknown_options": True,  # Temporarily disable -- RESTORE
+    "ignore_unknown_options": False,  # Set to False for stricter parsing
     "allow_interspersed_args": False,
 }
 
@@ -248,121 +251,130 @@ def run_audit(
 
 # === CLI Group Factory Function ===
 def create_cli_group() -> click.Group:
-    """Factory to create the main CLI group with dynamically added options."""
+    """Factory to create the main CLI group with dynamically added subcommands."""
 
-    option_defs = load_zlt_option_definitions()
-
-    # Define the base function for the group *with* static decorators
     @click.group(context_settings=CONTEXT_SETTINGS)
     @click.version_option(version=zlt_version, package_name="zeroth-law", prog_name="zeroth-law")
-    # --- Add global options manually as decorators --- #
-    @click.option("--verbose", "-V", count=True, default=0, help="Increase verbosity. -V for INFO, -VV for DEBUG.")
-    @click.option("--quiet", "-q", is_flag=True, default=False, help="Suppress all output except errors.")
+    # --- Define ACTUAL Global options ONLY here --- #
+    @click.option(
+        "-V",
+        "--verbose",
+        "verbose",  # Explicit destination name
+        count=True,
+        default=0,
+        help="Increase verbosity. -V for INFO, -VV for DEBUG.",
+    )
+    @click.option(
+        "-q",
+        "--quiet",
+        "quiet",  # Explicit destination name
+        is_flag=True,
+        default=False,
+        help="Suppress all output except errors.",
+    )
     @click.option(
         "--config",
-        type=click.Path(path_type=Path),
+        "config_path",  # Explicit destination name (avoids conflict with potential 'config' dict)
+        type=click.Path(path_type=Path, exists=True, dir_okay=False, resolve_path=True),
         default=None,
+        envvar="ZLT_CONFIG",
+        show_envvar=True,
         metavar="FILE_PATH",
-        help="Path to a tool-specific configuration file.",
+        help="Path to the ZLT configuration file (pyproject.toml section overrides this).",
     )
-    # Add other global options like --color if defined and needed
-    # Note: Positional 'paths' is not a global option, handled by subcommands
+    # --- REMOVED incorrect/duplicate global options like --recursive --- #
     @click.pass_context
-    def base_cli_group(ctx: click.Context, **kwargs) -> None:
+    def base_cli_group(ctx: click.Context, verbose: int, quiet: bool, config_path: Optional[Path], **kwargs) -> None:
         """Core logic for the base CLI group."""
-        # Extract values from kwargs passed by Click
-        # verbosity = kwargs.get("verbose", 0) # REMOVE
-        # quiet = kwargs.get("quiet", False) # REMOVE
-        color = kwargs.get("color")  # Assuming color option exists/added
-        config_path_override = kwargs.get("config")
-
-        # Determine effective log level name based on flags
-        # REMOVE verbose/quiet logic
-        # if quiet:
-        #     level_name = "error"
-        # elif verbosity == 1:
-        #     level_name = "info"
-        # elif verbosity >= 2:
-        #     level_name = "debug"
-        # else:
-        #     level_name = DEFAULT_LOG_LEVEL_NAME
-        # Set a default level for now, subcommands will override if needed
-        level_name = DEFAULT_LOG_LEVEL_NAME
-
-        # Setup/Adjust structlog logging based on determined level and color option
-        setup_structlog_logging(level_name, color)
-        # log.debug("TEST: Logging should be configured for DEBUG level now.", level_set=level_name) # Remove test log
-
-        # Store options early using kwargs
+        # Initialize context object first
         ctx.ensure_object(dict)
-        # Remove verbose/quiet from stored options if they are no longer global
-        options_to_store = {k: v for k, v in kwargs.items() if k not in ["verbose", "quiet"]}
-        ctx.obj["options"] = options_to_store
 
-        # --- Consolidated Root Finding and Config Loading ---
+        # --- Configuration Loading & Context Setup --- #
         try:
-            project_root = find_project_root(start_path=Path.cwd())
-            config_file_to_load = config_path_override or (project_root / "pyproject.toml")
-            if config_file_to_load and Path(config_file_to_load).is_file():
-                log.info("attempting_config_load", path=str(config_file_to_load))
-                config_data = load_config(config_file_to_load)
-                log.debug("Inspect config_data after load_config", data=config_data)
-                if config_data is None:
-                    log.warning("config_loading_returned_none", path=str(config_file_to_load))
-                    config_data = {}  # Use empty dict if load_config returns None
-            elif config_path_override:
-                log.warning("config_override_not_found", path=str(config_path_override))
-                config_data = {}
-            else:
-                log.warning("default_config_not_found_or_override_invalid", path=str(config_file_to_load))
-                config_data = {}
+            project_root = find_project_root(Path.cwd())
+        except ZLFProjectRootNotFoundError:
+            log.warning(  # Restore log call
+                "project_root_not_found",
+                message="Could not find project root (pyproject.toml). Proceeding without project config.",
+                # file=sys.stderr, # Remove debug file output
+            )
+            project_root = None
 
-            ctx.obj["project_root"] = project_root
-            ctx.obj["config"] = config_data
-            log.debug("Storing config in context", config_stored=ctx.obj["config"])
-            log.info("configuration_processed", loaded=bool(config_data), project_root=str(project_root))
+        ctx.obj["PROJECT_ROOT"] = project_root
+        ctx.obj["GLOBAL_CONFIG_PATH"] = config_path
+        ctx.obj["VERBOSE"] = verbose
+        ctx.obj["QUIET"] = quiet
+        ctx.obj["IS_TTY"] = sys.stdout.isatty()  # Set IS_TTY here
 
-        except ZLFProjectRootNotFoundError as e:
-            log.critical("project_root_not_found", error=str(e))
-            ctx.fail(f"Fatal Error: {e} Please run `zlt` from within a ZLF compliant project directory.")
-        except Exception as e:
-            log.exception("project_root_or_config_loading_failed", error=str(e))
-            ctx.fail(f"Fatal Error during project root detection or configuration loading: {e}")
+        # --- Load Config Data --- #
+        config_data = load_config(project_root=project_root, config_path_override=config_path)
+        ctx.obj["CONFIG_DATA"] = config_data if config_data else {}
 
-        # --- FINAL DEBUG: Log context state before returning --- #
-        log.debug("Final context object state in base_cli_group", ctx_obj=repr(ctx.obj))
+        log.debug(  # Restore log call
+            "CLI context initialized and config loaded.",
+            project_root=str(project_root) if project_root else None,
+            explicit_config_path=str(config_path) if config_path else None,
+            is_tty=ctx.obj["IS_TTY"],
+            config_loaded=bool(config_data),
+            # file=sys.stderr, # Remove debug file output
+        )
+        # sys.stderr.flush() # Remove debug flush
 
-    # --- Restore Dynamic Option Loading --- #
-    dynamic_options: List[click.Option] = []
-    # Iterate in reverse definition order for consistent help message order
-    for name, definition in reversed(option_defs.items()):
-        # !! IMPORTANT: Skip verbose and quiet !!
-        if name in ["verbose", "quiet"]:
-            continue
-        if definition.get("type") != "positional":
-            try:
-                option = create_click_option_from_def(name, definition)
-                dynamic_options.append(option)
-            except ValueError as e:
-                log.warning(f"Skipping dynamic option creation for '{name}': {e}")
+        # --- Logging Setup (AFTER context is populated) --- #
+        log_level_name = DEFAULT_LOG_LEVEL_NAME
+        if quiet:
+            log_level_name = "error"
+        elif verbose == 1:
+            log_level_name = "info"
+        elif verbose >= 2:
+            log_level_name = "debug"
+        #
+        use_color = ctx.obj.get("IS_TTY", False)  # Now ctx.obj exists
+        setup_structlog_logging(log_level_name, use_color=use_color)  # Uncomment setup call
+        log.debug(
+            "Structlog logging configured.",
+            level=log_level_name,
+            verbose_level=verbose,
+            quiet_level=quiet,
+            use_color=use_color,
+        )  # Restore log call
+        # print(f"DEBUG [cli]: Structlog logging would be configured. level={log_level_name}, use_color={use_color}", file=sys.stderr)
+        # sys.stderr.flush()
 
-    # Add the options to the group's parameter list
-    base_cli_group.params.extend(dynamic_options)
+    # === Dynamically Add Subcommands ===
+    # Add manually imported groups/commands first
+    base_cli_group.add_command(tools_group, name="tools")
+    base_cli_group.add_command(audit_command, name="audit")  # Use the imported command
+    base_cli_group.add_command(install_git_hook, name="install-git-hook")
+    base_cli_group.add_command(restore_git_hooks, name="restore-git-hooks")
+    base_cli_group.add_command(todo_group, name="todo")
+    # Add other core subcommands here...
 
-    # Add the subcommands
-    base_cli_group.add_command(audit_command)
-    base_cli_group.add_command(install_git_hook)
-    base_cli_group.add_command(restore_git_hooks)
-    base_cli_group.add_command(tools_group)
-    base_cli_group.add_command(todo_group)
+    # (Optional) Placeholder for discovering plugin subcommands if needed later
 
-    return base_cli_group
+    return cast(click.Group, base_cli_group)
 
 
-# === Create the CLI instance using the factory ===
-main = create_cli_group()
+# === Main Execution Function ===
+cli_group = create_cli_group()  # Create the group first
 
-# === Entry Point ===
+
+def main() -> None:
+    """Main entry point for the ZLT CLI application."""
+    # Use the pre-created group
+    try:
+        cli_group(prog_name="zlt")  # Pass prog_name here for testing
+    except Exception as e:
+        # Catch unexpected errors during CLI execution
+        log.exception("cli_unhandled_exception", error=str(e))  # Restore log call
+        # print(f"ERROR [cli]: cli_unhandled_exception: {str(e)}", file=sys.stderr)
+        # import traceback
+        # traceback.print_exc(file=sys.stderr)
+        # sys.stderr.flush()
+        # Optionally, re-raise or exit with non-zero status
+        sys.exit(f"An unexpected error occurred: {e}")
+
+
 if __name__ == "__main__":
     main()
 

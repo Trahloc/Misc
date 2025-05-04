@@ -1,21 +1,22 @@
 {
-    "command": [
-        "uv",
-        "lock"
+  "command": "uv",
+  "description": "Tool definition for uv (auto-generated skeleton)",
+  "usage": "uv [options] [arguments]",
+  "options": [],
+  "arguments": [],
+  "metadata": {
+    "name": "uv",
+    "version": null,
+    "language": "unknown",
+    "categories": [],
+    "tags": [
+      "skeleton"
     ],
-    "description": "Tool definition for uv (auto-generated skeleton)",
-    "usage": "uv [options] [arguments]",
-    "options": [],
-    "arguments": [],
-    "metadata": {
-        "name": "uv",
-        "version": null,
-        "language": "unknown",
-        "categories": [],
-        "tags": [
-            "skeleton"
-        ],
-        "url": "",
-        "other": {}
-    }
+    "url": "",
+    "other": {},
+    "tool_name": "uv",
+    "command_name": "lock",
+    "ground_truth_crc": "0x00000000"
+  },
+  "subcommand": "lock"
 }
