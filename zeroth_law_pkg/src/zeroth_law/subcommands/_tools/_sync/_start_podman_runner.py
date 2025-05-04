@@ -37,33 +37,56 @@ def _start_podman_runner(
     try:
         # Use python -m build to build the wheel
         # Correct path construction: venv_path should already point to the bin dir
-        host_python_exe = venv_path / "python"
-        if not host_python_exe.is_file():
-            log.error(f"Host python executable not found in venv bin: {host_python_exe}")
-            return False
+        # host_python_exe = venv_path / "python" # OLD: Use temp python
+        # Use the main project's python from the actual .venv
+        main_venv_python = project_root / ".venv" / "bin" / "python"
+        if not main_venv_python.is_file():
+            log.error(f"Main project python executable not found: {main_venv_python}")
+            # Attempt to find python in PATH as fallback (might not be venv)
+            python_in_path = shutil.which("python")
+            if not python_in_path:
+                log.error("Could not find 'python' in PATH either. Build cannot proceed.")
+                return False
+            log.warning(f"Using system python found in PATH: {python_in_path}")
+            host_python_exe = Path(python_in_path)
+        else:
+            host_python_exe = main_venv_python
+
+        # if not host_python_exe.is_file(): # OLD Check
+        #     log.error(f"Host python executable not found in venv bin: {host_python_exe}")
+        #     return False
 
         build_cmd = [
             str(host_python_exe),  # Use python from host venv
             "-m",
             "build",
+            "-vv",  # Add verbosity to build
             "--wheel",  # Build only wheel
-            f"--outdir={wheel_dir}",  # Output directory
             ".",  # Build the current directory
         ]
-        log.debug(f"Running wheel build command: {' '.join(build_cmd)}")
+        log.debug(f"Running wheel build command: {' '.join(build_cmd)} in cwd={project_root}")
         # Note: This runs on the HOST, not in podman. Needs error handling.
-        build_result = subprocess.run(build_cmd, cwd=project_root, check=False, capture_output=True, text=True)
 
-        # --- Always log build output --- #
-        log.debug(f"Build command stdout:\n{build_result.stdout}")
-        if build_result.stderr:
-            log.warning(f"Build command stderr:\n{build_result.stderr}")
-        # --- End Log --- #
-
-        if build_result.returncode != 0:
-            raise subprocess.CalledProcessError(
-                build_result.returncode, build_cmd, output=build_result.stdout, stderr=build_result.stderr
-            )
+        # --- Log full build output *before* checking return code --- #
+        # This logging might not appear if check=True causes an immediate exception
+        log.info(f"-- Build Command Output START ---")
+        # build_result = subprocess.run(build_cmd, cwd=project_root, check=False, capture_output=True, text=True) # OLD
+        try:
+            build_result = subprocess.run(
+                build_cmd, cwd=project_root, check=True, capture_output=True, text=True
+            )  # Set check=True
+            log.info(f"Build command stdout:\\n{build_result.stdout}")
+            log.info(f"Build command stderr:\\n{build_result.stderr}")
+            log.info(f"Build command return code: {build_result.returncode}")
+            log.info(f"-- Build Command Output END ---")
+        except subprocess.CalledProcessError as build_e:
+            # Log output even on failure before re-raising or handling
+            log.error(f"-- Build Command FAILED Output START ---")
+            log.error(f"Build command stdout:\\n{build_e.stdout}")
+            log.error(f"Build command stderr:\\n{build_e.stderr}")
+            log.error(f"Build command return code: {build_e.returncode}")
+            log.error(f"-- Build Command FAILED Output END ---")
+            raise build_e  # Re-raise the caught exception
 
         # --- Add delay and debug logging for wheel finding --- #
         time.sleep(0.1)  # Short delay for filesystem operations
@@ -75,14 +98,25 @@ def _start_podman_runner(
             log.error(f"Wheel directory {wheel_dir} does not exist after build!")
         # --- End Debug --- #
 
-        # Find the built wheel file
-        built_wheels = list(wheel_dir.glob("*.whl"))
+        # Find the built wheel file in the default project dist dir
+        project_dist_dir = project_root / "dist"  # Look in project dist
+        built_wheels = list(project_dist_dir.glob("*.whl"))
         if not built_wheels:
-            raise RuntimeError("python -m build command completed but no wheel file found in dist/")
+            # Add logging for contents of project dist dir if wheel not found
+            log.error(f"Checking for wheel in: {project_dist_dir}")
+            try:
+                dir_contents = os.listdir(project_dist_dir)
+                log.error(f"Contents of {project_dist_dir}: {dir_contents}")
+            except FileNotFoundError:
+                log.error(f"Project dist directory {project_dist_dir} does not exist after build!")
+            # --- End Debug ---
+            raise RuntimeError(
+                "python -m build command completed but no wheel file found in project dist/"
+            )  # Update error msg
         if len(built_wheels) > 1:
-            log.warning(f"Multiple wheels found in dist/, using the first one: {built_wheels[0]}")
-        local_wheel_path = built_wheels[0]
-        log.info(f"Using wheel: {local_wheel_path.name}")
+            log.warning(f"Multiple wheels found in project dist/, using the first one: {built_wheels[0]}")
+        local_wheel_path = built_wheels[0]  # This is now the path in project_root/dist
+        log.info(f"Using wheel: {local_wheel_path.name} from {local_wheel_path.parent}")
     except (subprocess.CalledProcessError, FileNotFoundError, RuntimeError) as build_e:
         log.error(f"Failed to build local project wheel: {build_e}")
         if isinstance(build_e, subprocess.CalledProcessError):
@@ -90,20 +124,13 @@ def _start_podman_runner(
         return False
     # --- End Build local project wheel --- #
 
-    # --- Ensure host venv exists (to get python) --- #
-    # Correct path construction: venv_path should already point to the bin dir
-    host_python_path = venv_path / "python"
-    if not host_python_path.is_file():
-        log.error(f"Host `python` executable not found at: {host_python_path}. Cannot proceed.")
-        return False
-
     # Check if container exists, remove if it does (ensures clean start)
     try:
-        result = _run_podman_command(["inspect", container_name], check=False)
+        result = _run_podman_command(["inspect", container_name])
         if result.returncode == 0:
             log.warning(f"Container {container_name} already exists. Stopping and removing.")
-            _run_podman_command(["stop", container_name], check=False)
-            _run_podman_command(["rm", container_name], check=False)
+            _run_podman_command(["stop", container_name])
+            _run_podman_command(["rm", container_name])
     except Exception as e:
         log.error(f"Error checking/removing existing container {container_name}: {e}")
         return False
@@ -141,13 +168,13 @@ def _start_podman_runner(
 
         # --- Create internal venv --- #
         log.info(f"Creating virtual environment inside {container_name} at /venv...")
-        _run_podman_command(["exec", container_name, "python", "-m", "venv", "/venv"], check=True)
+        _run_podman_command(["exec", container_name, "python", "-m", "venv", "/venv"])
         log.info("Internal venv created.")
 
         # --- Determine path to uv inside the container --- #
         internal_uv_path = "uv"  # Default assumption
         try:
-            uv_check_result = _run_podman_command(["exec", container_name, "which", "uv"], check=False, capture=True)
+            uv_check_result = _run_podman_command(["exec", container_name, "which", "uv"])
             if uv_check_result.returncode == 0:
                 internal_uv_path = uv_check_result.stdout.decode("utf-8").strip()
                 log.info(f"`uv` found in container PATH: {internal_uv_path}")
@@ -155,7 +182,6 @@ def _start_podman_runner(
                 log.warning("uv not found in container PATH. Installing using pip...")
                 _run_podman_command(
                     ["exec", container_name, "/venv/bin/pip", "install", "uv"],
-                    check=True,
                 )
                 internal_uv_path = "/venv/bin/uv"  # Assume standard install path
                 log.info(f"`uv` installed inside container at {internal_uv_path}")
@@ -171,7 +197,6 @@ def _start_podman_runner(
             log.info(f"Copying {host_req_file.name} to {container_name}:{container_req_file}...")
             _run_podman_command(
                 ["cp", str(host_req_file), f"{container_name}:{container_req_file}"],
-                check=True,
             )
             log.info(f"Copying {local_wheel_path.name} to {container_name}:{container_wheel_file}...")
             _run_podman_command(
@@ -180,7 +205,6 @@ def _start_podman_runner(
                     str(local_wheel_path),
                     f"{container_name}:{container_wheel_file}",
                 ],
-                check=True,
             )
             log.info("Requirements and wheel files copied.")
         else:
@@ -203,7 +227,7 @@ def _start_podman_runner(
             container_wheel_file,
         ]
         log.info(f"Running uv pip install from requirements and wheel file...")
-        _run_podman_command(install_cmd, check=True)
+        _run_podman_command(install_cmd)
         log.info("Dependencies and local project installed in internal venv.")
 
         # --- DEBUG: Poll container status until 'Up' or timeout ---

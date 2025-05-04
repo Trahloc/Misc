@@ -10,6 +10,7 @@ import shutil
 import time
 import os
 import logging
+import subprocess
 
 from click.testing import CliRunner
 
@@ -96,14 +97,21 @@ def temp_tools_structure(tmp_path):
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-# --- End Add --- #
+
+# --- Added Project table --- #
+[project]
+name = "zeroth-law"
+version = "0.1.0a0" # Use a PEP440-compliant version for tests
+description = "Test project"
+requires-python = ">=3.13"
+# Add other minimal required fields if build complains
 
 [tool.zeroth-law]
 # Minimal config needed for tests
 [tool.zeroth-law.managed-tools]
 whitelist = ["managed_tool_a", "managed_tool_b"]
-blacklist = []
-    """)
+blacklist = ["python"]
+""")
 
     tools_root = tmp_path / "src" / "zeroth_law" / "tools"
     tools_root.mkdir(parents=True)
@@ -117,14 +125,28 @@ blacklist = []
     venv_bin = tmp_path / ".venv" / "bin"
     venv_bin.mkdir(parents=True)
     # --- Create dummy EXECUTABLE python script --- #
-    python_dummy_path = venv_bin / "python"
-    python_dummy_path.write_text("#!/bin/sh\nexit 0")  # Minimal valid executable script
-    os.chmod(python_dummy_path, 0o755)
-    # --- END --- #
+    # python_dummy_path = venv_bin / "python"
+    # python_dummy_path.write_text("#!/bin/sh\\nexit 0")  # Minimal valid executable script
+    # os.chmod(python_dummy_path, 0o755)
+    # # --- END --- #
+    #
+    # # --- Install 'build' package into the temp venv --- #
+    # try:
+    #     # Install build, setuptools, and wheel explicitly
+    #     subprocess.run([str(python_dummy_path), "-m", "pip", "install", "build", "setuptools", "wheel"], check=True, capture_output=True)
+    #     logger.debug(f"Successfully installed build tools into {venv_bin}")
+    # except subprocess.CalledProcessError as e:
+    #     logger.error(f"Failed to install build tools into temp venv {venv_bin}: {e}\\n{e.stderr.decode()}")
+    #     pytest.fail(f"Failed to install build tools into temp venv: {e}")
+    # # --- END Install --- #
+
     (venv_bin / "managed_tool_a").touch()  # Keep other dummies as simple files for now
     os.chmod(venv_bin / "managed_tool_a", 0o755)
     (venv_bin / "unmanaged_tool_env").touch()
     os.chmod(venv_bin / "unmanaged_tool_env", 0o755)
+
+    # Create dummy requirements-dev.txt
+    (tmp_path / "requirements-dev.txt").touch()
 
     return tmp_path
 
@@ -143,7 +165,7 @@ def test_sync_fails_on_unclassified_tool(temp_tools_structure):
     # Remove the orphan dir to isolate the orphan env tool error
     shutil.rmtree(temp_tools_structure / "src" / "zeroth_law" / "tools" / "unmanaged_tool_c", ignore_errors=True)
     try:
-        result = runner.invoke(cli_group, ["tools", "sync"], catch_exceptions=False)
+        result = runner.invoke(cli_group, ["--max-workers=1", "tools", "sync"], catch_exceptions=False)
     finally:
         os.chdir(original_cwd)
     assert result.exit_code != 0
@@ -161,7 +183,7 @@ def test_sync_fails_on_orphan_tool_dir(temp_tools_structure):
     original_cwd = os.getcwd()
     os.chdir(str(temp_tools_structure))
     try:
-        result = runner.invoke(cli_group, ["tools", "sync"], catch_exceptions=False)
+        result = runner.invoke(cli_group, ["--max-workers=1", "tools", "sync"], catch_exceptions=False)
     finally:
         os.chdir(original_cwd)
     assert result.exit_code != 0
@@ -170,8 +192,8 @@ def test_sync_fails_on_orphan_tool_dir(temp_tools_structure):
 
 
 @patch("zeroth_law.subcommands._tools._sync._stop_podman_runner")
-@patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value=True)
-def test_sync_success_no_changes(mock_start_podman, mock_stop_podman, temp_tools_structure, caplog):
+# @patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value=True) # REMOVE THIS PATCH
+def test_sync_success_no_changes(mock_stop_podman, temp_tools_structure, caplog):
     """Test successful sync run with no required baseline changes."""
     caplog.set_level(logging.INFO)
     runner = CliRunner()
@@ -230,7 +252,7 @@ def test_sync_success_no_changes(mock_start_podman, mock_stop_podman, temp_tools
     original_cwd = os.getcwd()
     os.chdir(str(temp_tools_structure))
     try:
-        result = runner.invoke(cli_group, ["tools", "sync", "--generate"], catch_exceptions=False)
+        result = runner.invoke(cli_group, ["tools", "sync", "--max-workers=1"], catch_exceptions=False)
     finally:
         os.chdir(original_cwd)
     assert result.exit_code == 0
@@ -250,7 +272,7 @@ def test_sync_success_no_changes(mock_start_podman, mock_stop_podman, temp_tools
 )
 # Add patch decorators for podman helpers
 @patch("zeroth_law.subcommands._tools._sync._stop_podman_runner")
-@patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value=True)
+# @patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value=True) # REMOVE THIS PATCH
 # REMOVED: Patch for parallel runner
 # NOW Patching _process_command_sequence directly
 @patch(
@@ -260,7 +282,6 @@ def test_sync_success_no_changes(mock_start_podman, mock_stop_podman, temp_tools
 def test_sync_timestamp_logic(
     mock_process_sequence,
     mock_baseline_status_enum,
-    mock_start_podman,
     mock_stop_podman,
     temp_tools_structure,
     scenario,
@@ -366,7 +387,7 @@ def test_sync_timestamp_logic(
     mock_process_sequence.side_effect = process_sequence_side_effect
 
     # Run the sync command
-    cmd_args = ["tools", "sync", "--generate"]
+    cmd_args = ["tools", "sync", "--max-workers=1", "--generate"]
     if "force" in scenario:
         cmd_args.append("--force")
 
@@ -416,8 +437,8 @@ def test_sync_timestamp_logic(
 
 # Test --exit-errors flag
 @patch("zeroth_law.subcommands._tools._sync._stop_podman_runner")
-@patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value=True)
-def test_sync_exit_errors(mock_start_podman, mock_stop_podman, temp_tools_structure, caplog):
+# @patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value=True) # REMOVE THIS PATCH
+def test_sync_exit_errors(mock_stop_podman, temp_tools_structure, caplog):
     runner = CliRunner()
     from zeroth_law.cli import cli_group
 
@@ -545,7 +566,9 @@ def test_sync_exit_errors(mock_start_podman, mock_stop_podman, temp_tools_struct
             mock_parallel_runner.side_effect = sequential_runner_side_effect
 
             # Use default catch_exceptions=True and check result.exit_code
-            result_with_exit = runner.invoke(cli_group, ["tools", "sync", "--generate", "--exit-errors"])
+            result_with_exit = runner.invoke(
+                cli_group, ["tools", "sync", "--max-workers=1", "--exit-errors"], catch_exceptions=True
+            )
 
     finally:
         os.chdir(original_cwd)

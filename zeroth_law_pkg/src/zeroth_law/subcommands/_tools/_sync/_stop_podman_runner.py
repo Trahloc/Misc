@@ -14,8 +14,8 @@ def _stop_podman_runner(container_name: str) -> None:
     log.info(f"STAGE 7: Stopping and removing Podman container: {container_name}")
     try:
         # Use --ignore to avoid errors if container is already gone
-        _run_podman_command(["stop", "--ignore", container_name], check=False)
-        _run_podman_command(["rm", "--ignore", container_name], check=False)
+        _run_podman_command(["stop", "--ignore", container_name])
+        _run_podman_command(["rm", "--ignore", container_name])
         log.info(f"Podman container {container_name} stopped and removed.")
     except Exception as e:
         # Log error but don't prevent script exit

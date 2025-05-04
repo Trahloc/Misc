@@ -155,6 +155,7 @@ def sync(
     exit_errors: Optional[int],
     debug: bool,  # Add debug flag parameter
     audit_hostility: bool,  # Add audit flag parameter
+    max_workers: int,  # <--- ADD MISSING PARAMETER HERE
 ) -> None:
     """Syncs the local tool definitions with the managed tools and generates baselines.
 
@@ -299,31 +300,99 @@ def sync(
                 )
 
                 # === Run Baseline Processing (Step 6) === #
-                all_results, processing_errors, skipped_count = _run_parallel_baseline_processing(
-                    whitelisted_sequences=whitelisted_sequences,
-                    tool_defs_dir=tool_defs_dir,
-                    project_root=project_root,
-                    container_name=container_name,
-                    index_data=initial_index_data,
-                    force=force,
-                    since_timestamp=since_timestamp,
-                    ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
-                    exit_errors_limit=exit_errors,
-                )
-                all_errors.extend(processing_errors)
+                log.info("STAGE 4: Starting baseline generation...")
+                try:
+                    # Initialize results before the try block
+                    all_results: List[Dict[str, Any]] = []
+                    processing_errors: List[str] = []
+                    skipped_count: int = 0
 
-                # --- DEBUG: Log results before saving --- #
-                log.info(
-                    "Baseline processing complete",
-                    results_count=len(all_results),
-                    errors_count=len(processing_errors),
-                    skipped_count=skipped_count,
-                )
-                # --- End DEBUG --- #
+                    # STAGE 4: Run baseline processing in parallel (or sequentially if max_workers=1)
+                    log.info("STAGE 4: Starting baseline generation...")
+                    try:
+                        all_results, processing_errors, skipped_count = _run_parallel_baseline_processing(
+                            tasks_to_run=whitelisted_sequences,
+                            tool_defs_dir=tool_defs_dir,
+                            project_root=project_root,
+                            container_name=container_name,
+                            index_data=current_index_data,
+                            force=force,
+                            since_timestamp=since_timestamp,
+                            ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
+                            max_workers=max_workers,
+                            exit_errors_limit=exit_errors,
+                        )
+                    except Exception as parallel_exc:
+                        log.exception(f"Error during parallel baseline processing: {parallel_exc}")
+                        all_errors.append(f"Parallel baseline processing error: {parallel_exc}")
+                        ctx.fail(str(parallel_exc))
 
-                # --- Update and Save Index (Step 7) --- #
-                updated_count = _update_and_save_index(tool_index_path, current_index_data, all_results)
-                processed_count = len(all_results)  # Correct calculation
+                    # --- DEBUG: Log results before saving --- #
+                    log.info(
+                        "Baseline processing complete",
+                        results_count=len(all_results),
+                        errors_count=len(processing_errors),
+                        skipped_count=skipped_count,
+                    )
+                    # --- End DEBUG --- #
+
+                    # --- Update and Save Index (Step 7) --- #
+                    updated_count = _update_and_save_index(tool_index_path, current_index_data, all_results)
+                    processed_count = len(all_results)  # Correct calculation
+
+                except ReconciliationError as e:
+                    # Use ctx.fail to print the error and exit with code 1
+                    ctx.fail(str(e))
+                except Exception as e:
+                    log.exception(f"Error during main sync logic: {e}")
+                    all_errors.append(f"Main sync error: {e}")
+                finally:
+                    # Add a direct print to confirm finally block is reached
+                    # print("SYNC FINALLY BLOCK REACHED", file=sys.stderr)
+                    # sys.stderr.flush()
+                    # === Podman Cleanup (Step 7) ===
+                    if container_name and podman_setup_successful:
+                        log.info(f"Attempting to stop and remove Podman container: {container_name}")
+                        try:  # <<< FIX: Add try block back >>>
+                            _stop_podman_runner(container_name)
+                            log.info(f"Successfully stopped and removed Podman container: {container_name}")
+                        except Exception as cleanup_e:  # <<< FIX: Add except block back >>>
+                            log.exception(f"Error during Podman cleanup: {cleanup_e}")
+
+                    # --- Final Reporting --- #
+                    end_time = time.time()
+                    duration = end_time - start_time
+                    summary_msg = (
+                        f"Sync summary: duration={round(duration, 2)}s, processed={processed_count}, "
+                        f"updated={updated_count}, skipped={skipped_count}, errors={len(all_errors)}, "
+                        f"exit_code={exit_code}"
+                    )
+                    if prune:
+                        summary_msg += f", pruned={pruned_count}"
+
+                    log.info(
+                        "Sync summary",  # Keep the log call
+                        duration_seconds=round(duration, 2),
+                        processed=processed_count,
+                        updated=updated_count,
+                        skipped=skipped_count,
+                        errors=len(all_errors),
+                        exit_code=exit_code,
+                        pruned=(pruned_count if prune else None),
+                    )
+                    # Also print directly to stderr for CliRunner testing
+                    # print(summary_msg, file=sys.stderr)
+                    # sys.stderr.flush()
+
+                    if processing_errors:
+                        log.error("Baseline generation failed for some commands.", failed=processing_errors)
+                        all_errors.append(f"Failed commands: {processing_errors}")
+                        if exit_errors:
+                            log.error("Exiting with error code due to baseline generation failures.")
+                            exit_code = 1
+                            # Need to ensure this actually causes a non-zero exit later
+
+                    processed_count += updated_count
 
             elif dry_run:
                 log.info("[DRY RUN] Skipping baseline generation and index update.")

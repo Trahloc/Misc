@@ -79,8 +79,8 @@ except PackageNotFoundError:
 # Context settings for Click
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
-    "ignore_unknown_options": False,  # Set to False for stricter parsing
-    "allow_interspersed_args": False,
+    "ignore_unknown_options": False,  # Keep strict parsing
+    "allow_interspersed_args": False,  # Set this back to False
 }
 
 # --- Path to dynamic options definitions ---
