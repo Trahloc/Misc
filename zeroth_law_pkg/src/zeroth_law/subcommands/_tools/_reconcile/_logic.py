@@ -386,46 +386,31 @@ def _print_reconciliation_summary(
             ]
         )
 
-    # Basic print formatting (manual column widths)
-    # TODO: Use tabulate or rich for better formatting
-    try:
-        # Calculate widths based on plain strings first
-        plain_rows = []
-        for r in rows:
-            plain_rows.append([str(r[0]), str(r[1]), str(r[2]), str(r[3]), str(r[4].unstyled)])  # Unstyle the last one
-        col_widths = [max(len(str(r[i])) for r in [headers] + plain_rows) for i in range(len(headers))]
+    # Calculate widths based on plain strings first
+    plain_rows = []
+    for r in rows:
+        # Use getattr to safely get unstyled version or fallback to str()
+        plain_last_col = getattr(r[4], "unstyled", str(r[4]))
+        plain_rows.append([str(r[0]), str(r[1]), str(r[2]), str(r[3]), plain_last_col])
+    col_widths = [max(len(str(r[i])) for r in [headers] + plain_rows) for i in range(len(headers))]
 
-        header_line = " | ".join(f"{h:<{col_widths[i]}}" for i, h in enumerate(headers))
-        separator = "-+- ".join("-" * w for w in col_widths)
-        # print(header_line, file=sys.stderr)
-        # print(separator, file=sys.stderr)
-        click.echo(header_line)
-        click.echo(separator)
-        for i, row in enumerate(rows):
-            # Print the row with styling, using calculated widths
-            # plain_row = [str(item) for item in row]
-            line = " | ".join(f"{str(row[j]):<{col_widths[j]}}" for j in range(len(headers)))
-            # Print the row with styling - adjust width for styled part
-            # This manual adjustment is tricky. Rich/tabulate handles this better.
-            styled_part_len_diff = len(str(row[4])) - len(plain_rows[i][4])
-            line = " | ".join(
-                f"{str(row[j]):<{col_widths[j] + (styled_part_len_diff if j == 4 else 0)}}" for j in range(len(headers))
-            )
-            # line = " | ".join(f"{str(row[i]):<{col_widths[i]}}" for i in range(len(headers)))
-            # print(" | ".join(f"{str(row[i]):<{col_widths[i]}}" for i in range(len(headers))), file=sys.stderr)
-            click.echo(line)
+    header_line = " | ".join(f"{h:<{col_widths[i]}}" for i, h in enumerate(headers))
+    separator = "-+-".join("-" * w for w in col_widths)  # Adjusted separator slightly
+    # print(header_line, file=sys.stderr)
+    # print(separator, file=sys.stderr)
+    click.echo(header_line)
+    click.echo(separator)
+    for i, row in enumerate(rows):
+        # Print the row using original (potentially styled) elements and plain widths
+        # Click/Rich handles the alignment correctly with ANSI codes present.
+        line = " | ".join(f"{str(row[j]):<{col_widths[j]}}" for j in range(len(headers)))
+        click.echo(line)
 
-        # print(file=sys.stderr)
-        click.echo()
-        if errors or warnings:
-            # print("Reconciliation finished with issues.", file=sys.stderr)
-            click.secho("Reconciliation finished with issues.", fg=("red" if errors else "yellow"))
-        else:
-            # print("Reconciliation successful. All detected tools are consistent.", file=sys.stderr)
-            click.secho("Reconciliation successful. All detected tools are consistent.", fg="green")
-    except Exception as fmt_e:
-        # print(f"ERROR [_logic]: Failed to format reconciliation summary table: {fmt_e}", file=sys.stderr)
-        logger.error("Failed to format reconciliation summary table", error=str(fmt_e))
-        # Fallback: Print raw results
-        click.echo("\nRaw Results (table formatting failed):")
-        click.echo(str(results))
+    # print(file=sys.stderr)
+    click.echo()
+    if errors or warnings:
+        # print("Reconciliation finished with issues.", file=sys.stderr)
+        click.secho("Reconciliation finished with issues.", fg=("red" if errors else "yellow"))
+    else:
+        # print("Reconciliation successful. All detected tools are consistent.", file=sys.stderr)
+        click.secho("Reconciliation successful. All detected tools are consistent.", fg="green")

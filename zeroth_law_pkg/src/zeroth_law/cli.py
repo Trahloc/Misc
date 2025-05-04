@@ -282,7 +282,6 @@ def create_cli_group() -> click.Group:
         metavar="FILE_PATH",
         help="Path to the ZLT configuration file (pyproject.toml section overrides this).",
     )
-    # --- REMOVED incorrect/duplicate global options like --recursive --- #
     @click.pass_context
     def base_cli_group(ctx: click.Context, verbose: int, quiet: bool, config_path: Optional[Path], **kwargs) -> None:
         """Core logic for the base CLI group."""
