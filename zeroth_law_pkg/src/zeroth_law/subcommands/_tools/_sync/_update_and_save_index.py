@@ -70,7 +70,7 @@ def _update_and_save_index(
         log.info(f"[DRY RUN] Would save updated tool index with {len(final_index_data)} entries to {tool_index_path}")
     else:
         log.info(f"Saving updated tool index with {len(final_index_data)} entries...")
-        if not save_tool_index(final_index_data):
+        if not save_tool_index(final_index_data, tool_index_path=tool_index_path):
             log.error("Failed to save final tool index.")
             index_errors.append("Failed to save final tool index.")
 

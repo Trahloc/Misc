@@ -21,9 +21,9 @@ with open(_OPTIONS_DEF_PATH, "r", encoding="utf-8") as f:
 @pytest.mark.parametrize(
     "option_name, expected_flags, expected_description",
     [
-        ("verbose", "-V, --verbose", "Increase verbosity. -V for INFO, -VV for DEBUG."),
+        ("verbose", "-v, --verbose", "Increase verbosity. -v for INFO, -vv for DEBUG."),
         ("quiet", "-q, --quiet", "Suppress all output except errors."),
-        ("config", "--config FILE_PATH", "Path to the ZLT configuration file (pyproject.toml section overrides this)."),
+        ("config", "--config FILE_PATH", "Load configuration from a specific file."),
         # ("recursive", "-r, --recursive", OPTION_DEFS["recursive"]["description"]), # Recursive removed as global
         # ("paths", "PATHS", OPTION_DEFS["paths"]["description"]), # Positional args don't appear in options help
     ],

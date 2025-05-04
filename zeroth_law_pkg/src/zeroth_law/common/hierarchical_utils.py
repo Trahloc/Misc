@@ -20,12 +20,26 @@ ParsedHierarchy = Dict[str, NodeData]
 def parse_to_nested_dict(raw_list: Union[List[str], Set[str], Array]) -> ParsedHierarchy:
     """Parses a list of hierarchical strings into a nested dictionary representation."""
     log.debug("Starting hierarchical list parsing.", input_list=raw_list)
+
+    # --- Input Validation --- #
+    if not isinstance(raw_list, (list, set, Array)):
+        log.warning("Invalid input type for hierarchical parsing, returning empty dict.", input_type=type(raw_list))
+        return {}  # Return empty dict for invalid input types (matches test expectation)
+    # --- End Validation --- #
+
     root: ParsedHierarchy = {}
     processed_list = list(raw_list)  # Ensure it's a list
 
     for original_entry in processed_list:
         if not isinstance(original_entry, str) or not original_entry.strip():
             continue
+
+        # --- Pre-validation for invalid patterns --- #
+        if "::" in original_entry:
+            log.warning(f"Skipping entry '{original_entry}' due to invalid '::'.")
+            continue
+        # --- End Pre-validation ---
+
         entry = original_entry.strip()
 
         # --- Pre-process entry for suffix handling ---
@@ -459,19 +473,19 @@ def check_list_conflicts(whitelist_tree: ParsedHierarchy, blacklist_tree: Parsed
         if is_explicit_w and is_explicit_b:
             conflict_found = True
             log.debug(f"Explicit conflict found at path: {current_path}")
-        # Conflict if both have _all=True at this exact level (ignoring parent_all flags)
+        # Conflict if both have _all=True at this exact level
         elif node_w.get("_all", False) and node_b.get("_all", False):
             conflict_found = True
             log.debug(f"Wildcard conflict found at path: {current_path}")
-        # elif is_explicit_w and is_all_b: # REMOVED: Explicit WL vs Parent BL (*) - No longer a conflict
-        #     conflict_found = True
-        #     log.debug(f"Conflict: Explicit Whitelist vs Parent Blacklist (*) at path: {current_path}")
-        # elif is_explicit_b and is_all_w: # REMOVED: Explicit BL vs Parent WL (*) - No longer a conflict
-        #     conflict_found = True
-        #     log.debug(f"Conflict: Explicit Blacklist vs Parent Whitelist (*) at path: {current_path}")
+        # --- Restore checks against PARENT wildcards --- #
+        elif is_explicit_w and parent_all_b:
+            conflict_found = True
+            log.debug(f"Conflict: Explicit WL vs Parent BL (*) at path: {current_path}")
+        elif is_explicit_b and parent_all_w:
+            conflict_found = True
+            log.debug(f"Conflict: Explicit BL vs Parent WL (*) at path: {current_path}")
 
         if conflict_found:
-            # Convert list path to tuple before appending
             conflicts.append(tuple(current_path))
 
         # Find common keys to recurse into (excluding internal keys)

@@ -5,6 +5,7 @@ import click
 import structlog
 import time
 import sys
+import os
 
 # import shutil # Keep if needed by sync()
 # import itertools # Keep if needed by sync()
@@ -155,7 +156,6 @@ def sync(
     exit_errors: Optional[int],
     debug: bool,  # Add debug flag parameter
     audit_hostility: bool,  # Add audit flag parameter
-    max_workers: int,  # <--- ADD MISSING PARAMETER HERE
 ) -> None:
     """Syncs the local tool definitions with the managed tools and generates baselines.
 
@@ -310,6 +310,8 @@ def sync(
                     # STAGE 4: Run baseline processing in parallel (or sequentially if max_workers=1)
                     log.info("STAGE 4: Starting baseline generation...")
                     try:
+                        # Get max_workers from context
+                        sync_max_workers = ctx.obj.get("MAX_WORKERS", os.cpu_count())  # Use ctx.obj
                         all_results, processing_errors, skipped_count = _run_parallel_baseline_processing(
                             tasks_to_run=whitelisted_sequences,
                             tool_defs_dir=tool_defs_dir,
@@ -319,7 +321,7 @@ def sync(
                             force=force,
                             since_timestamp=since_timestamp,
                             ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
-                            max_workers=max_workers,
+                            max_workers=sync_max_workers,  # Use variable from ctx.obj
                             exit_errors_limit=exit_errors,
                         )
                     except Exception as parallel_exc:
@@ -337,8 +339,16 @@ def sync(
                     # --- End DEBUG --- #
 
                     # --- Update and Save Index (Step 7) --- #
-                    updated_count = _update_and_save_index(tool_index_path, current_index_data, all_results)
-                    processed_count = len(all_results)  # Correct calculation
+                    # Note: _update_and_save_index now returns final_index_data, errors, updated_count, skipped_count
+                    final_index_data, index_errors, updated_count, skipped_count = _update_and_save_index(
+                        results=all_results,
+                        initial_index_data=current_index_data,
+                        tool_index_path=tool_index_path,
+                        dry_run=dry_run,  # <-- ADD THIS ARGUMENT
+                    )
+                    all_errors.extend(index_errors)
+                    # Update current_index_data with the final version for potential hostility audit
+                    current_index_data = final_index_data
 
                 except ReconciliationError as e:
                     # Use ctx.fail to print the error and exit with code 1

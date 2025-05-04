@@ -32,8 +32,8 @@ log = structlog.get_logger()
 # --- CONSTANTS ---
 # It's often better if constants like these are defined centrally, but for now:
 TOOLS_DIR_ROOT: Path = project_root / "src" / "zeroth_law" / "tools"
-TOOL_INDEX_PATH: Path = TOOLS_DIR_ROOT / "tool_index.json"
-TOOL_INDEX_LOCK_PATH = TOOL_INDEX_PATH.with_suffix(".lock")
+DEFAULT_TOOL_INDEX_PATH: Path = TOOLS_DIR_ROOT / "tool_index.json"
+DEFAULT_TOOL_INDEX_LOCK_PATH = DEFAULT_TOOL_INDEX_PATH.with_suffix(".lock")
 LOCK_TIMEOUT = 10
 DEFAULT_ENCODING = "utf-8"
 
@@ -44,7 +44,7 @@ DEFAULT_ENCODING = "utf-8"
 def load_tool_index(tool_index_path: Optional[Path] = None) -> Dict[str, dict]:
     """Loads the full tool index file. Returns empty dict on error or if not found."""
     # Use provided path or default
-    effective_path = tool_index_path if tool_index_path is not None else TOOL_INDEX_PATH
+    effective_path = tool_index_path if tool_index_path is not None else DEFAULT_TOOL_INDEX_PATH
 
     if not effective_path.is_file():
         log.info(f"Tool index file not found at {effective_path}. Returning empty index for bootstrap.")
@@ -85,14 +85,13 @@ def load_tool_index(tool_index_path: Optional[Path] = None) -> Dict[str, dict]:
         return {}
 
 
-def save_tool_index(index_data: Dict[str, dict]) -> bool:
+def save_tool_index(index_data: Dict[str, dict], tool_index_path: Optional[Path] = None) -> bool:
     """
     Saves the complete tool index file, sorted by key.
 
     Args:
         index_data: The dictionary representing the entire desired index content.
-                    It's the responsibility of the caller to ensure this dictionary
-                    has the correct structure (e.g., {"tool_id": {"crc": "...", "timestamp": ...}}).
+        tool_index_path: Optional path to save the index to. Defaults to standard location.
 
     Returns:
         True if the save was successful, False otherwise.
@@ -100,25 +99,26 @@ def save_tool_index(index_data: Dict[str, dict]) -> bool:
     if not isinstance(index_data, dict):
         raise TypeError("index_data must be a dictionary")
 
+    effective_path = tool_index_path if tool_index_path is not None else DEFAULT_TOOL_INDEX_PATH
+
     try:
         # Ensure parent directory exists
-        TOOL_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
+        effective_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Sort the index by key before saving for consistent ordering
         sorted_index = dict(sorted(index_data.items()))
 
-        with open(TOOL_INDEX_PATH, "w", encoding=DEFAULT_ENCODING) as f:
+        with open(effective_path, "w", encoding=DEFAULT_ENCODING) as f:
             json.dump(sorted_index, f, indent=2)
             f.write("\n")  # Add trailing newline
-        log.info(f"Successfully saved updated tool index to {TOOL_INDEX_PATH}")
+        log.info(f"Successfully saved updated tool index to {effective_path}")
         return True
 
     except IOError as e:
-        log.error(f"Error saving tool index {TOOL_INDEX_PATH}: {e}")
+        log.error(f"Error saving tool index {effective_path}: {e}")
         return False
     except Exception as e:
-        log.exception(f"Unexpected error saving tool index {TOOL_INDEX_PATH}: {e}")
-        # Wrap unexpected errors in IOError for consistency? Or re-raise? Re-raising is cleaner.
+        log.exception(f"Unexpected error saving tool index {effective_path}: {e}")
         return False
 
 
@@ -270,7 +270,7 @@ def load_update_and_save_entry(command_sequence: Tuple[str, ...], update_data: D
     Returns:
         True if the update and save were successful, False otherwise.
     """
-    lock = FileLock(TOOL_INDEX_LOCK_PATH, timeout=LOCK_TIMEOUT)
+    lock = FileLock(DEFAULT_TOOL_INDEX_LOCK_PATH, timeout=LOCK_TIMEOUT)
     entry_id = "_".join(command_sequence)
     try:
         with lock:
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     log.info("Testing tool_index_utils...")
 
     # Test loading
-    log.info(f"Loading index from: {TOOL_INDEX_PATH}")
+    log.info(f"Loading index from: {DEFAULT_TOOL_INDEX_PATH}")
     current_index = load_tool_index()
     log.info(f"Loaded {len(current_index)} entries.")
     # print("Current Index:", json.dumps(current_index, indent=2)) # Can be noisy

@@ -4,6 +4,8 @@ import click
 import structlog
 from pathlib import Path
 import sys  # Add sys import
+from typing import Optional
+import os  # Add import needed for default
 
 # Import the function to find the project root
 from ..common.path_utils import find_project_root, ZLFProjectRootNotFoundError
@@ -15,8 +17,15 @@ log = structlog.get_logger()  # Restore logger
 
 
 @click.group("tools")
+@click.option(
+    "--max-workers",
+    type=int,
+    default=None,  # Default handled later if None
+    help="Maximum number of parallel workers for baseline generation.",
+    show_default="CPU count",  # Indicate dynamic default
+)
 @click.pass_context
-def tools_group(ctx: click.Context) -> None:
+def tools_group(ctx: click.Context, max_workers: Optional[int]) -> None:
     """Group for managing tool definitions, baselines, and environment synchronization."""
     log.debug("Entering tools command group", ctx_obj_keys=list(ctx.obj.keys()))  # Restore log call
     # print(f"DEBUG [tools_group]: Entering tools command group. ctx_obj_keys={list(ctx.obj.keys())}", file=sys.stderr)
@@ -40,7 +49,12 @@ def tools_group(ctx: click.Context) -> None:
     ctx.obj["tools_dir"] = tools_dir
     ctx.obj["zlt_capabilities_path"] = zlt_capabilities_path
     ctx.obj["zlt_options_definitions_path"] = zlt_options_definitions_path
-    log.debug("Added derived paths to context", obj_keys=list(ctx.obj.keys()))  # Restore log call
+
+    # Store max_workers in context, defaulting if not provided
+    actual_max_workers = max_workers if max_workers is not None else os.cpu_count()
+    ctx.obj["MAX_WORKERS"] = actual_max_workers
+
+    log.debug("Added derived paths and max_workers to context", obj_keys=list(ctx.obj.keys()))  # Restore log call
     # print(f"DEBUG [tools_group]: Added derived paths to context. obj_keys={list(ctx.obj.keys())}", file=sys.stderr)
     # sys.stderr.flush()
 

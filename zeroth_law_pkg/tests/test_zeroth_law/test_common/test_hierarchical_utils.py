@@ -451,21 +451,18 @@ def test_get_effective_status(sequence, wl_tree_def, bl_tree_def, expected_statu
         (
             ["toolA:*", "toolB:sub1"],
             ["toolA:sub1", "toolC"],
-            # This case should NOT conflict per rule: explicit overrides wildcard
-            [],
+            [("toolA", "sub1")],
         ),
         # Wildcard conflict (WL:explicit vs BL:*)
         (
             ["toolA:sub1", "toolC"],
             ["toolA:*", "toolB:sub1"],
-            # This case should NOT conflict per rule: explicit overrides wildcard
-            [],
+            [("toolA", "sub1")],
         ),
         # Wildcard conflict (WL:* vs BL:*)
         (
             ["toolA:*", "toolC"],
             ["toolA:*", "toolB:sub1"],
-            # Conflict: Both specify wildcard for the same path
             [("toolA",)],  # Conflict is at the wildcard level
         ),
         # Wildcard no conflict (WL:sub_explicit vs BL:parent_*)
@@ -492,17 +489,17 @@ def test_get_effective_status(sequence, wl_tree_def, bl_tree_def, expected_statu
             ["toolA", "toolB"],  # Explicit block toolA
             [],  # No conflict, different levels of specificity
         ),
-        # Conflict: Parent WL wildcard, Child BL explicit - SHOULD NOT conflict
+        # Conflict: Parent WL wildcard, Child BL explicit - SHOULD conflict
         (
             ["toolA:*", "toolB"],
             ["toolA:sub1", "toolC"],
-            [],
+            [("toolA", "sub1")],
         ),
-        # Conflict: Parent BL wildcard, Child WL explicit - SHOULD NOT conflict
+        # Conflict: Parent BL wildcard, Child WL explicit - SHOULD conflict
         (
             ["toolA:sub1", "toolC"],
             ["toolA:*", "toolB"],
-            [],
+            [("toolA", "sub1")],
         ),
     ],
 )

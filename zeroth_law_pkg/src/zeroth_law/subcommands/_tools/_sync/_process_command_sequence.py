@@ -82,6 +82,7 @@ def _process_command_sequence(
             since_timestamp=since_timestamp,
             skip_hours=ground_truth_txt_skip_hours,
             output_capture_path=baseline_file_path,
+            json_definition_path=json_file_path,
         )
 
         result["calculated_crc"] = calculated_crc
