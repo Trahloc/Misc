@@ -45,6 +45,10 @@ from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 # Import sync command directly for testing
 # from .subcommands.tools.sync import sync as sync_command
 
+# Add project root to path for potential utility imports if needed
+# sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
+# Test comment for multi-config commit
+
 # --- Early Structlog Setup --- START
 # Configure structlog minimally early on for setup messages
 structlog.configure(
