@@ -1,0 +1,41 @@
+Metadata-Version: 2.4
+Name: astscan
+Version: 0.0.1
+Summary: A Python package generated with Zeroth Law
+Author-email: Your Name <your.email@example.com>
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: click
+Provides-Extra: dev
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+
+# FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/README.md.template
+
+# astscan
+
+A Python package created with Zeroth Law.
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+```python
+import astscan
+```
+
+## Command Line Interface
+
+```bash
+astscan --help
+```
+
+## Development
+
+This project follows the Zeroth Law of AI-Driven Development.
