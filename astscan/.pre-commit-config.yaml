@@ -17,9 +17,7 @@ repos:
         # pre-commit: This is a final check, ensuring consistent style.
         args: [
           "--max-line-length=120",
-          "--ignore=E203",
-          "--ignore=E501",
-          "--ignore=W503"
+          "--extend-ignore=E203,E501,W503" # Try as a single extend-ignore
         ] # Pass ignores as separate args
 
 # Removed mypy hook for now as astscan is not yet a ZLF project
