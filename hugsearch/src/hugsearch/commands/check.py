@@ -25,6 +25,7 @@ if sys.version_info >= (3, 8):
             dist.metadata["Name"].lower(): dist.version
             for dist in importlib_metadata.distributions()
         }
+
 else:
     import pkg_resources
 

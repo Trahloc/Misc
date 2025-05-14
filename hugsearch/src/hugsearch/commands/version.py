@@ -26,6 +26,7 @@ if sys.version_info >= (3, 8):
             return importlib_metadata.version(package_name)
         except importlib_metadata.PackageNotFoundError:
             return "unknown"
+
 else:
     import pkg_resources
 

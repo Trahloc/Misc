@@ -61,12 +61,14 @@ async def get_all_tags(
     """Get all known tags, optionally with usage counts"""
     async with aiosqlite.connect(db_path) as db:
         if include_counts:
-            cursor = await db.execute("""
+            cursor = await db.execute(
+                """
                 SELECT tag, COUNT(*) as count
                 FROM model_tags
                 GROUP BY tag
                 ORDER BY count DESC, tag
-            """)
+            """
+            )
             rows = await cursor.fetchall()
             return [{"tag": row[0], "count": row[1]} for row in rows]
         else:
