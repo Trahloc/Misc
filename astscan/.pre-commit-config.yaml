@@ -1,37 +1,4 @@
 # FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/.pre-commit-config.yaml.template
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.1.0  # Use a specific, stable version.  VS Code has built-in Black support.
-    hooks:
-      - id: black
-        # VS Code:  Enable "Format on Save" and configure Black as the formatter.
-        # pre-commit: This acts as a final check before commit.
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0  # Use a specific, stable version.
-    hooks:
-      - id: flake8
-        # VS Code: Install the "Python" extension (by Microsoft).  It includes
-        #          flake8 integration.  Configure flake8 settings in your VS Code
-        #          settings.json (e.g., max-line-length, ignore codes).
-        # pre-commit: This is a final check, ensuring consistent style.
-        args: [
-          "--max-line-length=120",
-          "--extend-ignore=E203,E501,W503" # Try as a single extend-ignore
-        ] # Pass ignores as separate args
-
-# Removed mypy hook for now as astscan is not yet a ZLF project
-#  - repo: https://github.com/pre-commit/mirrors-mypy
-#    rev: v1.0.0  # Use a specific, stable version.
-#    hooks:
-#      - id: mypy
-#        ...
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0  # Use a specific version
-    hooks:
-      - id: isort
-        # VS Code: Install the "Python" extension (by Microsoft).  It includes
-        #          isort integration. Configure isort settings in your VS Code
-        #          settings.json
-        # pre-commit: This is a final check, ensuring consistent import order
+  []
+# Removed all hooks as astscan is not a ZLF project.
