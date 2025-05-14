@@ -8,3 +8,4 @@ mypy>=1.0
 flake8>=6.0
 hypothesis
 pre-commit
+autoinit
