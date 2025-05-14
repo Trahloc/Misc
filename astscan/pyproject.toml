@@ -21,8 +21,17 @@ dependencies = [
     "click",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=3.0.0",
+]
+
 [project.scripts]
 astscan = "astscan.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.flake8]
+extend-ignore = ["E501", "W503"]  # Ignore line length and line break before binary operator
+max-line-length = 120  # Keep explicit, though E501 is ignored
