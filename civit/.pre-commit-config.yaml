@@ -16,7 +16,7 @@ repos:
         #          flake8 integration.  Configure flake8 settings in your VS Code
         #          settings.json (e.g., max-line-length, ignore codes).
         # pre-commit: This is a final check, ensuring consistent style.
-        args: [--max-line-length=88, --ignore=E203,W503] # Example: Adjust as needed.
+        args: ["--max-line-length=88", "--extend-ignore=E203,W503"] # Example: Adjust as needed.
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.0.0  # Use a specific, stable version.
@@ -24,10 +24,12 @@ repos:
       - id: mypy
         name: mypy (project-specific)
         language: system # Use project environment
-        entry: uv run mypy . # Run via uv in project env
+        entry: uv run mypy # Run via uv in project env
+        files: ^src/civit/ # Restrict files pre-commit passes to mypy
+        # args: ["--config-file", "pyproject.toml"] # Removed for now
         types: [python]
         require_serial: true
-        pass_filenames: false
+        pass_filenames: true # Pass relevant staged files to mypy
         # additional_dependencies removed - should be in pyproject.toml dev deps
 
   - repo: https://github.com/pycqa/isort
@@ -43,7 +45,7 @@ repos:
     hooks:
       - id: autoinit
         name: Auto-generate __init__.py
-        entry: uv run autoinit # Run via uv in project env
+        entry: uv run python -m autoinit # Run via uv as a module
         language: system # Use project environment
         types: [python]
         require_serial: true

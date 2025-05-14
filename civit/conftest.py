@@ -4,10 +4,11 @@ Pytest configuration.
 This file contains pytest configuration and fixtures.
 """
 
-import sys
 import logging
-import pytest
+import sys
 from typing import List
+
+import pytest
 
 # Configure logging
 logging.basicConfig(
