@@ -44,7 +44,9 @@ def mock_requests():
         "requests.post"
     ) as mock_post, mock.patch("requests.put") as mock_put, mock.patch(
         "requests.delete"
-    ) as mock_delete, mock.patch("requests.head") as mock_head:
+    ) as mock_delete, mock.patch(
+        "requests.head"
+    ) as mock_head:
         # Set up the mocks to raise by default
         mock_get.side_effect = RealNetworkAccessError(
             "Unmocked requests.get call detected"
