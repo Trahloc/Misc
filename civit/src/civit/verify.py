@@ -13,13 +13,15 @@
     re: Regular expressions
 """
 
-import os
 import logging
-from typing import Dict, Optional, Tuple, List
-import blake3
+import os
 import re
+from typing import Dict, List, Optional, Tuple
+
+import blake3
+
+from .download_handler import get_metadata_from_hash, get_metadata_from_ids
 from .filename_generator import generate_custom_filename
-from .download_handler import get_metadata_from_ids, get_metadata_from_hash
 
 logger = logging.getLogger(__name__)
 

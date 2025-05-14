@@ -11,17 +11,14 @@
 """
 
 import logging
-from typing import Dict, Any, Optional
-from logging import LoggerAdapter
 from datetime import UTC, datetime
-import requests
+from logging import LoggerAdapter
+from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
-from .exceptions import (
-    ModelNotFoundError,
-    ModelVersionError,
-    ModelAccessError,
-)
+import requests
+
+from .exceptions import ModelAccessError, ModelNotFoundError, ModelVersionError
 
 # Create structured logger
 logger = LoggerAdapter(logging.getLogger(__name__), {"component": "model_info"})

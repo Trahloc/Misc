@@ -2,9 +2,11 @@
 Debug entry point for civit CLI with debug mode enabled.
 """
 
-import sys
 import logging
-from .cli import setup_logging, parse_args, main as civit_main
+import sys
+
+from .cli import main as civit_main
+from .cli import parse_args, setup_logging
 
 logger = logging.getLogger(__name__)
 

@@ -13,14 +13,15 @@
     os: Operating system path operations
 """
 
-import re
 import logging
-from typing import Tuple
-from logging import LoggerAdapter
-from datetime import datetime
-from requests import Response
-from urllib.parse import urlparse
 import os
+import re
+from datetime import datetime
+from logging import LoggerAdapter
+from typing import Tuple
+from urllib.parse import urlparse
+
+from requests import Response
 
 logger = LoggerAdapter(logging.getLogger(__name__), {"component": "response_handler"})
 

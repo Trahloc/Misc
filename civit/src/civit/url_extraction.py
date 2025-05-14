@@ -1,6 +1,7 @@
-import re
 import logging
+import re
 from typing import Optional
+
 from .model_info import get_model_info
 
 

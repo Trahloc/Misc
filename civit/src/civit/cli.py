@@ -14,11 +14,11 @@
 """
 
 import argparse
-import logging
-from pathlib import Path
 import glob
-from typing import List
+import logging
 import os
+from pathlib import Path
+from typing import List
 
 from .download_handler import download_file
 

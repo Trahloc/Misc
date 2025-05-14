@@ -10,10 +10,11 @@
 import logging
 import re
 from pathlib import Path
-from tqdm import tqdm
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 import requests
 from requests import Response
+from tqdm import tqdm
 
 
 def make_request_with_auth(

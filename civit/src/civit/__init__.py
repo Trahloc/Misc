@@ -17,26 +17,26 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from .download_handler import download_file
-from .verify import verify_file, verify_directory
+from .verify import verify_directory, verify_file
 
 __all__ = ["download_file", "verify_file", "verify_directory"]
 
 # Import public API
 from .exceptions import (
+    APIError,
+    AuthenticationError,
     CivitError,
-    NetworkError,
+    DownloadError,
     FileSystemError,
-    InvalidResponseError,
     InvalidPatternError,
+    InvalidResponseError,
     MetadataError,
-    ModelNotFoundError,
     ModelAccessError,
+    ModelNotFoundError,
+    ModelVersionError,
+    NetworkError,
     URLValidationError,
     VersionNotFoundError,
-    ModelVersionError,
-    DownloadError,
-    AuthenticationError,
-    APIError,
 )
 
 # Import core functionality
