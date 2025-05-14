@@ -10,6 +10,7 @@
 """
 
 import unittest
+
 from astscan.example_module import add_numbers, multiply_numbers
 
 
