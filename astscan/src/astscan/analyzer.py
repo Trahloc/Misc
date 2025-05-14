@@ -16,28 +16,22 @@
 """
 
 import ast
+import logging
 import os
 import shutil
 import tempfile
-from typing import Dict, List, Any
-import logging
 from datetime import datetime
+from typing import Any, Dict, List
 
-from astscan.metrics import (
-    calculate_file_size_metrics,
-    calculate_function_size_metrics,
-    calculate_cyclomatic_complexity,
-    calculate_docstring_coverage,
-    calculate_naming_score,
-    calculate_import_metrics,
-)
-from astscan.utils import find_header_footer, count_executable_lines, replace_footer
-from astscan.exceptions import (
-    ZerothLawError,
-    FileNotFoundError,
-    NotPythonFileError,
-    AnalysisError,
-)
+from astscan.exceptions import (AnalysisError, FileNotFoundError,
+                                NotPythonFileError, ZerothLawError)
+from astscan.metrics import (calculate_cyclomatic_complexity,
+                             calculate_docstring_coverage,
+                             calculate_file_size_metrics,
+                             calculate_function_size_metrics,
+                             calculate_import_metrics, calculate_naming_score)
+from astscan.utils import (count_executable_lines, find_header_footer,
+                           replace_footer)
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +270,8 @@ def update_file_footer(file_path: str, metrics: Dict[str, Any]) -> None:
 
 def generate_footer(metrics: Dict[str, Any]) -> str:
     """Generates the Zeroth Law footer content."""
-    footer = f'''"""
+    # Start the f-string
+    footer = f"""\"\"\"
 ## KNOWN ERRORS: [List with severity.]
 
 ## IMPROVEMENTS: [This session's improvements.]
@@ -285,11 +280,22 @@ def generate_footer(metrics: Dict[str, Any]) -> str:
 
 ## ZEROTH LAW COMPLIANCE:
     - Overall Score: {metrics["overall_score"]}/100 - {metrics["compliance_level"]}
-    - Penalties:'''
+    - Penalties:"""
 
+    # Append penalties within the f-string context if possible, otherwise append separately
+    # Note: Directly appending to multiline f-string parts can be tricky. Let's build it step-by-step.
+    penalty_lines = []
     for penalty in metrics["penalties"]:
-        footer += f"""\n      - {penalty["reason"]}: -{penalty["deduction"]}"""
+        # Format each penalty line separately
+        penalty_lines.append(
+            f"""\\n      - {penalty["reason"]}: -{penalty["deduction"]}"""
+        )  # Note \\n for literal \n
 
-    footer += f'''\n    - Analysis Timestamp: {datetime.now().isoformat()}
-"""'''
+    # Join penalty lines and append
+    footer += "".join(penalty_lines)
+
+    # Append the final part including the timestamp and closing triple quotes
+    footer += f"""\\n    - Analysis Timestamp: {datetime.now().isoformat()}
+\"\"\""""  # Note \\n for literal \n and the closing """
+
     return footer
