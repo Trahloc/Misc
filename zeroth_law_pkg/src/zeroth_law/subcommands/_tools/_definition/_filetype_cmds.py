@@ -24,7 +24,10 @@ def set_filetypes(ctx: click.Context, tool_id: str, extensions: tuple[str]):
         raise click.Abort()
 
     if not extensions:
-        click.echo("Error: At least one file extension (e.g., '.py' or '*') must be provided.", err=True)
+        click.echo(
+            "Error: At least one file extension (e.g., '.py' or '*') must be provided.",
+            err=True,
+        )
         raise click.Abort()
 
     # Basic validation: ensure extensions start with a dot or are "*"
@@ -36,7 +39,8 @@ def set_filetypes(ctx: click.Context, tool_id: str, extensions: tuple[str]):
             validated_extensions.append(ext.lower())  # Store lowercase
         else:
             click.echo(
-                f"Error: Invalid file extension format '{ext}'. Must start with '.' (e.g., '.py') or be '*'", err=True
+                f"Error: Invalid file extension format '{ext}'. Must start with '.' (e.g., '.py') or be '*'",
+                err=True,
             )
             raise click.Abort()
 
@@ -47,7 +51,10 @@ def set_filetypes(ctx: click.Context, tool_id: str, extensions: tuple[str]):
     tool_json_path = _get_tool_def_path(tool_id, tools_dir)
     tool_data = _load_json_file(tool_json_path)
     if tool_data is None:
-        click.echo(f"Error: Could not load tool definition for '{tool_id}' from {tool_json_path}", err=True)
+        click.echo(
+            f"Error: Could not load tool definition for '{tool_id}' from {tool_json_path}",
+            err=True,
+        )
         raise click.Abort()
 
     # 2. Modify data structure (overwrite existing)
@@ -57,8 +64,16 @@ def set_filetypes(ctx: click.Context, tool_id: str, extensions: tuple[str]):
     # 3. Write updated data back
     if _write_json_file(tool_json_path, tool_data):
         click.echo(f"Successfully set filetypes for tool '{tool_id}' definition to: {unique_sorted_extensions}")
-        log.info("Filetypes set successfully.", tool=tool_id, filetypes=unique_sorted_extensions)
+        log.info(
+            "Filetypes set successfully.",
+            tool=tool_id,
+            filetypes=unique_sorted_extensions,
+        )
     else:
         click.echo(f"Error: Failed to write updated definition to {tool_json_path}", err=True)
-        log.error("Failed to write updated definition.", tool=tool_id, path=str(tool_json_path))
+        log.error(
+            "Failed to write updated definition.",
+            tool=tool_id,
+            path=str(tool_json_path),
+        )
         raise click.Abort()

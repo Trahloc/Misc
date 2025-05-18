@@ -29,6 +29,7 @@ def _process_command_sequence(
     force: bool,
     since_timestamp: Optional[float],
     ground_truth_txt_skip_hours: int,
+    executable_override: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Processes a single command sequence (ground truth gen, skeleton check, prep update data)."""
     log.debug(f"--->>> Worker thread processing: {command_sequence_to_id(command_sequence)}")
@@ -73,16 +74,19 @@ def _process_command_sequence(
         )
 
         # --- Restore call to baseline generator with all args --- #
-        status_enum, calculated_crc, check_timestamp = generate_or_verify_ground_truth_txt(
+        (
+            status_enum,
+            calculated_crc,
+            check_timestamp,
+        ) = generate_or_verify_ground_truth_txt(
             command_sequence=command_sequence,
             container_name=container_name,
             project_root=project_root,
             index_entry=current_index_entry,
             force=force,
             since_timestamp=since_timestamp,
-            skip_hours=ground_truth_txt_skip_hours,
             output_capture_path=baseline_file_path,
-            json_definition_path=json_file_path,
+            executable_command_override=executable_override,
         )
 
         result["calculated_crc"] = calculated_crc
@@ -111,25 +115,30 @@ def _process_command_sequence(
             )
             log.error(result["error_message"])
 
-        # 4. Prepare update data (always prepare, even for failures, but CRC might be None)
-        relative_baseline_path_str = (
-            str(baseline_file_path.relative_to(tool_defs_dir))  # Changed base path
-            if baseline_file_path.exists()
-            else None  # Set to None if baseline doesn't exist
-        )
-        # Use the result["calculated_crc"] which could be None on failure
-        update_crc = result["calculated_crc"]
-        update_timestamp = result["check_timestamp"]  # Use timestamp from result
-
-        result["update_data"] = {
-            "command": list(command_sequence),
-            "baseline_file": relative_baseline_path_str,  # Path relative to tools dir
-            "json_definition_file": str(relative_json_path),  # Already relative to tools dir
-            "crc": update_crc,  # Use actual CRC (might be None)
-            "updated_timestamp": update_timestamp,  # Use actual timestamp
-            "checked_timestamp": update_timestamp,  # Use actual timestamp
-            "source": "zlt_tools_sync",  # Removed dry_run suffix
-        }
+        # --- Prepare update_data based on status --- #
+        # Only include CRC if the baseline was actually generated/updated or capture succeeded.
+        # For UP_TO_DATE/SKIPPED, rely on the CRC already in the index (or None if new).
+        if status_enum in {BaselineStatus.UPDATED, BaselineStatus.CAPTURE_SUCCESS}:
+            update_data = {
+                "crc": calculated_crc,
+                "baseline_file": str(relative_baseline_path),
+                "checked_timestamp": check_timestamp,
+                "updated_timestamp": check_timestamp,  # Use check time as update time
+                "json_definition_file": str(relative_json_path),  # Store relative path
+            }
+        elif status_enum == BaselineStatus.UP_TO_DATE:
+            # Only update the checked timestamp if it was truly up-to-date
+            update_data = {
+                "checked_timestamp": check_timestamp,
+                # DO NOT include crc, baseline_file, or updated_timestamp
+                "json_definition_file": str(relative_json_path),  # Store relative path
+            }
+        else:  # SKIPPED, FAILED, or other error statuses
+            update_data = {  # Still update checked time even on failure/skip
+                "checked_timestamp": check_timestamp,
+                # DO NOT include crc, baseline_file, or updated_timestamp
+                "json_definition_file": str(relative_json_path),  # Store relative path
+            }
 
     except Exception as e:
         err_msg = f"Unexpected error processing {command_id}: {e}"

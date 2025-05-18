@@ -21,16 +21,27 @@ log = structlog.get_logger()
 @click.pass_context  # Get paths from context
 def map_option(ctx: click.Context, tool_id: str, tool_option_name: str, zlt_option_name: str):
     """Maps a tool's option/argument TOOL_OPTION_NAME to a canonical ZLT option ZLT_OPTION_NAME for tool TOOL_ID."""
-    log.info("Attempting to map option...", tool=tool_id, tool_option=tool_option_name, zlt_option=zlt_option_name)
+    log.info(
+        "Attempting to map option...",
+        tool=tool_id,
+        tool_option=tool_option_name,
+        zlt_option=zlt_option_name,
+    )
     zlt_options_path = ctx.obj.get("zlt_options_definitions_path")
     if not zlt_options_path:
-        click.echo("Error: Could not determine required paths (zlt_options_definitions_path) from context.", err=True)
+        click.echo(
+            "Error: Could not determine required paths (zlt_options_definitions_path) from context.",
+            err=True,
+        )
         raise click.Abort()
 
     # 1. Load ZLT options definition for validation
     valid_zlt_options = _load_json_file(zlt_options_path)
     if valid_zlt_options is None:
-        click.echo(f"Error: Could not load ZLT option definitions from {zlt_options_path}", err=True)
+        click.echo(
+            f"Error: Could not load ZLT option definitions from {zlt_options_path}",
+            err=True,
+        )
         raise click.Abort()
     if zlt_option_name not in valid_zlt_options:
         click.echo(
@@ -60,7 +71,8 @@ def map_option(ctx: click.Context, tool_id: str, tool_option_name: str, zlt_opti
 
     if not option_found or target_option_dict is None:
         click.echo(
-            f"Error: Tool option/argument '{tool_option_name}' not found in definition {tool_json_path}", err=True
+            f"Error: Tool option/argument '{tool_option_name}' not found in definition {tool_json_path}",
+            err=True,
         )
         raise click.Abort()
 
@@ -68,7 +80,8 @@ def map_option(ctx: click.Context, tool_id: str, tool_option_name: str, zlt_opti
     option_map = target_option_dict.setdefault("maps_to_zlt", {})
     if not isinstance(option_map, dict):
         click.echo(
-            f"Error: 'maps_to_zlt' for option '{tool_option_name}' in {tool_json_path} is not a dictionary.", err=True
+            f"Error: 'maps_to_zlt' for option '{tool_option_name}' in {tool_json_path} is not a dictionary.",
+            err=True,
         )
         raise click.Abort()
 
@@ -85,10 +98,19 @@ def map_option(ctx: click.Context, tool_id: str, tool_option_name: str, zlt_opti
     # 5. Write updated data back
     if _write_json_file(tool_json_path, tool_data):
         click.echo(f"Successfully mapped '{tool_option_name}' to ZLT option '{zlt_option_name}' for tool '{tool_id}'.")
-        log.info("Option mapped successfully.", tool=tool_id, tool_option=tool_option_name, zlt_option=zlt_option_name)
+        log.info(
+            "Option mapped successfully.",
+            tool=tool_id,
+            tool_option=tool_option_name,
+            zlt_option=zlt_option_name,
+        )
     else:
         click.echo(f"Error: Failed to write updated definition to {tool_json_path}", err=True)
-        log.error("Failed to write updated definition.", tool=tool_id, path=str(tool_json_path))
+        log.error(
+            "Failed to write updated definition.",
+            tool=tool_id,
+            path=str(tool_json_path),
+        )
         raise click.Abort()
 
 
@@ -120,7 +142,8 @@ def unmap_option(ctx: click.Context, tool_id: str, tool_option_name: str):
 
     if not option_found:
         click.echo(
-            f"Error: Tool option/argument '{tool_option_name}' not found in definition {tool_json_path}", err=True
+            f"Error: Tool option/argument '{tool_option_name}' not found in definition {tool_json_path}",
+            err=True,
         )
         raise click.Abort()
 
@@ -134,5 +157,9 @@ def unmap_option(ctx: click.Context, tool_id: str, tool_option_name: str):
         log.info("Option unmapped successfully.", tool=tool_id, tool_option=tool_option_name)
     else:
         click.echo(f"Error: Failed to write updated definition to {tool_json_path}", err=True)
-        log.error("Failed to write updated definition.", tool=tool_id, path=str(tool_json_path))
+        log.error(
+            "Failed to write updated definition.",
+            tool=tool_id,
+            path=str(tool_json_path),
+        )
         raise click.Abort()

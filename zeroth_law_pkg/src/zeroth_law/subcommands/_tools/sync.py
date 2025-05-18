@@ -38,7 +38,9 @@ from ._sync._run_hostility_audit import _run_hostility_audit
 
 # === Imports from OTHER modules (Needed by sync() directly) ===
 # Need index loading for setup
-from ...dev_scripts.tool_index_utils import load_tool_index  # Needed for initial load
+from ...dev_scripts.tool_index_utils import (
+    load_tool_index,
+)  # REMOVE save_tool_index import
 
 # Need ToolStatus for type hints if used directly
 from .reconcile import ToolStatus  # Keep if type hints needed in sync()
@@ -192,27 +194,24 @@ def sync(
     # generated_outputs_dir = project_root / "generated_command_outputs"
     # generated_outputs_dir.mkdir(parents=True, exist_ok=True)
 
-    # === Branch based on audit flag ===
-    if audit_hostility:
-        # --- Run Audit --- #
-        # ... (audit logic seems okay, uses read_only_app=True) ...
-        pass  # Placeholder for existing audit logic
-    else:
-        # --- Proceed with Normal Sync/Generate Workflow --- #
-        log.info("Proceeding with standard sync/generate workflow...")
-
-        # === Call Reconcile Directly (Step 2) ===
-        all_errors = []
-        exit_code = 0
-        # --- Initialize variables used in finally block --- #
+    # === Start Main Logic Try Block ===
+    try:
+        # === Pre-flight Checks & Setup (Steps 1-3) ===
+        # Initialize variables used throughout the function and in finally
+        pruned_count = 0
+        processed_count = 0
+        all_errors: List[str] = []  # Ensure defined early
+        exit_code = 0  # Default exit code
         container_name: Optional[str] = None
         podman_setup_successful = False
-        processed_count = 0  # Initialize reporting vars
-        updated_count = 0
-        skipped_count = 0
-        pruned_count = 0  # Initialize pruned_count here
-        # --- End Initialization --- #
+        current_index_data: Dict[str, Any] = {}  # Initialize index data
+        # Initialize reporting counts used in finally block
+        updated_count: int = 0
+        skipped_count: int = 0
+
+        # === Reconciliation (Moved inside its own try/except) ===
         try:
+            log.info("STAGE 1 & 2: Starting tool reconciliation and target identification...")
             (
                 reconciliation_results,
                 managed_tools_set,
@@ -221,259 +220,206 @@ def sync(
                 prune_errors,
                 pruned_count,
             ) = _reconcile_and_prune(project_root, config, tool_defs_dir, prune, dry_run)
-            all_errors.extend(prune_errors)
-            if prune_errors:
-                log.warning("Errors occurred during pruning. Continuing sync...")
+        except ReconciliationError as recon_e:
+            # Use ctx.fail to exit immediately with error message and code 1
+            ctx.fail(str(recon_e))
+        # --- End Reconciliation Block ---
 
-            if not managed_tools_set:  # <<< FIX: Indent this block >>>
-                log.warning("No managed tools identified by reconciliation. Nothing to sync.")
-                log.debug("Exiting: No managed tools.")
-                ctx.exit(0)
+        # Add prune errors if any occurred (even if ReconciliationError wasn't raised)
+        all_errors.extend(prune_errors)
+        if prune_errors:
+            log.warning("Errors occurred during pruning. Continuing sync...")
 
-            # === Identify Target Tools (Step 3) ===
-            target_tool_names = _identify_target_tools(specific_tools, reconciliation_results, managed_tools_set)
-            if not target_tool_names:
-                log.info("No target tools identified. Exiting.")
-                log.debug("Exiting: No target tools.")
-                ctx.exit(0)  # <-- Should be indented inside here
+        if not managed_tools_set:
+            log.warning("No managed tools identified by reconciliation. Nothing to sync.")
+            ctx.exit(0)
 
-            # === Generate & Filter Sequences (Step 4) ===
-            whitelisted_sequences, _, skipped_blacklist = _generate_and_filter_sequences(
-                tool_defs_dir,
-                target_tool_names,
-                reconciliation_results,
-                parsed_whitelist,
-                parsed_blacklist,
+        # === Target Identification & Filtering ===
+        target_tool_names = _identify_target_tools(specific_tools, reconciliation_results, managed_tools_set)
+        if not target_tool_names:
+            log.info("No target tools identified. Exiting.")
+            ctx.exit(0)
+
+        whitelisted_sequences, _, skipped_blacklist = _generate_and_filter_sequences(
+            tool_defs_dir,
+            target_tool_names,
+            reconciliation_results,
+            parsed_whitelist,
+            parsed_blacklist,
+        )
+        if not whitelisted_sequences:
+            log.warning("No effectively whitelisted sequences to process. Exiting.")
+            ctx.exit(0)
+
+        tasks_to_run = whitelisted_sequences  # Use whitelisted for generation
+
+        # === Load Index (Before Podman setup) ===
+        initial_index_data = load_tool_index(tool_index_path)
+        current_index_data = initial_index_data.copy()
+        log.info("Initial index loaded", index_size=len(initial_index_data))
+
+        # === Podman Setup (Step 5b) === #
+        # Container name and setup status are already initialized above
+        if generate_baselines and not dry_run:
+            log.info("STAGE 3: Setting up Podman runner...")
+            # --- Restore Podman Setup Logic --- #
+            venv_bin_path = project_root / ".venv" / "bin"
+            if not venv_bin_path.is_dir():
+                ctx.fail(f"Sync Error: Expected venv bin path not found for Podman setup: {venv_bin_path}")
+            container_name = _get_container_name(project_root)
+            podman_setup_successful = _start_podman_runner(
+                container_name,
+                project_root,
+                venv_bin_path,
+                read_only_app=audit_hostility,  # Use audit flag
             )
-            # --- DEBUG: Log sequences --- #
-            log.info("Generated whitelisted sequences", sequences=whitelisted_sequences)
-            # --- End DEBUG --- #
-            if not whitelisted_sequences:
-                log.warning("No effectively whitelisted sequences to process. Exiting.")
-                log.debug("Exiting: No whitelisted sequences.")
-                ctx.exit(0)
-
-            # === Load Index for Baseline Processing (Step 5) ===
-            initial_index_data = load_tool_index(tool_index_path)
-            current_index_data = initial_index_data.copy()
-            log.info("Initial index loaded", index_size=len(initial_index_data))  # DEBUG
-
-            # === Podman Setup for GENERATE (Step 5a) ===
-            container_name: Optional[str] = None
-            podman_setup_successful = False
-            if generate_baselines:
-                # Need venv_bin_path for _start_podman_runner
-                venv_bin_path = project_root / ".venv" / "bin"
-                if not venv_bin_path.is_dir():
-                    ctx.fail(f"Sync Error: Expected venv bin path not found for Podman setup: {venv_bin_path}")
-
-                # Corrected try/except/else for Podman setup
-                try:
-                    container_name = _get_container_name(project_root)
-                    podman_setup_successful = _start_podman_runner(
-                        container_name, project_root, venv_bin_path, read_only_app=False
-                    )
-                    if not podman_setup_successful:
-                        log.error("Podman runner setup failed. Cannot generate baselines.")
-                        ctx.exit(1)  # Exit if setup fails
-                    else:
-                        log.info(f"Podman runner container '{container_name}' started successfully.")
-                except Exception as e:
-                    log.exception(f"Error during Podman setup: {e}")
-                    if container_name:
-                        # Attempt cleanup only if container name was assigned
-                        try:
-                            _stop_podman_runner(container_name)
-                        except Exception as cleanup_e:
-                            log.error(f"Error during Podman cleanup after setup failure: {cleanup_e}")
-                    ctx.exit(1)  # Exit after error and cleanup attempt
-                # End corrected try/except/else
-
-            elif not dry_run:
-                log.info("Skipping Podman setup as --generate flag was not provided.")
-
-            # === Run Baseline Processing (Step 5c) ===
-            if generate_baselines and podman_setup_successful:
-                # Timestamp for --skip-hours logic
-                since_timestamp = (
-                    time.time() - (ground_truth_txt_skip_hours * 3600) if ground_truth_txt_skip_hours > 0 else None
-                )
-
-                # === Run Baseline Processing (Step 6) === #
-                log.info("STAGE 4: Starting baseline generation...")
-                try:
-                    # Initialize results before the try block
-                    all_results: List[Dict[str, Any]] = []
-                    processing_errors: List[str] = []
-                    skipped_count: int = 0
-
-                    # STAGE 4: Run baseline processing in parallel (or sequentially if max_workers=1)
-                    log.info("STAGE 4: Starting baseline generation...")
+            if not podman_setup_successful:
+                log.error("Podman runner setup failed. Cannot generate baselines.")
+                # Attempt cleanup even if setup failed
+                if container_name:
                     try:
-                        # Get max_workers from context
-                        sync_max_workers = ctx.obj.get("MAX_WORKERS", os.cpu_count())  # Use ctx.obj
-                        all_results, processing_errors, skipped_count = _run_parallel_baseline_processing(
-                            tasks_to_run=whitelisted_sequences,
-                            tool_defs_dir=tool_defs_dir,
-                            project_root=project_root,
-                            container_name=container_name,
-                            index_data=current_index_data,
-                            force=force,
-                            since_timestamp=since_timestamp,
-                            ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
-                            max_workers=sync_max_workers,  # Use variable from ctx.obj
-                            exit_errors_limit=exit_errors,
-                        )
-                    except Exception as parallel_exc:
-                        log.exception(f"Error during parallel baseline processing: {parallel_exc}")
-                        all_errors.append(f"Parallel baseline processing error: {parallel_exc}")
-                        ctx.fail(str(parallel_exc))
-
-                    # --- DEBUG: Log results before saving --- #
-                    log.info(
-                        "Baseline processing complete",
-                        results_count=len(all_results),
-                        errors_count=len(processing_errors),
-                        skipped_count=skipped_count,
-                    )
-                    # --- End DEBUG --- #
-
-                    # --- Update and Save Index (Step 7) --- #
-                    # Note: _update_and_save_index now returns final_index_data, errors, updated_count, skipped_count
-                    final_index_data, index_errors, updated_count, skipped_count = _update_and_save_index(
-                        results=all_results,
-                        initial_index_data=current_index_data,
-                        tool_index_path=tool_index_path,
-                        dry_run=dry_run,  # <-- ADD THIS ARGUMENT
-                    )
-                    all_errors.extend(index_errors)
-                    # Update current_index_data with the final version for potential hostility audit
-                    current_index_data = final_index_data
-
-                except ReconciliationError as e:
-                    # Use ctx.fail to print the error and exit with code 1
-                    ctx.fail(str(e))
-                except Exception as e:
-                    log.exception(f"Error during main sync logic: {e}")
-                    all_errors.append(f"Main sync error: {e}")
-                finally:
-                    # Add a direct print to confirm finally block is reached
-                    # print("SYNC FINALLY BLOCK REACHED", file=sys.stderr)
-                    # sys.stderr.flush()
-                    # === Podman Cleanup (Step 7) ===
-                    if container_name and podman_setup_successful:
-                        log.info(f"Attempting to stop and remove Podman container: {container_name}")
-                        try:  # <<< FIX: Add try block back >>>
-                            _stop_podman_runner(container_name)
-                            log.info(f"Successfully stopped and removed Podman container: {container_name}")
-                        except Exception as cleanup_e:  # <<< FIX: Add except block back >>>
-                            log.exception(f"Error during Podman cleanup: {cleanup_e}")
-
-                    # --- Final Reporting --- #
-                    end_time = time.time()
-                    duration = end_time - start_time
-                    summary_msg = (
-                        f"Sync summary: duration={round(duration, 2)}s, processed={processed_count}, "
-                        f"updated={updated_count}, skipped={skipped_count}, errors={len(all_errors)}, "
-                        f"exit_code={exit_code}"
-                    )
-                    if prune:
-                        summary_msg += f", pruned={pruned_count}"
-
-                    log.info(
-                        "Sync summary",  # Keep the log call
-                        duration_seconds=round(duration, 2),
-                        processed=processed_count,
-                        updated=updated_count,
-                        skipped=skipped_count,
-                        errors=len(all_errors),
-                        exit_code=exit_code,
-                        pruned=(pruned_count if prune else None),
-                    )
-                    # Also print directly to stderr for CliRunner testing
-                    # print(summary_msg, file=sys.stderr)
-                    # sys.stderr.flush()
-
-                    if processing_errors:
-                        log.error("Baseline generation failed for some commands.", failed=processing_errors)
-                        all_errors.append(f"Failed commands: {processing_errors}")
-                        if exit_errors:
-                            log.error("Exiting with error code due to baseline generation failures.")
-                            exit_code = 1
-                            # Need to ensure this actually causes a non-zero exit later
-
-                    processed_count += updated_count
-
-            elif dry_run:
-                log.info("[DRY RUN] Skipping baseline generation and index update.")
+                        _stop_podman_runner(container_name)
+                    except Exception:
+                        pass
+                ctx.exit(1)  # Exit if setup fails
             else:
-                log.info("Skipping baseline generation as --generate was not specified.")
+                log.info(f"Podman runner container '{container_name}' started successfully.")
+            # --- End Restore Podman Setup --- #
 
+        elif not dry_run:
+            log.info("Skipping Podman setup as --generate flag was not provided.")
+
+        # === Initialize variables used in baseline processing outside the conditional block ===
+        all_results: List[Dict[str, Any]] = []
+        processing_errors: List[str] = []
+
+        # === Run Baseline Processing (Step 5c) ===
+        if generate_baselines and podman_setup_successful:
+            # Timestamp for --skip-hours logic
+            since_timestamp = (
+                time.time() - (ground_truth_txt_skip_hours * 3600) if ground_truth_txt_skip_hours > 0 else None
+            )
+
+            # === Run Baseline Processing (Step 6) === #
+            log.info("STAGE 4: Starting baseline generation...")
+            # --- REMOVED INNER TRY/EXCEPT/FINALLY --- #
+            sync_max_workers = ctx.obj.get("MAX_WORKERS", os.cpu_count())  # Use ctx.obj
+            (
+                all_results,
+                processing_errors,
+                processed_count,
+            ) = _run_parallel_baseline_processing(
+                tasks_to_run=whitelisted_sequences,
+                tool_defs_dir=tool_defs_dir,
+                project_root=project_root,
+                container_name=container_name,
+                index_data=current_index_data,
+                force=force,
+                since_timestamp=since_timestamp,
+                ground_truth_txt_skip_hours=ground_truth_txt_skip_hours,
+                max_workers=sync_max_workers,  # Use variable from ctx.obj
+                exit_errors_limit=exit_errors,
+            )
+            # Assign skipped_count from results, not just initialized zero
+            skipped_count = sum(1 for r in all_results if r.get("skipped"))  # Correctly count skips
+            # Add processing errors to main error list
             if processing_errors:
-                log.error("Baseline generation failed for some commands.", failed=processing_errors)
-                all_errors.append(f"Failed commands: {processing_errors}")
+                all_errors.extend(processing_errors)
                 if exit_errors:
                     log.error("Exiting with error code due to baseline generation failures.")
-                    exit_code = 1
-                    # Need to ensure this actually causes a non-zero exit later
-
-            processed_count += updated_count
-
-        except click.exceptions.Exit as e:
-            # Allow clean exits initiated by helpers (like ctx.exit(0))
-            # Do not log this as an error or append to errors list
-            raise e  # Re-raise for Click to handle
-        except ReconciliationError as e:
-            # Use ctx.fail to print the error and exit with code 1
-            ctx.fail(str(e))
-        except Exception as e:
-            log.exception(f"Error during main sync logic: {e}")
-            all_errors.append(f"Main sync error: {e}")
-        finally:
-            # Add a direct print to confirm finally block is reached
-            # print("SYNC FINALLY BLOCK REACHED", file=sys.stderr)
-            # sys.stderr.flush()
-            # === Podman Cleanup (Step 7) ===
-            if container_name and podman_setup_successful:
-                log.info(f"Attempting to stop and remove Podman container: {container_name}")
-                try:  # <<< FIX: Add try block back >>>
-                    _stop_podman_runner(container_name)
-                    log.info(f"Successfully stopped and removed Podman container: {container_name}")
-                except Exception as cleanup_e:  # <<< FIX: Add except block back >>>
-                    log.exception(f"Error during Podman cleanup: {cleanup_e}")
-
-            # --- Final Reporting --- #
-            end_time = time.time()
-            duration = end_time - start_time
-            summary_msg = (
-                f"Sync summary: duration={round(duration, 2)}s, processed={processed_count}, "
-                f"updated={updated_count}, skipped={skipped_count}, errors={len(all_errors)}, "
-                f"exit_code={exit_code}"
-            )
-            if prune:
-                summary_msg += f", pruned={pruned_count}"
+                    exit_code = 1  # Set exit code if limit reached or any error occurred
 
             log.info(
-                "Sync summary",  # Keep the log call
-                duration_seconds=round(duration, 2),
-                processed=processed_count,
-                updated=updated_count,
-                skipped=skipped_count,
-                errors=len(all_errors),
-                exit_code=exit_code,
-                pruned=(pruned_count if prune else None),
+                "Baseline processing complete",
+                results_count=len(all_results),
+                errors_count=len(processing_errors),
+                skipped_count=skipped_count,
             )
-            # Also print directly to stderr for CliRunner testing
-            # print(summary_msg, file=sys.stderr)
-            # sys.stderr.flush()
 
-            if all_errors:
-                log.error("Sync finished with errors:", errors=all_errors)
-            else:
-                log.info("Sync finished successfully.")
+            # === Update and Save Index (Step 7) ===
+            # --- DEBUG: Log content of all_results before update --- #
+            log.debug(
+                "Sync: Before _update_and_save_index",
+                results_count=len(all_results),
+                all_results_data=all_results,
+            )
+            # --- DEBUG: Log the initial index data being passed --- #
+            log.debug("Sync: Passing initial_index_data", index_data=current_index_data)
+            # --- End DEBUG --- #
+            final_index_data, index_errors, updated_count, _ = _update_and_save_index(
+                results=all_results,
+                initial_index_data=current_index_data,
+                tool_index_path=tool_index_path,
+                dry_run=dry_run,
+            )
+            all_errors.extend(index_errors)
+            current_index_data = final_index_data
+            # --- DEBUG: Log index data AFTER update call --- #
+            # log.debug("Sync: After _update_and_save_index",
+            #           returned_final_data=final_index_data,
+            #           current_index_data=current_index_data)
+            # --- End DEBUG --- #
 
-    # Print final exit code for debugging
-    # print(f"FINAL EXIT CODE: {exit_code}", file=sys.stderr)
-    # sys.stderr.flush()
-    # Final exit call using the potentially modified exit_code
-    ctx.exit(exit_code)
+        elif dry_run:
+            log.info("[DRY RUN] Skipping baseline generation and index update.")
+            processed_count = len(tasks_to_run)  # In dry run, all tasks are considered 'processed' for summary
+        else:
+            log.info("Skipping baseline generation as --generate was not specified.")
+            processed_count = len(tasks_to_run)  # If not generating, all tasks are considered 'processed' for summary
+
+        # === Hostility Audit (Conditional) ===
+        if audit_hostility and not dry_run and not all_errors:
+            # ... (existing audit logic) ...
+            pass  # Placeholder
+
+    except click.exceptions.Exit as e:
+        # Allow clean exits initiated by helpers (like ctx.exit(0))
+        raise e  # Re-raise for Click to handle
+    except ReconciliationError as e:
+        # Use ctx.fail to print the error and exit with code 1
+        ctx.fail(str(e))
+    except Exception as e:
+        log.exception(f"Error during main sync logic: {e}")
+        all_errors.append(f"Main sync error: {e}")
+        exit_code = 1  # Set error exit code for unexpected exceptions
+    finally:
+        # === Single Finally Block ===
+        log.info("Executing main finally block...")
+        # === Podman Cleanup ===
+        if container_name and podman_setup_successful:
+            log.info(f"Attempting to stop and remove Podman container: {container_name}")
+            try:
+                _stop_podman_runner(container_name)
+                log.info(f"Successfully stopped and removed Podman container: {container_name}")
+            except Exception as cleanup_e:
+                log.exception(f"Error during Podman cleanup: {cleanup_e}")
+                # Optionally set exit_code = 1 here if cleanup failure is critical
+
+        # === Final Reporting ===
+        end_time = time.time()
+        duration = end_time - start_time
+
+        # Ensure counts are accurate even if baseline gen was skipped
+        # `processed_count` now reflects total tasks considered.
+        # `updated_count` and `skipped_count` come from `_update_and_save_index` or are 0.
+
+        log.info(
+            "Sync summary",
+            duration_seconds=round(duration, 2),
+            processed=processed_count,
+            updated=updated_count,
+            skipped=skipped_count,
+            errors=len(all_errors),
+            pruned=(pruned_count if prune else None),
+            exit_code=exit_code,  # Log the final intended exit code
+        )
+
+        if all_errors:
+            log.error("Sync finished with errors:", errors=all_errors)
+            exit_code = 1  # Ensure exit code is 1 if any errors occurred
+        else:
+            log.info("Sync finished successfully.")
+
+        # === Final Exit ===
+        # Final exit call using the determined exit_code
+        ctx.exit(exit_code)

@@ -29,7 +29,11 @@ def remove_blacklist(ctx: click.Context, tool_items: Tuple[str, ...], apply_all:
         log.error("Project root could not be determined.")
         ctx.exit(1)
 
-    log.info(f"Removing from blacklist: {tool_items} (All: {apply_all})", items=tool_items, all=apply_all)
+    log.info(
+        f"Removing from blacklist: {tool_items} (All: {apply_all})",
+        items=tool_items,
+        all=apply_all,
+    )
     modified = modify_tool_list(
         project_root=project_root,
         tool_items_to_modify=tool_items,

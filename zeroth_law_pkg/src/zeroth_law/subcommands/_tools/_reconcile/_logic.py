@@ -18,7 +18,10 @@ from ....lib.tooling.tool_reconciler import (
 )
 from ....lib.tooling.tools_dir_scanner import get_tool_dirs, scan_for_command_sequences
 from ....common.hierarchical_utils import ParsedHierarchy, parse_to_nested_dict
-from ....common.hierarchical_utils import ParsedHierarchy as HierarchicalListData  # Correct import + Alias
+from ....common.hierarchical_utils import (
+    ParsedHierarchy as HierarchicalListData,
+)  # Correct import + Alias
+
 # No config loader needed here, expects processed config
 
 logger = structlog.get_logger()  # Restore logger
@@ -89,7 +92,9 @@ def _perform_reconciliation_logic(
     # print(f"DEBUG [_logic]: Parsed blacklist (top-level keys): {list(blacklist.keys())}", file=sys.stderr)
     # sys.stderr.flush()
     logger.debug(
-        "Parsed lists", whitelist_keys=list(whitelist.keys()), blacklist_keys=list(blacklist.keys())
+        "Parsed lists",
+        whitelist_keys=list(whitelist.keys()),
+        blacklist_keys=list(blacklist.keys()),
     )  # Restore logger
 
     # 2. Scan Tool Definitions Directory for SEQUENCES
@@ -111,7 +116,9 @@ def _perform_reconciliation_logic(
         # print(f"INFO [_logic]: scan_for_command_sequences took {seq_scan_duration:.4f} seconds", file=sys.stderr)
         # sys.stderr.flush()
         logger.info(
-            "scan_for_command_sequences complete", duration=f"{seq_scan_duration:.4f}s", count=len(defined_sequences)
+            "scan_for_command_sequences complete",
+            duration=f"{seq_scan_duration:.4f}s",
+            count=len(defined_sequences),
         )  # Restore logger
         # print(f"INFO [_logic]: Found {len(defined_sequences)} defined command sequences in {tool_defs_dir}.", file=sys.stderr)
         # print(f"DEBUG [_logic]: Defined sequences: {defined_sequences}", file=sys.stderr) # Potentially large output
@@ -126,19 +133,26 @@ def _perform_reconciliation_logic(
                 f"Found unexpected tool definition directories not in whitelist: {sorted(list(discovered_unexpected_dirs))}"
             )
             logger.warning(
-                "Found unexpected tool definition directories", unexpected=sorted(list(discovered_unexpected_dirs))
+                "Found unexpected tool definition directories",
+                unexpected=sorted(list(discovered_unexpected_dirs)),
             )  # Log warning
 
     except FileNotFoundError as e:
         # print(f"ERROR [_logic]: {str(e)}", file=sys.stderr)
         # sys.stderr.flush()
-        logger.error("Tool definitions directory not found", path=str(tool_defs_dir), error=str(e))  # Restore logger
+        logger.error(
+            "Tool definitions directory not found",
+            path=str(tool_defs_dir),
+            error=str(e),
+        )  # Restore logger
         errors_found = True
     except OSError as e:
         # print(f"ERROR [_logic]: Error scanning tool definitions directory {tool_defs_dir}: {e}", file=sys.stderr)
         # sys.stderr.flush()
         logger.error(
-            "Error scanning tool definitions directory", path=str(tool_defs_dir), error=str(e)
+            "Error scanning tool definitions directory",
+            path=str(tool_defs_dir),
+            error=str(e),
         )  # Restore logger
         errors_found = True
 
@@ -167,11 +181,17 @@ def _perform_reconciliation_logic(
             # print(f"INFO [_logic]: get_executables_from_env took {env_scan_duration:.4f} seconds", file=sys.stderr)
             # sys.stderr.flush()
             logger.info(
-                "get_executables_from_env complete", duration=f"{env_scan_duration:.4f}s", count=len(env_tools)
+                "get_executables_from_env complete",
+                duration=f"{env_scan_duration:.4f}s",
+                count=len(env_tools),
             )  # Restore logger
         # print(f"INFO [_logic]: Found {len(env_tools)} relevant executables in environment after filtering. Tools: {sorted(list(env_tools))}", file=sys.stderr)
         # sys.stderr.flush()
-        logger.debug("Environment scan results", count=len(env_tools), tools=sorted(list(env_tools)))  # Restore logger
+        logger.debug(
+            "Environment scan results",
+            count=len(env_tools),
+            tools=sorted(list(env_tools)),
+        )  # Restore logger
     except FileNotFoundError as e:
         # print(f"ERROR [_logic]: Error constructing venv path (check project root): {e}", file=sys.stderr)
         # sys.stderr.flush()
@@ -181,7 +201,9 @@ def _perform_reconciliation_logic(
         # print(f"ERROR [_logic]: Error scanning environment bin directory: {e}", file=sys.stderr)
         # sys.stderr.flush()
         logger.error(
-            "Error scanning environment bin directory", path=str(venv_bin_path), error=str(e)
+            "Error scanning environment bin directory",
+            path=str(venv_bin_path),
+            error=str(e),
         )  # Restore logger
         errors_found = True
 
@@ -269,7 +291,8 @@ def _perform_reconciliation_logic(
     # print(f"INFO [_logic]: Identified {len(managed_tools_for_processing)} tools considered effectively managed.", file=sys.stderr)
     # sys.stderr.flush()
     logger.info(
-        "Identified managed tools for further processing", count=len(managed_tools_for_processing)
+        "Identified managed tools for further processing",
+        count=len(managed_tools_for_processing),
     )  # Restore logger
 
     # Return results including error status and the parsed lists
@@ -335,7 +358,13 @@ def _print_reconciliation_summary(
         return
 
     # Prepare data for a simple table (could use rich.Table later)
-    headers = ["Tool", "Source(s)", "Whitelist Status", "Blacklist Status", "Overall Status"]
+    headers = [
+        "Tool",
+        "Source(s)",
+        "Whitelist Status",
+        "Blacklist Status",
+        "Overall Status",
+    ]
     rows = []
     # Need env_tools and defined_sequences here to show sources accurately
     # THIS FUNCTION NEEDS MORE CONTEXT - PASS ENV_TOOLS & DEFINED_SEQUENCES

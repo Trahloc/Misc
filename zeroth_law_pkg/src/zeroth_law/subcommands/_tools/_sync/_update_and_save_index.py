@@ -4,6 +4,7 @@
 from pathlib import Path
 from typing import Tuple, List, Dict, Any
 import structlog
+import sys
 
 # --- Import project modules --- #
 # Relative path needs adjustment (add one more dot)
@@ -65,12 +66,23 @@ def _update_and_save_index(
                 f"Skipping index update for {command_sequence_to_id(command_sequence)} due to failure status: {status}"
             )
 
+    # --- DEBUG: Log final_index_data after loop --- #
+    # log.debug("[_update_and_save_index] Final index data after loop", data=final_index_data)
+    # --- END DEBUG --- #
+
     # Save Final Index
+    # --- DEBUG: Print value of dry_run --- #
+    # print(f"--- DEBUG [_update_and_save_index]: dry_run = {dry_run} (type: {type(dry_run)}) ---", file=sys.stderr)
+    # sys.stderr.flush()
+    # --- END DEBUG --- #
     if dry_run:
         log.info(f"[DRY RUN] Would save updated tool index with {len(final_index_data)} entries to {tool_index_path}")
     else:
+        # Call original save_tool_index FIRST
+        save_success = save_tool_index(final_index_data, tool_index_path=tool_index_path)
+        # Log AFTERWARDS
         log.info(f"Saving updated tool index with {len(final_index_data)} entries...")
-        if not save_tool_index(final_index_data, tool_index_path=tool_index_path):
+        if not save_success:
             log.error("Failed to save final tool index.")
             index_errors.append("Failed to save final tool index.")
 

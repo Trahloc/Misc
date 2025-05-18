@@ -40,8 +40,8 @@ def _run_parallel_baseline_processing(
     processed_count = 0
     error_count = 0  # Track errors specifically for exit_errors_limit
 
-    # --- Run Sequentially for Debugging (Commented Out) --- #
-    # log.warning("Running baseline processing sequentially for debugging...")
+    # --- Run Sequentially ALWAYS for Debugging --- # REMOVED
+    # log.warning("DEBUG: Running baseline processing sequentially...")
     # for sequence in tasks_to_run:
     #     command_id = command_sequence_to_id(sequence)
     #     try:
