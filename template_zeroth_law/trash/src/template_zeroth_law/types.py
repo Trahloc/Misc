@@ -20,17 +20,8 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    Dict,
-    List,
-    Union,
-    Any,
-    Callable,
-    TypeVar,
-    Protocol,
-    runtime_checkable,
-    Type,
-)
+from typing import (Any, Callable, Dict, List, Protocol, Type, TypeVar, Union,
+                    runtime_checkable)
 
 # Define type variables
 T = TypeVar("T")

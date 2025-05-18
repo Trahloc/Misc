@@ -13,11 +13,12 @@
 
 import logging
 import sys
-from typing import Optional  # Only import what's needed for the type annotation
+from typing import \
+    Optional  # Only import what's needed for the type annotation
 
 import click
 
-from template_zeroth_law.commands import check, version, info, test_coverage
+from template_zeroth_law.commands import check, info, test_coverage, version
 from template_zeroth_law.config import get_config
 
 
@@ -48,7 +49,7 @@ def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> 
     assert hasattr(app_config, "logging"), "Configuration must contain logging settings"
 
     # Use config version or fallback to default
-    version_str = getattr(app_config.app, "version", "0.1.0")
+    getattr(app_config.app, "version", "0.1.0")
 
     # Set up logging based on verbosity
     log_level = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}.get(

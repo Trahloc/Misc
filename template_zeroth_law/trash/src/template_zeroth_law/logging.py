@@ -14,7 +14,7 @@
 import logging
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Literal, Union
+from typing import Dict, Literal, Optional, Union
 
 # Define log formats and levels as constants
 DEFAULT_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
