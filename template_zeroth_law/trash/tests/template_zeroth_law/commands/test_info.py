@@ -14,10 +14,11 @@
  - template_zeroth_law.commands.info: Info command
 """
 
+from typing import Any, Dict
+from unittest.mock import MagicMock, patch
+
 import pytest
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
-from typing import Dict, Any
 
 from template_zeroth_law.commands.info import command
 

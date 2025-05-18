@@ -12,16 +12,13 @@
  - template_zeroth_law.utils: Module under test
 """
 
-import pytest
 from datetime import datetime
 from pathlib import Path
 
-from template_zeroth_law.utils import (
-    get_project_root,
-    sanitize_filename,
-    merge_dicts,
-    parse_timestamp,
-)
+import pytest
+
+from template_zeroth_law.utils import (get_project_root, merge_dicts,
+                                       parse_timestamp, sanitize_filename)
 
 
 def test_get_project_root():

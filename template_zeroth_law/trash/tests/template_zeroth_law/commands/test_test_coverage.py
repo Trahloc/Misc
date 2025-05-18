@@ -16,22 +16,18 @@
  - template_zeroth_law.commands.test_coverage: Module under test
 """
 
-import os
 import json
+import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import MagicMock, patch
+
 import pytest
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
 
 from template_zeroth_law.commands.test_coverage import (
-    command_create_test_stubs,
-    get_project_name,
-    find_source_and_test_files,
-    calculate_coverage,
-    create_test_stubs,
-    command,
-)
+    calculate_coverage, command, command_create_test_stubs, create_test_stubs,
+    find_source_and_test_files, get_project_name)
 
 
 @pytest.fixture

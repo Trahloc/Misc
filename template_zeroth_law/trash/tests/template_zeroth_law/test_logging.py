@@ -14,16 +14,13 @@
 """
 
 import logging
-import pytest
 from pathlib import Path
 from typing import Generator
 
-from template_zeroth_law.logging import (
-    configure_logging,
-    get_logger,
-    DEBUG_FORMAT,
-    LOG_LEVELS,
-)
+import pytest
+
+from template_zeroth_law.logging import (DEBUG_FORMAT, LOG_LEVELS,
+                                         configure_logging, get_logger)
 
 
 @pytest.fixture

@@ -13,17 +13,14 @@
  - template_zeroth_law.exceptions: Custom exceptions
 """
 
-from typing import Type, Any
+from typing import Any, Type
+
 import pytest
 
-from template_zeroth_law.exceptions import (
-    ZerothLawError,
-    FileNotFoundError,
-    NotPythonFileError,
-    NotADirectoryError,
-    AnalysisError,
-    ConfigError,
-)
+from template_zeroth_law.exceptions import (AnalysisError, ConfigError,
+                                            FileNotFoundError,
+                                            NotADirectoryError,
+                                            NotPythonFileError, ZerothLawError)
 
 
 def test_exception_hierarchy():
