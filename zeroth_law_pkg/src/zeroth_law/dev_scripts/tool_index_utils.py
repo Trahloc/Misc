@@ -203,7 +203,19 @@ def update_index_entry(
 
             # Perform the update - Explicitly assign relevant keys
             target_entry = index_data[base_tool_name]
-            keys_to_update = ["crc", "checked_timestamp", "updated_timestamp", "baseline_file", "source"]
+            log.debug(
+                "update_index_entry (base): Received update_data",
+                data=update_data,
+                target_before=target_entry.copy(),
+            )  # DEBUG LOG
+            keys_to_update = [
+                "crc",
+                "checked_timestamp",
+                "updated_timestamp",
+                "baseline_file",
+                "json_definition_file",
+                "source",
+            ]
             updated_keys_list = []
             for key in keys_to_update:
                 if key in update_data:
@@ -214,6 +226,10 @@ def update_index_entry(
                 target_entry.pop("baseline_file", None)  # Remove if exists
 
             log.info(f"Updated base entry for '{entry_id}' with keys: {updated_keys_list}")
+            log.debug(
+                "update_index_entry (base): Target after update",
+                target_after=target_entry,
+            )  # DEBUG LOG
             return True
         else:
             # Update subcommand
@@ -240,7 +256,19 @@ def update_index_entry(
 
             # Perform the update - Explicitly assign relevant keys
             target_entry = subcommands_dict[subcommand_name]
-            keys_to_update = ["crc", "checked_timestamp", "updated_timestamp", "baseline_file", "source"]
+            log.debug(
+                "update_index_entry (sub): Received update_data",
+                data=update_data,
+                target_before=target_entry.copy(),
+            )  # DEBUG LOG
+            keys_to_update = [
+                "crc",
+                "checked_timestamp",
+                "updated_timestamp",
+                "baseline_file",
+                "json_definition_file",
+                "source",
+            ]
             updated_keys_list = []
             for key in keys_to_update:
                 if key in update_data:
@@ -251,6 +279,10 @@ def update_index_entry(
                 target_entry.pop("baseline_file", None)  # Remove if exists
 
             log.info(f"Updated subcommand entry for '{entry_id}' with keys: {updated_keys_list}")
+            log.debug(
+                "update_index_entry (sub): Target after update",
+                target_after=target_entry,
+            )  # DEBUG LOG
             return True
 
     except Exception as e:

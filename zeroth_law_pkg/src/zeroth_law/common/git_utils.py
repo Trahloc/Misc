@@ -127,12 +127,16 @@ def generate_custom_hook_script() -> str:
     try:
         # Determine the path to the script file relative to this module
         # Use importlib.resources for robust path finding within the package
-        script_path = importlib.resources.files('zeroth_law.common.hook_scripts').joinpath('pre-commit-hook.sh')
-        with script_path.open('r', encoding='utf-8') as f:
+        script_path = importlib.resources.files("zeroth_law.common.hook_scripts").joinpath("pre-commit-hook.sh")
+        with script_path.open("r", encoding="utf-8") as f:
             script_content = f.read()
         return script_content.strip()
     except FileNotFoundError as e:
-        log.error("Hook script file not found! Check package data.", path=script_path, exc_info=True)
+        log.error(
+            "Hook script file not found! Check package data.",
+            path=script_path,
+            exc_info=True,
+        )
         raise FileNotFoundError("Could not find the pre-commit hook script file.") from e
     except Exception as e:
         log.exception("Unexpected error reading hook script file.", exc_info=True)
