@@ -1,1 +1,81 @@
-{}
+{
+  "ruff": {
+    "subcommands": {
+      "analyze": {
+        "crc": "0x00000000",
+        "checked_timestamp": 1746422600.9697611,
+        "updated_timestamp": 1746422600.9697611,
+        "baseline_file": "ruff/ruff_analyze.txt",
+        "source": "zlt_tools_sync"
+      },
+      "check": {
+        "crc": "0x78687F48",
+        "checked_timestamp": 1746422600.9700234,
+        "updated_timestamp": 1746422600.9700234,
+        "baseline_file": "ruff/ruff_check.txt",
+        "source": "zlt_tools_sync"
+      },
+      "help": {
+        "crc": "0xAE0936D1",
+        "checked_timestamp": 1746422600.971266,
+        "updated_timestamp": 1746422600.971266,
+        "baseline_file": "ruff/ruff_help.txt",
+        "source": "zlt_tools_sync"
+      },
+      "rule": {
+        "crc": "0x00000000",
+        "checked_timestamp": 1746422600.9717417,
+        "updated_timestamp": 1746422600.9717417,
+        "baseline_file": "ruff/ruff_rule.txt",
+        "source": "zlt_tools_sync"
+      },
+      "clean": {
+        "crc": "0x00000000",
+        "checked_timestamp": 1746422600.9702258,
+        "updated_timestamp": 1746422600.9702258,
+        "baseline_file": "ruff/ruff_clean.txt",
+        "source": "zlt_tools_sync"
+      },
+      "version": {
+        "crc": "0x2C2E159D",
+        "checked_timestamp": 1746422600.9729624,
+        "updated_timestamp": 1746422600.9729624,
+        "baseline_file": "ruff/ruff_version.txt",
+        "source": "zlt_tools_sync"
+      },
+      "config": {
+        "crc": "0x497C8431",
+        "checked_timestamp": 1746422600.9704394,
+        "updated_timestamp": 1746422600.9704394,
+        "baseline_file": "ruff/ruff_config.txt",
+        "source": "zlt_tools_sync"
+      },
+      "format": {
+        "crc": "0x4483F5C0",
+        "checked_timestamp": 1746422600.9710112,
+        "updated_timestamp": 1746422600.9710112,
+        "baseline_file": "ruff/ruff_format.txt",
+        "source": "zlt_tools_sync"
+      },
+      "server": {
+        "crc": "0x00000000",
+        "checked_timestamp": 1746422600.9732769,
+        "updated_timestamp": 1746422600.9732769,
+        "baseline_file": "ruff/ruff_server.txt",
+        "source": "zlt_tools_sync"
+      },
+      "linter": {
+        "crc": "0x481C7F89",
+        "checked_timestamp": 1746422600.9716306,
+        "updated_timestamp": 1746422600.9716306,
+        "baseline_file": "ruff/ruff_linter.txt",
+        "source": "zlt_tools_sync"
+      }
+    },
+    "crc": "0x00000000",
+    "checked_timestamp": 1746422600.9694512,
+    "updated_timestamp": 1746422600.9694512,
+    "baseline_file": "ruff/ruff.txt",
+    "source": "zlt_tools_sync"
+  }
+}
