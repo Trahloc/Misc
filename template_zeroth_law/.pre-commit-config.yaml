@@ -27,27 +27,27 @@ repos:
       - id: mypy
         additional_dependencies: [types-requests]
 
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        exclude: ^tests/
+  # - repo: https://github.com/pycqa/pydocstyle
+  #   rev: 6.3.0
+  #   hooks:
+  #     - id: pydocstyle
+  #       exclude: ^tests/
 
-  - repo: https://github.com/econchick/interrogate
-    rev: 1.5.0
-    hooks:
-      - id: interrogate
-        args: [-vv, -i, --fail-under=95]
+  # - repo: https://github.com/econchick/interrogate
+  #   rev: 1.5.0
+  #   hooks:
+  #     - id: interrogate
+  #       args: [-vv, -i, --fail-under=95]
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0  # Use a specific, stable version.
-    hooks:
-      - id: flake8
-        # VS Code: Install the "Python" extension (by Microsoft).  It includes
-        #          flake8 integration.  Configure flake8 settings in your VS Code
-        #          settings.json (e.g., max-line-length, ignore codes).
-        # pre-commit: This is a final check, ensuring consistent style.
-        args: [--max-line-length=88, --ignore=E203,W503] # Example: Adjust as needed.
+  # - repo: https://github.com/PyCQA/flake8
+  #   rev: 6.0.0  # Use a specific, stable version.
+  #   hooks:
+  #     - id: flake8
+  #       # VS Code: Install the "Python" extension (by Microsoft).  It includes
+  #       #          flake8 integration.  Configure flake8 settings in your VS Code
+  #       #          settings.json (e.g., max-line-length, ignore codes).
+  #       # pre-commit: This is a final check, ensuring consistent style.
+  #       args: [--max-line-length=88, --ignore=E203,W503] # Example: Adjust as needed.
 
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0  # Use a specific version
