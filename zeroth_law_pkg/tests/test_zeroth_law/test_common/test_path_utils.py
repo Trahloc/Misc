@@ -24,7 +24,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 # from zeroth_law.path_utils import find_project_root  # noqa: E402
 from zeroth_law.common.path_utils import find_project_root, ZLFProjectRootNotFoundError
 from zeroth_law.common.git_utils import find_git_root
-from zeroth_law.lib.tool_path_utils import command_sequence_to_filepath, command_sequence_to_id
+from zeroth_law.lib.tool_path_utils import (
+    command_sequence_to_filepath,
+    command_sequence_to_id,
+)
 
 
 def test_find_project_root_from_within_project(tmp_path):

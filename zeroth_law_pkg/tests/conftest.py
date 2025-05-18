@@ -888,7 +888,9 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]: 
     from zeroth_law.common.config_loader import load_config
 
     # Import the logic function, but rely on the imported Exception class
-    from zeroth_law.subcommands._tools._reconcile._logic import _perform_reconciliation_logic
+    from zeroth_law.subcommands._tools._reconcile._logic import (
+        _perform_reconciliation_logic,
+    )
     from zeroth_law.lib.tooling.tool_reconciler import ToolStatus
 
     logger = logging.getLogger(__name__)  # Use standard logging for fixture setup
@@ -908,7 +910,10 @@ def managed_sequences(WORKSPACE_ROOT: Path, TOOL_INDEX_PATH: Path) -> Set[str]: 
 
         if has_errors:
             # Optionally fail fixture setup if reconciliation itself had errors
-            pytest.fail("Reconciliation logic reported errors during fixture setup.", pytrace=False)
+            pytest.fail(
+                "Reconciliation logic reported errors during fixture setup.",
+                pytrace=False,
+            )
 
         # Return the set of managed tool names (top-level only for simplicity here)
         return managed_tools  # Return the set directly

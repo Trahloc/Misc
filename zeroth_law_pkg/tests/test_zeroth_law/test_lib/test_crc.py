@@ -87,7 +87,9 @@ try:
     #     crc_val = zlib.crc32(content_bytes) & 0xFFFFFFFF
     #     return f"0x{crc_val:08X}"
     # For this test, we assume it's imported or available
-    from zeroth_law.lib.tool_path_utils import calculate_crc32_hex  # Check this import path
+    from zeroth_law.lib.tool_path_utils import (
+        calculate_crc32_hex,
+    )  # Check this import path
 
     _crc_hex_imported = True
 except ImportError:

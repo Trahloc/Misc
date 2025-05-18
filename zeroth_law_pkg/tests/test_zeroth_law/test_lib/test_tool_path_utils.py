@@ -25,8 +25,16 @@ BASE_TOOLS_DIR = Path("/mock/tools")
     [
         (("toolA",), "toolA/toolA.json", "toolA/toolA.txt"),
         (("toolB", "sub1"), "toolB/toolB_sub1.json", "toolB/toolB_sub1.txt"),
-        (("toolC", "sub1", "subsubA"), "toolC/toolC_sub1_subsubA.json", "toolC/toolC_sub1_subsubA.txt"),
-        (("tool-with-hyphen",), "tool-with-hyphen/tool-with-hyphen.json", "tool-with-hyphen/tool-with-hyphen.txt"),
+        (
+            ("toolC", "sub1", "subsubA"),
+            "toolC/toolC_sub1_subsubA.json",
+            "toolC/toolC_sub1_subsubA.txt",
+        ),
+        (
+            ("tool-with-hyphen",),
+            "tool-with-hyphen/tool-with-hyphen.json",
+            "tool-with-hyphen/tool-with-hyphen.txt",
+        ),
     ],
 )
 def test_command_sequence_to_filepath_new_signature(sequence, expected_json_rel_path_str, expected_txt_rel_path_str):

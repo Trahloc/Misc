@@ -53,7 +53,10 @@ def test_run_podman_command_failure_exit_code(mock_subprocess_run):
 
 
 @pytest.mark.skipif(_run_podman_command is None, reason="Could not import function")
-@patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="podman run ...", timeout=10))
+@patch(
+    "subprocess.run",
+    side_effect=subprocess.TimeoutExpired(cmd="podman run ...", timeout=10),
+)
 def test_run_podman_command_exception(mock_subprocess_run):
     """Test _run_podman_command handling subprocess exceptions."""
     cmd_list = ["podman", "run", "infinite_loop"]

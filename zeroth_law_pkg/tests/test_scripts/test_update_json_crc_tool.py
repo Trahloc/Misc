@@ -59,9 +59,7 @@ MOCK_TOOL1_JSON_OLD_CRC = (
             "description": "Test tool 1",
             "options": [],
             "arguments": [],
-            "metadata": {
-                "ground_truth_crc": "0xOLDDDDDD"  # Needs update
-            },
+            "metadata": {"ground_truth_crc": "0xOLDDDDDD"},  # Needs update
         },
         indent=4,
     )
@@ -75,9 +73,7 @@ MOCK_TOOL1_JSON_NEW_CRC = (
             "description": "Test tool 1",
             "options": [],
             "arguments": [],
-            "metadata": {
-                "ground_truth_crc": "0xabcdef12"  # Updated value
-            },
+            "metadata": {"ground_truth_crc": "0xabcdef12"},  # Updated value
         },
         indent=4,
     )
@@ -107,9 +103,7 @@ MOCK_TOOL2_SUBA_JSON_NEW_CRC = (
             "description": "Test tool 2 sub A",
             "options": [],
             "arguments": [],
-            "metadata": {
-                "ground_truth_crc": "0x55667788"  # Added/updated value
-            },
+            "metadata": {"ground_truth_crc": "0x55667788"},  # Added/updated value
         },
         indent=4,
     )
@@ -885,9 +879,7 @@ MOCK_TOOL1_JSON_MATCHING_CRC = (
             "description": "Test tool 1",
             "options": [],
             "arguments": [],
-            "metadata": {
-                "ground_truth_crc": "0xabcdef12"  # Matches index
-            },
+            "metadata": {"ground_truth_crc": "0xabcdef12"},  # Matches index
         },
         indent=4,
     )

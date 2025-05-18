@@ -4,7 +4,11 @@ import pytest
 from pathlib import Path
 from typing import List, Tuple
 
-from zeroth_law.common.hierarchical_utils import parse_to_nested_dict, check_list_conflicts, get_effective_status
+from zeroth_law.common.hierarchical_utils import (
+    parse_to_nested_dict,
+    check_list_conflicts,
+    get_effective_status,
+)
 
 
 def test_placeholder():
@@ -16,7 +20,10 @@ def test_parse_to_nested_dict_basic():
     """Test basic parsing."""
     items = ["toolA", "toolB"]
     # Updated expected: Intermediate nodes not created for top-level
-    expected = {"toolA": {"_explicit": True, "_all": False}, "toolB": {"_explicit": True, "_all": False}}
+    expected = {
+        "toolA": {"_explicit": True, "_all": False},
+        "toolB": {"_explicit": True, "_all": False},
+    }
     assert parse_to_nested_dict(items) == expected
 
 
@@ -28,7 +35,11 @@ def test_parse_to_nested_dict_nested():
         "toolA": {
             "_explicit": False,
             "_all": False,
-            "sub1": {"_explicit": False, "_all": False, "subsubA": {"_explicit": True, "_all": False}},
+            "sub1": {
+                "_explicit": False,
+                "_all": False,
+                "subsubA": {"_explicit": True, "_all": False},
+            },
         }
     }
     assert parse_to_nested_dict(items) == expected
@@ -60,7 +71,11 @@ def test_parse_to_nested_dict_wildcard():
             "_all": False,
             "sub1": {"_explicit": False, "_all": True},
         },
-        "toolC": {"_explicit": False, "_all": False, "sub2": {"_explicit": True, "_all": False}},
+        "toolC": {
+            "_explicit": False,
+            "_all": False,
+            "sub2": {"_explicit": True, "_all": False},
+        },
     }
     assert parse_to_nested_dict(items) == expected
 
@@ -70,7 +85,13 @@ def test_parse_to_nested_dict_explicit_beats_wildcard_parent():
     # Although toolA isn't explicitly listed, the child implies its existence
     items = ["toolA:sub1"]
     # Updated expected: Intermediate nodes get flags
-    expected = {"toolA": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}}
+    expected = {
+        "toolA": {
+            "_explicit": False,
+            "_all": False,
+            "sub1": {"_explicit": True, "_all": False},
+        }
+    }
     assert parse_to_nested_dict(items) == expected
 
 
@@ -224,7 +245,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "WHITELISTED",
         ),
         (
@@ -239,7 +268,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "WHITELISTED",
         ),
         (
@@ -254,7 +291,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "BLACKLISTED",
         ),
         (
@@ -269,7 +314,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "WHITELISTED",
         ),
         (
@@ -284,7 +337,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "BLACKLISTED",
         ),
         (
@@ -299,7 +360,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "WHITELISTED",
         ),
         (
@@ -314,7 +383,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "UNSPECIFIED",
         ),
         (
@@ -329,7 +406,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "BLACKLISTED",
         ),
         (
@@ -344,7 +429,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "BLACKLISTED",
         ),
         (
@@ -359,7 +452,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "WHITELISTED",
         ),
         (
@@ -374,7 +475,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "WHITELISTED",
         ),
         (
@@ -389,7 +498,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "BLACKLISTED",
         ),
         (
@@ -404,7 +521,15 @@ def test_parse_to_nested_dict_invalid_strings():
                 "toolG:*",
                 "toolH:sub1",
             ],
-            ["toolB:sub2", "toolC:sub_block", "toolD:sub2", "toolE:sub2:*", "toolF:*", "toolG:sub_block", "toolH:*"],
+            [
+                "toolB:sub2",
+                "toolC:sub_block",
+                "toolD:sub2",
+                "toolE:sub2:*",
+                "toolF:*",
+                "toolG:sub_block",
+                "toolH:*",
+            ],
             "UNSPECIFIED",
         ),
     ],

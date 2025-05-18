@@ -9,7 +9,10 @@ from unittest.mock import patch, MagicMock
 import os
 
 # from zeroth_law.lib.tooling.tools_dir_scanner import get_tool_dirs, scan_whitelisted_sequences # Commented out - Module refactored/deleted
-from zeroth_law.common.hierarchical_utils import parse_to_nested_dict, get_effective_status
+from zeroth_law.common.hierarchical_utils import (
+    parse_to_nested_dict,
+    get_effective_status,
+)
 
 
 def test_scan_with_tool_dirs(tmp_path):
@@ -91,8 +94,8 @@ def test_scan_directory_with_only_files(tmp_path):
 # Commenting out module-level calls that might cause import/collection hangs
 # WL_TREE = parse_to_nested_dict(["toolA", "toolB:sub1", "toolC:sub1:subsubA", "toolD:*"])
 # BL_TREE = parse_to_nested_dict(["toolA:sub_blocked", "toolB:sub2", "toolE"])
-WL_TREE = None # Placeholder
-BL_TREE = None # Placeholder
+WL_TREE = None  # Placeholder
+BL_TREE = None  # Placeholder
 
 
 def mock_get_effective_status(sequence, wl_tree, bl_tree):
@@ -124,7 +127,10 @@ def mock_get_effective_status(sequence, wl_tree, bl_tree):
     return "UNSPECIFIED"
 
 
-@patch("zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status", mock_get_effective_status)
+@patch(
+    "zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status",
+    mock_get_effective_status,
+)
 def test_scan_whitelisted_only_base(tmp_path):
     """Test scanning when only base tools are whitelisted (and exist)."""
     base_tools_dir = tmp_path / "tools"
@@ -138,7 +144,10 @@ def test_scan_whitelisted_only_base(tmp_path):
     assert sorted(result) == sorted(expected)
 
 
-@patch("zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status", mock_get_effective_status)
+@patch(
+    "zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status",
+    mock_get_effective_status,
+)
 def test_scan_whitelisted_mixed(tmp_path):
     """Test scanning a mix of whitelisted base and subcommands."""
     base_tools_dir = tmp_path / "tools"
@@ -167,7 +176,10 @@ def test_scan_whitelisted_mixed(tmp_path):
     assert sorted(map(tuple, result)) == sorted(map(tuple, expected))
 
 
-@patch("zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status", mock_get_effective_status)
+@patch(
+    "zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status",
+    mock_get_effective_status,
+)
 def test_scan_whitelisted_only_specific_subcommand(tmp_path):
     """Test scanning when only a deep subcommand is whitelisted."""
     base_tools_dir = tmp_path / "tools"
@@ -180,7 +192,10 @@ def test_scan_whitelisted_only_specific_subcommand(tmp_path):
     assert sorted(result) == sorted(expected)
 
 
-@patch("zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status", mock_get_effective_status)
+@patch(
+    "zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status",
+    mock_get_effective_status,
+)
 def test_scan_whitelisted_skips_blacklisted_branch(tmp_path):
     """Test that scanning does not descend into blacklisted directories."""
     base_tools_dir = tmp_path / "tools"
@@ -190,7 +205,10 @@ def test_scan_whitelisted_skips_blacklisted_branch(tmp_path):
     assert result == []  # Should not find anything inside toolE
 
 
-@patch("zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status", mock_get_effective_status)
+@patch(
+    "zeroth_law.lib.tooling.tools_dir_scanner.get_effective_status",
+    mock_get_effective_status,
+)
 def test_scan_whitelisted_empty_dir(tmp_path):
     """Test scanning an empty tools directory."""
     base_tools_dir = tmp_path / "tools"
