@@ -14,10 +14,11 @@
 """
 
 import os
-import sys
 import platform
-import click
+import sys
 from pathlib import Path
+
+import click
 
 from template_zeroth_law.utils import get_project_root
 

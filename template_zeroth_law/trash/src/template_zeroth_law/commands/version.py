@@ -11,9 +11,10 @@
  - template_zeroth_law.config: Configuration management
 """
 
-import sys
 import platform
+import sys
 from datetime import datetime
+
 import click
 
 # Use importlib.metadata for Python 3.8+ or pkg_resources as fallback

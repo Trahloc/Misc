@@ -8,8 +8,8 @@
  - unittest.mock
 """
 
-from unittest.mock import MagicMock
 from typing import Any, Callable
+from unittest.mock import MagicMock
 
 
 def create_click_compatible_mock(mock_class: Callable[[], Any]) -> Any:

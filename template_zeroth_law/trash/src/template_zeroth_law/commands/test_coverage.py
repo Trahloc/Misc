@@ -18,11 +18,12 @@
 """
 
 import os
-import click
-from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional
-import sys
 import subprocess
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import click
 
 from template_zeroth_law.utils import get_project_root
 
@@ -351,7 +352,7 @@ def create_test_stubs(
         # Get relative path within source
         # If it's a src structure, parts[0] is project_name and we need parts[1:]
         # If it's not a src structure, we still use parts[1:] to skip the root
-        rel_path = "/".join(parts[1:])
+        "/".join(parts[1:])
 
         # Create test directory if it doesn't exist
         test_dir = project_root / "tests" / "/".join(parts[1:-1])
