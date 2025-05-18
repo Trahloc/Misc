@@ -10,7 +10,7 @@
 """
 
 # Import the module to test
-from template_zeroth_law import __version__, ZerothLawError
+from template_zeroth_law import ZerothLawError, __version__
 
 
 def test___init___version_exists():

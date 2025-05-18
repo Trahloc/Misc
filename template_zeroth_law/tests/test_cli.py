@@ -17,10 +17,11 @@
 """
 
 import logging
-import pytest
-from click.testing import CliRunner
 from pathlib import Path
 from typing import Any
+
+import pytest
+from click.testing import CliRunner
 
 from template_zeroth_law.cli import main
 
@@ -43,7 +44,8 @@ def config_file(tmp_path: Path) -> Path:
     RETURNS: Path to the temporary config file
     """
     config = tmp_path / "config.json"
-    config.write_text("""
+    config.write_text(
+        """
     {
         "app": {
             "name": "test_app",
@@ -55,7 +57,8 @@ def config_file(tmp_path: Path) -> Path:
             "format": "%(message)s"
         }
     }
-    """)
+    """
+    )
     return config
 
 

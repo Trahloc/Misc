@@ -22,7 +22,8 @@ from typing import List, Optional
 
 import click
 
-from template_zeroth_law.exceptions import ZerothLawError, ConfigError, FileError
+from template_zeroth_law.exceptions import (ConfigError, FileError,
+                                            ZerothLawError)
 
 
 @click.group()

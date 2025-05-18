@@ -13,8 +13,6 @@ import pytest
 
 # Import the module to test - if it exists
 try:
-    from template_zeroth_law.utils import time_utils
-
     TIME_UTILS_MODULE_EXISTS = True
 except ImportError:
     TIME_UTILS_MODULE_EXISTS = False
