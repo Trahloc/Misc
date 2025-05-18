@@ -101,7 +101,11 @@ def load_zlt_option_definitions() -> Dict[str, Dict[str, Any]]:
         with open(OPTIONS_DEF_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except json.JSONDecodeError as e:
-        log.error("zlt_options_definition_decoding_error", path=str(OPTIONS_DEF_PATH), error=str(e))
+        log.error(
+            "zlt_options_definition_decoding_error",
+            path=str(OPTIONS_DEF_PATH),
+            error=str(e),
+        )
         return {}
     except Exception as e:
         log.exception("zlt_options_definition_loading_error", path=str(OPTIONS_DEF_PATH))
@@ -287,7 +291,13 @@ def create_cli_group() -> click.Group:
         help="Path to the ZLT configuration file (pyproject.toml section overrides this).",
     )
     @click.pass_context
-    def base_cli_group(ctx: click.Context, verbose: int, quiet: bool, config_path: Optional[Path], **kwargs) -> None:
+    def base_cli_group(
+        ctx: click.Context,
+        verbose: int,
+        quiet: bool,
+        config_path: Optional[Path],
+        **kwargs,
+    ) -> None:
         """Core logic for the base CLI group."""
         # Initialize context object first
         ctx.ensure_object(dict)
