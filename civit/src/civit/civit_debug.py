@@ -7,8 +7,8 @@ Usage:
     python -m src.civit_debug -d URL
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Make sure we can import our modules

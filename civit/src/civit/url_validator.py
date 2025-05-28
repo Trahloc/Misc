@@ -12,8 +12,9 @@
 
 import logging
 import re
-import requests
 from urllib.parse import urlparse, urlunparse
+
+import requests
 
 # Configure module logger
 logger = logging.getLogger(__name__)

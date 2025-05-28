@@ -1,12 +1,9 @@
-import re
-import logging
 import inspect
+import logging
+import re
 from typing import Dict, Optional
-from .test_utils import (
-    test_aware,
-    get_current_test_name,
-    get_current_test_file,
-)
+
+from .test_utils import get_current_test_file, get_current_test_name, test_aware
 
 logger = logging.getLogger(__name__)
 

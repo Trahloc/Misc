@@ -44,4 +44,8 @@ dev = [
     "flake8>=6.0",
     "hypothesis",
     "pre-commit",
+    "autoinit",
 ]
+
+[tool.mypy]
+files = ["src/civit"]

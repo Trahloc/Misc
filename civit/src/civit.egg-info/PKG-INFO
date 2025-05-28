@@ -19,6 +19,7 @@ Requires-Dist: mypy>=1.0; extra == "dev"
 Requires-Dist: flake8>=6.0; extra == "dev"
 Requires-Dist: hypothesis; extra == "dev"
 Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: autoinit; extra == "dev"
 
 # Civit Downloader
 

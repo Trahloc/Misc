@@ -13,11 +13,12 @@
     - zlib: For CRC32 hash generation
 """
 
-import zlib
-from typing import Dict, Any
-from .filename_generator import sanitize_filename
-from .exceptions import InvalidPatternError, MetadataError
 import logging
+import zlib
+from typing import Any, Dict
+
+from .exceptions import InvalidPatternError, MetadataError
+from .filename_generator import sanitize_filename
 
 logger = logging.getLogger(__name__)
 

@@ -10,8 +10,8 @@
     - datetime: Timestamp handling
 """
 
-import logging
 import json
+import logging
 from dataclasses import dataclass
 
 __all__ = ["JsonFormatter", "setup_logging"]

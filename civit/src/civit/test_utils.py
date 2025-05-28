@@ -1,8 +1,8 @@
+import functools
 import inspect
 import os
-import functools
 import sys
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 
 def is_running_test() -> bool:

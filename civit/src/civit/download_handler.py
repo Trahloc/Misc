@@ -1,16 +1,16 @@
-import os
-import requests
-import logging
 import hashlib
+import logging
+import os
 import re
-from tqdm.auto import tqdm
-from pathlib import Path
-from typing import Dict, Any, Optional, Union, Tuple
-from .test_utils import (
-    test_aware,
-)
-from urllib.parse import urlparse
 import time
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Union
+from urllib.parse import urlparse
+
+import requests
+from tqdm.auto import tqdm
+
+from .test_utils import test_aware
 
 logger = logging.getLogger(__name__)
 

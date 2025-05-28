@@ -11,11 +11,11 @@
 """
 
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from logging import LoggerAdapter
 from pathlib import Path
 from typing import Dict
-from logging import LoggerAdapter
-from datetime import datetime
-from dataclasses import dataclass
 
 # Create structured logger
 logger = LoggerAdapter(
