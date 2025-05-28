@@ -230,6 +230,54 @@ def _start_podman_runner(
         _run_podman_command(install_cmd)
         log.info("Dependencies and local project installed in internal venv.")
 
+        # --- START ADDED VERIFICATION ---
+        # Verify that a known script from the project wheel was installed
+        # Use managed_tool_a as an example, assuming it's defined in [project.scripts]
+        log.info("Verifying project script installation in container...")
+        verify_script_cmd = ["exec", container_name, "test", "-x", "/venv/bin/managed_tool_a"]
+        verify_result = _run_podman_command(verify_script_cmd)
+        if verify_result.returncode != 0:
+            log.error(
+                f"Verification failed: '/venv/bin/managed_tool_a' not found or not executable in container {container_name} after installation."
+            )
+            # Attempt to list /venv/bin for debugging
+            try:
+                ls_cmd = ["exec", container_name, "ls", "-la", "/venv/bin"]
+                ls_result = _run_podman_command(ls_cmd)
+                log.error(
+                    f"Contents of /venv/bin:\n{ls_result.stdout.decode(errors='replace')}{ls_result.stderr.decode(errors='replace')}"
+                )
+            except Exception as ls_e:
+                log.error(f"Failed to list /venv/bin: {ls_e}")
+            # Stop the potentially broken container before returning
+            _stop_podman_runner(container_name)
+            return False
+        log.info("Project script installation verified successfully.")
+        # --- END ADDED VERIFICATION ---
+
+        # --- START ADDED SITE-PACKAGES VERIFICATION ---
+        log.info("Verifying package installation in container site-packages...")
+        verify_pkg_cmd = ["exec", container_name, "test", "-d", "/venv/lib/python3.13/site-packages/zeroth_law"]
+        verify_pkg_result = _run_podman_command(verify_pkg_cmd)
+        if verify_pkg_result.returncode != 0:
+            log.error(
+                f"Verification failed: Package directory '/venv/lib/python3.13/site-packages/zeroth_law' not found in container {container_name} after installation."
+            )
+            # Attempt to list site-packages for debugging
+            try:
+                ls_cmd = ["exec", container_name, "ls", "-la", "/venv/lib/python3.13/site-packages"]
+                ls_result = _run_podman_command(ls_cmd)
+                log.error(
+                    f"Contents of /venv/lib/python3.13/site-packages:\n{ls_result.stdout.decode(errors='replace')}{ls_result.stderr.decode(errors='replace')}"
+                )
+            except Exception as ls_e:
+                log.error(f"Failed to list /venv/lib/python3.13/site-packages: {ls_e}")
+            # Stop the potentially broken container before returning
+            _stop_podman_runner(container_name)
+            return False
+        log.info("Package directory installation verified successfully.")
+        # --- END ADDED SITE-PACKAGES VERIFICATION ---
+
         # --- DEBUG: Poll container status until 'Up' or timeout ---
         log.info(f"Polling status of container {container_name}...")
         start_time = time.time()

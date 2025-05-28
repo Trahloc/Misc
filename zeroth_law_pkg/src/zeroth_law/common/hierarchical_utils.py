@@ -302,7 +302,9 @@ def remove_node_recursive(hierarchy: ParsedHierarchy, path: List[str]) -> bool:
         node = level.get(part)
         if not node or not isinstance(node, dict):
             # Node doesn't exist at this level, path invalid for removal
-            log.debug(f"Node '{part}' not found at path {''.join(path[:len(path)-len(current_path)])}. Cannot remove.")
+            log.debug(
+                f"Node '{part}' not found at path {''.join(path[: len(path) - len(current_path)])}. Cannot remove."
+            )
             return False
 
         child_requested_deletion = False

@@ -9,6 +9,7 @@ from ._complete._run_complete import _run_complete_logic
 
 log = structlog.get_logger()
 
+
 @click.command("complete")
 @click.argument("phase_header", type=str)
 @click.option("--confirmed", is_flag=True, help="Perform the archive operation. Without this flag, performs a dry run.")

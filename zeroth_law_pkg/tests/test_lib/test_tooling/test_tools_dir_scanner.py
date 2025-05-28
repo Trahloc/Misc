@@ -91,8 +91,8 @@ def test_scan_directory_with_only_files(tmp_path):
 # Commenting out module-level calls that might cause import/collection hangs
 # WL_TREE = parse_to_nested_dict(["toolA", "toolB:sub1", "toolC:sub1:subsubA", "toolD:*"])
 # BL_TREE = parse_to_nested_dict(["toolA:sub_blocked", "toolB:sub2", "toolE"])
-WL_TREE = None # Placeholder
-BL_TREE = None # Placeholder
+WL_TREE = None  # Placeholder
+BL_TREE = None  # Placeholder
 
 
 def mock_get_effective_status(sequence, wl_tree, bl_tree):

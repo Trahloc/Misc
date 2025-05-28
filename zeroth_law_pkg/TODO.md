@@ -163,11 +163,11 @@
 # Goal: Refine the process for capturing and verifying tool CLI definitions using AI interpretation.
 #
 # --- MANDATE REMINDER --- #
-# `tool_index.json` is 100% programmatically generated (by baseline tests).
-# NEVER edit `tool_index.json` directly. The AI's role is ONLY to populate/update
-# the separate `.json` DEFINITION files based on `.txt` baselines and sync their
-# internal `metadata.ground_truth_crc` to match the index.
-# * Clarification: This interpretation (`.txt` -> `.json` structure & internal CRC sync) is the *sole* permitted non-deterministic step.
+# `tool_index.json` is 100% programmatically generated (by baseline tests or `zlt tools sync`).
+# NEVER edit `tool_index.json` directly. The AI's role is ONLY to create/populate/update
+# the separate `.json` DEFINITION files based on `.txt` baselines and then trigger
+# the `update_json_crc_tool.py` script to sync the internal CRC.
+# * Clarification: This interpretation (`.txt` -> `.json` structure) and the subsequent scripted CRC sync are the *sole* permitted AI-driven steps.
 # --- END MANDATE REMINDER --- #
 #
 # --- SUPERCEDING NOTE (2025-05-01T12:15:37+08:00) ---
@@ -176,14 +176,14 @@
 # While the high-level goals may remain, refer to Phase L for the current, authoritative workflow.
 # --- END SUPERCEDING NOTE ---
 #
-- [ ] **Simplify Paths:** Update paths in tests (`test_ensure_*.py`, `test_txt_json_consistency.py`).
+- [ ] **Simplify Paths:** Update paths in tests (`test_ensure_*.py`, `test_txt_json_consistency.py`). (Note: `test_ensure_*.py` might be obsolete).
 - [x] **Update Schema Guidelines:** Add guidance to `docs/zlt_schema_guidelines.md` emphasizing the AI's responsibility to maintain consistency for unchanged options/args when updating `.json` files.
 - [x] **Separate Capabilities:** Create `src/zeroth_law/tools/tool_capabilities.yaml` to store functional categories (Formatter, Linter, etc.), separate from CLI structure.
-- [ ] **AI Task: Populate `.json` Definitions:** Systematically process `.txt` files and populate the corresponding `.json` skeleton files according to the guidelines. (Partially superseded by Phase L, Step 8 - focus is now iterative and triggered by sync failures).
+- [ ] **AI Task: Populate `.json` Definitions:** Systematically process `.txt` files and populate/create the corresponding `.json` definition files according to the guidelines. This is now triggered iteratively by `zlt tools sync` failures (Phase L, Step 8).
     - [ ] **Review `poetry.json`:** The current `poetry.txt` seems to contain help for `poetry list` rather than the main command.
-        - [ ] Regenerate the baseline using `poetry --help` (or similar) to capture the correct help text. (Covered by Phase L, Step 6)
-        - [ ] Repopulate `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`. (Covered by Phase L, Step 8)
-- [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate `value_name` structure, `nargs` consistency, and whitespace rules in names/flags. (Consistent with Phase L, Step 7.5 validation goals).
+        - [ ] Regenerate the baseline using `poetry --help` (or similar) via `zlt tools sync --force --tool poetry` (Phase L, Step 6).
+        - [ ] Populate/Correct `src/zeroth_law/tools/poetry/poetry.json` based on the new baseline, ensuring it includes core subcommands like `add`, `install`, `build`. (Phase L, Step 8 triggered by sync failure).
+- [ ] **Implement Schema Validation Test:** Create `tests/test_tool_defs/test_json_schema_validation.py` to validate structure and content rules (`value_name`, `nargs`, whitespace, etc.) in `.json` definition files. (Consistent with Phase L, Step 7.5 validation goals).
 
 ## **Phase H: Tool Management Subcommand (`zlt tools`)**
 # Goal: Centralize tool management logic into a dedicated subcommand group.
@@ -210,11 +210,11 @@
   - [x] Implement INFO message for conflicting entries.
 - [ ] 10. Implement `zlt tools sync` subcommand. (Superseded by Phase L for implementation details)
   - [ ] ~~Migrate baseline generation logic (`generate_baseline_cli.py`).~~ (Superseded by Phase L, Step 6 Podman logic)
-  - [ ] ~~Migrate skeleton JSON creation logic.~~ (Superseded by Phase L logic)
+  - [ ] ~~Migrate skeleton JSON creation logic.~~ (REMOVED - No longer creating skeleton JSONs)
   - [ ] ~~Migrate index update logic (`ToolIndexHandler`).~~ (Integrated into Phase L, Steps 6 & 9)
-  - [x] Implement `--tool`, `--force`, `--since` options. (Note: `--tool` needs review against Phase L sequence focus. `--since` split into `--check-since`, `--update-since` in Phase L).
+  - [x] Implement `--force`, `--check-since-hours`, `--update-since-hours` options. (Options adjusted in Phase L)
   - [✓] **10.6 Add --dry-run option:** Implement flag to simulate sync actions without execution. (Needs review/integration with Phase L)
-  - [ ] **~~Verify Handling of Whitelisted but Missing Tools:~~** ~~Ensure `sync` correctly attempts to generate baselines for tools like `zlt` that are whitelisted but whose directories are initially missing.~~ (Covered by Phase L, Step 4 & 6 interaction)
+  - [ ] ~~**Verify Handling of Whitelisted but Missing Tools:** Ensure `sync` correctly attempts to generate baselines for tools like `zlt` that are whitelisted but whose directories are initially missing.~~ (Covered by Phase L, Step 4 & 6 interaction)
   - [ ] **Enhance User Feedback:** Add progress indicators or more verbose logging during reconciliation and parallel baseline generation phases to improve user experience for long operations. (Still relevant for Phase L implementation)
 - [x] 11. Refactor/Remove redundant dev scripts (`reconciliation_logic.py`, `generate_baseline_cli.py`, `tools_dir_scanner.py`, `tool_discovery.py`).
 - [ ] 12. Refactor/Remove redundant test fixtures (`ensure_baselines_updated`, `managed_sequences` - replace with direct calls or new fixtures if needed).
@@ -317,7 +317,7 @@
     - [ ] Ensure tool definition validation (J.3) uses this file to check `option_map` references.
 
 ## **Phase L: Implement Tool Sync Workflow (10-Step Plan)**
-# Goal: Implement the robust, deterministic `zlt tools sync` workflow based on the 10-step plan defined on 2025-05-01.
+# Goal: Implement the robust, deterministic `zlt tools sync` workflow based on the 10-step plan defined on 2025-05-01, removing automatic skeleton JSON creation.
 # NOTE: Add completion timestamp `(YYYY-MM-DDTHH:MM:SS+ZZ:ZZ - Run 'date --iso-8601=seconds')` to each item upon completion.
 
 ### **Phase 1: Setup & Reconciliation (Steps 1-5)**
@@ -361,7 +361,7 @@
 
 ### **Phase 2: Baseline Generation & Indexing (Step 6)**
 
-- [ ] **Step 6: `.txt` Baseline Generation & Verification** (`2025-05-01T12:15:37+08:00`)
+- [ ] **Step 6: `.txt` Baseline Generation & Verification (Only `.txt` files)** (`2025-05-01T12:15:37+08:00`)
   - [x] 6.1 Action: Initialize `recent_update_warning_count = 0`. (`2025-05-01T13:47:53+08:00`)
   - [x] 6.2 Action: Implement/Verify `ToolIndexHandler` class (in `src/zeroth_law/lib/tooling/tool_index_handler.py`?) with load/save/update/add methods for `tool_index.json`. Load index. (Using functions from `tool_index_utils.py`) (`2025-05-01T13:47:53+08:00`)
   - [x] 6.3 Action: Define deterministic Podman container name. (`2025-05-01T13:47:53+08:00`)
@@ -378,6 +378,7 @@
     - [x] 6.5.5 Comparison & Update:
       - [x] 6.5.5.1 If `new_crc == index_crc`: Call `ToolIndexHandler.update_checked_timestamp(sequence, now)`. (`2025-05-01T13:47:53+08:00`)
       - [x] 6.5.5.2 If `new_crc != index_crc`: Use `--update-since` (default 48h), warn/increment `recent_update_warning_count` if needed. Write output to `.txt` file. Call `ToolIndexHandler.update_entry(sequence, crc=new_crc, updated_timestamp=now, ...)` (`2025-05-01T13:47:53+08:00`)
+      - [x] **6.5.5.3:** This step **only** writes the `.txt` file and updates the index. It **does not** touch `.json` files. (`2025-05-02T11:10:00+08:00`)
   - [x] 6.6 Action: After loop, call `ToolIndexHandler.save_index()`. (`2025-05-01T13:47:53+08:00`)
   - [x] 6.7 Action: If `recent_update_warning_count >= 3`, fail immediately reporting rapid update issue. (`2025-05-01T13:47:53+08:00`)
 
@@ -391,15 +392,15 @@
     - [x] 7.3.2 Determine `txt_path`, `json_path`. (`2025-05-01T13:47:53+08:00`)
     - [x] 7.3.3 Check if `txt_path` exists. Continue if not. (`2025-05-01T13:47:53+08:00`)
     - [x] 7.3.4 Check if `json_path` exists. If not, `needs_interpretation = True`. (`2025-05-01T13:47:53+08:00`)
-    - [x] 7.3.5 If `json_path` exists, load JSON, get `json_crc`, compare with `index_crc`. If mismatch or placeholder, `needs_interpretation = True`. (`2025-05-01T13:47:53+08:00`)
+    - [x] 7.3.5 If `json_path` exists, load JSON, get `metadata.ground_truth_crc` from JSON, compare with `entry_data['crc']` from index. If mismatch or placeholder (`0x00000000`), `needs_interpretation = True`. (`2025-05-02T11:10:00+08:00`)
     - [x] 7.3.6 If `needs_interpretation`, fail immediately, report sequence/path, instruct AI to start Step 8. (`2025-05-01T13:47:53+08:00`)
   - [x] 7.4 Outcome: If loop completes, proceed to Step 9. (`2025-05-01T13:47:53+08:00`)
 
 - [ ] **Step 8: AI Interpretation & Validation (Triggered by Step 7 Failure)** (`2025-05-01T12:15:37+08:00`)
   - [ ] 8.1 AI Task: Interpret `.txt` to `.json`
     - [ ] 8.1.1 AI: Receive sequence key, JSON path from Step 7 failure.
-    - [ ] 8.1.2 AI: Read `.txt`, existing `.json`, `zlt_schema_guidelines.md`.
-    - [ ] 8.1.3 AI: Propose `edit_file` for `.json` path, adhering to guidelines (NO backslashes, DO NOT set `ground_truth_crc`).
+    - [ ] 8.1.2 AI: Read `.txt`, existing `.json` (if any), `docs/zlt_schema_guidelines.md`.
+    - [ ] 8.1.3 AI: Propose `edit_file` to create/update `.json` path, adhering to guidelines (NO backslashes, DO NOT set `metadata.ground_truth_crc`).
   - [ ] 8.2 Verify & Correct Schema (Automated Post-AI Edit)
     - [ ] 8.2.1 Implement trigger mechanism (AI calls script? Wrapper script?).
     - [ ] 8.2.2 Run `fix_json_whitespace.py` on edited file. Check exit.
@@ -417,7 +418,7 @@
 - [x] **Step 9: Discover & Index Subcommands** (`2025-05-01T12:15:37+08:00`)
   - [x] 9.1 Action: Reload index. Initialize `new_sequences_added = False`. (`2025-05-01T13:47:53+08:00`)
   - [x] 9.2 Action: Loop through `tool_index.json` entries (`parent_sequence_key`, `parent_entry_data`). (`2025-05-01T13:47:53+08:00`)
-    - [x] 9.2.1 Consistency Check: Verify parent `.json` exists and its CRC matches index. Continue if not. (`2025-05-01T13:47:53+08:00`)
+    - [x] 9.2.1 Consistency Check: Verify parent `.json` exists and its `metadata.ground_truth_crc` matches index CRC. Continue if not. (`2025-05-02T11:10:00+08:00`)
     - [x] 9.2.2 Parse JSON: Load parent JSON. (`2025-05-01T13:47:53+08:00`)
     - [x] 9.2.3 Find Subcommands: Extract subcommand names (e.g., from `subcommands_detail`). (`2025-05-01T13:47:53+08:00`)
     - [x] 9.2.4 Process Subcommands: For each `subcommand_name`: (`2025-05-01T13:47:53+08:00`)

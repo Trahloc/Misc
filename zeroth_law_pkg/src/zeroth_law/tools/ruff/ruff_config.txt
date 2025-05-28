@@ -1,26 +1,26 @@
-List or describe the available configuration options
+cache-dir
+extend
+output-format
+fix
+unsafe-fixes
+fix-only
+show-fixes
+required-version
+preview
+exclude
+extend-exclude
+extend-include
+force-exclude
+include
+respect-gitignore
+builtins
+namespace-packages
+target-version
+per-file-target-version
+src
+line-length
+indent-width
+lint
+format
+analyze
 
-Usage: ruff config [OPTIONS] [OPTION]
-
-Arguments:
-  [OPTION]  Config key to show
-
-Options:
-      --output-format <OUTPUT_FORMAT>  Output format [default: text] [possible values: text, json]
-  -h, --help                           Print help
-
-Log levels:
-  -v, --verbose  Enable verbose logging
-  -q, --quiet    Print diagnostics, but nothing else
-  -s, --silent   Disable all logging (but still exit with status code "1" upon detecting
-                 diagnostics)
-
-Global options:
-      --config <CONFIG_OPTION>  Either a path to a TOML configuration file (`pyproject.toml` or
-                                `ruff.toml`), or a TOML `<KEY> = <VALUE>` pair (such as you might
-                                find in a `ruff.toml` configuration file) overriding a specific
-                                configuration option. Overrides of individual settings using this
-                                option always take precedence over all configuration files,
-                                including configuration files that were also specified using
-                                `--config`
-      --isolated                Ignore all configuration files

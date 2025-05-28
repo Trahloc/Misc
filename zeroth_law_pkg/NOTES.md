@@ -122,30 +122,30 @@ To reiterate the mandate above for absolute clarity: The ONLY non-deterministic 
     *   It fails the test run if orphaned tools are found or whitelisted tools are missing.
 
 2.  **Ground Truth Check & Update (Core logic in `src/zeroth_law/dev_scripts/baseline_generator.py::generate_or_verify_baseline`, called by tests):**
-    *   For each managed sequence, captures `command --help | cat` output.
+    *   For each managed sequence, captures `command --help | cat` output (or other relevant help command).
     *   Calculates the CRC32 hash of the output.
     *   Compares calculated CRC with the `crc` stored in `tool_index.json` for that sequence.
     *   **If CRCs match:** Updates only the `checked_timestamp` in `tool_index.json`.
     *   **If CRCs mismatch (or entry is new):**
         *   Overwrites the corresponding `.txt` file (`src/zeroth_law/tools/<tool>/<id>.txt`) with the new output.
         *   Updates `crc`, `updated_timestamp`, and `checked_timestamp` in `tool_index.json`.
-        *   **Ensures Minimal Skeleton JSON:** Checks if `src/zeroth_law/tools/<tool>/<id>.json` exists. If not, creates it with basic keys and `metadata.ground_truth_crc = "0x00000000"`. It *does not* modify an existing JSON or populate the skeleton.
+        *   **DOES NOT** create or modify any `.json` definition file.
 
 3.  **AI Interpretation & Synchronization (`.json` Population):**
-    *   Triggered by a failing `test_txt_json_consistency.py` (see Step 4) or `test_json_schema_validation.py` indicating a need for structure update.
-    *   **Me (the AI)** reads the existing `.json` file (which might be a skeleton or partially populated).
-    *   **Me (the AI)** reads the ground-truth `.txt` file (which was updated in Step 2 if necessary).
-    *   **Me (the AI)** holistically compares the `.txt` content to the `.json` structure. Update the `.json` content (filling `description`, `usage`, `options`, `arguments`, `subcommands` etc.) based **solely** on the `.txt` content, interpreting it **strictly according to the rules and structure defined in `tools/zlt_schema_guidelines.md`**. Preserve existing unchanged elements where appropriate.
-    *   **Me (the AI)** **AFTER** ensuring the JSON structure is fully updated and consistent with the `.txt` interpretation and the schema guidelines, **MUST NOT** read `tool_index.json` or manually set the CRC. Instead, **MUST** execute the designated CRC update script: `uv run python scripts/update_json_crc_tool.py --file <path_to_updated.json>`. This script handles reading the index and updating the `metadata.ground_truth_crc` field in the specified JSON file.
+    *   Triggered by a failing `test_txt_json_consistency.py` (see Step 4) or `test_json_schema_validation.py` indicating a need for structure update or interpretation.
+    *   **Me (the AI)** reads the existing `.json` file (if it exists) or is instructed to create a new one.
+    *   **Me (the AI)** reads the ground-truth `.txt` file.
+    *   **Me (the AI)** holistically compares the `.txt` content to the `.json` structure (or creates the structure if new). Update the `.json` content (filling `description`, `usage`, `options`, `arguments`, `subcommands_detail` etc.) based **solely** on the `.txt` content, interpreting it **strictly according to the rules and structure defined in `docs/zlt_schema_guidelines.md`**. Preserve existing unchanged elements where appropriate.
+    *   **Me (the AI)** **AFTER** the JSON structure is fully created/updated and adheres to the schema guidelines, **MUST NOT** manually set the CRC. Instead, **MUST** execute the designated CRC update script: `uv run python scripts/update_json_crc_tool.py --file <path_to_updated.json>`. This script handles reading the index and updating the `metadata.ground_truth_crc` field in the specified JSON file.
 
 4.  **Verification (Separate Tests):**
     *   **`test_txt_json_consistency.py`:**
         *   Compares the `metadata.ground_truth_crc` value *inside* the `.json` file against the `crc` value stored in `tool_index.json` for the same tool ID.
-        *   A mismatch indicates the AI interpretation (Step 3) is needed or incomplete.
+        *   A mismatch indicates the AI interpretation (Step 3) is needed or incomplete, or the `.json` file is missing.
     *   `test_json_schema_validation.py`:
         *   Validates the structure and content rules of the populated `.json` files against the defined schema.
 
-**Rationale & Consumption:** This workflow uses automated tests for discovery and ground-truth (`.txt`, index CRC) updates. Automated fix scripts (e.g., `fix_json_schema.py`) should handle deterministic errors flagged by tests like `test_json_schema_validation.py`. The AI performs the interpretation step (`.json` content population based on `.txt` and schema) when signaled by `test_txt_json_consistency.py` or when automated fixes are insufficient. The final CRC sync **must** be performed using the `update_json_crc_tool.py` script. The AI-populated and validated `.json` files serve as the machine-readable knowledge base for ZLT.
+**Rationale & Consumption:** This workflow uses automated tests for discovery and ground-truth (`.txt`, index CRC) updates. The `sync` command checks for consistency between the index and existing `.json` files, failing if inconsistencies are found. Automated fix scripts (e.g., `fix_json_schema.py`) handle deterministic errors. The AI performs the interpretation step (`.json` creation/population based on `.txt` and schema) when signaled by `sync` or test failures. The final CRC sync **must** be performed using the `update_json_crc_tool.py` script. The AI-created/populated and validated `.json` files serve as the machine-readable knowledge base for ZLT.
 
 ---
 
@@ -620,36 +620,42 @@ format:
 
 ## Process for Populating Tool Definition JSON Files
 
-1.  **Run Baseline Tests:**
-    *   Execute `uv run pytest tests/test_tool_defs/`
-    *   This automatically runs `test_ensure_txt_baselines_exist.py` which calls `generate_or_verify_baseline`.
-    *   This ensures all `.txt` files and `tool_index.json` CRCs/timestamps are up-to-date, and skeleton `.json` files exist.
-2.  **Run Automated Fixers (Should be triggered by tests, check if mechanism exists/works):**
-    *   When tests like `test_json_schema_validation.py` fail due to *deterministic structural issues*, the test framework should ideally trigger fix scripts like `src/zeroth_law/dev_scripts/fix_json_schema.py`. **(AI Task: Investigate if this auto-triggering works).**
+1.  **Run `zlt tools sync`:**
+    *   Execute `zlt tools sync --generate`.
+    *   This updates all `.txt` files and `tool_index.json` CRCs/timestamps based on current command output.
+    *   It will fail if it detects inconsistencies (e.g., missing `.json` files or CRC mismatches between index and existing `.json`), instructing the AI to perform interpretation.
+2.  **Run Automated Fixers (If Necessary):**
+    *   If `test_json_schema_validation.py` fails due to *deterministic structural issues*, run fix scripts like `src/zeroth_law/dev_scripts/fix_json_schema.py` manually or verify if tests trigger them. **(AI Task: Investigate if this auto-triggering works).**
 3.  **Identify AI Task Triggers:**
-    *   Look for failures specifically in `test_txt_json_consistency.py::test_all_txt_json_consistency` (CRC mismatch).
-    *   Also consider failures in `test_json_schema_validation.py` if automated fixers (Step 2) didn't resolve them, indicating a need for manual interpretation.
+    *   Failures from `zlt tools sync` indicating missing JSON or CRC mismatch.
+    *   Failures in `test_txt_json_consistency.py::test_all_txt_json_consistency` (if run manually).
+    *   Failures in `test_json_schema_validation.py` if automated fixers (Step 2) didn't resolve them.
 4.  **Iterate Through Failing Files (AI Interpretation Task):**
-    *   For each tool ID failing the relevant tests:
+    *   For each tool ID needing interpretation:
         *   **Locate Files:**
-            *   JSON: `src/zeroth_law/tools/<tool>/<id>.json`
-            *   Help Text: `src/zeroth_law/tools/<tool>/<id>.txt`
-            *   Schema Guidelines: `tools/zlt_schema_guidelines.md`
+            *   JSON: `src/zeroth_law/tools/<tool>/<id>.json` (may not exist yet)
+            *   Help Text: `src/zeroth_law/tools/<tool>/<id>.txt` (should exist)
+            *   Schema Guidelines: `docs/zlt_schema_guidelines.md`
             *   CRC Update Script: `scripts/update_json_crc_tool.py`
-        *   **Read Existing JSON:** Use `read_file` on the `.json` file.
         *   **Read Help Text:** Use `read_file` on the `.txt` file.
-        *   **Populate/Correct JSON Structure:**
-            *   Use `edit_file` on the `.json` file.
-            *   Carefully compare `.txt` to the existing JSON structure.
-            *   Incrementally fill/update `description`, `usage`, `options`, `arguments`, `subcommands_detail` based **solely** on the `.txt` help text interpreted according to the rules and structure defined in **`tools/zlt_schema_guidelines.md`**. Preserve unchanged elements where appropriate.
+        *   **Read Existing JSON (if it exists):** Use `read_file` on the `.json` file.
+        *   **Create/Populate/Correct JSON Structure:**
+            *   Use `edit_file` on the `.json` path (creates if new).
+            *   Carefully compare `.txt` to the existing JSON structure (if any).
+            *   Incrementally fill/update `description`, `usage`, `options`, `arguments`, `subcommands_detail` based **solely** on the `.txt` help text interpreted according to the rules and structure defined in **`docs/zlt_schema_guidelines.md`**. Preserve unchanged elements where appropriate.
             *   Ensure the final JSON structure adheres to the schema (`test_json_schema_validation.py` failures provide guidance).
-            *   **DO NOT** touch `metadata.ground_truth_crc` during this edit.
+            *   **DO NOT** add/modify `metadata.ground_truth_crc` during this edit.
+        *   **Run Schema Fixers:**
+            *   Execute `uv run python src/zeroth_law/dev_scripts/fix_json_whitespace.py --file <path_to_json>`.
+            *   Execute `uv run python src/zeroth_law/dev_scripts/fix_json_schema.py --file <path_to_json>`.
+            *   (If schema corrector exists) Execute `uv run python src/zeroth_law/dev_scripts/schema_corrector.py --file <path_to_json>`.
+            *   If any fix script fails, analyze the error, adjust the JSON interpretation (previous step), and re-run fixers.
         *   **Run CRC Update Script:**
-            *   **AFTER** the JSON structure is confirmed correct via interpretation, run the command: `uv run python scripts/update_json_crc_tool.py --file src/zeroth_law/tools/<tool>/<id>.json`.
-        *   **Handle Edit Failures:** If `edit_file` reports "no changes" but `pytest` still fails the file's structure/consistency, use `reapply` on the target `.json` file.
-        *   **Verify:** Rerun the relevant `pytest` tests (e.g., `uv run pytest tests/test_project_integrity/test_txt_json_consistency.py tests/test_project_integrity/test_json_schema_validation.py -k <tool_id>`) to confirm the tests for the specific tool ID now pass.
+            *   **AFTER** the JSON structure is validated by fix scripts, run the command: `uv run python scripts/update_json_crc_tool.py --file <path_to_json>`.
+        *   **Handle Edit Failures:** If `edit_file` reports "no changes" but consistency checks still fail, use `reapply` on the target `.json` file and re-run fix/CRC scripts.
+        *   **Verify:** Rerun `zlt tools sync` or relevant `pytest` tests to confirm the issue for the specific tool ID is resolved.
 
-5.  **Repeat:** Continue until all tests in `tests/test_project_integrity/` related to JSON definitions pass.
+5.  **Repeat:** Continue until `zlt tools sync` runs successfully without reporting inconsistencies and relevant tests pass.
 
 ### Testing Techniques: Using External Helper Scripts as Test Doubles
 
