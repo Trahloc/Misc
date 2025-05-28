@@ -1,1 +1,0 @@
-/home/trahloc/code/Misc/zeroth_law/docs/ZerothLawAIFramework.py.md
