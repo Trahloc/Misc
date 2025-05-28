@@ -11,7 +11,7 @@
 """
 
 import json
-from typing import Dict, Any
+from typing import Any, Dict
 
 DEFAULT_CONFIG = {
     "max_line_length": 88,

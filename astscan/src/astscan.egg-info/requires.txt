@@ -1,0 +1,4 @@
+click
+
+[dev]
+pre-commit>=3.0.0
