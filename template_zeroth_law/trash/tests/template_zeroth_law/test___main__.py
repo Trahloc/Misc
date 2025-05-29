@@ -14,8 +14,9 @@
  - template_zeroth_law.__main__: Main module
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 from click.testing import CliRunner
 
 from template_zeroth_law.cli import main
@@ -75,14 +76,16 @@ def test_config_file_option(cli_runner: CliRunner, tmp_path: Path):
     """Test loading configuration from file."""
     # Create a test config file
     config_file = tmp_path / "test_config.json"
-    config_file.write_text("""
+    config_file.write_text(
+        """
     {
         "app": {
             "name": "test_app",
             "version": "1.0.0"
         }
     }
-    """)
+    """
+    )
 
     result = cli_runner.invoke(main, ["--config", str(config_file), "version"])
     assert result.exit_code == 0

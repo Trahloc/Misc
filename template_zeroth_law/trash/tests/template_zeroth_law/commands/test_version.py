@@ -15,10 +15,11 @@
 """
 
 import json
+from typing import Any, Dict, Tuple
+from unittest.mock import MagicMock, patch
+
 import pytest
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
-from typing import Dict, Any, Tuple
 
 from template_zeroth_law.commands.version import command, get_package_version
 

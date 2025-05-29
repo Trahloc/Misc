@@ -29,10 +29,12 @@ async def test_schema_initialization(test_db):
         assert row[0] == SCHEMA_VERSION
 
         # Check tables exist
-        cursor = await db.execute("""
+        cursor = await db.execute(
+            """
             SELECT name FROM sqlite_master
             WHERE type='table' OR type='view'
-        """)
+        """
+        )
         tables = {row[0] for row in await cursor.fetchall()}
 
         required_tables = {
@@ -45,10 +47,12 @@ async def test_schema_initialization(test_db):
         assert required_tables.issubset(tables)
 
         # Check indexes exist
-        cursor = await db.execute("""
+        cursor = await db.execute(
+            """
             SELECT name FROM sqlite_master
             WHERE type='index'
-        """)
+        """
+        )
         indexes = {row[0] for row in await cursor.fetchall()}
 
         required_indexes = {
@@ -64,9 +68,11 @@ async def test_schema_migration(test_db):
     """Test schema migration handling"""
     # Create database with old version
     async with aiosqlite.connect(test_db) as db:
-        await db.execute("""
+        await db.execute(
+            """
             CREATE TABLE schema_version (version INTEGER PRIMARY KEY)
-        """)
+        """
+        )
         await db.execute("INSERT INTO schema_version VALUES (?)", (0,))
         await db.commit()
 

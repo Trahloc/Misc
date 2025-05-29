@@ -11,9 +11,10 @@
  - logging: Python logging facilities
 """
 
-import click
 import logging
 from typing import Any, Callable, TypeVar, cast
+
+import click
 
 # Type variable for function decoration
 F = TypeVar("F", bound=Callable[..., Any])
@@ -38,8 +39,8 @@ def add_args(command: F) -> F:
 
 def configure_logging(ctx: click.Context, verbose: int) -> None:
     """Configure logging based on verbosity level."""
-    from template_zeroth_law.logging import configure_logging as setup_logging
     from template_zeroth_law.config import get_config
+    from template_zeroth_law.logging import configure_logging as setup_logging
 
     # Get config from context or load default
     config = ctx.obj.get("config") if ctx.obj else None

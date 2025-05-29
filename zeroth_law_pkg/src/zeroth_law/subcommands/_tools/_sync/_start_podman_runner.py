@@ -234,7 +234,13 @@ def _start_podman_runner(
         # Verify that a known script from the project wheel was installed
         # Use managed_tool_a as an example, assuming it's defined in [project.scripts]
         log.info("Verifying project script installation in container...")
-        verify_script_cmd = ["exec", container_name, "test", "-x", "/venv/bin/managed_tool_a"]
+        verify_script_cmd = [
+            "exec",
+            container_name,
+            "test",
+            "-x",
+            "/venv/bin/managed_tool_a",
+        ]
         verify_result = _run_podman_command(verify_script_cmd)
         if verify_result.returncode != 0:
             log.error(
@@ -257,7 +263,13 @@ def _start_podman_runner(
 
         # --- START ADDED SITE-PACKAGES VERIFICATION ---
         log.info("Verifying package installation in container site-packages...")
-        verify_pkg_cmd = ["exec", container_name, "test", "-d", "/venv/lib/python3.13/site-packages/zeroth_law"]
+        verify_pkg_cmd = [
+            "exec",
+            container_name,
+            "test",
+            "-d",
+            "/venv/lib/python3.13/site-packages/zeroth_law",
+        ]
         verify_pkg_result = _run_podman_command(verify_pkg_cmd)
         if verify_pkg_result.returncode != 0:
             log.error(
@@ -265,7 +277,13 @@ def _start_podman_runner(
             )
             # Attempt to list site-packages for debugging
             try:
-                ls_cmd = ["exec", container_name, "ls", "-la", "/venv/lib/python3.13/site-packages"]
+                ls_cmd = [
+                    "exec",
+                    container_name,
+                    "ls",
+                    "-la",
+                    "/venv/lib/python3.13/site-packages",
+                ]
                 ls_result = _run_podman_command(ls_cmd)
                 log.error(
                     f"Contents of /venv/lib/python3.13/site-packages:\n{ls_result.stdout.decode(errors='replace')}{ls_result.stderr.decode(errors='replace')}"

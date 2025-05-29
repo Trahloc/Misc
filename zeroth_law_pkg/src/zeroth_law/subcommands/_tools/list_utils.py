@@ -98,7 +98,10 @@ def _apply_modification_recursive(
                     return found, list(set(tuple(p) for p in conflicts))  # Deduplicate paths
 
                 # Start search from the node being overridden by apply_all
-                has_conflicting_children, child_conflict_paths_tuples = _find_conflicts_under(other_hierarchy, path)
+                (
+                    has_conflicting_children,
+                    child_conflict_paths_tuples,
+                ) = _find_conflicts_under(other_hierarchy, path)
                 child_conflict_paths = [list(p) for p in child_conflict_paths_tuples]
 
                 if has_conflicting_children:
@@ -288,7 +291,13 @@ def modify_tool_list(
 
             # Apply the modification recursively
             mod_target, mod_other = _apply_modification_recursive(
-                target_hierarchy, other_hierarchy, path, action, item_apply_all, force, target_list_name
+                target_hierarchy,
+                other_hierarchy,
+                path,
+                action,
+                item_apply_all,
+                force,
+                target_list_name,
             )
             # Track if *any* modification call reported success for either hierarchy
             if mod_target or mod_other:
@@ -301,8 +310,14 @@ def modify_tool_list(
         overall_modified = any_item_caused_modification
 
         # --- DEBUG: Log final hierarchies before formatting --- #
-        log.debug("[FINAL HIERARCHY DEBUG] Target Hierarchy before format:", data=repr(target_hierarchy))
-        log.debug("[FINAL HIERARCHY DEBUG] Other Hierarchy before format:", data=repr(other_hierarchy))
+        log.debug(
+            "[FINAL HIERARCHY DEBUG] Target Hierarchy before format:",
+            data=repr(target_hierarchy),
+        )
+        log.debug(
+            "[FINAL HIERARCHY DEBUG] Other Hierarchy before format:",
+            data=repr(other_hierarchy),
+        )
         # --- END DEBUG --- #
 
         # --- Write back to TOML --- #

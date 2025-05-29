@@ -15,23 +15,14 @@
 """
 
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Any, List
-from datetime import datetime
 
-from template_zeroth_law.types import (
-    PathLike,
-    JsonDict,
-    JsonValue,
-    CallbackFunc,
-    ResultCallback,
-    LogLevel,
-    DateLike,
-    Closeable,
-    Disposable,
-    HasName,
-    ConfigDict,
-)
+from template_zeroth_law.types import (CallbackFunc, Closeable, ConfigDict,
+                                       DateLike, Disposable, HasName,
+                                       JsonValue, LogLevel, PathLike,
+                                       ResultCallback)
 
 
 def test_path_like_types():
@@ -71,15 +62,6 @@ def test_json_types():
     ]
 
     # Test JsonDict with nested structures
-    json_dict: JsonDict = {
-        "null": None,
-        "bool": True,
-        "int": 42,
-        "float": 3.14,
-        "str": "test",
-        "list": [1, 2, 3],
-        "dict": {"nested": "value"},
-    }
 
     # Verify type safety
     for value in json_values:

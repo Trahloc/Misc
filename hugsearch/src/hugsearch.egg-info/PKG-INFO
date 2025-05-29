@@ -2,11 +2,11 @@ Metadata-Version: 2.4
 Name: hugsearch
 Version: 1742389364
 Summary: A local cached search engine for Hugging Face models.
-Author-email: Zeroth Law Developer <developer@example.com>
+Author-email: Trahloc colDhart <github@trahloc.com>
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
-Requires-Python: >=3.8
+Requires-Python: >=3.8.1
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: aiosqlite>=0.19.0
@@ -24,6 +24,7 @@ Requires-Dist: pytest>=7.0; extra == "dev"
 Requires-Dist: black>=23.0; extra == "dev"
 Requires-Dist: flake8>=6.0; extra == "dev"
 Requires-Dist: mypy>=1.0; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
 Dynamic: license-file
 
 # FILE_LOCATION: hugsearch/README.md

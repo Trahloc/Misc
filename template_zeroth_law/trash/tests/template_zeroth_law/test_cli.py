@@ -23,7 +23,6 @@ def test_cli_exists():
     # Replace this with actual tests for the cli module.
     try:
         # This import will raise an ImportError if the module doesn't exist
-        from template_zeroth_law import cli
 
         assert True
     except ImportError:

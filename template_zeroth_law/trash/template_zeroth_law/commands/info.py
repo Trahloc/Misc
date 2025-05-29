@@ -1,9 +1,11 @@
-import click
-from typing import Dict, Any
-from datetime import datetime
+import json
 import platform
 import sys
-import json
+from datetime import datetime
+from typing import Any, Dict
+
+import click
+
 from ..config import get_config
 
 

@@ -6,6 +6,7 @@ import click
 from ._definition._capability_cmds import add_capability, remove_capability
 from ._definition._filetype_cmds import set_filetypes
 from ._definition._mapping_cmds import map_option, unmap_option
+
 # _paths.py and _io.py contain helpers used by the command implementations,
 # they don't define commands themselves.
 

@@ -56,6 +56,9 @@ def _load_tool_definition_or_abort(ctx: click.Context, tool_id: str) -> dict:
     tool_json_path = _get_tool_def_path(tool_id, tools_dir)
     tool_data = _load_json_file(tool_json_path)
     if tool_data is None:
-        click.echo(f"Error: Could not load tool definition for '{tool_id}' from {tool_json_path}", err=True)
+        click.echo(
+            f"Error: Could not load tool definition for '{tool_id}' from {tool_json_path}",
+            err=True,
+        )
         raise click.Abort()
     return tool_data

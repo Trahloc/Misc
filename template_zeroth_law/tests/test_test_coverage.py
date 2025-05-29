@@ -13,8 +13,6 @@ import pytest
 
 # Import the module to test - if it exists
 try:
-    from template_zeroth_law.commands import test_coverage
-
     TEST_COVERAGE_MODULE_EXISTS = True
 except ImportError:
     TEST_COVERAGE_MODULE_EXISTS = False

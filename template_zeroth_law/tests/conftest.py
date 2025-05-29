@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Add the src directory to sys.path to allow imports from template_zeroth_law
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+
 """
 # PURPOSE: Pytest configuration and fixtures for template_zeroth_law tests.
 
@@ -9,8 +15,8 @@
  - importlib
 """
 
-import tempfile
 import importlib
+import tempfile
 from pathlib import Path
 from typing import Iterator
 

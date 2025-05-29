@@ -74,7 +74,11 @@ def _process_command_sequence(
         )
 
         # --- Restore call to baseline generator with all args --- #
-        status_enum, calculated_crc, check_timestamp = generate_or_verify_ground_truth_txt(
+        (
+            status_enum,
+            calculated_crc,
+            check_timestamp,
+        ) = generate_or_verify_ground_truth_txt(
             command_sequence=command_sequence,
             container_name=container_name,
             project_root=project_root,

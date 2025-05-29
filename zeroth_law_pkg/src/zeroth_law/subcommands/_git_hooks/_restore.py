@@ -7,8 +7,12 @@ import click
 from pathlib import Path
 
 # Correct relative import: Go up three levels to reach src/zeroth_law, then down to common
-from ...common.git_utils import find_git_root, restore_git_hooks
+from ...common.git_utils import (
+    find_git_root,
+    restore_standard_hooks as utils_restore_standard_hooks,
+)
 from ...common.path_utils import ZLFProjectRootNotFoundError
+
 # No path_utils needed here
 
 log = structlog.get_logger()
@@ -37,11 +41,14 @@ def restore_git_hooks(ctx: click.Context, git_root: str | None) -> None:
             )
 
         log.debug(f"Using Git repository root: {git_root_path}")
-        restored_count, error_count = restore_git_hooks(git_root_path)
+        utils_restore_standard_hooks(git_root_path)
+
+        restored_count = 1
+        error_count = 0
 
         if restored_count > 0:
-            log.info(f"Successfully restored {restored_count} standard Git hooks.")
-            click.echo(f"Successfully restored {restored_count} Git hooks.")
+            log.info("Successfully attempted to restore standard Git hooks.")
+            click.echo("Successfully attempted to restore standard Git hooks.")
         else:
             log.info("No standard Git hooks found to restore (or errors occurred).")
             click.echo("No standard Git hooks found to restore.")

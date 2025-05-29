@@ -13,9 +13,10 @@
  - template_zeroth_law.config: Configuration module
 """
 
-import pytest
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 from template_zeroth_law.config import Config, get_config, load_config
 from template_zeroth_law.exceptions import ConfigError

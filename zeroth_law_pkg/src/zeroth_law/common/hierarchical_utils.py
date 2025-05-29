@@ -23,7 +23,10 @@ def parse_to_nested_dict(raw_list: Union[List[str], Set[str], Array]) -> ParsedH
 
     # --- Input Validation --- #
     if not isinstance(raw_list, (list, set, Array)):
-        log.warning("Invalid input type for hierarchical parsing, returning empty dict.", input_type=type(raw_list))
+        log.warning(
+            "Invalid input type for hierarchical parsing, returning empty dict.",
+            input_type=type(raw_list),
+        )
         return {}  # Return empty dict for invalid input types (matches test expectation)
     # --- End Validation --- #
 
@@ -137,7 +140,10 @@ def parse_to_nested_dict(raw_list: Union[List[str], Set[str], Array]) -> ParsedH
                 path_accumulator.append(node_name)
 
                 if node_name not in current_level:
-                    current_level[node_name] = {"_explicit": False, "_all": False}  # Initialize flags
+                    current_level[node_name] = {
+                        "_explicit": False,
+                        "_all": False,
+                    }  # Initialize flags
                 node = current_level[node_name]
 
                 if not isinstance(node, dict):
@@ -380,7 +386,12 @@ def remove_node_recursive(hierarchy: ParsedHierarchy, path: List[str]) -> bool:
     return modified
 
 
-def set_node_flags(hierarchy: ParsedHierarchy, path: List[str], is_explicit: Optional[bool], is_all: Optional[bool]):
+def set_node_flags(
+    hierarchy: ParsedHierarchy,
+    path: List[str],
+    is_explicit: Optional[bool],
+    is_all: Optional[bool],
+):
     """Sets the _explicit and _all flags for a node, creating path if needed.
     Only modifies if the new flag value is different from the existing one.
     Returns True if a change was made, False otherwise.
@@ -511,7 +522,13 @@ def check_list_conflicts(whitelist_tree: ParsedHierarchy, blacklist_tree: Parsed
                 # Propagate _all status down: current level's _all OR parent's _all
                 next_parent_all_w = is_all_w or parent_all_w
                 next_parent_all_b = is_all_b or parent_all_b
-                _traverse(child_node_w, child_node_b, current_path + [key], next_parent_all_w, next_parent_all_b)
+                _traverse(
+                    child_node_w,
+                    child_node_b,
+                    current_path + [key],
+                    next_parent_all_w,
+                    next_parent_all_b,
+                )
 
     # Start traversal from the root of both trees
     root_keys = set(whitelist_tree.keys()) | set(blacklist_tree.keys())

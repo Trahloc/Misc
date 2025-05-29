@@ -38,7 +38,9 @@ from ._sync._run_hostility_audit import _run_hostility_audit
 
 # === Imports from OTHER modules (Needed by sync() directly) ===
 # Need index loading for setup
-from ...dev_scripts.tool_index_utils import load_tool_index  # REMOVE save_tool_index import
+from ...dev_scripts.tool_index_utils import (
+    load_tool_index,
+)  # REMOVE save_tool_index import
 
 # Need ToolStatus for type hints if used directly
 from .reconcile import ToolStatus  # Keep if type hints needed in sync()
@@ -302,7 +304,11 @@ def sync(
             log.info("STAGE 4: Starting baseline generation...")
             # --- REMOVED INNER TRY/EXCEPT/FINALLY --- #
             sync_max_workers = ctx.obj.get("MAX_WORKERS", os.cpu_count())  # Use ctx.obj
-            all_results, processing_errors, processed_count = _run_parallel_baseline_processing(
+            (
+                all_results,
+                processing_errors,
+                processed_count,
+            ) = _run_parallel_baseline_processing(
                 tasks_to_run=whitelisted_sequences,
                 tool_defs_dir=tool_defs_dir,
                 project_root=project_root,
@@ -333,7 +339,9 @@ def sync(
             # === Update and Save Index (Step 7) ===
             # --- DEBUG: Log content of all_results before update --- #
             log.debug(
-                "Sync: Before _update_and_save_index", results_count=len(all_results), all_results_data=all_results
+                "Sync: Before _update_and_save_index",
+                results_count=len(all_results),
+                all_results_data=all_results,
             )
             # --- DEBUG: Log the initial index data being passed --- #
             log.debug("Sync: Passing initial_index_data", index_data=current_index_data)

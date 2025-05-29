@@ -24,13 +24,19 @@ def add_capability(ctx: click.Context, tool_id: str, capability_name: str):
     # Get paths from context (excluding tools_dir, handled by helper)
     zlt_capabilities_path = ctx.obj.get("zlt_capabilities_path")
     if not zlt_capabilities_path:
-        click.echo("Error: Could not determine required paths (zlt_capabilities_path) from context.", err=True)
+        click.echo(
+            "Error: Could not determine required paths (zlt_capabilities_path) from context.",
+            err=True,
+        )
         raise click.Abort()
 
     # 1. Load capabilities definition for validation
     valid_capabilities = _load_json_file(zlt_capabilities_path)
     if valid_capabilities is None:
-        click.echo(f"Error: Could not load capability definitions from {zlt_capabilities_path}", err=True)
+        click.echo(
+            f"Error: Could not load capability definitions from {zlt_capabilities_path}",
+            err=True,
+        )
         raise click.Abort()
     if capability_name not in valid_capabilities:
         click.echo(
@@ -51,7 +57,10 @@ def add_capability(ctx: click.Context, tool_id: str, capability_name: str):
     capabilities_list = metadata.setdefault("provides_capabilities", [])
 
     if not isinstance(capabilities_list, list):
-        click.echo(f"Error: 'metadata.provides_capabilities' in {tool_json_path} is not a list.", err=True)
+        click.echo(
+            f"Error: 'metadata.provides_capabilities' in {tool_json_path} is not a list.",
+            err=True,
+        )
         raise click.Abort()
 
     if capability_name in capabilities_list:
@@ -68,7 +77,11 @@ def add_capability(ctx: click.Context, tool_id: str, capability_name: str):
         log.info("Capability added successfully.", tool=tool_id, capability=capability_name)
     else:
         click.echo(f"Error: Failed to write updated definition to {tool_json_path}", err=True)
-        log.error("Failed to write updated definition.", tool=tool_id, path=str(tool_json_path))
+        log.error(
+            "Failed to write updated definition.",
+            tool=tool_id,
+            path=str(tool_json_path),
+        )
         raise click.Abort()
 
 
@@ -96,7 +109,8 @@ def remove_capability(ctx: click.Context, tool_id: str, capability_name: str):
     metadata = tool_data.get("metadata")
     if not metadata or not isinstance(metadata, dict):
         click.echo(
-            f"Error: 'metadata' object missing or invalid in {tool_json_path}. Cannot remove capability.", err=True
+            f"Error: 'metadata' object missing or invalid in {tool_json_path}. Cannot remove capability.",
+            err=True,
         )
         raise click.Abort()
 
@@ -128,5 +142,9 @@ def remove_capability(ctx: click.Context, tool_id: str, capability_name: str):
         log.info("Capability removed successfully.", tool=tool_id, capability=capability_name)
     else:
         click.echo(f"Error: Failed to write updated definition to {tool_json_path}", err=True)
-        log.error("Failed to write updated definition.", tool=tool_id, path=str(tool_json_path))
+        log.error(
+            "Failed to write updated definition.",
+            tool=tool_id,
+            path=str(tool_json_path),
+        )
         raise click.Abort()

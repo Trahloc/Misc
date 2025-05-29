@@ -22,7 +22,11 @@ from .config_validation import validate_config
 from pydantic import ValidationError
 
 # Import the new parser
-from .hierarchical_utils import parse_to_nested_dict, ParsedHierarchy, check_list_conflicts
+from .hierarchical_utils import (
+    parse_to_nested_dict,
+    ParsedHierarchy,
+    check_list_conflicts,
+)
 
 # Import defaults from shared module
 from zeroth_law.config_defaults import DEFAULT_CONFIG
@@ -63,7 +67,8 @@ def _parse_hierarchical_list(raw_list: List[str]) -> Dict[str, Set[str]]:
     parsed_dict: Dict[str, Set[str]] = {}
     if not isinstance(raw_list, list):
         log.warning(
-            "Managed tools list is not a valid list. Returning empty structure.", received_type=type(raw_list).__name__
+            "Managed tools list is not a valid list. Returning empty structure.",
+            received_type=type(raw_list).__name__,
         )
         return {}
 
@@ -93,7 +98,10 @@ def _parse_hierarchical_list(raw_list: List[str]) -> Dict[str, Set[str]]:
             subcommands = {sub.strip() for sub in subcommands_str.split(",") if sub.strip()}
 
             if not subcommands:
-                log.warning("Entry specified tool with ':' but no valid subcommands followed.", entry=entry)
+                log.warning(
+                    "Entry specified tool with ':' but no valid subcommands followed.",
+                    entry=entry,
+                )
                 continue
 
             # TODO: Handle deeper nesting like tool:sub:subsub? Needs further parsing logic.
@@ -101,16 +109,28 @@ def _parse_hierarchical_list(raw_list: List[str]) -> Dict[str, Set[str]]:
 
             if tool_name in parsed_dict and parsed_dict[tool_name] == {"*"}:
                 # Whole tool is already listed, ignore specific subcommand entries for it.
-                log.debug("Ignoring subcommand entry as whole tool is listed.", tool=tool_name, subcommands=subcommands)
+                log.debug(
+                    "Ignoring subcommand entry as whole tool is listed.",
+                    tool=tool_name,
+                    subcommands=subcommands,
+                )
                 continue
             else:
                 # Add/update subcommands.
                 if tool_name in parsed_dict:
                     parsed_dict[tool_name].update(subcommands)
-                    log.debug("Updated subcommands for tool", tool=tool_name, added_subcommands=subcommands)
+                    log.debug(
+                        "Updated subcommands for tool",
+                        tool=tool_name,
+                        added_subcommands=subcommands,
+                    )
                 else:
                     parsed_dict[tool_name] = subcommands
-                    log.debug("Added new tool with subcommands", tool=tool_name, subcommands=subcommands)
+                    log.debug(
+                        "Added new tool with subcommands",
+                        tool=tool_name,
+                        subcommands=subcommands,
+                    )
 
     return parsed_dict
 
@@ -319,7 +339,10 @@ def load_config(
         config_file_path = Path(config_path_override)
         log.info("Using explicit config path override.", path=str(config_file_path))
         if not config_file_path.is_file():
-            log.error("Explicit config path override not found or not a file.", path=str(config_file_path))
+            log.error(
+                "Explicit config path override not found or not a file.",
+                path=str(config_file_path),
+            )
             return {}
     elif project_root:
         potential_path = project_root / _PYPROJECT_FILENAME
@@ -327,7 +350,10 @@ def load_config(
         if potential_path.is_file():
             config_file_path = potential_path
         else:
-            log.debug("pyproject.toml not found in determined project root", project_root=str(project_root))
+            log.debug(
+                "pyproject.toml not found in determined project root",
+                project_root=str(project_root),
+            )
             pass  # config_file_path remains None
 
     if config_file_path is None:
@@ -346,7 +372,10 @@ def load_config(
                 validated_defaults["parsed_blacklist"],
             )
             if conflicts:
-                log.error("Conflicts detected in DEFAULT whitelist/blacklist configuration!", conflicts=conflicts)
+                log.error(
+                    "Conflicts detected in DEFAULT whitelist/blacklist configuration!",
+                    conflicts=conflicts,
+                )
                 raise ValueError("Default configuration contains conflicts.")
             return validated_defaults
         except ValidationError as ve:
@@ -378,7 +407,10 @@ def load_config(
                 validated_defaults["parsed_blacklist"],
             )
             if conflicts:
-                log.error("Conflicts detected in DEFAULT whitelist/blacklist configuration!", conflicts=conflicts)
+                log.error(
+                    "Conflicts detected in DEFAULT whitelist/blacklist configuration!",
+                    conflicts=conflicts,
+                )
                 raise ValueError("Default configuration contains conflicts.")
             return validated_defaults
 
@@ -393,7 +425,11 @@ def load_config(
         raw_whitelist = managed_tools_data.get("whitelist", [])
         raw_blacklist = managed_tools_data.get("blacklist", [])
 
-        log.debug("Parsing hierarchical lists", whitelist_len=len(raw_whitelist), blacklist_len=len(raw_blacklist))
+        log.debug(
+            "Parsing hierarchical lists",
+            whitelist_len=len(raw_whitelist),
+            blacklist_len=len(raw_blacklist),
+        )
         parsed_whitelist = parse_to_nested_dict(raw_whitelist)
         parsed_blacklist = parse_to_nested_dict(raw_blacklist)
         log.debug(
@@ -418,14 +454,21 @@ def load_config(
         validated_config_dict["parsed_whitelist"] = parsed_whitelist
         validated_config_dict["parsed_blacklist"] = parsed_blacklist
 
-        log.info("Configuration loaded and validated successfully.", path=str(config_file_path))
+        log.info(
+            "Configuration loaded and validated successfully.",
+            path=str(config_file_path),
+        )
         return validated_config_dict
 
     except (FileNotFoundError, TomlDecodeError, OSError, ValidationError) as e:
         log.error("Configuration loading/validation failed.", error=str(e))
         return {}
     except Exception as e:
-        log.exception("Unexpected error processing configuration file.", path=str(config_file_path), error=str(e))
+        log.exception(
+            "Unexpected error processing configuration file.",
+            path=str(config_file_path),
+            error=str(e),
+        )
         return {}
 
 

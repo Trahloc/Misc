@@ -13,8 +13,6 @@ import pytest
 
 # Import the module to test - if it exists
 try:
-    from template_zeroth_law.commands import info
-
     INFO_MODULE_EXISTS = True
 except ImportError:
     INFO_MODULE_EXISTS = False

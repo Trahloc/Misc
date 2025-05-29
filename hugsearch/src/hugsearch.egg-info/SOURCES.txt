@@ -23,5 +23,10 @@ src/hugsearch/commands/__init__.py
 src/hugsearch/commands/check.py
 src/hugsearch/commands/info.py
 src/hugsearch/commands/version.py
+src/hugsearch/database/__init__.py
+src/hugsearch/database/models.py
+src/hugsearch/database/schema.py
+src/hugsearch/database/search.py
+src/hugsearch/database/tags.py
 tests/test_cli.py
 tests/test_project_setup.py

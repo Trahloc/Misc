@@ -46,9 +46,15 @@ def reconcile(ctx: click.Context, output_json: bool) -> None:
     try:
         # Run the core logic
         log.debug("Calling _perform_reconciliation_logic...")
-        results, managed, parsed_whitelist, parsed_blacklist, errors, warnings, has_errors = (
-            _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
-        )
+        (
+            results,
+            managed,
+            parsed_whitelist,
+            parsed_blacklist,
+            errors,
+            warnings,
+            has_errors,
+        ) = _perform_reconciliation_logic(project_root_dir=project_root, config_data=config)
         log.debug("Returned from _perform_reconciliation_logic.")
 
         # Handle output based on flags

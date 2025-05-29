@@ -12,16 +12,13 @@
 """
 
 from pathlib import Path
-import pytest
 from unittest.mock import patch
+
+import pytest
 from click.testing import CliRunner
 
-from template_zeroth_law.commands.check import (
-    command,
-    check_deps,
-    check_env,
-    check_paths,
-)
+from template_zeroth_law.commands.check import (check_deps, check_env,
+                                                check_paths, command)
 
 
 @pytest.fixture

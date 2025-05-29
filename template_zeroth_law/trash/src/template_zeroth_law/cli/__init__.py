@@ -28,8 +28,8 @@ INTERFACES:
 DEPENDENCIES: None
 """
 
-import sys
 import argparse
+import sys
 from typing import List, Optional
 
 
@@ -51,7 +51,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     # Add subparsers for different commands
-    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+    parser.add_subparsers(dest="command", help="Command to execute")
 
     # TODO: Add command subparsers here
 

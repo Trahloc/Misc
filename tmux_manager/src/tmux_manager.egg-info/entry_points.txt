@@ -1,2 +1,0 @@
-[console_scripts]
-tmux_manager = tmux_manager.cli:main

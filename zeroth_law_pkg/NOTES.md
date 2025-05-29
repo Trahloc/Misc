@@ -856,3 +856,13 @@ Implement a system that maintains an automated, persistent "map" of the codebase
 5. Verify `__init__.py` files in `src/` and `tests/`.
 6. Verify project installation within the `.venv`.
 7. Fix the underlying issue.
+
+---
+
+## Future Consideration: Rust for Performance Bottlenecks & Dual-Use of Underscore Prefix (2025-05-07T07:42:04+00:00)
+
+While the Zeroth Law Tool (ZLT) is fundamentally a Python application, the internal convention of prefixing modules and functions with an underscore (e.g., `_helper_module.py`, `_internal_function()`) serves a dual purpose beyond just indicating non-public APIs.
+
+These underscore-prefixed Python components are also considered potential candidates for being rewritten in Rust if they are identified as performance bottlenecks, particularly for computationally complex or concurrency-intensive tasks. Python remains the core language for ZLT's flexibility and high-level logic. However, should specific Python implementations prove insufficient for performance demands, the intention is to replace these well-encapsulated, underscore-prefixed modules/functions with Rust equivalents.
+
+The choice of Rust for such targeted optimizations is driven by its strong performance characteristics, robust concurrency model (which is considered superior for this project's needs compared to options like C/C++), and mature ecosystem. While other languages like Verse might offer advantages in the distant future, Rust is the current pragmatic choice for performance-critical drop-in replacements within the ZLT architecture.

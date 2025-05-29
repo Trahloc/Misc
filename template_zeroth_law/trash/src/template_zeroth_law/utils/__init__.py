@@ -15,12 +15,10 @@
  - re: Regular expressions
 """
 
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-import os
 import re
-import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 def get_project_root() -> Path:

@@ -13,8 +13,6 @@ import pytest
 
 # Import the module to test - if it exists
 try:
-    from template_zeroth_law.utils import strings
-
     STRINGS_MODULE_EXISTS = True
 except ImportError:
     STRINGS_MODULE_EXISTS = False

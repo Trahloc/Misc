@@ -66,7 +66,9 @@ def configure_logging(args: argparse.Namespace):
     structlog.configure(
         processors=[
             structlog.processors.JSONRenderer(
-                indent=4, sort_keys=True, key_order=["timestamp", "level", "logger", "message"]
+                indent=4,
+                sort_keys=True,
+                key_order=["timestamp", "level", "logger", "message"],
             )
         ],
         logger_factory=structlog.PrintLoggerFactory(),

@@ -60,20 +60,23 @@ DateLike = Union[datetime, str, int, float]
 class Closeable(Protocol):
     """Protocol for objects that can be closed."""
 
-    def close(self) -> None: ...
+    def close(self) -> None:
+        ...
 
 
 class Disposable(Protocol):
     """Protocol for objects that can be disposed."""
 
-    def dispose(self) -> None: ...
+    def dispose(self) -> None:
+        ...
 
 
 class HasName(Protocol):
     """Protocol for objects that have a name property."""
 
     @property
-    def name(self) -> str: ...
+    def name(self) -> str:
+        ...
 
 
 # Application-specific type definitions

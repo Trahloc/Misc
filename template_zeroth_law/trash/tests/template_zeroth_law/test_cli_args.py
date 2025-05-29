@@ -16,11 +16,12 @@
 """
 
 import logging
-import pytest
-import click
-from click.testing import CliRunner
-from unittest.mock import patch
 from typing import List
+from unittest.mock import patch
+
+import click
+import pytest
+from click.testing import CliRunner
 
 from template_zeroth_law.cli_args import add_args, configure_logging
 

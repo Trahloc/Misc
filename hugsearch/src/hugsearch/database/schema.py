@@ -20,14 +20,17 @@ async def init_db(db_path: Union[str, Path]) -> None:
         await db.execute("PRAGMA foreign_keys = ON")
 
         # Version tracking
-        await db.execute("""
+        await db.execute(
+            """
             CREATE TABLE IF NOT EXISTS schema_version (
                 version INTEGER PRIMARY KEY
             )
-        """)
+        """
+        )
 
         # Core models table with normalized columns
-        await db.execute("""
+        await db.execute(
+            """
             CREATE TABLE IF NOT EXISTS models (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -38,7 +41,8 @@ async def init_db(db_path: Union[str, Path]) -> None:
                 metadata TEXT NOT NULL,
                 last_checked TEXT NOT NULL
             )
-        """)
+        """
+        )
         await db.execute("CREATE INDEX IF NOT EXISTS idx_models_name ON models(name)")
         await db.execute(
             "CREATE INDEX IF NOT EXISTS idx_models_name_lower ON models(name_lower)"
@@ -51,7 +55,8 @@ async def init_db(db_path: Union[str, Path]) -> None:
         )
 
         # Tags table for clean tag management
-        await db.execute("""
+        await db.execute(
+            """
             CREATE TABLE IF NOT EXISTS model_tags (
                 model_id TEXT NOT NULL,
                 tag TEXT NOT NULL,
@@ -59,26 +64,31 @@ async def init_db(db_path: Union[str, Path]) -> None:
                 PRIMARY KEY (model_id, tag),
                 FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
             )
-        """)
+        """
+        )
         await db.execute(
             "CREATE INDEX IF NOT EXISTS idx_model_tags ON model_tags(tag_lower)"
         )
 
         # Description search using FTS5
-        await db.execute("""
+        await db.execute(
+            """
             CREATE VIRTUAL TABLE IF NOT EXISTS model_descriptions USING fts5(
                 model_id UNINDEXED,
                 description
             )
-        """)
+        """
+        )
 
         # Creator following
-        await db.execute("""
+        await db.execute(
+            """
             CREATE TABLE IF NOT EXISTS followed_creators (
                 author TEXT PRIMARY KEY,
                 last_checked TEXT NOT NULL
             )
-        """)
+        """
+        )
 
         # Set initial schema version
         await db.execute(
@@ -97,7 +107,8 @@ async def migrate_schema(db_path: Union[str, Path]) -> None:
 
         if current_version < 1:
             # Create initial tables if they don't exist
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS models (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -107,7 +118,8 @@ async def migrate_schema(db_path: Union[str, Path]) -> None:
                     metadata TEXT NOT NULL,
                     last_checked TEXT NOT NULL
                 )
-            """)
+            """
+            )
             await db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_models_name ON models(name)"
             )
@@ -118,7 +130,8 @@ async def migrate_schema(db_path: Union[str, Path]) -> None:
                 "CREATE INDEX IF NOT EXISTS idx_models_author ON models(author)"
             )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS model_tags (
                     model_id TEXT NOT NULL,
                     tag TEXT NOT NULL,
@@ -126,24 +139,29 @@ async def migrate_schema(db_path: Union[str, Path]) -> None:
                     PRIMARY KEY (model_id, tag),
                     FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
                 )
-            """)
+            """
+            )
             await db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_model_tags ON model_tags(tag_lower)"
             )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE VIRTUAL TABLE IF NOT EXISTS model_descriptions USING fts5(
                     model_id UNINDEXED,
                     description
                 )
-            """)
+            """
+            )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS followed_creators (
                     author TEXT PRIMARY KEY,
                     last_checked TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
         if current_version < 2:
             await db.execute("ALTER TABLE models ADD COLUMN author_lower TEXT")

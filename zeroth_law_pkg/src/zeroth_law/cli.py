@@ -45,6 +45,10 @@ from zeroth_law.analyzers.precommit_analyzer import analyze_precommit_config
 # Import sync command directly for testing
 # from .subcommands.tools.sync import sync as sync_command
 
+# Add project root to path for potential utility imports if needed
+# sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
+# Test comment for multi-config commit
+
 # --- Early Structlog Setup --- START
 # Configure structlog minimally early on for setup messages
 structlog.configure(
@@ -97,7 +101,11 @@ def load_zlt_option_definitions() -> Dict[str, Dict[str, Any]]:
         with open(OPTIONS_DEF_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except json.JSONDecodeError as e:
-        log.error("zlt_options_definition_decoding_error", path=str(OPTIONS_DEF_PATH), error=str(e))
+        log.error(
+            "zlt_options_definition_decoding_error",
+            path=str(OPTIONS_DEF_PATH),
+            error=str(e),
+        )
         return {}
     except Exception as e:
         log.exception("zlt_options_definition_loading_error", path=str(OPTIONS_DEF_PATH))
@@ -118,7 +126,7 @@ def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click
         # Ensure 'default' is set appropriately (usually False)
         kwargs.setdefault("default", False)
         # Remove 'type' if explicitly set to bool, as it's implied
-        if kwargs.get("type") == bool:
+        if kwargs.get("type") is bool:
             del kwargs["type"]
     else:
         # Handle other types
@@ -138,7 +146,7 @@ def create_click_option_from_def(name: str, definition: Dict[str, Any]) -> click
         # Default 'type' is implicitly int for counts
         kwargs.setdefault("default", 0)
         # Remove 'type' if explicitly set to int, as it's implied
-        if kwargs.get("type") == int:
+        if kwargs.get("type") is int:
             del kwargs["type"]
 
     # Handle 'required' attribute
@@ -283,7 +291,13 @@ def create_cli_group() -> click.Group:
         help="Path to the ZLT configuration file (pyproject.toml section overrides this).",
     )
     @click.pass_context
-    def base_cli_group(ctx: click.Context, verbose: int, quiet: bool, config_path: Optional[Path], **kwargs) -> None:
+    def base_cli_group(
+        ctx: click.Context,
+        verbose: int,
+        quiet: bool,
+        config_path: Optional[Path],
+        **kwargs,
+    ) -> None:
         """Core logic for the base CLI group."""
         # Initialize context object first
         ctx.ensure_object(dict)

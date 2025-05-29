@@ -11,12 +11,13 @@
  - template_zeroth_law.utils: Utility functions
 """
 
-import sys
-import click
-import platform
-from pathlib import Path
-from typing import Dict, Any, Optional
 import json
+import platform
+import sys
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import click
 
 from template_zeroth_law.utils import get_project_root, merge_dicts
 

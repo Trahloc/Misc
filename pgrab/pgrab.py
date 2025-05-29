@@ -102,10 +102,13 @@ class ModelManager:
         for repo_path, filename in models:
             try:
                 # First get the download links from Hugging Face
-                links, sha256, is_lora, is_llamacpp = (
-                    self.downloader.get_download_links_from_huggingface(
-                        repo_path, "main", specific_file=filename
-                    )
+                (
+                    links,
+                    sha256,
+                    is_lora,
+                    is_llamacpp,
+                ) = self.downloader.get_download_links_from_huggingface(
+                    repo_path, "main", specific_file=filename
                 )
 
                 # Get the output folder
