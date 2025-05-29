@@ -152,9 +152,9 @@ def expect_log_error(
         matching_logs = [
             record for record in captured_logs if message in record.getMessage()
         ]
-        assert (
-            matching_logs
-        ), f"Expected log message containing '{message}' was not found"
+        assert matching_logs, (
+            f"Expected log message containing '{message}' was not found"
+        )
 
 
 def silent_errors(func=None, logger_names=None):

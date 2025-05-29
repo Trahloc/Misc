@@ -63,7 +63,11 @@ def test_load_tool_index_json_not_dict(mock_index_file: Path):
 # Test cases for get_entry
 GET_ENTRY_TEST_CASES = [
     (("toolA",), ("toolA",), {"crc": "0x1111", "checked_timestamp": 1678886400.0}),
-    (("toolB", "sub1"), ("toolB", "sub1"), {"crc": "0x2222", "checked_timestamp": 1678886500.0}),
+    (
+        ("toolB", "sub1"),
+        ("toolB", "sub1"),
+        {"crc": "0x2222", "checked_timestamp": 1678886500.0},
+    ),
     (("toolC",), ("toolC",), None),  # Not in index
     ((), (), None),  # Empty sequence
 ]

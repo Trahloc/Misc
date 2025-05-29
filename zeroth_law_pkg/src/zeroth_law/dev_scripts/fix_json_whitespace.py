@@ -10,7 +10,7 @@ import json
 import jsonschema
 
 # from zeroth_law.path_utils import find_project_root
-from zeroth_law.common.path_utils import find_project_root
+from zeroth_law.common.path_utils import find_project_root, process_json_files_in_tools_dir
 
 # Add project root to sys.path to ensure correct module resolution
 # Assuming this script is run from somewhere within the project structure
@@ -56,36 +56,13 @@ def fix_json_trailing_whitespace(file_path: Path) -> bool:
 
 
 def main():
-    """Main function to find and fix JSON files."""
-    log.info("Starting JSON trailing whitespace check...")
-    project_root = find_project_root()
-    if not project_root:
-        log.error("Could not find project root. Exiting.")
-        sys.exit(1)
+    from zeroth_law.common.path_utils import process_json_files_in_tools_dir
 
-    tools_dir = project_root / "src" / "zeroth_law" / "tools"
-    if not tools_dir.is_dir():
-        log.error(f"Tools directory not found at {tools_dir}. Exiting.")
-        sys.exit(1)
-
-    json_files = list(tools_dir.rglob("*.json"))
-    log.info(f"Found {len(json_files)} JSON files to check in {tools_dir.relative_to(project_root)}.")
-
-    files_fixed = 0
-    files_error = 0
-
-    for json_file in json_files:
-        try:
-            if fix_json_trailing_whitespace(json_file):
-                files_fixed += 1
-        except Exception as e:
-            # Log error from the main loop just in case
-            log.exception(f"Unexpected error during processing of {json_file}: {e}")
-            files_error += 1
-
-    log.info(f"JSON trailing whitespace check complete. Fixed: {files_fixed} file(s). Errors: {files_error}.")
-    if files_error > 0:
-        sys.exit(1)  # Exit with error if any file processing failed
+    process_json_files_in_tools_dir(
+        file_callback=fix_json_trailing_whitespace,
+        log_prefix="JSON trailing whitespace check",
+        exit_on_error=True,
+    )
 
 
 if __name__ == "__main__":

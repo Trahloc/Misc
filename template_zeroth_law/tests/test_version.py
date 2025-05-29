@@ -31,9 +31,9 @@ def test_version_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        VERSION_MODULE_EXISTS
-    ), "The template_zeroth_law.commands.version module should exist"
+    assert VERSION_MODULE_EXISTS, (
+        "The template_zeroth_law.commands.version module should exist"
+    )
 
 
 """

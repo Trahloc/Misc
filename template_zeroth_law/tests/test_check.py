@@ -31,9 +31,9 @@ def test_check_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        CHECK_MODULE_EXISTS
-    ), "The template_zeroth_law.commands.check module should exist"
+    assert CHECK_MODULE_EXISTS, (
+        "The template_zeroth_law.commands.check module should exist"
+    )
 
 
 """

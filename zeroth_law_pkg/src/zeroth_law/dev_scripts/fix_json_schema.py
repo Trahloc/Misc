@@ -7,7 +7,7 @@ import structlog
 import json
 import jsonschema
 from pathlib import Path
-from zeroth_law.common.path_utils import find_project_root
+from zeroth_law.common.path_utils import find_project_root, process_json_files_in_tools_dir
 
 # Add project root to sys.path to ensure correct module resolution
 project_root = find_project_root(start_path=Path(__file__).resolve())
@@ -336,39 +336,22 @@ def fix_json_file_structure(file_path: Path, tool_name: str, command_id: str) ->
 
 def main():
     """Main function to find and fix JSON files."""
-    log.info("Starting JSON structural schema fix scan...")
-    project_root = find_project_root(Path(__file__).parent)
-    if not project_root:
-        log.error("Could not find project root. Exiting.")
-        sys.exit(1)
+    from zeroth_law.common.path_utils import process_json_files_in_tools_dir
 
-    tools_dir = project_root / "src" / "zeroth_law" / "tools"
-    if not tools_dir.is_dir():
-        log.error(f"Tools directory not found at {tools_dir}. Exiting.")
-        sys.exit(1)
+    def callback(json_file):
+        if json_file.name == "tool_index.json":
+            return False
+        # Infer tool_name and command_id from path
+        tool_name = json_file.parent.name
+        command_id = json_file.stem
+        return fix_json_file_structure(json_file, tool_name, command_id)
 
-    json_files = list(tools_dir.rglob("*.json"))
-    log.info(f"Found {len(json_files)} JSON files to check in {tools_dir.relative_to(project_root)}.")
-
-    files_fixed = 0
-    files_error = 0
-
-    for json_file in json_files:
-        if json_file.name == "tool_index.json":  # Skip the main index
-            continue
-        try:
-            # Infer tool_name and command_id from path
-            tool_name = json_file.parent.name
-            command_id = json_file.stem  # Filename without extension
-            if fix_json_file_structure(json_file, tool_name, command_id):
-                files_fixed += 1
-        except Exception as e:
-            log.exception(f"Unexpected error during processing of {json_file}: {e}")
-            files_error += 1
-
-    log.info(f"JSON structural fix scan complete. Fixed: {files_fixed} file(s). Errors: {files_error}.")
-    if files_error > 0:
-        sys.exit(1)  # Exit with error if any file processing failed
+    process_json_files_in_tools_dir(
+        file_callback=callback,
+        skip_files={"tool_index.json"},
+        log_prefix="JSON structural schema fix scan",
+        exit_on_error=True,
+    )
 
 
 if __name__ == "__main__":

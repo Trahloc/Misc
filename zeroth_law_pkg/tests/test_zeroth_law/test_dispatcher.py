@@ -85,9 +85,9 @@ def test_find_formatter_for_python():
 
     assert len(selected_tools) == 1
     assert target_files[0] in selected_tools
-    assert (
-        selected_tools[target_files[0]] == "ruff_format"
-    ), f"Expected 'ruff_format', but got {selected_tools.get(target_files[0])}"
+    assert selected_tools[target_files[0]] == "ruff_format", (
+        f"Expected 'ruff_format', but got {selected_tools.get(target_files[0])}"
+    )
 
 
 def test_find_linter_for_python():

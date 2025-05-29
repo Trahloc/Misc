@@ -31,9 +31,9 @@ def test_import_modules():
         from civit.filename_generator import sanitize_filename
 
         # If we get here, the imports worked
-        assert callable(
-            get_current_test_name
-        ), "get_current_test_name should be callable"
+        assert callable(get_current_test_name), (
+            "get_current_test_name should be callable"
+        )
         assert callable(sanitize_filename), "sanitize_filename should be callable"
     except ImportError as e:
         pytest.fail(f"Failed to import modules: {e}")

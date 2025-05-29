@@ -13,8 +13,7 @@
 
 import logging
 import sys
-from typing import \
-    Optional  # Only import what's needed for the type annotation
+from typing import Optional  # Only import what's needed for the type annotation
 
 import click
 
@@ -34,12 +33,12 @@ from template_zeroth_law.config import get_config
 def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> None:
     """Command-line interface for the template_zeroth_law package."""
     # Input validation
-    assert (
-        isinstance(verbose, int) and verbose >= 0
-    ), f"Verbosity must be non-negative integer, got {verbose}"
-    assert config is None or isinstance(
-        config, str
-    ), f"Config must be string or None, got {type(config)}"
+    assert isinstance(verbose, int) and verbose >= 0, (
+        f"Verbosity must be non-negative integer, got {verbose}"
+    )
+    assert config is None or isinstance(config, str), (
+        f"Config must be string or None, got {type(config)}"
+    )
 
     # Initialize context object to store shared data
     ctx.ensure_object(dict)
@@ -71,9 +70,9 @@ def main(ctx: click.Context, verbose: int = 0, config: Optional[str] = None) -> 
     ctx.obj["verbose"] = verbose
 
     # Validate context setup
-    assert all(
-        key in ctx.obj for key in ["logger", "config", "verbose"]
-    ), "Context missing required keys"
+    assert all(key in ctx.obj for key in ["logger", "config", "verbose"]), (
+        "Context missing required keys"
+    )
 
 
 # Register commands

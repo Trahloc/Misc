@@ -27,7 +27,9 @@ from zeroth_law.common.config_loader import (
     parse_to_nested_dict,
     check_list_conflicts,
 )
-from zeroth_law.common.path_utils import ZLFProjectRootNotFoundError  # Import the exception
+from zeroth_law.common.path_utils import (
+    ZLFProjectRootNotFoundError,
+)  # Import the exception
 from zeroth_law.common.hierarchical_utils import ParsedHierarchy
 from zeroth_law.config_defaults import DEFAULT_CONFIG as config_defaults
 from tomlkit import parse as tomlkit_parse, dumps as tomlkit_dumps

@@ -1,5 +1,5 @@
 # FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/example_module.py.template # Shortened
-"""  # noqa: E501
+"""# noqa: E501
 # PURPOSE: [Briefly describe the purpose of this module file.]
 
 ## INTERFACES:

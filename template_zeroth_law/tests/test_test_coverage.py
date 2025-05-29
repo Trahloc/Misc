@@ -32,9 +32,9 @@ def test_test_coverage_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        TEST_COVERAGE_MODULE_EXISTS
-    ), "The template_zeroth_law.commands.test_coverage module should exist"
+    assert TEST_COVERAGE_MODULE_EXISTS, (
+        "The template_zeroth_law.commands.test_coverage module should exist"
+    )
 
 
 """

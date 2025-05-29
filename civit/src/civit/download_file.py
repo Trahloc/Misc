@@ -123,13 +123,16 @@ def download_file(
         filepath = dest_path / filename
         total_size = int(response.headers.get("content-length", 0))
 
-        with open(filepath, "wb") as f, tqdm(
-            desc=filename,
-            total=total_size,
-            unit="iB",
-            unit_scale=True,
-            unit_divisor=1024,
-        ) as pbar:
+        with (
+            open(filepath, "wb") as f,
+            tqdm(
+                desc=filename,
+                total=total_size,
+                unit="iB",
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as pbar,
+        ):
             for data in response.iter_content(chunk_size=8192):
                 size = f.write(data)
                 pbar.update(size)

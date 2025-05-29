@@ -17,10 +17,14 @@ from typing import Any, Type
 
 import pytest
 
-from template_zeroth_law.exceptions import (AnalysisError, ConfigError,
-                                            FileNotFoundError,
-                                            NotADirectoryError,
-                                            NotPythonFileError, ZerothLawError)
+from template_zeroth_law.exceptions import (
+    AnalysisError,
+    ConfigError,
+    FileNotFoundError,
+    NotADirectoryError,
+    NotPythonFileError,
+    ZerothLawError,
+)
 
 
 def test_exception_hierarchy():
@@ -43,9 +47,9 @@ def test_exception_hierarchy():
     ]
 
     for exc in custom_exceptions:
-        assert issubclass(
-            exc, ZerothLawError
-        ), f"{exc.__name__} must inherit from ZerothLawError"
+        assert issubclass(exc, ZerothLawError), (
+            f"{exc.__name__} must inherit from ZerothLawError"
+        )
 
 
 @pytest.mark.parametrize(

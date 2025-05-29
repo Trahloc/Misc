@@ -31,9 +31,9 @@ def test_commands_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        COMMANDS_MODULE_EXISTS
-    ), "The template_zeroth_law.cli.commands module should exist"
+    assert COMMANDS_MODULE_EXISTS, (
+        "The template_zeroth_law.cli.commands module should exist"
+    )
 
 
 """

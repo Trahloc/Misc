@@ -44,7 +44,9 @@ from zeroth_law.subcommands._tools.sync import sync as sync_command  # NEW PATH
 # Import helpers and exceptions potentially needed for mocking/setup
 # from zeroth_law.lib.tooling.tool_reconciler import ToolStatus, ReconciliationError # OLD PATH
 from zeroth_law.lib.tooling.tool_reconciler import ToolStatus  # Keep this
-from zeroth_law.subcommands._tools._reconcile._logic import ReconciliationError  # NEW PATH for exception
+from zeroth_law.subcommands._tools._reconcile._logic import (
+    ReconciliationError,
+)  # NEW PATH for exception
 from zeroth_law.lib.tool_index_handler import ToolIndexHandler
 
 # Import calculate_crc32_hex helper
@@ -75,13 +77,21 @@ package-dir = {"" = "src"}
 
 # Default tool index content
 DEFAULT_TOOL_INDEX = {
-    "toolA": {"crc": hex(zlib.crc32(b"toolA help")), "checked_timestamp": 1.0, "updated_timestamp": 1.0},
+    "toolA": {
+        "crc": hex(zlib.crc32(b"toolA help")),
+        "checked_timestamp": 1.0,
+        "updated_timestamp": 1.0,
+    },
     "toolB": {
         "crc": None,
         "checked_timestamp": 1.0,
         "updated_timestamp": 1.0,
         "subcommands": {
-            "sub1": {"crc": hex(zlib.crc32(b"toolB sub1 help")), "checked_timestamp": 1.0, "updated_timestamp": 1.0}
+            "sub1": {
+                "crc": hex(zlib.crc32(b"toolB sub1 help")),
+                "checked_timestamp": 1.0,
+                "updated_timestamp": 1.0,
+            }
         },
     },
 }
@@ -174,7 +184,10 @@ def test_sync_fails_on_unclassified_tool(temp_tools_structure):
     original_cwd = os.getcwd()
     os.chdir(str(temp_tools_structure))
     # Remove the orphan dir to isolate the orphan env tool error
-    shutil.rmtree(temp_tools_structure / "src" / "zeroth_law" / "tools" / "unmanaged_tool_c", ignore_errors=True)
+    shutil.rmtree(
+        temp_tools_structure / "src" / "zeroth_law" / "tools" / "unmanaged_tool_c",
+        ignore_errors=True,
+    )
     try:
         result = runner.invoke(cli_group, ["tools", "--max-workers=1", "sync"], catch_exceptions=False)
     finally:
@@ -199,7 +212,10 @@ def test_sync_fails_on_orphan_tool_dir(temp_tools_structure):
 
 
 @patch("zeroth_law.subcommands._tools._sync._stop_podman_runner")
-@patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value="mock-container-name")
+@patch(
+    "zeroth_law.subcommands._tools._sync._start_podman_runner",
+    return_value="mock-container-name",
+)
 def test_sync_success_no_changes(mock_stop_podman, mock_start_podman, temp_tools_structure, caplog):
     """Test successful sync run with no required baseline changes."""
     caplog.set_level(logging.INFO)
@@ -279,7 +295,10 @@ def test_sync_success_no_changes(mock_stop_podman, mock_start_podman, temp_tools
 )
 # Add patch decorators for podman helpers
 @patch("zeroth_law.subcommands._tools._sync._stop_podman_runner")
-@patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value="mock-container-name")
+@patch(
+    "zeroth_law.subcommands._tools._sync._start_podman_runner",
+    return_value="mock-container-name",
+)
 # --- STRATEGY: Patching save_tool_index AND _capture_command_output --- #
 # --- Patch save_tool_index where it's imported/used --- #
 @patch("zeroth_law.subcommands._tools._sync._update_and_save_index.save_tool_index")
@@ -421,13 +440,13 @@ def test_sync_timestamp_logic(
     if "skip" in scenario:
         assert saved_entry_a is not None, f"Index entry missing in skip scenario '{scenario}'"
         assert saved_entry_a["crc"] == initial_crc, f"Index CRC changed in skip scenario '{scenario}'"
-        assert (
-            txt_file.read_text() == "existing baseline"
-        ), f"Baseline file content changed in skip scenario '{scenario}'"
+        assert txt_file.read_text() == "existing baseline", (
+            f"Baseline file content changed in skip scenario '{scenario}'"
+        )
     elif "process" in scenario or "force" in scenario:
-        assert (
-            saved_entry_a is not None
-        ), f"managed_tool_a missing from saved index in process/force scenario '{scenario}'"
+        assert saved_entry_a is not None, (
+            f"managed_tool_a missing from saved index in process/force scenario '{scenario}'"
+        )
         # Assert against the CRC calculated from the mocked output
         assert saved_entry_a["crc"] == fixed_crc, f"Index CRC not updated in process/force scenario '{scenario}'"
         assert "checked_timestamp" in saved_entry_a, "checked_timestamp missing"
@@ -439,7 +458,10 @@ def test_sync_timestamp_logic(
 
 # Test --exit-errors flag
 @patch("zeroth_law.subcommands._tools._sync._stop_podman_runner")
-@patch("zeroth_law.subcommands._tools._sync._start_podman_runner", return_value="mock-container-name")
+@patch(
+    "zeroth_law.subcommands._tools._sync._start_podman_runner",
+    return_value="mock-container-name",
+)
 def test_sync_exit_errors(mock_stop_podman, mock_start_podman, temp_tools_structure, caplog):
     runner = CliRunner()
     from zeroth_law.cli import cli_group
@@ -569,7 +591,9 @@ def test_sync_exit_errors(mock_stop_podman, mock_start_podman, temp_tools_struct
 
             # Use default catch_exceptions=True and check result.exit_code
             result_with_exit = runner.invoke(
-                cli_group, ["tools", "--max-workers=1", "sync", "--exit-errors"], catch_exceptions=True
+                cli_group,
+                ["tools", "--max-workers=1", "sync", "--exit-errors"],
+                catch_exceptions=True,
             )
 
     finally:

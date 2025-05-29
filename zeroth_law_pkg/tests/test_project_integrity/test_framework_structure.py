@@ -178,9 +178,11 @@ SOURCE_FILE_IDS = [str(p.relative_to(SRC_PKG_ROOT.parent)) for p in SOURCE_FILES
 def test_test_structure_mirrors_source(src_file: Path):
     """Verify that for every source .py file, a corresponding test_*.py file exists inside tests/test_zeroth_law/."""
     expected_test_file = _expected_test_path(src_file)
-    assert expected_test_file.is_file(), f"Source file {src_file.relative_to(SRC_PKG_ROOT.parent)} \
+    assert expected_test_file.is_file(), (
+        f"Source file {src_file.relative_to(SRC_PKG_ROOT.parent)} \
         lacks corresponding test file at {expected_test_file.relative_to(TESTS_ROOT)} \
         (Based on ZLF 'Prefix Everything' Convention inside tests/test_zeroth_law/)"
+    )
 
 
 def _get_test_py_files() -> Set[Path]:

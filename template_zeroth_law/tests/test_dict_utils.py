@@ -31,9 +31,9 @@ def test_dict_utils_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        DICT_UTILS_MODULE_EXISTS
-    ), "The template_zeroth_law.utils.dict_utils module should exist"
+    assert DICT_UTILS_MODULE_EXISTS, (
+        "The template_zeroth_law.utils.dict_utils module should exist"
+    )
 
 
 """

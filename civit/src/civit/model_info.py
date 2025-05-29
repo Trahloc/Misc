@@ -59,13 +59,13 @@ def get_model_info(
     """
     try:
         # Validate pre-conditions
-        assert model_id and isinstance(
-            model_id, str
-        ), "model_id must be non-empty string"
+        assert model_id and isinstance(model_id, str), (
+            "model_id must be non-empty string"
+        )
         assert timeout > 0, "timeout must be positive"
-        assert api_key is None or isinstance(
-            api_key, str
-        ), "api_key must be string or None"
+        assert api_key is None or isinstance(api_key, str), (
+            "api_key must be string or None"
+        )
 
         api_url = urljoin("https://civitai.com/api/v1/models/", model_id)
         headers = {"User-Agent": "civit-cli/1.0"}

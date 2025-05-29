@@ -609,7 +609,9 @@ class ProcessManager:
             self.logger.warning(
                 "Standard signal sequence failed. Initiating final termination protocol..."
             )
-            print(f"\n{Colors.RED}🧨 DEPLOYING FINAL TERMINATION PROTOCOL 🧨{Colors.NC}")
+            print(
+                f"\n{Colors.RED}🧨 DEPLOYING FINAL TERMINATION PROTOCOL 🧨{Colors.NC}"
+            )
 
             original_wait = self.args.wait_time
             self.args.wait_time = max(1, original_wait // 2)
@@ -619,8 +621,10 @@ class ProcessManager:
                 if not remaining_pids:
                     break
 
-                print(f"{Colors.YELLOW}Termination attempt {attempt+1}/3...{Colors.NC}")
-                self.logger.info(f"Final termination protocol attempt {attempt+1}/3")
+                print(
+                    f"{Colors.YELLOW}Termination attempt {attempt + 1}/3...{Colors.NC}"
+                )
+                self.logger.info(f"Final termination protocol attempt {attempt + 1}/3")
 
                 # Try SIGKILL again, repeatedly
                 success, remaining_pids = self.kill_processes("KILL", remaining_pids)

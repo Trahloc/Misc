@@ -102,3 +102,59 @@ def list_executables_in_venv_bin(venv_bin_path: Path) -> List[str]:
 
     log.debug(f"Found {len(executables)} executables in {venv_bin_path}")
     return executables
+
+
+def process_json_files_in_tools_dir(
+    file_callback,
+    skip_files=None,
+    log_prefix="JSON file processing",
+    exit_on_error=True,
+):
+    """
+    Shared utility to find the project root, locate the tools dir, and process all JSON files with a callback.
+    Args:
+        file_callback: function(json_file: Path) -> bool or None. Called for each JSON file.
+        skip_files: set of filenames to skip (e.g., {"tool_index.json"})
+        log_prefix: string prefix for log messages
+        exit_on_error: if True, sys.exit(1) on error
+    Returns:
+        (files_fixed, files_error)
+    """
+    import sys
+    from pathlib import Path
+    import structlog
+
+    log = structlog.get_logger()
+    if skip_files is None:
+        skip_files = set()
+    log.info(f"{log_prefix}: Starting scan...")
+    project_root = find_project_root(Path(__file__).parent)
+    if not project_root:
+        log.error(f"{log_prefix}: Could not find project root. Exiting.")
+        if exit_on_error:
+            sys.exit(1)
+        return 0, 1
+    tools_dir = project_root / "src" / "zeroth_law" / "tools"
+    if not tools_dir.is_dir():
+        log.error(f"{log_prefix}: Tools directory not found at {tools_dir}. Exiting.")
+        if exit_on_error:
+            sys.exit(1)
+        return 0, 1
+    json_files = list(tools_dir.rglob("*.json"))
+    log.info(f"{log_prefix}: Found {len(json_files)} JSON files to check in {tools_dir.relative_to(project_root)}.")
+    files_fixed = 0
+    files_error = 0
+    for json_file in json_files:
+        if json_file.name in skip_files:
+            continue
+        try:
+            result = file_callback(json_file)
+            if result:
+                files_fixed += 1
+        except Exception as e:
+            log.exception(f"{log_prefix}: Unexpected error during processing of {json_file}: {e}")
+            files_error += 1
+    log.info(f"{log_prefix}: Scan complete. Fixed: {files_fixed} file(s). Errors: {files_error}.")
+    if exit_on_error and files_error > 0:
+        sys.exit(1)
+    return files_fixed, files_error

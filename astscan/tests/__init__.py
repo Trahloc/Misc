@@ -1,5 +1,5 @@
 # FILE_LOCATION: https://github.com/Trahloc/Misc/blob/main/zeroth_law/src/zeroth_law/templates/tests/__init__.py.template
-"""  # noqa: E501
+"""# noqa: E501
 # PURPOSE: [Briefly describe the purpose of this module.]
 
 ## INTERFACES:

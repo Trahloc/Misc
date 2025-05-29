@@ -25,8 +25,16 @@ BASE_TOOLS_DIR = Path("/mock/tools")
     [
         (("toolA",), "toolA/toolA.json", "toolA/toolA.txt"),
         (("toolB", "sub1"), "toolB/toolB_sub1.json", "toolB/toolB_sub1.txt"),
-        (("toolC", "sub1", "subsubA"), "toolC/toolC_sub1_subsubA.json", "toolC/toolC_sub1_subsubA.txt"),
-        (("tool-with-hyphen",), "tool-with-hyphen/tool-with-hyphen.json", "tool-with-hyphen/tool-with-hyphen.txt"),
+        (
+            ("toolC", "sub1", "subsubA"),
+            "toolC/toolC_sub1_subsubA.json",
+            "toolC/toolC_sub1_subsubA.txt",
+        ),
+        (
+            ("tool-with-hyphen",),
+            "tool-with-hyphen/tool-with-hyphen.json",
+            "tool-with-hyphen/tool-with-hyphen.txt",
+        ),
     ],
 )
 def test_command_sequence_to_filepath_new_signature(sequence, expected_json_rel_path_str, expected_txt_rel_path_str):
@@ -68,9 +76,9 @@ def test_calculate_crc32_hex():
         f"\nDEBUG CRC TEST: Data='{TEST_DATA_BYTES!r}', Expected(Hardcoded)='{EXPECTED_CRC_HEX_STR}', Expected(LocalCalc)='{local_expected_hex}', Got='{calculated_hex}'"
     )  # DEBUG PRINT
     # Assert against locally calculated value first for debugging
-    assert (
-        calculated_hex == local_expected_hex
-    ), f"Imported function result '{calculated_hex}' does not match local zlib calculation '{local_expected_hex}'"
+    assert calculated_hex == local_expected_hex, (
+        f"Imported function result '{calculated_hex}' does not match local zlib calculation '{local_expected_hex}'"
+    )
     # Keep original assert as well
     assert calculated_hex == EXPECTED_CRC_HEX_STR
 

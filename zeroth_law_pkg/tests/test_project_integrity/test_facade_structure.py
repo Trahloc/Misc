@@ -38,7 +38,10 @@ def test_command_facade_structure_and_content():
     all_fs_paths = list(SUBCOMMANDS_DIR.rglob("*"))
     all_py_files = {p for p in all_fs_paths if p.is_file() and p.suffix == ".py"}
     all_dirs = {p for p in all_fs_paths if p.is_dir()}
-    print(f"DEBUG: Found {len(all_py_files)} py files, {len(all_dirs)} dirs.", file=sys.stderr)  # DEBUG
+    print(
+        f"DEBUG: Found {len(all_py_files)} py files, {len(all_dirs)} dirs.",
+        file=sys.stderr,
+    )  # DEBUG
 
     # --- Rule 6: Check for invalid '*_cmd.py' files ---
     for py_file in all_py_files:

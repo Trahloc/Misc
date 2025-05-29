@@ -19,8 +19,12 @@ from typing import Generator
 
 import pytest
 
-from template_zeroth_law.logging import (DEBUG_FORMAT, LOG_LEVELS,
-                                         configure_logging, get_logger)
+from template_zeroth_law.logging import (
+    DEBUG_FORMAT,
+    LOG_LEVELS,
+    configure_logging,
+    get_logger,
+)
 
 
 @pytest.fixture

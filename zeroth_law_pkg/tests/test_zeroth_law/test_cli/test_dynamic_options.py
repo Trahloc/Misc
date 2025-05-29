@@ -39,16 +39,16 @@ def test_dynamic_cli_options_in_help(option_name, expected_flags, expected_descr
     assert result.exit_code == 0, f"CLI exited with code {result.exit_code}: {result.output}"
 
     # Check if the option flags are present
-    assert (
-        expected_flags in result.output
-    ), f"Expected flags '{expected_flags}' not found in help output for '{option_name}'"
+    assert expected_flags in result.output, (
+        f"Expected flags '{expected_flags}' not found in help output for '{option_name}'"
+    )
 
     # Check if the description is present
     # Be slightly flexible with whitespace
     cleaned_output = " ".join(result.output.split())
     cleaned_description = " ".join(expected_description.split())
-    assert (
-        cleaned_description in cleaned_output
-    ), f"Expected description '{expected_description}' not found in help output for '{option_name}'"
+    assert cleaned_description in cleaned_output, (
+        f"Expected description '{expected_description}' not found in help output for '{option_name}'"
+    )
 
     print(f"Test passed for option: {option_name}")  # Optional: Print success message

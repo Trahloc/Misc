@@ -19,10 +19,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, List
 
-from template_zeroth_law.types import (CallbackFunc, Closeable, ConfigDict,
-                                       DateLike, Disposable, HasName,
-                                       JsonValue, LogLevel, PathLike,
-                                       ResultCallback)
+from template_zeroth_law.types import (
+    CallbackFunc,
+    Closeable,
+    ConfigDict,
+    DateLike,
+    Disposable,
+    HasName,
+    JsonValue,
+    LogLevel,
+    PathLike,
+    ResultCallback,
+)
 
 
 def test_path_like_types():

@@ -63,7 +63,10 @@ class LoggingUsageFinder(ast.NodeVisitor):
 
 
 # --- The Pytest Test Function ---
-@pytest.mark.xfail(reason="'import logging' needed for level constants in cli.py setup_structlog_logging", strict=True)
+@pytest.mark.xfail(
+    reason="'import logging' needed for level constants in cli.py setup_structlog_logging",
+    strict=True,
+)
 def test_enforce_structlog_usage():
     """
     Verify that core modules use structlog instead of the standard logging module,

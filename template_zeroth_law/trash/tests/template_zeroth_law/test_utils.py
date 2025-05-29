@@ -17,8 +17,12 @@ from pathlib import Path
 
 import pytest
 
-from template_zeroth_law.utils import (get_project_root, merge_dicts,
-                                       parse_timestamp, sanitize_filename)
+from template_zeroth_law.utils import (
+    get_project_root,
+    merge_dicts,
+    parse_timestamp,
+    sanitize_filename,
+)
 
 
 def test_get_project_root():

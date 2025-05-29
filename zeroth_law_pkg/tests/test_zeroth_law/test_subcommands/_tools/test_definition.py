@@ -59,8 +59,14 @@ def test_add_capability_success(tmp_path):  # Use pytest tmp_path fixture
     # This assumes the command logic uses functions/constants to find these paths
     with (
         patch("zeroth_law.subcommands.tools.definition.WORKSPACE_ROOT", tmp_path),
-        patch("zeroth_law.subcommands.tools.definition.TOOLS_DIR", tmp_path / "src/zeroth_law/tools"),
-        patch("zeroth_law.subcommands.tools.definition.ZLT_CAPABILITIES_PATH", cap_defs_path),
+        patch(
+            "zeroth_law.subcommands.tools.definition.TOOLS_DIR",
+            tmp_path / "src/zeroth_law/tools",
+        ),
+        patch(
+            "zeroth_law.subcommands.tools.definition.ZLT_CAPABILITIES_PATH",
+            cap_defs_path,
+        ),
     ):  # Assuming a constant like this
         # --- Act --- Run the CLI command
         result = runner.invoke(
@@ -118,8 +124,14 @@ def test_remove_capability_success(tmp_path):
 
     with (
         patch("zeroth_law.subcommands.tools.definition.WORKSPACE_ROOT", tmp_path),
-        patch("zeroth_law.subcommands.tools.definition.TOOLS_DIR", tmp_path / "src/zeroth_law/tools"),
-        patch("zeroth_law.subcommands.tools.definition.ZLT_CAPABILITIES_PATH", cap_defs_path),
+        patch(
+            "zeroth_law.subcommands.tools.definition.TOOLS_DIR",
+            tmp_path / "src/zeroth_law/tools",
+        ),
+        patch(
+            "zeroth_law.subcommands.tools.definition.ZLT_CAPABILITIES_PATH",
+            cap_defs_path,
+        ),
     ):
         result = runner.invoke(
             zlt_cli,
@@ -159,7 +171,10 @@ def test_set_filetypes_success(tmp_path):
 
     with (
         patch("zeroth_law.subcommands.tools.definition.WORKSPACE_ROOT", tmp_path),
-        patch("zeroth_law.subcommands.tools.definition.TOOLS_DIR", tmp_path / "src/zeroth_law/tools"),
+        patch(
+            "zeroth_law.subcommands.tools.definition.TOOLS_DIR",
+            tmp_path / "src/zeroth_law/tools",
+        ),
     ):
         result = runner.invoke(
             zlt_cli,
@@ -190,7 +205,12 @@ def test_map_option_success(tmp_path):
         "command_sequence": ["mytool", "testcmd"],
         "options": [
             {"name": "--verbose-mode", "type": "flag", "description": "..."},
-            {"name": "--config-file", "type": "value", "description": "...", "maps_to_zlt_option": "config"},
+            {
+                "name": "--config-file",
+                "type": "value",
+                "description": "...",
+                "maps_to_zlt_option": "config",
+            },
         ],
         "arguments": [],
         "metadata": {"tool_name": "mytool"},
@@ -208,8 +228,14 @@ def test_map_option_success(tmp_path):
 
     with (
         patch("zeroth_law.subcommands.tools.definition.WORKSPACE_ROOT", tmp_path),
-        patch("zeroth_law.subcommands.tools.definition.TOOLS_DIR", tmp_path / "src/zeroth_law/tools"),
-        patch("zeroth_law.subcommands.tools.definition.ZLT_OPTIONS_DEFINITIONS_PATH", opts_defs_path),
+        patch(
+            "zeroth_law.subcommands.tools.definition.TOOLS_DIR",
+            tmp_path / "src/zeroth_law/tools",
+        ),
+        patch(
+            "zeroth_law.subcommands.tools.definition.ZLT_OPTIONS_DEFINITIONS_PATH",
+            opts_defs_path,
+        ),
     ):  # Assuming constant
         result = runner.invoke(
             zlt_cli,
@@ -233,7 +259,10 @@ def test_map_option_success(tmp_path):
     assert mapped_option is not None
     assert mapped_option.get("maps_to_zlt_option") == zlt_option
     # Check other option is untouched
-    other_option = next((opt for opt in updated_data["options"] if opt.get("name") == "--config-file"), None)
+    other_option = next(
+        (opt for opt in updated_data["options"] if opt.get("name") == "--config-file"),
+        None,
+    )
     assert other_option.get("maps_to_zlt_option") == "config"
 
 
@@ -245,8 +274,18 @@ def test_unmap_option_success(tmp_path):
     initial_def_data = {
         "command_sequence": ["mytool", "testcmd"],
         "options": [
-            {"name": "--verbose-mode", "type": "flag", "description": "...", "maps_to_zlt_option": "verbose"},
-            {"name": "--config-file", "type": "value", "description": "...", "maps_to_zlt_option": "config"},
+            {
+                "name": "--verbose-mode",
+                "type": "flag",
+                "description": "...",
+                "maps_to_zlt_option": "verbose",
+            },
+            {
+                "name": "--config-file",
+                "type": "value",
+                "description": "...",
+                "maps_to_zlt_option": "config",
+            },
         ],
         "arguments": [],
         "metadata": {"tool_name": "mytool"},
@@ -256,7 +295,10 @@ def test_unmap_option_success(tmp_path):
 
     with (
         patch("zeroth_law.subcommands.tools.definition.WORKSPACE_ROOT", tmp_path),
-        patch("zeroth_law.subcommands.tools.definition.TOOLS_DIR", tmp_path / "src/zeroth_law/tools"),
+        patch(
+            "zeroth_law.subcommands.tools.definition.TOOLS_DIR",
+            tmp_path / "src/zeroth_law/tools",
+        ),
     ):
         result = runner.invoke(
             zlt_cli,
@@ -275,11 +317,17 @@ def test_unmap_option_success(tmp_path):
     with open(tool_json_path, "r") as f:
         updated_data = json.load(f)
     # Find the correct option object and check mapping is removed
-    unmapped_option = next((opt for opt in updated_data["options"] if opt.get("name") == tool_option_to_unmap), None)
+    unmapped_option = next(
+        (opt for opt in updated_data["options"] if opt.get("name") == tool_option_to_unmap),
+        None,
+    )
     assert unmapped_option is not None
     assert "maps_to_zlt_option" not in unmapped_option
     # Check other option is untouched
-    other_option = next((opt for opt in updated_data["options"] if opt.get("name") == "--verbose-mode"), None)
+    other_option = next(
+        (opt for opt in updated_data["options"] if opt.get("name") == "--verbose-mode"),
+        None,
+    )
     assert other_option.get("maps_to_zlt_option") == "verbose"
 
 

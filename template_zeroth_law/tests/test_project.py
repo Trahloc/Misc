@@ -31,9 +31,9 @@ def test_project_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        PROJECT_MODULE_EXISTS
-    ), "The template_zeroth_law.utils.project module should exist"
+    assert PROJECT_MODULE_EXISTS, (
+        "The template_zeroth_law.utils.project module should exist"
+    )
 
 
 """

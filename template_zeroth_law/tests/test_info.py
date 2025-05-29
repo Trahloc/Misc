@@ -29,9 +29,9 @@ def test_info_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        INFO_MODULE_EXISTS
-    ), "The template_zeroth_law.commands.info module should exist"
+    assert INFO_MODULE_EXISTS, (
+        "The template_zeroth_law.commands.info module should exist"
+    )
 
 
 """

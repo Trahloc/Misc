@@ -31,9 +31,9 @@ def test_time_utils_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        TIME_UTILS_MODULE_EXISTS
-    ), "The template_zeroth_law.utils.time_utils module should exist"
+    assert TIME_UTILS_MODULE_EXISTS, (
+        "The template_zeroth_law.utils.time_utils module should exist"
+    )
 
 
 """

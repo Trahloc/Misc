@@ -12,8 +12,9 @@ from civit.cli import main as cli_main, setup_logging, parse_args
 def test_help_command():
     """Test the --help command works correctly"""
     # Capture stdout and stderr from the CLI function
-    with patch("sys.stdout", new=StringIO()) as fake_stdout, patch(
-        "sys.stderr", new=StringIO()
+    with (
+        patch("sys.stdout", new=StringIO()) as fake_stdout,
+        patch("sys.stderr", new=StringIO()),
     ):
         try:
             with patch("sys.argv", ["civit.py", "--help"]):
@@ -105,8 +106,9 @@ def test_double_verbose_flag():
 def test_short_help_command():
     """Test the -h short flag for help command"""
     # Capture stdout and stderr from the CLI function
-    with patch("sys.stdout", new=StringIO()) as fake_stdout, patch(
-        "sys.stderr", new=StringIO()
+    with (
+        patch("sys.stdout", new=StringIO()) as fake_stdout,
+        patch("sys.stderr", new=StringIO()),
     ):
         try:
             with patch("sys.argv", ["civit.py", "-h"]):

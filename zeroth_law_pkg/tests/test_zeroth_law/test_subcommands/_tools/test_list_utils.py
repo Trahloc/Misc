@@ -24,7 +24,9 @@ from zeroth_law.common.hierarchical_utils import (
 )
 
 # Need the old parser only for comparing its simple output format in one test
-from zeroth_law.common.config_loader import _parse_hierarchical_list as _parse_simple_hierarchical_list
+from zeroth_law.common.config_loader import (
+    _parse_hierarchical_list as _parse_simple_hierarchical_list,
+)
 
 # --- Fixtures --- #
 
@@ -72,10 +74,19 @@ PARSE_TEST_CASES = [
     # Input List                        Expected Nested Dictionary
     ([], {}),  # Empty list
     (["tool_a"], {"tool_a": {"_explicit": True, "_all": False}}),  # Simple tool
-    (["tool_a:*"], {"tool_a": {"_explicit": False, "_all": True}}),  # Corrected: Tool with *
+    (
+        ["tool_a:*"],
+        {"tool_a": {"_explicit": False, "_all": True}},
+    ),  # Corrected: Tool with *
     (
         ["tool_a:sub1"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+        {
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": True, "_all": False},
+            }
+        },
     ),  # Tool with sub
     (
         ["tool_a:sub1,sub2"],
@@ -90,7 +101,13 @@ PARSE_TEST_CASES = [
     ),  # Tool with multiple subs
     (
         ["tool_a:sub1:*"],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": True}}},
+        {
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": False, "_all": True},
+            }
+        },
     ),  # Corrected: Sub with *
     (
         ["tool_a:sub1:subsub1"],
@@ -98,7 +115,11 @@ PARSE_TEST_CASES = [
             "tool_a": {
                 "_explicit": False,
                 "_all": False,
-                "sub1": {"_explicit": False, "_all": False, "subsub1": {"_explicit": True, "_all": False}},
+                "sub1": {
+                    "_explicit": False,
+                    "_all": False,
+                    "subsub1": {"_explicit": True, "_all": False},
+                },
             }
         },
     ),  # Nested sub
@@ -119,11 +140,23 @@ PARSE_TEST_CASES = [
     ),  # Nested multiple subs
     (
         ["tool_a", "tool_a:sub1"],
-        {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+        {
+            "tool_a": {
+                "_explicit": True,
+                "_all": False,
+                "sub1": {"_explicit": True, "_all": False},
+            }
+        },
     ),  # Explicit tool and sub
     (
         ["tool_a:sub1", "tool_a"],
-        {"tool_a": {"_explicit": True, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+        {
+            "tool_a": {
+                "_explicit": True,
+                "_all": False,
+                "sub1": {"_explicit": True, "_all": False},
+            }
+        },
     ),  # Order shouldn't matter
     (
         ["tool_a:*", "tool_a:sub1"],
@@ -136,13 +169,21 @@ PARSE_TEST_CASES = [
     (
         ["tool_a:sub1:*", "tool_a:sub1:subsub1"],
         {
-            "tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": True}}
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": False, "_all": True},
+            }
         },  # Corrected: :* wipes sub definitions
     ),
     (
         ["tool_a:sub1:subsub1", "tool_a:sub1:*"],
         {
-            "tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": False, "_all": True}}
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": False, "_all": True},
+            }
         },  # Corrected: :* wipes sub definitions
     ),
     (
@@ -157,18 +198,37 @@ PARSE_TEST_CASES = [
             "tool_b": {"_explicit": True, "_all": False},
         },
     ),  # Mixed
-    (["tool_a::sub1"], {"tool_a": {"_explicit": False, "_all": False}}),  # Invalid empty component - Leaves parent
-    (["tool_a:,"], {"tool_a": {"_explicit": False, "_all": False}}),  # Invalid empty sub after comma - Leaves parent
-    (["tool_a", ""], {"tool_a": {"_explicit": True, "_all": False}}),  # Empty string in list ignored
+    (
+        ["tool_a::sub1"],
+        {"tool_a": {"_explicit": False, "_all": False}},
+    ),  # Invalid empty component - Leaves parent
+    (
+        ["tool_a:,"],
+        {"tool_a": {"_explicit": False, "_all": False}},
+    ),  # Invalid empty sub after comma - Leaves parent
+    (
+        ["tool_a", ""],
+        {"tool_a": {"_explicit": True, "_all": False}},
+    ),  # Empty string in list ignored
     (
         ["  tool_a : sub1  "],
-        {"tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}}},
+        {
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": True, "_all": False},
+            }
+        },
     ),  # Whitespace handling
     ([":*"], {}),  # Invalid :* alone
     (
         ["tool_a:sub1:", "tool_b"],
         {
-            "tool_a": {"_explicit": False, "_all": False, "sub1": {"_explicit": True, "_all": False}},
+            "tool_a": {
+                "_explicit": False,
+                "_all": False,
+                "sub1": {"_explicit": True, "_all": False},
+            },
             "tool_b": {"_explicit": True, "_all": False},
         },
     ),  # Trailing colon ignored
@@ -199,18 +259,32 @@ FORMAT_TEST_CASES = [
         ["tool_a:sub1:subsub1", "tool_a:sub1:subsub2"],
         {"tool_a": {"sub1": {"subsub1": {"_explicit": True}, "subsub2": {"_explicit": True}}}},
     ),
-    (["tool_a", "tool_a:sub1"], {"tool_a": {"_explicit": True, "sub1": {"_explicit": True}}}),
+    (
+        ["tool_a", "tool_a:sub1"],
+        {"tool_a": {"_explicit": True, "sub1": {"_explicit": True}}},
+    ),
     (
         ["tool_a:*"],
         {"tool_a": {"_explicit": True, "_all": True, "sub1": {"_explicit": True}}},
     ),  # _all=True prunes deeper items on format
     (
         ["tool_a:sub1:*"],
-        {"tool_a": {"sub1": {"_explicit": True, "_all": True, "subsub1": {"_explicit": True}}}},
+        {
+            "tool_a": {
+                "sub1": {
+                    "_explicit": True,
+                    "_all": True,
+                    "subsub1": {"_explicit": True},
+                }
+            }
+        },
     ),  # _all=True prunes deeper
     (
         ["tool_a:sub1", "tool_a:sub2", "tool_b"],
-        {"tool_a": {"sub1": {"_explicit": True}, "sub2": {"_explicit": True}}, "tool_b": {"_explicit": True}},
+        {
+            "tool_a": {"sub1": {"_explicit": True}, "sub2": {"_explicit": True}},
+            "tool_b": {"_explicit": True},
+        },
     ),
     # Case where only intermediate node exists but isn't explicit
     ([], {"tool_a": {"sub1": {}}}),
@@ -233,22 +307,130 @@ def test_format_nested_dict_to_list(expected_list: List[str], input_dict: Parsed
 MODIFY_ADD_TEST_CASES = [
     # --- Basic Add --- #
     ([], [], ("tool_a",), False, False, ["tool_a"], [], True),  # Add simple
-    (["tool_b"], [], ("tool_a",), False, False, ["tool_a", "tool_b"], [], True),  # Add to existing
-    (["tool_a"], [], ("tool_a",), False, False, ["tool_a"], [], False),  # Add existing (no change)
+    (
+        ["tool_b"],
+        [],
+        ("tool_a",),
+        False,
+        False,
+        ["tool_a", "tool_b"],
+        [],
+        True,
+    ),  # Add to existing
+    (
+        ["tool_a"],
+        [],
+        ("tool_a",),
+        False,
+        False,
+        ["tool_a"],
+        [],
+        False,
+    ),  # Add existing (no change)
     ([], [], ("tool_a:sub1",), False, False, ["tool_a:sub1"], [], True),  # Add sub
-    (["tool_a:sub1"], [], ("tool_a:sub2",), False, False, ["tool_a:sub1", "tool_a:sub2"], [], True),  # Add another sub
-    (["tool_a:sub1"], [], ("tool_a:sub1",), False, False, ["tool_a:sub1"], [], False),  # Add existing sub
-    ([], [], ("tool_a:sub1:subsub1",), False, False, ["tool_a:sub1:subsub1"], [], True),  # Add nested sub
+    (
+        ["tool_a:sub1"],
+        [],
+        ("tool_a:sub2",),
+        False,
+        False,
+        ["tool_a:sub1", "tool_a:sub2"],
+        [],
+        True,
+    ),  # Add another sub
+    (
+        ["tool_a:sub1"],
+        [],
+        ("tool_a:sub1",),
+        False,
+        False,
+        ["tool_a:sub1"],
+        [],
+        False,
+    ),  # Add existing sub
+    (
+        [],
+        [],
+        ("tool_a:sub1:subsub1",),
+        False,
+        False,
+        ["tool_a:sub1:subsub1"],
+        [],
+        True,
+    ),  # Add nested sub
     # --- Add with --all / :* --- #
     ([], [], ("tool_a",), True, False, ["tool_a:*"], [], True),  # Add simple --all
     ([], [], ("tool_a:*",), False, False, ["tool_a:*"], [], True),  # Add simple with :*
-    (["tool_a:sub1"], [], ("tool_a",), True, False, ["tool_a:*"], [], True),  # Add --all overrides existing sub
-    (["tool_a:sub1"], [], ("tool_a:*",), False, False, ["tool_a:*"], [], True),  # Add :* overrides existing sub
-    (["tool_a:*"], [], ("tool_a",), True, False, ["tool_a:*"], [], False),  # Add --all when :* exists (no change)
-    (["tool_a:*"], [], ("tool_a:*",), False, False, ["tool_a:*"], [], False),  # Add :* when :* exists (no change)
-    (["tool_a:*"], [], ("tool_a:sub1",), False, False, ["tool_a:*"], [], False),  # Add sub when :* exists (no change)
-    ([], [], ("tool_a:sub1",), True, False, ["tool_a:sub1:*"], [], True),  # Add sub --all
-    ([], [], ("tool_a:sub1:*",), False, False, ["tool_a:sub1:*"], [], True),  # Add sub with :*
+    (
+        ["tool_a:sub1"],
+        [],
+        ("tool_a",),
+        True,
+        False,
+        ["tool_a:*"],
+        [],
+        True,
+    ),  # Add --all overrides existing sub
+    (
+        ["tool_a:sub1"],
+        [],
+        ("tool_a:*",),
+        False,
+        False,
+        ["tool_a:*"],
+        [],
+        True,
+    ),  # Add :* overrides existing sub
+    (
+        ["tool_a:*"],
+        [],
+        ("tool_a",),
+        True,
+        False,
+        ["tool_a:*"],
+        [],
+        False,
+    ),  # Add --all when :* exists (no change)
+    (
+        ["tool_a:*"],
+        [],
+        ("tool_a:*",),
+        False,
+        False,
+        ["tool_a:*"],
+        [],
+        False,
+    ),  # Add :* when :* exists (no change)
+    (
+        ["tool_a:*"],
+        [],
+        ("tool_a:sub1",),
+        False,
+        False,
+        ["tool_a:*"],
+        [],
+        False,
+    ),  # Add sub when :* exists (no change)
+    (
+        [],
+        [],
+        ("tool_a:sub1",),
+        True,
+        False,
+        ["tool_a:sub1:*"],
+        [],
+        True,
+    ),  # Add sub --all
+    (
+        [],
+        [],
+        ("tool_a:sub1:*",),
+        False,
+        False,
+        ["tool_a:sub1:*"],
+        [],
+        True,
+    ),  # Add sub with :*
     (
         ["tool_a:sub1:subsub1"],
         [],
@@ -260,13 +442,76 @@ MODIFY_ADD_TEST_CASES = [
         True,
     ),  # Add sub --all overrides subsub
     # --- Add with Conflicts (No Force) --- #
-    ([], ["tool_a"], ("tool_a",), False, False, [], ["tool_a"], False),  # Conflict simple
-    ([], ["tool_a:*"], ("tool_a",), False, False, [], ["tool_a:*"], False),  # Conflict simple vs :*
-    ([], ["tool_a"], ("tool_a:*",), False, False, [], ["tool_a"], False),  # Conflict :* vs simple
-    ([], ["tool_a:*"], ("tool_a:*",), False, False, [], ["tool_a:*"], False),  # Conflict :* vs :*
-    ([], ["tool_a:sub1"], ("tool_a:sub1",), False, False, [], ["tool_a:sub1"], False),  # Conflict sub
-    ([], ["tool_a:*"], ("tool_a:sub1",), False, False, [], ["tool_a:*"], False),  # Conflict sub vs parent:*
-    ([], ["tool_a:sub1"], ("tool_a:*",), False, False, [], ["tool_a:sub1"], False),  # Conflict parent:* vs sub
+    (
+        [],
+        ["tool_a"],
+        ("tool_a",),
+        False,
+        False,
+        [],
+        ["tool_a"],
+        False,
+    ),  # Conflict simple
+    (
+        [],
+        ["tool_a:*"],
+        ("tool_a",),
+        False,
+        False,
+        [],
+        ["tool_a:*"],
+        False,
+    ),  # Conflict simple vs :*
+    (
+        [],
+        ["tool_a"],
+        ("tool_a:*",),
+        False,
+        False,
+        [],
+        ["tool_a"],
+        False,
+    ),  # Conflict :* vs simple
+    (
+        [],
+        ["tool_a:*"],
+        ("tool_a:*",),
+        False,
+        False,
+        [],
+        ["tool_a:*"],
+        False,
+    ),  # Conflict :* vs :*
+    (
+        [],
+        ["tool_a:sub1"],
+        ("tool_a:sub1",),
+        False,
+        False,
+        [],
+        ["tool_a:sub1"],
+        False,
+    ),  # Conflict sub
+    (
+        [],
+        ["tool_a:*"],
+        ("tool_a:sub1",),
+        False,
+        False,
+        [],
+        ["tool_a:*"],
+        False,
+    ),  # Conflict sub vs parent:*
+    (
+        [],
+        ["tool_a:sub1"],
+        ("tool_a:*",),
+        False,
+        False,
+        [],
+        ["tool_a:sub1"],
+        False,
+    ),  # Conflict parent:* vs sub
     (
         [],
         ["tool_a:sub1:*"],
@@ -277,14 +522,68 @@ MODIFY_ADD_TEST_CASES = [
         ["tool_a:sub1:*"],
         False,
     ),  # Conflict subsub vs sub:*
-    ([], ["tool_a"], ("tool_a",), True, False, [], ["tool_a"], False),  # Conflict simple --all
-    ([], ["tool_a:sub1"], ("tool_a",), True, False, [], ["tool_a:sub1"], False),  # Conflict parent --all vs sub
+    (
+        [],
+        ["tool_a"],
+        ("tool_a",),
+        True,
+        False,
+        [],
+        ["tool_a"],
+        False,
+    ),  # Conflict simple --all
+    (
+        [],
+        ["tool_a:sub1"],
+        ("tool_a",),
+        True,
+        False,
+        [],
+        ["tool_a:sub1"],
+        False,
+    ),  # Conflict parent --all vs sub
     # --- Add with Conflicts (Force) --- #
     ([], ["tool_a"], ("tool_a",), False, True, ["tool_a"], [], True),  # Force simple
-    ([], ["tool_a:*"], ("tool_a",), False, True, ["tool_a"], [], True),  # Force simple vs :* (removes other :*)
-    ([], ["tool_a"], ("tool_a:*",), False, True, ["tool_a:*"], [], True),  # Force :* vs simple (removes other simple)
-    ([], ["tool_a:*"], ("tool_a:*",), False, True, ["tool_a:*"], [], True),  # Force :* vs :*
-    ([], ["tool_a:sub1"], ("tool_a:sub1",), False, True, ["tool_a:sub1"], [], True),  # Force sub
+    (
+        [],
+        ["tool_a:*"],
+        ("tool_a",),
+        False,
+        True,
+        ["tool_a"],
+        [],
+        True,
+    ),  # Force simple vs :* (removes other :*)
+    (
+        [],
+        ["tool_a"],
+        ("tool_a:*",),
+        False,
+        True,
+        ["tool_a:*"],
+        [],
+        True,
+    ),  # Force :* vs simple (removes other simple)
+    (
+        [],
+        ["tool_a:*"],
+        ("tool_a:*",),
+        False,
+        True,
+        ["tool_a:*"],
+        [],
+        True,
+    ),  # Force :* vs :*
+    (
+        [],
+        ["tool_a:sub1"],
+        ("tool_a:sub1",),
+        False,
+        True,
+        ["tool_a:sub1"],
+        [],
+        True,
+    ),  # Force sub
     (
         [],
         ["tool_a:*"],
@@ -305,7 +604,16 @@ MODIFY_ADD_TEST_CASES = [
         [],
         True,
     ),  # Force subsub vs sub:* (removes other sub:*)
-    ([], ["tool_a"], ("tool_a",), True, True, ["tool_a:*"], [], True),  # Force simple --all
+    (
+        [],
+        ["tool_a"],
+        ("tool_a",),
+        True,
+        True,
+        ["tool_a:*"],
+        [],
+        True,
+    ),  # Force simple --all
     (
         [],
         ["tool_a:sub1"],
@@ -370,14 +678,62 @@ def test_modify_add_whitelist(
 # Force is not applicable to remove
 MODIFY_REMOVE_TEST_CASES = [
     # --- Basic Remove --- #
-    (["tool_a", "tool_b"], [], ("tool_a",), False, ["tool_b"], [], True),  # Remove simple
+    (
+        ["tool_a", "tool_b"],
+        [],
+        ("tool_a",),
+        False,
+        ["tool_b"],
+        [],
+        True,
+    ),  # Remove simple
     (["tool_a"], [], ("tool_b",), False, ["tool_a"], [], False),  # Remove non-existent
     (["tool_a"], [], ("tool_a",), False, [], [], True),  # Remove last item
-    (["tool_a:sub1", "tool_a:sub2"], [], ("tool_a:sub1",), False, ["tool_a:sub2"], [], True),  # Remove sub
-    (["tool_a:sub1"], [], ("tool_a:sub2",), False, ["tool_a:sub1"], [], False),  # Remove non-existent sub
-    (["tool_a:sub1:subsub1"], [], ("tool_a:sub1:subsub1",), False, [], [], True),  # Remove nested sub
-    (["tool_a", "tool_a:sub1"], [], ("tool_a",), False, ["tool_a:sub1"], [], True),  # Remove explicit tool, keeps sub
-    (["tool_a", "tool_a:sub1"], [], ("tool_a:sub1",), False, ["tool_a"], [], True),  # Remove sub, keeps explicit tool
+    (
+        ["tool_a:sub1", "tool_a:sub2"],
+        [],
+        ("tool_a:sub1",),
+        False,
+        ["tool_a:sub2"],
+        [],
+        True,
+    ),  # Remove sub
+    (
+        ["tool_a:sub1"],
+        [],
+        ("tool_a:sub2",),
+        False,
+        ["tool_a:sub1"],
+        [],
+        False,
+    ),  # Remove non-existent sub
+    (
+        ["tool_a:sub1:subsub1"],
+        [],
+        ("tool_a:sub1:subsub1",),
+        False,
+        [],
+        [],
+        True,
+    ),  # Remove nested sub
+    (
+        ["tool_a", "tool_a:sub1"],
+        [],
+        ("tool_a",),
+        False,
+        ["tool_a:sub1"],
+        [],
+        True,
+    ),  # Remove explicit tool, keeps sub
+    (
+        ["tool_a", "tool_a:sub1"],
+        [],
+        ("tool_a:sub1",),
+        False,
+        ["tool_a"],
+        [],
+        True,
+    ),  # Remove sub, keeps explicit tool
     # --- Remove with --all / :* --- #
     (
         ["tool_a:*"],
@@ -389,7 +745,15 @@ MODIFY_REMOVE_TEST_CASES = [
         False,
     ),  # Remove simple when :* exists (no effect on flags)
     (["tool_a:*"], [], ("tool_a:*",), False, [], [], True),  # Remove :* when :* exists
-    (["tool_a:*", "tool_b"], [], ("tool_a:*",), False, ["tool_b"], [], True),  # Remove :*
+    (
+        ["tool_a:*", "tool_b"],
+        [],
+        ("tool_a:*",),
+        False,
+        ["tool_b"],
+        [],
+        True,
+    ),  # Remove :*
     (
         ["tool_a", "tool_a:sub1", "tool_a:sub2:*"],
         [],
@@ -408,7 +772,15 @@ MODIFY_REMOVE_TEST_CASES = [
         [],
         True,
     ),  # Remove :* --all (removes node)
-    (["tool_a:sub1:*", "tool_a:sub2"], [], ("tool_a:sub1",), True, ["tool_a:sub2"], [], True),  # Remove sub --all
+    (
+        ["tool_a:sub1:*", "tool_a:sub2"],
+        [],
+        ("tool_a:sub1",),
+        True,
+        ["tool_a:sub2"],
+        [],
+        True,
+    ),  # Remove sub --all
     (
         ["tool_a:sub1:subsub1", "tool_a:sub2"],
         [],
@@ -418,10 +790,34 @@ MODIFY_REMOVE_TEST_CASES = [
         [],
         True,
     ),  # Remove sub --all (removes subsub)
-    (["tool_a:sub1:*"], [], ("tool_a:sub1:*",), True, [], [], True),  # Remove sub:* --all
+    (
+        ["tool_a:sub1:*"],
+        [],
+        ("tool_a:sub1:*",),
+        True,
+        [],
+        [],
+        True,
+    ),  # Remove sub:* --all
     # --- Remove interaction with other list (should have no effect) --- #
-    (["tool_a"], ["tool_b"], ("tool_a",), False, [], ["tool_b"], True),  # Remove from WL, BL untouched
-    (["tool_a:*"], ["tool_b"], ("tool_a:*",), True, [], ["tool_b"], True),  # Remove from WL --all, BL untouched
+    (
+        ["tool_a"],
+        ["tool_b"],
+        ("tool_a",),
+        False,
+        [],
+        ["tool_b"],
+        True,
+    ),  # Remove from WL, BL untouched
+    (
+        ["tool_a:*"],
+        ["tool_b"],
+        ("tool_a:*",),
+        True,
+        [],
+        ["tool_b"],
+        True,
+    ),  # Remove from WL --all, BL untouched
 ]
 
 
@@ -503,3 +899,5 @@ def test_list_tool_list_file_not_found(tmp_path: Path):
 
 
 # endregion
+
+from tests.test_zeroth_law.test_common.common_test_structures import NESTED_EXAMPLE

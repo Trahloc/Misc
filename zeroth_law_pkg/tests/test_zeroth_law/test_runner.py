@@ -88,7 +88,12 @@ def test_translate_verbose_option_ruff():
     """Test translating ZLT's verbose option for ruff_check."""
     selected_tool_def = MOCK_TOOL_DEFS["ruff_check"]
     # Simulate ZLT context where --verbose was passed
-    zlt_options_activated = {"verbose": True, "quiet": False, "config": None, "paths": [Path("file1.py")]}
+    zlt_options_activated = {
+        "verbose": True,
+        "quiet": False,
+        "config": None,
+        "paths": [Path("file1.py")],
+    }
     target_files_for_tool = [Path("file1.py")]
 
     # Expected result: base command + tool's verbose flag + positional paths
@@ -104,7 +109,12 @@ def test_translate_config_option_ruff():
     selected_tool_def = MOCK_TOOL_DEFS["ruff_check"]
     config_file = Path("my_ruff.toml")
     # Simulate ZLT context where --config was passed
-    zlt_options_activated = {"verbose": False, "quiet": False, "config": config_file, "paths": [Path("file1.py")]}
+    zlt_options_activated = {
+        "verbose": False,
+        "quiet": False,
+        "config": config_file,
+        "paths": [Path("file1.py")],
+    }
     target_files_for_tool = [Path("file1.py")]
 
     # Expected result: base command + tool's config flag/value + positional paths
@@ -120,7 +130,12 @@ def test_translate_paths_option_ruff():
     selected_tool_def = MOCK_TOOL_DEFS["ruff_check"]
     paths = [Path("src/"), Path("tests/")]
     # Simulate ZLT context where multiple paths were passed
-    zlt_options_activated = {"verbose": False, "quiet": False, "config": None, "paths": paths}
+    zlt_options_activated = {
+        "verbose": False,
+        "quiet": False,
+        "config": None,
+        "paths": paths,
+    }
     target_files_for_tool = paths  # Assume all target files apply to this tool
 
     # Expected result: base command + positional paths
@@ -141,7 +156,12 @@ def test_translate_multiple_options_ruff():
     config_file = Path("../ruff.toml")
     paths = [Path(".")]
     # Simulate ZLT context with verbose, config, and paths
-    zlt_options_activated = {"verbose": True, "quiet": False, "config": config_file, "paths": paths}
+    zlt_options_activated = {
+        "verbose": True,
+        "quiet": False,
+        "config": config_file,
+        "paths": paths,
+    }
     target_files_for_tool = paths
 
     # Order might matter depending on implementation, let's assume flags first, then values, then positionals
@@ -158,7 +178,12 @@ def test_translate_options_different_tool():
     config_file = Path("other_config.ini")
     paths = [Path("script.py")]
     # Simulate ZLT context with verbose, config, and paths
-    zlt_options_activated = {"verbose": True, "quiet": False, "config": config_file, "paths": paths}
+    zlt_options_activated = {
+        "verbose": True,
+        "quiet": False,
+        "config": config_file,
+        "paths": paths,
+    }
     target_files_for_tool = paths
 
     # Expected args use the tool's specific flags (-V, --conf)
@@ -174,7 +199,13 @@ def test_ignore_unmapped_zlt_options():
     selected_tool_def = MOCK_TOOL_DEFS["ruff_check"]
     paths = [Path("file.py")]
     # Simulate ZLT context with recursive (which ruff_check doesn't map)
-    zlt_options_activated = {"verbose": False, "quiet": False, "config": None, "recursive": True, "paths": paths}
+    zlt_options_activated = {
+        "verbose": False,
+        "quiet": False,
+        "config": None,
+        "recursive": True,
+        "paths": paths,
+    }
     target_files_for_tool = paths
 
     # Expected: base command + paths (recursive is ignored)
@@ -189,7 +220,12 @@ def test_translate_quiet_option_ruff():
     """Test translating ZLT's quiet option for ruff_check."""
     selected_tool_def = MOCK_TOOL_DEFS["ruff_check"]
     # Simulate ZLT context where --quiet was passed
-    zlt_options_activated = {"verbose": False, "quiet": True, "config": None, "paths": [Path("file1.py")]}
+    zlt_options_activated = {
+        "verbose": False,
+        "quiet": True,
+        "config": None,
+        "paths": [Path("file1.py")],
+    }
     target_files_for_tool = [Path("file1.py")]
 
     # Expected result: base command + tool's quiet flag + positional paths

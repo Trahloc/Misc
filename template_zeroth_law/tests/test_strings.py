@@ -31,9 +31,9 @@ def test_strings_module_exists():
     RETURNS: None
     EXCEPTIONS: None
     """
-    assert (
-        STRINGS_MODULE_EXISTS
-    ), "The template_zeroth_law.utils.strings module should exist"
+    assert STRINGS_MODULE_EXISTS, (
+        "The template_zeroth_law.utils.strings module should exist"
+    )
 
 
 """

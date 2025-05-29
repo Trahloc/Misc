@@ -61,14 +61,14 @@ def test_string_operations():
         assert reversed_twice == s, f"String reversed twice should equal original: {s}"
 
         # Test string concatenation property
-        assert (
-            s + "" == s
-        ), f"String concatenated with empty string should be unchanged: {s}"
+        assert s + "" == s, (
+            f"String concatenated with empty string should be unchanged: {s}"
+        )
 
         # Test string length property
-        assert (
-            len(s + "a") == len(s) + 1
-        ), f"Adding a character should increase length by 1: {s}"
+        assert len(s + "a") == len(s) + 1, (
+            f"Adding a character should increase length by 1: {s}"
+        )
 
 
 def test_data_structures():
@@ -86,14 +86,14 @@ def test_data_structures():
 
     for lst in list_test_cases:
         # Test list reversal property
-        assert (
-            list(reversed(list(reversed(lst)))) == lst
-        ), f"List reversed twice should equal original: {lst}"
+        assert list(reversed(list(reversed(lst)))) == lst, (
+            f"List reversed twice should equal original: {lst}"
+        )
 
         # Test list concatenation with empty list
-        assert (
-            lst + [] == lst
-        ), f"List concatenated with empty list should be unchanged: {lst}"
+        assert lst + [] == lst, (
+            f"List concatenated with empty list should be unchanged: {lst}"
+        )
 
         # Test list copy is distinct from original
         lst_copy = lst.copy()
@@ -105,9 +105,9 @@ def test_data_structures():
                 )  # Shallow copy, modifies both if list contains lists
             else:
                 lst_copy[0] = 42  # This should not affect original list
-                assert (
-                    lst_copy != lst
-                ), f"Modifying copy should not affect original: {lst}"
+                assert lst_copy != lst, (
+                    f"Modifying copy should not affect original: {lst}"
+                )
 
 
 """

@@ -63,9 +63,10 @@ class TestUrlValidator(unittest.TestCase):
     def test_valid_url(self):
         """Test validation of correctly formatted civitai.com URLs using mock URLs"""
         # Temporarily patch the validate_url function to avoid real validation logic
-        with patch(
-            "civit.url_validator.is_valid_civitai_url", return_value=True
-        ), patch("civit.url_validator.is_valid_image_url", return_value=True):
+        with (
+            patch("civit.url_validator.is_valid_civitai_url", return_value=True),
+            patch("civit.url_validator.is_valid_image_url", return_value=True),
+        ):
             valid_urls = [
                 "https://civitai.com/models/1234",
                 "https://www.civitai.com/models/1234",
@@ -186,9 +187,10 @@ class TestUrlValidator(unittest.TestCase):
             mock_valid_url = "https://civitai.com/models/1234"
 
             # Override normal validation to ensure we get to the check_existence part
-            with patch(
-                "civit.url_validator.is_valid_civitai_url", return_value=True
-            ), patch("civit.url_validator.urlparse") as mock_urlparse:
+            with (
+                patch("civit.url_validator.is_valid_civitai_url", return_value=True),
+                patch("civit.url_validator.urlparse") as mock_urlparse,
+            ):
                 # Setup mock parsed URL
                 mock_parsed = MagicMock()
                 mock_parsed.scheme = "https"
@@ -205,9 +207,10 @@ class TestUrlValidator(unittest.TestCase):
                 "Failed to connect"
             )
 
-            with patch(
-                "civit.url_validator.is_valid_civitai_url", return_value=True
-            ), patch("civit.url_validator.urlparse") as mock_urlparse:
+            with (
+                patch("civit.url_validator.is_valid_civitai_url", return_value=True),
+                patch("civit.url_validator.urlparse") as mock_urlparse,
+            ):
                 mock_urlparse.return_value = mock_parsed
                 with self.assertRaises(ConnectionError):
                     validate_url(mock_valid_url, check_existence=True)
@@ -215,9 +218,10 @@ class TestUrlValidator(unittest.TestCase):
             # Test timeout
             mock_head.side_effect = requests.exceptions.Timeout("Connection timed out")
 
-            with patch(
-                "civit.url_validator.is_valid_civitai_url", return_value=True
-            ), patch("civit.url_validator.urlparse") as mock_urlparse:
+            with (
+                patch("civit.url_validator.is_valid_civitai_url", return_value=True),
+                patch("civit.url_validator.urlparse") as mock_urlparse,
+            ):
                 mock_urlparse.return_value = mock_parsed
                 with self.assertRaises(TimeoutError):
                     validate_url(mock_valid_url, check_existence=True)

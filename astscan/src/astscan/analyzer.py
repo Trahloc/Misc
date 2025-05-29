@@ -23,15 +23,21 @@ import tempfile
 from datetime import datetime
 from typing import Any, Dict, List
 
-from astscan.exceptions import (AnalysisError, FileNotFoundError,
-                                NotPythonFileError, ZerothLawError)
-from astscan.metrics import (calculate_cyclomatic_complexity,
-                             calculate_docstring_coverage,
-                             calculate_file_size_metrics,
-                             calculate_function_size_metrics,
-                             calculate_import_metrics, calculate_naming_score)
-from astscan.utils import (count_executable_lines, find_header_footer,
-                           replace_footer)
+from astscan.exceptions import (
+    AnalysisError,
+    FileNotFoundError,
+    NotPythonFileError,
+    ZerothLawError,
+)
+from astscan.metrics import (
+    calculate_cyclomatic_complexity,
+    calculate_docstring_coverage,
+    calculate_file_size_metrics,
+    calculate_function_size_metrics,
+    calculate_import_metrics,
+    calculate_naming_score,
+)
+from astscan.utils import count_executable_lines, find_header_footer, replace_footer
 
 logger = logging.getLogger(__name__)
 

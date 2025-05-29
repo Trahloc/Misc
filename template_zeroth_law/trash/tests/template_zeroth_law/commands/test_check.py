@@ -17,8 +17,12 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
-from template_zeroth_law.commands.check import (check_deps, check_env,
-                                                check_paths, command)
+from template_zeroth_law.commands.check import (
+    check_deps,
+    check_env,
+    check_paths,
+    command,
+)
 
 
 @pytest.fixture
@@ -53,11 +57,11 @@ def mock_project(tmp_path: Path) -> Path:
 def test_check_command_basic(cli_runner: CliRunner):
     """Test the basic check command."""
     # Create patches for the check functions to avoid actual system checks
-    with patch("template_zeroth_law.commands.check.check_deps") as mock_deps, patch(
-        "template_zeroth_law.commands.check.check_env"
-    ) as mock_env, patch(
-        "template_zeroth_law.commands.check.check_paths"
-    ) as mock_paths:
+    with (
+        patch("template_zeroth_law.commands.check.check_deps") as mock_deps,
+        patch("template_zeroth_law.commands.check.check_env") as mock_env,
+        patch("template_zeroth_law.commands.check.check_paths") as mock_paths,
+    ):
         # Run command
         result = cli_runner.invoke(command)
 
@@ -74,11 +78,11 @@ def test_check_command_basic(cli_runner: CliRunner):
 def test_check_command_with_options(cli_runner: CliRunner, option: str):
     """Test the check command with specific options."""
     # Create patches for the check functions to avoid actual system checks
-    with patch("template_zeroth_law.commands.check.check_deps") as mock_deps, patch(
-        "template_zeroth_law.commands.check.check_env"
-    ) as mock_env, patch(
-        "template_zeroth_law.commands.check.check_paths"
-    ) as mock_paths:
+    with (
+        patch("template_zeroth_law.commands.check.check_deps") as mock_deps,
+        patch("template_zeroth_law.commands.check.check_env") as mock_env,
+        patch("template_zeroth_law.commands.check.check_paths") as mock_paths,
+    ):
         # Run command with option
         result = cli_runner.invoke(command, [option])
 
@@ -122,8 +126,9 @@ def test_check_env():
 
 def test_check_paths(mock_project: Path):
     """Test the check_paths function."""
-    with patch("click.echo") as mock_echo, patch(
-        "template_zeroth_law.utils.get_project_root", return_value=mock_project
+    with (
+        patch("click.echo") as mock_echo,
+        patch("template_zeroth_law.utils.get_project_root", return_value=mock_project),
     ):
         check_paths()
         # Verify function executed and produced output

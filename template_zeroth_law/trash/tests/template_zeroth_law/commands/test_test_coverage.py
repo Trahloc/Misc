@@ -26,8 +26,13 @@ import pytest
 from click.testing import CliRunner
 
 from template_zeroth_law.commands.test_coverage import (
-    calculate_coverage, command, command_create_test_stubs, create_test_stubs,
-    find_source_and_test_files, get_project_name)
+    calculate_coverage,
+    command,
+    command_create_test_stubs,
+    create_test_stubs,
+    find_source_and_test_files,
+    get_project_name,
+)
 
 
 @pytest.fixture
@@ -106,9 +111,9 @@ def test_calculate_coverage(mock_project: Path):
         "module1.py",
         "module2.py",
     ], "Source files don't match expected files"
-    assert test_filenames == [
-        "test_module1.py"
-    ], "Test files don't match expected files"
+    assert test_filenames == ["test_module1.py"], (
+        "Test files don't match expected files"
+    )
 
     # Calculate coverage
     coverage_info = calculate_coverage(source_files, test_files, project_name)
@@ -118,9 +123,9 @@ def test_calculate_coverage(mock_project: Path):
     assert coverage_info["total_test_files"] == 1, "Expected 1 test file"
     assert coverage_info["covered_files"] == 1, "Expected 1 covered file"
     assert coverage_info["coverage_percentage"] == 50.0, "Expected 50% coverage"
-    assert (
-        "module2" in coverage_info["source_modules_without_tests"]
-    ), "Expected module2 to be untested"
+    assert "module2" in coverage_info["source_modules_without_tests"], (
+        "Expected module2 to be untested"
+    )
 
 
 def test_create_test_stubs(mock_project: Path):

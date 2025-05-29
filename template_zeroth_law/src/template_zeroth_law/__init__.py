@@ -19,9 +19,14 @@
 __version__ = "0.1.0"
 
 from template_zeroth_law.config import Config, get_config, load_config
+
 # Import and expose key functionality
-from template_zeroth_law.exceptions import (ConfigError, FileError,
-                                            ValidationError, ZerothLawError)
+from template_zeroth_law.exceptions import (
+    ConfigError,
+    FileError,
+    ValidationError,
+    ZerothLawError,
+)
 
 # Explicitly define what's available when using 'from template_zeroth_law import *'
 __all__ = [
